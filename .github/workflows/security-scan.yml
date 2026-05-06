@@ -1,0 +1,245 @@
+# ACAS Pro - Security Scanning Pipeline
+name: Security Scan
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '0 2 * * 1'  # 每周一早2点
+
+jobs:
+  # SAST - 静态代码分析
+  sast:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # SonarQube 扫描
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=acas-pro
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.python.version=3.11
+
+      # Bandit - Python 安全扫描
+      - name: Bandit Security Scan
+        run: |
+          pip install bandit[toml]
+          bandit -r src/ -f json -o bandit-report.json || true
+          bandit -r src/ -ll
+
+      # Semgrep - 规则扫描
+      - name: Semgrep Scan
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/owasp-top-ten
+            p/cwe-top-25
+            p/python
+
+  # SCA - 依赖安全扫描
+  sca:
+    name: Dependency Scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Snyk 扫描
+      - name: Snyk Security Scan
+        uses: snyk/actions/python@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --json-file-output=snyk-report.json
+
+      # pip-audit
+      - name: Pip Audit
+        run: |
+          pip install pip-audit
+          pip-audit --requirement=requirements.txt --format=json --output=pip-audit-report.json
+
+      # Safety
+      - name: Safety Check
+        run: |
+          pip install safety
+          safety check --json --output safety-report.json
+
+  # 容器安全扫描
+  container-scan:
+    name: Container Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Image
+        run: docker build -t acas-pro:${{ github.sha }} .
+
+      # Trivy 扫描
+      - name: Trivy Scan
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: acas-pro:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy Results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      # Snyk 容器扫描
+      - name: Snyk Container Scan
+        uses: snyk/actions/docker@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          image: acas-pro:${{ github.sha }}
+          args: --severity-threshold=high
+
+  # 密钥扫描
+  secret-scan:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 需要完整历史
+
+      # GitLeaks
+      - name: GitLeaks Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+      # TruffleHog
+      - name: TruffleHog Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: main
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  # IaC 安全扫描
+  iac-scan:
+    name: IaC Security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Checkov - K8s/Terraform 扫描
+      - name: Checkov Scan
+        uses: bridgecrewio/checkov-action@master
+        with:
+          directory: .
+          framework: kubernetes,dockerfile
+          output_format: sarif
+          output_file_path: reports/checkov.sarif
+
+      # Kubeconform - K8s 配置验证
+      - name: Kubeconform
+        run: |
+          wget https://github.com/yannh/kubeconform/releases/download/v0.6.4/kubeconform-linux-amd64.tar.gz
+          tar xf kubeconform-linux-amd64.tar.gz
+          ./kubeconform -strict k8s/
+
+  # DAST - 动态扫描
+  dast:
+    name: Dynamic Analysis
+    runs-on: ubuntu-latest
+    needs: [sast, sca]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      # 部署到测试环境
+      - name: Deploy to Staging
+        run: |
+          echo "Deploying to staging..."
+          # kubectl apply -f k8s/
+
+      # OWASP ZAP
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.10.0
+        with:
+          target: 'https://staging.acas-pro.com'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a'
+
+      # Nuclei
+      - name: Nuclei Scan
+        run: |
+          wget https://github.com/projectdiscovery/nuclei/releases/download/v3.1.0/nuclei_3.1.0_linux_amd64.zip
+          unzip nuclei_3.1.0_linux_amd64.zip
+          ./nuclei -u https://staging.acas-pro.com -o nuclei-results.json
+
+  # 合规检查
+  compliance:
+    name: Compliance Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # OpenSCAP
+      - name: OpenSCAP Scan
+        run: |
+          docker run --rm -v $(pwd):/scan \
+            openpolicyagent/conftest test --policy security-policies/ k8s/
+
+      # CIS Benchmark
+      - name: CIS Kubernetes Benchmark
+        run: |
+          echo "Running CIS checks..."
+          # kube-bench 或类似工具
+
+  # 生成安全报告
+  report:
+    name: Security Report
+    runs-on: ubuntu-latest
+    needs: [sast, sca, container-scan, secret-scan, iac-scan]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Generate Report
+        run: |
+          python scripts/generate-security-report.py \
+            --sonar sonar-report.json \
+            --snyk snyk-report.json \
+            --trivy trivy-results.sarif \
+            --bandit bandit-report.json \
+            --output security-report.md
+
+      - name: Upload Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-report
+          path: security-report.md
+
+      - name: Comment PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const report = fs.readFileSync('security-report.md', 'utf8');
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: report
+            });

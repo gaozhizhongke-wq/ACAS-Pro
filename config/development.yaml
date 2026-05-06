@@ -1,0 +1,43 @@
+# ACAS Pro - 开发环境配置
+app:
+  name: "ACAS Pro"
+  version: "1.0.0-dev"
+  debug: true
+  log_level: "DEBUG"
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  reload: true
+  workers: 1
+
+database:
+  host: "localhost"
+  port: 5432
+  name: "acas_pro_dev"
+  pool_size: 5
+  max_overflow: 10
+  echo: true  # SQL 日志
+
+redis:
+  host: "localhost"
+  port: 6379
+  db: 1  # 开发用单独 DB
+  decode_responses: true
+
+security:
+  jwt_secret: "${JWT_SECRET}"
+  jwt_expiry: 86400  # 24小时，开发方便
+  password_min_length: 6  # 开发放宽
+  rate_limit: "100/minute"  # 开发放宽
+
+features:
+  enable_cache: false  # 开发禁用缓存，方便调试
+  enable_metrics: true
+  enable_swagger: true
+  mock_external_apis: true  # 开发使用 mock
+
+logging:
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  handlers:
+    - console

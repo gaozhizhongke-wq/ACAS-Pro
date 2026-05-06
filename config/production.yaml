@@ -1,0 +1,79 @@
+# ACAS Pro - 生产环境配置
+app:
+  name: "ACAS Pro"
+  version: "1.0.0"
+  debug: false
+  log_level: "WARNING"  # 生产只记录警告及以上
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  reload: false
+  workers: 4  # 根据 CPU 核心数调整
+
+database:
+  host: "postgres.acas-pro.svc.cluster.local"
+  port: 5432
+  name: "acas_pro"
+  pool_size: 20
+  max_overflow: 30
+  echo: false
+  ssl_mode: "require"
+  connect_timeout: 10
+  application_name: "acas-pro-api"
+
+redis:
+  host: "redis.acas-pro.svc.cluster.local"
+  port: 6379
+  db: 0
+  decode_responses: true
+  ssl: true
+  socket_timeout: 5
+  socket_connect_timeout: 5
+
+security:
+  jwt_secret: "${JWT_SECRET}"  # 必须从环境变量读取
+  jwt_expiry: 1800  # 30分钟
+  password_min_length: 12  # 强密码策略
+  rate_limit: "30/minute"  # 严格限流
+  enable_csrf_protection: true
+  secure_cookies: true
+  content_security_policy: "default-src 'self'"
+
+features:
+  enable_cache: true
+  enable_metrics: true
+  enable_swagger: false  # 生产禁用文档
+  mock_external_apis: false
+
+logging:
+  format: "json"
+  handlers:
+    - console
+    - file
+    - syslog
+  file_path: "/var/log/acas-pro/app.log"
+  max_bytes: 104857600  # 100MB
+  backup_count: 10
+
+monitoring:
+  prometheus_enabled: true
+  prometheus_port: 9090
+  health_check_interval: 10
+  slo:
+    availability: 99.9  # 99.9% 可用性
+    latency_p95: 0.5    # P95 < 500ms
+    error_rate: 0.001   # 错误率 < 0.1%
+
+backup:
+  enabled: true
+  schedule: "0 2 * * *"  # 每天凌晨2点
+  retention_days: 30
+  s3_bucket: "acas-pro-backups"
+
+alerting:
+  enabled: true
+  channels:
+    - feishu
+    - dingtalk
+  on_call_rotation: "weekly"

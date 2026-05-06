@@ -1,0 +1,305 @@
+# ACAS Pro - Redis Cluster
+# High Availability Cache Layer
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: acas-pro
+data:
+  redis.conf: |
+    # Network
+    bind 0.0.0.0
+    port 6379
+    protected-mode yes
+    
+    # Memory
+    maxmemory 512mb
+    maxmemory-policy allkeys-lru
+    
+    # Persistence
+    save 900 1
+    save 300 10
+    save 60 10000
+    appendonly yes
+    appendfsync everysec
+    
+    # Cluster
+    cluster-enabled yes
+    cluster-config-file nodes.conf
+    cluster-node-timeout 5000
+    cluster-require-full-coverage no
+    
+    # Security
+    requirepass ${REDIS_PASSWORD}
+    masterauth ${REDIS_PASSWORD}
+    
+    # Performance
+    tcp-keepalive 300
+    timeout 0
+    tcp-backlog 511
+    
+    # Logging
+    loglevel notice
+    
+  sentinel.conf: |
+    sentinel monitor mymaster redis-master 6379 2
+    sentinel down-after-milliseconds mymaster 5000
+    sentinel failover-timeout mymaster 60000
+    sentinel parallel-syncs mymaster 1
+    sentinel auth-pass mymaster ${REDIS_PASSWORD}
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-master
+  namespace: acas-pro
+spec:
+  serviceName: redis-master
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+      role: master
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: master
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+              name: redis
+          command:
+            - redis-server
+            - /etc/redis/redis.conf
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: password
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /etc/redis
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: config
+          configMap:
+            name: redis-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: fast-ssd
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-replica
+  namespace: acas-pro
+spec:
+  serviceName: redis-replica
+  replicas: 2
+  selector:
+    matchLabels:
+      app: redis
+      role: replica
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: replica
+    spec:
+      initContainers:
+        - name: init-replica
+          image: redis:7-alpine
+          command:
+            - sh
+            - -c
+            - |
+              redis-cli -h redis-master -a $REDIS_PASSWORD replicaof redis-master 6379
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: password
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          ports:
+            - containerPort: 6379
+              name: redis
+          command:
+            - redis-server
+            - /etc/redis/redis.conf
+            - --replicaof
+            - redis-master
+            - "6379"
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: password
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: config
+              mountPath: /etc/redis
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      volumes:
+        - name: config
+          configMap:
+            name: redis-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: fast-ssd
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-sentinel
+  namespace: acas-pro
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redis-sentinel
+  template:
+    metadata:
+      labels:
+        app: redis-sentinel
+    spec:
+      containers:
+        - name: sentinel
+          image: redis:7-alpine
+          ports:
+            - containerPort: 26379
+              name: sentinel
+          command:
+            - redis-sentinel
+            - /etc/redis/sentinel.conf
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: password
+          volumeMounts:
+            - name: config
+              mountPath: /etc/redis
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "50m"
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+      volumes:
+        - name: config
+          configMap:
+            name: redis-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+  namespace: acas-pro
+  labels:
+    app: redis
+    role: master
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: 6379
+      name: redis
+  selector:
+    app: redis
+    role: master
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-replicas
+  namespace: acas-pro
+  labels:
+    app: redis
+    role: replica
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      targetPort: 6379
+      name: redis
+  selector:
+    app: redis
+    role: replica
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-sentinel
+  namespace: acas-pro
+  labels:
+    app: redis-sentinel
+spec:
+  type: ClusterIP
+  ports:
+    - port: 26379
+      targetPort: 26379
+      name: sentinel
+  selector:
+    app: redis-sentinel
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-credentials
+  namespace: acas-pro
+type: Opaque
+stringData:
+  password: changeme-in-production

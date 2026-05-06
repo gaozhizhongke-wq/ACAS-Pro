@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>ACAS Pro - 高智中科（北京）科技有限公司</title>
+    <script>
+        // API 配置
+        const API_BASE = 'http://localhost:5000/api';
+        let authToken = localStorage.getItem('auth_token') || '';
+        
+        // 统一请求封装
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE}${endpoint}`;
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            
+            if (authToken) {
+                headers['Authorization'] = `Bearer ${authToken}`;
+            }
+            
+            try {
+                const response = await fetch(url, {
+                    ...options,
+                    headers,
+                    signal: AbortSignal.timeout(options.timeout || 10000)
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error?.message || `HTTP ${response.status}`);
+                }
+                
+                return data;
+            } catch (error) {
+                if (error.name === 'TimeoutError') {
+                    throw new Error('请求超时，请检查服务是否运行');
+                }
+                throw error;
+            }
+        }
+    </script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: #0d1117;
+            color: #c9d1d9;
+            min-height: 100vh;
+        }
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 240px;
+            height: 100vh;
+            background: #161b22;
+            border-right: 1px solid #30363d;
+            padding: 20px 0;
+            overflow-y: auto;
+        }
+        .logo {
+            padding: 0 20px 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #58a6ff;
+            border-bottom: 1px solid #30363d;
+            margin-bottom: 16px;
+        }
+        .copyright {
+            padding: 12px 20px;
+            font-size: 11px;
+            color: #6e7681;
+            border-top: 1px solid #30363d;
+            margin-top: auto;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+        }
+        .nav-item {
+            display: block;
+            padding: 12px 20px;
+            color: #8b949e;
+            text-decoration: none;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .nav-item:hover, .nav-item.active {
+            color: #58a6ff;
+            background: #21262d;
+        }
+        .main {
+            margin-left: 240px;
+            padding: 28px;
+        }
+        .header {
+            margin-bottom: 24px;
+        }
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .header p {
+            color: #8b949e;
+        }
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .card {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        .card-title {
+            color: #8b949e;
+            font-size: 13px;
+            margin-bottom: 8px;
+        }
+        .card-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+        .card-sub {
+            font-size: 12px;
+        }
+        .success { color: #3fb950; }
+        .accent { color: #58a6ff; }
+        .warning { color: #d29922; }
+        .danger { color: #f85149; }
+        .section-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin: 24px 0 16px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            color: #c9d1d9;
+            text-decoration: none;
+            margin-right: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #58a6ff;
+            color: white;
+        }
+        .btn-primary {
+            background: #58a6ff;
+            color: white;
+        }
+        .btn-primary:hover {
+            background: #79b8ff;
+        }
+        .btn-success {
+            background: #238636;
+            color: white;
+        }
+        .btn-success:hover {
+            background: #2ea043;
+        }
+        .content-area {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 300px;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #8b949e;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 16px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            color: #c9d1d9;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #58a6ff;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+        }
+        .status-ok { background: #238636; color: white; }
+        .status-warn { background: #9e6a03; color: white; }
+        .status-err { background: #da3633; color: white; }
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #30363d;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            color: #8b949e;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab:hover, .tab.active {
+            color: #58a6ff;
+            border-bottom-color: #58a6ff;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Lists */
+        .list-item {
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .list-item h4 {
+            color: #c9d1d9;
+            margin-bottom: 8px;
+        }
+        .list-item p {
+            color: #8b949e;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+        .tag {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #30363d;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 8px;
+            margin-top: 8px;
+        }
+        .tag-hot { background: #da3633; color: white; }
+        .tag-warm { background: #9e6a03; color: white; }
+        .tag-cool { background: #58a6ff; color: white; }
+        
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #30363d;
+        }
+        th {
+            color: #8b949e;
+            font-weight: normal;
+        }
+        
+        /* Grid */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+        }
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        
+        /* Filters */
+        .filter-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-row select, .filter-row input {
+            padding: 8px 12px;
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            color: #c9d1d9;
+        }
+        
+        /* Result output */
+        .output {
+            background: #21262d;
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            min-height: 100px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 13px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo">ACAS Pro</div>
+        <a class="nav-item active" data-page="dashboard">仪表盘</a>
+        <a class="nav-item" data-page="llm">AI 助手</a>
+        <a class="nav-item" data-page="content">内容创作</a>
+        <a class="nav-item" data-page="video-editor">🎬 视频剪辑</a>
+        <a class="nav-item" data-page="accounts">账号矩阵</a>
+        <a class="nav-item" data-page="festival">节日营销</a>
+        <a class="nav-item" data-page="forecast">销售预测</a>
+        <a class="nav-item" data-page="inventory">库存管理</a>
+        <a class="nav-item" data-page="blockchain">⛓️ 区块链结算</a>
+        <a class="nav-item" data-page="settings">系统设置</a>
+    </div>
+    
+    <div class="main">
+        <!-- Dashboard -->
+        <div id="dashboard" class="page active">
+            <div class="header">
+                <h1>欢迎回来! 👋</h1>
+                <p>以下是您今日的业务概览</p>
+            </div>
+            <div class="cards">
+                <div class="card">
+                    <div class="card-title">总营收</div>
+                    <div class="card-value success">¥128,450</div>
+                    <div class="card-sub success">较上月 +12.5%</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">活跃订单</div>
+                    <div class="card-value accent">1,284</div>
+                    <div class="card-sub accent">较上月 +8.2%</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">库存商品</div>
+                    <div class="card-value warning">5,240</div>
+                    <div class="card-sub warning">23项需补货</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">风险预警</div>
+                    <div class="card-value danger">3</div>
+                    <div class="card-sub danger">2个紧急, 1个高</div>
+                </div>
+            </div>
+            <div class="section-title">快速操作</div>
+            <button class="btn" onclick="showPage('forecast')">📊 查看预测</button>
+            <button class="btn" onclick="showPage('inventory')">📦 库存检查</button>
+            <button class="btn" onclick="showPage('content')">🌍 热点监测</button>
+            <button class="btn" onclick="showPage('settings')">⚙️ 系统设置</button>
+        </div>
+        
+        <!-- LLM -->
+        <div id="llm" class="page">
+            <div class="header">
+                <h1>AI 助手</h1>
+                <p>与 AI 对话，获取业务洞察</p>
+            </div>
+            <div class="content-area">
+                <div class="form-group">
+                    <label>输入您的问题</label>
+                    <textarea id="llm-input" placeholder="例如：分析本月销售趋势，预测下月库存需求..."></textarea>
+                </div>
+                <button class="btn btn-primary" onclick="sendLLM()">🚀 发送</button>
+                <button class="btn" onclick="clearLLM()">🗑️ 清空</button>
+                <div id="llm-output" class="output" style="display:none;"></div>
+            </div>
+        </div>
+        
+        <!-- Content Creation -->
+        <div id="content" class="page">
+            <div class="header">
+                <h1>内容创作</h1>
+                <p>热点监测、AI 文案生成</p>
+            </div>
+            <div class="tabs">
+                <div class="tab active" data-tab="trends">🔥 热点监测</div>
+                <div class="tab" data-tab="script">✍️ AI文案</div>
+                <div class="tab" data-tab="video">🎬 视频</div>
+            </div>
+            
+            <div id="tab-trends" class="tab-content active">
+                <div class="filter-row">
+                    <select id="trend-platform" onchange="loadTrends()">
+                        <option value="all">全部平台</option>
+                        <option value="douyin">抖音</option>
+                        <option value="xhs">小红书</option>
+                        <option value="kuaishou">快手</option>
+                        <option value="bilibili">B站</option>
+                    </select>
+                    <select id="trend-score" onchange="loadTrends()">
+                        <option value="0">全部热度</option>
+                        <option value="50">≥50</option>
+                        <option value="70">≥70</option>
+                        <option value="90">≥90</option>
+                    </select>
+                    <button class="btn" onclick="loadTrends()">🔄 刷新</button>
+                </div>
+                <div id="trends-list"></div>
+            </div>
+            
+            <div id="tab-script" class="tab-content">
+                <div class="form-group">
+                    <label>产品信息或创意方向</label>
+                    <textarea id="script-input" placeholder="例如：黑茶，降脂养胃，适合西北及中东市场..."></textarea>
+                </div>
+                <div class="filter-row">
+                    <select id="script-platform">
+                        <option value="douyin">抖音</option>
+                        <option value="xhs">小红书</option>
+                        <option value="kuaishou">快手</option>
+                        <option value="bilibili">B站</option>
+                    </select>
+                    <select id="script-style">
+                        <option value="broadcast">口播</option>
+                        <option value="seeding">种草</option>
+                        <option value="knowledge">知识</option>
+                        <option value="promotion">促销</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary" onclick="generateScript()">✨ 生成文案</button>
+                <div id="script-output" class="output" style="display:none;"></div>
+            </div>
+            
+            <div id="tab-video" class="tab-content">
+                <div style="text-align: center; padding: 40px;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">🎬</div>
+                    <h3 style="color: #c9d1d9; margin-bottom: 16px;">专业视频剪辑工具</h3>
+                    <p style="color: #8b949e; margin-bottom: 24px;">基于 FFmpeg 的全功能视频处理，支持合并、截取、添加音乐、压缩等操作</p>
+                    <button class="btn btn-primary" onclick="showPage('video-editor'); document.querySelector('[data-page=video-editor]').click();" style="font-size: 16px; padding: 16px 32px;">
+                        🚀 打开视频剪辑工具
+                    </button>
+                    <div style="margin-top: 32px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                        <div style="background: #21262d; padding: 16px; border-radius: 8px;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">🔄</div>
+                            <div style="color: #8b949e; font-size: 12px;">合并视频</div>
+                        </div>
+                        <div style="background: #21262d; padding: 16px; border-radius: 8px;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">✂️</div>
+                            <div style="color: #8b949e; font-size: 12px;">截取片段</div>
+                        </div>
+                        <div style="background: #21262d; padding: 16px; border-radius: 8px;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">🎵</div>
+                            <div style="color: #8b949e; font-size: 12px;">添加音乐</div>
+                        </div>
+                        <div style="background: #21262d; padding: 16px; border-radius: 8px;">
+                            <div style="font-size: 24px; margin-bottom: 8px;">🗜️</div>
+                            <div style="color: #8b949e; font-size: 12px;">压缩视频</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Accounts -->
+        <div id="accounts" class="page">
+            <div class="header">
+                <h1>账号矩阵</h1>
+                <p>多平台账号统一管理</p>
+            </div>
+            <div class="cards">
+                <div class="card">
+                    <div class="card-title">总账号数</div>
+                    <div class="card-value accent">12</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">正常运营</div>
+                    <div class="card-value success">10</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">异常账号</div>
+                    <div class="card-value danger">2</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">总粉丝数</div>
+                    <div class="card-value warning">45.2万</div>
+                </div>
+            </div>
+            <div class="filter-row">
+                <select id="account-platform" onchange="loadAccounts()">
+                    <option value="all">全部平台</option>
+                    <option value="douyin">抖音</option>
+                    <option value="xhs">小红书</option>
+                    <option value="kuaishou">快手</option>
+                    <option value="bilibili">B站</option>
+                </select>
+                <select id="account-status" onchange="loadAccounts()">
+                    <option value="all">全部状态</option>
+                    <option value="active">正常</option>
+                    <option value="inactive">未激活</option>
+                    <option value="suspended">封禁</option>
+                </select>
+                <button class="btn btn-success" onclick="addAccount()">➕ 添加账号</button>
+            </div>
+            <div id="accounts-list"></div>
+        </div>
+        
+        <!-- Festival -->
+        <div id="festival" class="page">
+            <div class="header">
+                <h1>节日营销</h1>
+                <p>智能节日营销规划</p>
+            </div>
+            <div class="tabs">
+                <div class="tab active" data-tab="upcoming">🎯 即将来袭</div>
+                <div class="tab" data-tab="all-festivals">📅 全部节日</div>
+                <div class="tab" data-tab="plans">📋 营销计划</div>
+            </div>
+            
+            <div id="tab-upcoming" class="tab-content active">
+                <div class="filter-row">
+                    <select id="festival-market" onchange="loadUpcoming()">
+                        <option value="all">全部市场</option>
+                        <option value="domestic">国内</option>
+                        <option value="overseas">海外</option>
+                        <option value="northwest">西北</option>
+                        <option value="middle-east">中东</option>
+                    </select>
+                    <select id="festival-days" onchange="loadUpcoming()">
+                        <option value="30">30天内</option>
+                        <option value="60">60天内</option>
+                        <option value="90">90天内</option>
+                    </select>
+                </div>
+                <div id="upcoming-list"></div>
+            </div>
+            
+            <div id="tab-all-festivals" class="tab-content">
+                <div class="filter-row">
+                    <select id="festival-type" onchange="loadFestivals()">
+                        <option value="all">全部类型</option>
+                        <option value="traditional">传统节日</option>
+                        <option value="western">西方节日</option>
+                        <option value="shopping">购物节</option>
+                        <option value="cultural">文化节日</option>
+                    </select>
+                </div>
+                <table id="festivals-table">
+                    <thead>
+                        <tr><th>节日</th><th>日期</th><th>类型</th><th>市场</th><th>重要性</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            
+            <div id="tab-plans" class="tab-content">
+                <button class="btn btn-success" onclick="createPlan()">➕ 新建营销计划</button>
+                <table id="plans-table" style="margin-top: 16px;">
+                    <thead>
+                        <tr><th>计划名称</th><th>节日</th><th>时间</th><th>状态</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Video Editor Page -->
+        <div id="video-editor" class="page">
+            <div class="header">
+                <h1>🎬 视频剪辑</h1>
+                <p>基于 FFmpeg 的专业视频处理工具</p>
+            </div>
+            <div class="cards">
+                <div class="card">
+                    <div class="card-title">FFmpeg 状态</div>
+                    <div class="card-value" id="ffmpeg-status">检查中...</div>
+                    <div class="card-sub">视频处理引擎</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">API 服务</div>
+                    <div class="card-value" id="api-status">检查中...</div>
+                    <div class="card-sub">http://localhost:5001</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">输出文件</div>
+                    <div class="card-value accent" id="output-count">0</div>
+                    <div class="card-sub"><a href="#" onclick="showPage('video-editor'); loadOutputFiles(); return false;" style="color: #58a6ff;">查看全部</a></div>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="ve-merge">🔄 合并视频</div>
+                <div class="tab" data-tab="ve-trim">✂️ 截取片段</div>
+                <div class="tab" data-tab="ve-bgm">🎵 添加音乐</div>
+                <div class="tab" data-tab="ve-compress">🗜️ 压缩视频</div>
+                <div class="tab" data-tab="ve-files">📁 输出文件</div>
+            </div>
+            
+            <!-- 合并视频 -->
+            <div id="tab-ve-merge" class="tab-content active">
+                <div class="content-area">
+                    <div class="form-group">
+                        <label>选择视频文件（可多选，按顺序合并）</label>
+                        <input type="file" id="ve-merge-files" multiple accept="video/*" style="display:none">
+                        <button class="btn" onclick="document.getElementById('ve-merge-files').click()">📁 选择视频文件</button>
+                        <div id="ve-merge-file-list" style="margin-top: 12px;"></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="veMergeVideos()">🔄 开始合并</button>
+                    <div id="ve-merge-result" class="output" style="display:none;"></div>
+                </div>
+            </div>
+            
+            <!-- 截取片段 -->
+            <div id="tab-ve-trim" class="tab-content">
+                <div class="content-area">
+                    <div class="form-group">
+                        <label>选择视频文件</label>
+                        <input type="file" id="ve-trim-file" accept="video/*" style="display:none">
+                        <button class="btn" onclick="document.getElementById('ve-trim-file').click()">📁 选择视频</button>
+                        <div id="ve-trim-file-name" style="margin-top: 8px; color: #8b949e;"></div>
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>开始时间（如：00:01:30 或 90s）</label>
+                            <input type="text" id="ve-trim-start" placeholder="00:00:00">
+                        </div>
+                        <div class="form-group">
+                            <label>结束时间 或 持续时间</label>
+                            <input type="text" id="ve-trim-end" placeholder="00:02:00 或 120s">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="veTrimVideo()">✂️ 开始截取</button>
+                    <div id="ve-trim-result" class="output" style="display:none;"></div>
+                </div>
+            </div>
+            
+            <!-- 添加背景音乐 -->
+            <div id="tab-ve-bgm" class="tab-content">
+                <div class="content-area">
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label>选择视频文件</label>
+                            <input type="file" id="ve-bgm-video" accept="video/*" style="display:none">
+                            <button class="btn" onclick="document.getElementById('ve-bgm-video').click()">📁 选择视频</button>
+                            <div id="ve-bgm-video-name" style="margin-top: 8px; color: #8b949e;"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>选择音频文件</label>
+                            <input type="file" id="ve-bgm-audio" accept="audio/*" style="display:none">
+                            <button class="btn" onclick="document.getElementById('ve-bgm-audio').click()">📁 选择音频</button>
+                            <div id="ve-bgm-audio-name" style="margin-top: 8px; color: #8b949e;"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>背景音乐音量（0.1-1.0，默认 0.3）</label>
+                        <input type="range" id="ve-bgm-volume" min="0.1" max="1.0" step="0.1" value="0.3" style="width: 200px;">
+                        <span id="ve-bgm-volume-display" style="margin-left: 12px;">0.3</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="veAddBGM()">🎵 添加背景音乐</button>
+                    <div id="ve-bgm-result" class="output" style="display:none;"></div>
+                </div>
+            </div>
+            
+            <!-- 压缩视频 -->
+            <div id="tab-ve-compress" class="tab-content">
+                <div class="content-area">
+                    <div class="form-group">
+                        <label>选择视频文件</label>
+                        <input type="file" id="ve-compress-file" accept="video/*" style="display:none">
+                        <button class="btn" onclick="document.getElementById('ve-compress-file').click()">📁 选择视频</button>
+                        <div id="ve-compress-file-name" style="margin-top: 8px; color: #8b949e;"></div>
+                    </div>
+                    <div class="form-group">
+                        <label>压缩模式</label>
+                        <select id="ve-compress-mode" onchange="veToggleCompressMode()">
+                            <option value="target">目标大小</option>
+                            <option value="quality">质量优先</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="ve-compress-size-group">
+                        <label>目标大小（MB）</label>
+                        <input type="number" id="ve-compress-size" placeholder="10" value="10" min="1" max="500">
+                    </div>
+                    <div class="form-group" id="ve-compress-quality-group" style="display:none;">
+                        <label>质量等级（CRF: 18-28，越小质量越好）</label>
+                        <input type="range" id="ve-compress-quality" min="18" max="28" value="23">
+                        <span id="ve-compress-quality-display" style="margin-left: 12px;">23</span>
+                    </div>
+                    <button class="btn btn-primary" onclick="veCompressVideo()">🗜️ 开始压缩</button>
+                    <div id="ve-compress-result" class="output" style="display:none;"></div>
+                </div>
+            </div>
+            
+            <!-- 输出文件 -->
+            <div id="tab-ve-files" class="tab-content">
+                <div class="content-area">
+                    <div class="filter-row">
+                        <button class="btn" onclick="loadOutputFiles()">🔄 刷新列表</button>
+                        <button class="btn" onclick="openOutputFolder()">📂 打开输出目录</button>
+                    </div>
+                    <div id="ve-files-list"></div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Forecast -->
+        <div id="forecast" class="page">
+            <div class="header">
+                <h1>销售预测</h1>
+                <p>AI 驱动的销售预测与趋势分析</p>
+            </div>
+            <div class="content-area">
+                <div class="filter-row">
+                    <select id="forecast-product">
+                        <option value="all">全部产品</option>
+                        <option value="prod-001">黑茶礼盒</option>
+                        <option value="prod-002">绿茶罐装</option>
+                        <option value="prod-003">红茶袋泡</option>
+                    </select>
+                    <select id="forecast-days">
+                        <option value="7">未来7天</option>
+                        <option value="14">未来14天</option>
+                        <option value="30">未来30天</option>
+                    </select>
+                    <button class="btn btn-primary" onclick="runForecast()">📊 运行预测</button>
+                </div>
+                <div id="forecast-result"></div>
+            </div>
+        </div>
+        
+        <!-- Inventory -->
+        <div id="inventory" class="page">
+            <div class="header">
+                <h1>库存管理</h1>
+                <p>库存优化与补货建议</p>
+            </div>
+            <div class="cards">
+                <div class="card">
+                    <div class="card-title">库存总量</div>
+                    <div class="card-value accent">5,240</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">安全库存</div>
+                    <div class="card-value success">4,800</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">需补货</div>
+                    <div class="card-value danger">23</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">库存周转</div>
+                    <div class="card-value warning">12.5天</div>
+                </div>
+            </div>
+            <div class="content-area" style="margin-top: 20px;">
+                <h3 style="margin-bottom: 16px;">⚠️ 补货预警</h3>
+                <div id="inventory-alerts"></div>
+            </div>
+        </div>
+        
+        <!-- Settings -->
+        <div id="settings" class="page">
+            <div class="header">
+                <h1>系统设置</h1>
+                <p>配置 ACAS Pro 各项参数</p>
+            </div>
+            <div class="tabs">
+                <div class="tab active" data-tab="llm-settings">🤖 LLM</div>
+                <div class="tab" data-tab="general">⚙️ 通用</div>
+                <div class="tab" data-tab="about">ℹ️ 关于</div>
+            </div>
+            
+            <div id="tab-llm-settings" class="tab-content active">
+                <div class="content-area">
+                    <form id="llm-form">
+                        <div class="form-group">
+                            <label>Provider</label>
+                            <select id="provider">
+                                <option value="deepseek" selected>DeepSeek</option>
+                                <option value="openai">OpenAI</option>
+                                <option value="anthropic">Anthropic</option>
+                                <option value="kimi">Kimi</option>
+                                <option value="qwen">通义千问</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>API Key</label>
+                            <input type="password" id="api_key" placeholder="sk-...">
+                        </div>
+                        <div class="form-group">
+                            <label>Model</label>
+                            <input type="text" id="model" placeholder="deepseek-chat">
+                        </div>
+                        <button type="submit" class="btn btn-primary">💾 保存配置</button>
+                        <button type="button" class="btn" onclick="testConnection()">🧪 测试连接</button>
+                    </form>
+                    <div id="result" style="margin-top: 16px;"></div>
+                </div>
+            </div>
+            
+            <div id="tab-general" class="tab-content">
+                <div class="content-area">
+                    <div class="form-group">
+                        <label>主题</label>
+                        <select id="theme">
+                            <option value="dark" selected>深色模式</option>
+                            <option value="light">浅色模式</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>语言</label>
+                        <select id="language">
+                            <option value="zh" selected>简体中文</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveGeneral()">💾 保存</button>
+                </div>
+            </div>
+            
+            <div id="tab-about" class="tab-content">
+                <div class="content-area" style="text-align: center; padding: 40px;">
+                    <div style="font-size: 64px; margin-bottom: 16px;">🚀</div>
+                    <h2 style="color: #58a6ff; margin-bottom: 8px;">ACAS Pro</h2>
+                    <p style="color: #8b949e; margin-bottom: 16px;">智能全域获客系统</p>
+                    <p>Version 4.0.0</p>
+                    <p style="color: #238636; margin-top: 16px;">Enterprise License</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Blockchain Settlement -->
+        <div id="blockchain" class="page">
+            <div class="header">
+                <h1>⛓️ 区块链结算</h1>
+                <p>智能分账与结算管理</p>
+            </div>
+            <div class="cards">
+                <div class="card">
+                    <div class="card-title">待结算金额</div>
+                    <div class="card-value accent">¥45,280</div>
+                    <div class="card-sub">3笔待处理</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">本月已结算</div>
+                    <div class="card-value success">¥128,450</div>
+                    <div class="card-sub success">12笔已完成</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">参与方</div>
+                    <div class="card-value warning">8</div>
+                    <div class="card-sub">平台/创作者/供应商</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">区块链状态</div>
+                    <div class="card-value success">✅ 正常</div>
+                    <div class="card-sub">最近区块: #884,521</div>
+                </div>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" data-tab="settlement-pending">⏳ 待结算</div>
+                <div class="tab" data-tab="settlement-history">📜 结算记录</div>
+                <div class="tab" data-tab="settlement-parties">👥 参与方</div>
+                <div class="tab" data-tab="settlement-create">➕ 新建结算</div>
+            </div>
+            
+            <!-- 待结算 -->
+            <div id="tab-settlement-pending" class="tab-content active">
+                <div class="content-area">
+                    <div id="pending-settlements"></div>
+                </div>
+            </div>
+            
+            <!-- 结算记录 -->
+            <div id="tab-settlement-history" class="tab-content">
+                <div class="content-area">
+                    <table>
+                        <thead>
+                            <tr><th>结算ID</th><th>类型</th><th>金额</th><th>参与方</th><th>状态</th><th>时间</th></tr>
+                        </thead>
+                        <tbody id="settlement-history-list"></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 参与方 -->
+            <div id="tab-settlement-parties" class="tab-content">
+                <div class="content-area">
+                    <div id="settlement-parties-list"></div>
+                </div>
+            </div>
+            
+            <!-- 新建结算 -->
+            <div id="tab-settlement-create" class="tab-content">
+                <div class="content-area">
+                    <div class="form-group">
+                        <label>结算类型</label>
+                        <select id="settlement-type">
+                            <option value="revenue_share">收益分成</option>
+                            <option value="cost_split">成本分摊</option>
+                            <option value="commission">佣金结算</option>
+                            <option value="bonus">奖励结算</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>结算金额 (¥)</label>
+                        <input type="number" id="settlement-amount" placeholder="10000" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>参与方配置</label>
+                        <div id="settlement-parties-config">
+                            <div class="grid-2" style="margin-bottom: 12px;">
+                                <input type="text" placeholder="参与方名称" class="party-name">
+                                <input type="number" placeholder="分成比例 %" class="party-share" min="0" max="100">
+                            </div>
+                        </div>
+                        <button class="btn" onclick="addPartyRow()">➕ 添加参与方</button>
+                    </div>
+                    <button class="btn btn-primary" onclick="createSettlement()">💰 创建结算</button>
+                    <div id="settlement-create-result" class="output" style="display:none;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // ===== Navigation =====
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function() {
+                const page = this.getAttribute('data-page');
+                showPage(page);
+                document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+            
+            // Load data when page shown
+            if (pageId === 'content') loadTrends();
+            if (pageId === 'accounts') loadAccounts();
+            if (pageId === 'festival') loadUpcoming();
+            if (pageId === 'inventory') loadInventory();
+            if (pageId === 'blockchain') {
+                loadPendingSettlements();
+                loadSettlementHistory();
+                loadSettlementParties();
+            }
+        }
+        
+        // ===== Tabs =====
+        document.querySelectorAll('.tabs').forEach(tabs => {
+            tabs.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    const parent = this.closest('.page');
+                    
+                    parent.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    parent.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    this.classList.add('active');
+                    parent.querySelector('#tab-' + tabId).classList.add('active');
+                });
+            });
+        });
+        
+        // ===== LLM =====
+        async function sendLLM() {
+            const input = document.getElementById('llm-input').value;
+            if (!input) return;
+            
+            const output = document.getElementById('llm-output');
+            output.style.display = 'block';
+            output.innerHTML = '<span class="status-badge status-warm">🤔 思考中...</span>';
+            
+            // 先检查服务状态
+            const health = await checkLLMService();
+            if (!health.available) {
+                output.innerHTML = `
+                    <span class="status-badge status-err">❌ 服务未启动</span><br><br>
+                    <strong>LLM API 服务未运行</strong><br><br>
+                    <span style="color: #8b949e;">
+                    解决步骤：<br>
+                    1. 双击运行 <code>start_service.bat</code><br>
+                    2. 等待显示 "Service Starting"<br>
+                    3. 刷新此页面<br><br>
+                    <a href="#" onclick="location.reload()" style="color: #58a6ff;">↻ 刷新页面</a>
+                    </span>`;
+                return;
+            }
+            
+            // 检查 LLM 配置
+            try {
+                const data = await apiRequest('/chat', {
+                    method: 'POST',
+                    body: JSON.stringify({ message: input }),
+                    timeout: 30000
+                });
+                
+                const resp = data.data;
+                output.innerHTML = `<strong>🤖 AI助手 (${resp.model})</strong><br><br>${resp.response.replace(/\n/g, '<br>')}<br><br><span style="color: #8b949e; font-size: 12px;">📝 ${resp.tokens || '?'} tokens</span>`;
+            } catch (e) {
+                output.innerHTML = `<span class="status-badge status-err">❌ 请求失败</span><br><br>${e.message}<br><br><span style="color: #8b949e;">请确保服务已启动: start_production.bat</span>`;
+            }
+        }
+        
+        function clearLLM() {
+            document.getElementById('llm-input').value = '';
+            document.getElementById('llm-output').style.display = 'none';
+        }
+        
+        // ===== Content - Trends =====
+        const mockTrends = [
+            { title: "2024年茶叶消费新趋势：年轻人爱上喝茶", author: "茶界观察", platform: "douyin", views: 1250000, likes: 45000, score: 92 },
+            { title: "西北特产黑茶的养生秘密", author: "养生达人", platform: "xhs", views: 890000, likes: 32000, score: 88 },
+            { title: "中东市场对中国茶叶的需求分析", author: "跨境电商", platform: "bilibili", views: 560000, likes: 18000, score: 85 },
+            { title: "春节送礼首选：高端茶叶礼盒", author: "礼品推荐", platform: "kuaishou", views: 2100000, likes: 67000, score: 95 },
+            { title: "办公室喝茶指南：提神不伤胃", author: "职场生活", platform: "douyin", views: 780000, likes: 25000, score: 82 },
+        ];
+        
+        function loadTrends() {
+            const platform = document.getElementById('trend-platform').value;
+            const score = parseInt(document.getElementById('trend-score').value);
+            
+            let filtered = mockTrends;
+            if (platform !== 'all') filtered = filtered.filter(t => t.platform === platform);
+            if (score > 0) filtered = filtered.filter(t => t.score >= score);
+            
+            const container = document.getElementById('trends-list');
+            container.innerHTML = filtered.map(t => `
+                <div class="list-item">
+                    <h4>${t.title}</h4>
+                    <p>@${t.author} · ${t.platform} · 👁 ${(t.views/10000).toFixed(1)}万 · ❤️ ${(t.likes/1000).toFixed(1)}k</p>
+                    <span class="tag ${t.score >= 90 ? 'tag-hot' : t.score >= 70 ? 'tag-warm' : 'tag-cool'}">🔥 ${t.score}</span>
+                    <span class="tag">参考创作</span>
+                </div>
+            `).join('');
+        }
+        
+        // ===== Content - Script =====
+        // 平台风格模板
+        const platformTemplates = {
+            douyin: {
+                name: '抖音',
+                opening: ['家人们！', '宝子们！', '姐妹们！', '兄弟们！'],
+                style: {
+                    promotion: { tone: '激情', emoji: '🔥', cta: '限时抢购，手慢无！' },
+                    seeding: { tone: '真诚', emoji: '💕', cta: '真心推荐，不踩雷！' },
+                    broadcast: { tone: '专业', emoji: '🎙️', cta: '想了解更多，评论区见！' },
+                    story: { tone: '故事', emoji: '📖', cta: '你的故事是什么？告诉我！' }
+                }
+            },
+            xhs: {
+                name: '小红书',
+                opening: ['姐妹们！', '宝子们！', '家人们！', 'uu们！'],
+                style: {
+                    promotion: { tone: '精致', emoji: '✨', cta: '限时优惠，姐妹们冲！' },
+                    seeding: { tone: '种草', emoji: '🌿', cta: '亲测好用，闭眼入！' },
+                    broadcast: { tone: '分享', emoji: '💫', cta: '有问题评论区问我～' },
+                    story: { tone: '治愈', emoji: '🌸', cta: '喜欢的话给我点个赞吧！' }
+                }
+            },
+            kuaishou: {
+                name: '快手',
+                opening: ['老铁们！', '家人们！', '兄弟们！', '姐妹们！'],
+                style: {
+                    promotion: { tone: '实在', emoji: '💪', cta: '便宜又好用，赶紧下单！' },
+                    seeding: { tone: '接地气', emoji: '👍', cta: '用了都说好！' },
+                    broadcast: { tone: '唠嗑', emoji: '🎤', cta: '觉得对的扣个1！' },
+                    story: { tone: '朴实', emoji: '🏠', cta: '咱们老百姓的故事！' }
+                }
+            },
+            bilibili: {
+                name: 'B站',
+                opening: ['各位观众老爷！', '小伙伴们！', '家人们！', 'xdm！'],
+                style: {
+                    promotion: { tone: '硬核', emoji: '🎯', cta: '性价比拉满，一键三连！' },
+                    seeding: { tone: '深度', emoji: '📚', cta: '理性种草，按需购买！' },
+                    broadcast: { tone: '专业', emoji: '🔬', cta: '觉得有用记得三连支持！' },
+                    story: { tone: '文艺', emoji: '🎭', cta: '你的支持是我创作的动力！' }
+                }
+            },
+            wechat: {
+                name: '视频号',
+                opening: ['朋友们！', '各位！', '家人们！', '大家好！'],
+                style: {
+                    promotion: { tone: '商务', emoji: '💼', cta: '限时特惠，扫码下单！' },
+                    seeding: { tone: '品质', emoji: '⭐', cta: '品质保证，值得信赖！' },
+                    broadcast: { tone: '权威', emoji: '📢', cta: '转发给需要的朋友！' },
+                    story: { tone: '温情', emoji: '❤️', cta: '感谢关注，下期见！' }
+                }
+            }
+        };
+        
+        const styleNames = {
+            promotion: '促销',
+            seeding: '种草',
+            broadcast: '口播',
+            story: '故事'
+        };
+        
+        function generateScript() {
+            const input = document.getElementById('script-input').value;
+            const platform = document.getElementById('script-platform').value;
+            const style = document.getElementById('script-style').value;
+            
+            if (!input) {
+                alert('请输入产品信息');
+                return;
+            }
+            
+            const output = document.getElementById('script-output');
+            output.style.display = 'block';
+            output.textContent = '生成中...';
+            
+            setTimeout(() => {
+                const template = platformTemplates[platform] || platformTemplates.douyin;
+                const styleConfig = template.style[style] || template.style.promotion;
+                const opening = template.opening[Math.floor(Math.random() * template.opening.length)];
+                const productName = input.split('，')[0];
+                const productDesc = input.split('，').slice(1).join('，') || '品质优良，深受好评';
+                
+                // 根据平台生成不同的标签
+                const tags = {
+                    douyin: `#${productName.substring(0, 4)} #好物推荐 #${styleNames[style]} #品质生活`,
+                    xhs: `#${productName.substring(0, 4)} #种草 #${styleNames[style]} #好物分享 #必买清单`,
+                    kuaishou: `#${productName.substring(0, 4)} #好物 #${styleNames[style]} #实惠 #老百姓`,
+                    bilibili: `#${productName.substring(0, 4)} #测评 #${styleNames[style]} #性价比 #好物`,
+                    wechat: `#${productName.substring(0, 4)} #精选 #${styleNames[style]} #品质 #推荐`
+                };
+                
+                // 根据风格生成不同的正文
+                let body = '';
+                switch(style) {
+                    case 'promotion':
+                        body = `${opening}今天给大家带来一个超级划算的${productName}！${productDesc}。现在下单还有优惠，错过等一年！`;
+                        break;
+                    case 'seeding':
+                        body = `${opening}最近发现了一款宝藏${productName}，${productDesc}。用了一段时间真的爱不释手，必须安利给你们！`;
+                        break;
+                    case 'broadcast':
+                        body = `${opening}今天跟大家聊聊${productName}。${productDesc}。作为过来人，我有一些使用心得想和大家分享。`;
+                        break;
+                    case 'story':
+                        body = `${opening}还记得第一次接触${productName}的时候，${productDesc}。从那以后，它就成为了我生活中不可或缺的一部分。`;
+                        break;
+                    default:
+                        body = `${opening}推荐这款${productName}，${productDesc}。`;
+                }
+                
+                output.innerHTML = `<strong>【标题】</strong><br>
+${styleConfig.emoji} ${productName} | ${template.name}${styleNames[style]}风格
+
+<strong>【正文】</strong><br>
+${body}
+
+<strong>【标签】</strong><br>
+${tags[platform] || tags.douyin}
+
+<strong>【行动号召】</strong><br>
+${styleConfig.cta}
+
+<strong>【发布建议】</strong><br>
+• 平台: ${template.name}<br>
+• 风格: ${styleNames[style]} (${styleConfig.tone})<br>
+• 最佳发布时间: ${platform === 'douyin' ? '12:00-13:00, 18:00-22:00' : platform === 'xhs' ? '11:00-13:00, 19:00-21:00' : '18:00-21:00'}`;
+            }, 800);
+        }
+        
+        // ===== Accounts =====
+        async function loadAccounts() {
+            const container = document.getElementById('accounts-list');
+            container.innerHTML = '<p>加载中...</p>';
+            
+            try {
+                const data = await apiRequest('/accounts');
+                const accounts = data.data || [];
+                
+                const platform = document.getElementById('account-platform')?.value || 'all';
+                const status = document.getElementById('account-status')?.value || 'all';
+                
+                let filtered = accounts;
+                if (platform !== 'all') filtered = filtered.filter(a => a.platform === platform);
+                if (status !== 'all') filtered = filtered.filter(a => a.status === status);
+                
+                if (filtered.length === 0) {
+                    container.innerHTML = '<p style="color: #8b949e;">暂无账号数据</p>';
+                    return;
+                }
+                
+                container.innerHTML = filtered.map(a => `
+                    <div class="list-item">
+                        <h4>${a.username}</h4>
+                        <p>平台: ${a.platform} | 粉丝: ${(a.followers || 0).toLocaleString()} | 状态: ${a.status}</p>
+                        <span class="tag ${a.status === 'active' ? 'tag-hot' : a.status === 'inactive' ? 'tag-warm' : 'tag-err'}">${a.status}</span>
+                    </div>
+                `).join('');
+            } catch (e) {
+                container.innerHTML = `<p style="color: #f85149;">加载失败: ${e.message}</p>`;
+            }
+        }
+        
+        // 保留旧的 mock 数据作为 fallback
+        const mockAccounts = [
+            { username: "茶叶旗舰店", platform: "douyin", followers: 125000, status: "active" },
+            { username: "茶道生活", platform: "xhs", followers: 89000, status: "active" },
+        ];
+                </div>
+            `).join('');
+        }
+        
+        function addAccount() {
+            alert('添加账号功能：请输入平台授权信息');
+        }
+        
+        // ===== Festival =====
+        const mockFestivals = [
+            { name: "春节", date: "2026-02-17", type: "traditional", market: "domestic", importance: 5, daysUntil: 290 },
+            { name: "端午节", date: "2026-06-19", type: "traditional", market: "domestic", importance: 4, daysUntil: 48 },
+            { name: "中秋节", date: "2026-10-04", type: "traditional", market: "domestic", importance: 5, daysUntil: 155 },
+            { name: "双十一", date: "2026-11-11", type: "shopping", market: "domestic", importance: 5, daysUntil: 193 },
+            { name: "开斋节", date: "2026-06-27", type: "cultural", market: "middle-east", importance: 4, daysUntil: 56 },
+        ];
+        
+        function loadUpcoming() {
+            const market = document.getElementById('festival-market').value;
+            const days = parseInt(document.getElementById('festival-days').value);
+            
+            let filtered = mockFestivals.filter(f => f.daysUntil <= days);
+            if (market !== 'all') filtered = filtered.filter(f => f.market === market);
+            
+            const container = document.getElementById('upcoming-list');
+            container.innerHTML = filtered.map(f => `
+                <div class="list-item" style="border-left: 4px solid ${f.importance >= 5 ? '#f85149' : f.importance >= 4 ? '#d29922' : '#58a6ff'};">
+                    <h4>${f.name} ${'⭐'.repeat(f.importance)}</h4>
+                    <p>📅 ${f.date} | 还有 ${f.daysUntil} 天 | 市场: ${f.market}</p>
+                    <button class="btn btn-primary" style="margin-top: 8px;">📅 创建营销计划</button>
+                </div>
+            `).join('');
+        }
+        
+        function loadFestivals() {
+            const tbody = document.querySelector('#festivals-table tbody');
+            tbody.innerHTML = mockFestivals.map(f => `
+                <tr>
+                    <td>${f.name}</td>
+                    <td>${f.date}</td>
+                    <td>${f.type}</td>
+                    <td>${f.market}</td>
+                    <td>${'⭐'.repeat(f.importance)}</td>
+                </tr>
+            `).join('');
+        }
+        
+        function createPlan() {
+            alert('创建营销计划：选择节日和目标平台');
+        }
+        
+        // ===== Forecast =====
+        function runForecast() {
+            const product = document.getElementById('forecast-product').value;
+            const days = document.getElementById('forecast-days').value;
+            
+            const result = document.getElementById('forecast-result');
+            result.innerHTML = '<p style="color: #8b949e;">预测中...</p>';
+            
+            setTimeout(() => {
+                result.innerHTML = `
+                    <div class="cards">
+                        <div class="card">
+                            <div class="card-title">预测销量</div>
+                            <div class="card-value accent">${(Math.random() * 1000 + 500).toFixed(0)}</div>
+                            <div class="card-sub">未来${days}天</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-title">预测收入</div>
+                            <div class="card-value success">¥${(Math.random() * 50000 + 20000).toFixed(0)}</div>
+                            <div class="card-sub">预期增长 +${(Math.random() * 20).toFixed(1)}%</div>
+                        </div>
+                        <div class="card">
+                            <div class="card-title">置信度</div>
+                            <div class="card-value warning">${(Math.random() * 10 + 85).toFixed(1)}%</div>
+                            <div class="card-sub">模型预测准确度</div>
+                        </div>
+                    </div>
+                    <div class="output" style="margin-top: 16px;">
+📊 预测分析：
+• 基于历史数据和当前趋势分析
+• 建议增加库存以应对预期需求增长
+• 重点关注西北地区市场需求
+                    </div>
+                `;
+            }, 1500);
+        }
+        
+        // ===== Inventory =====
+        const mockInventory = [
+            { product: "黑茶礼盒", stock: 120, safety: 200, status: "low" },
+            { product: "绿茶罐装", stock: 450, safety: 300, status: "ok" },
+            { product: "红茶袋泡", stock: 80, safety: 150, status: "critical" },
+            { product: "普洱饼茶", stock: 320, safety: 250, status: "ok" },
+        ];
+        
+        function loadInventory() {
+            const alerts = mockInventory.filter(i => i.status !== 'ok');
+            const container = document.getElementById('inventory-alerts');
+            
+            container.innerHTML = alerts.map(i => `
+                <div class="list-item" style="border-left: 4px solid ${i.status === 'critical' ? '#f85149' : '#d29922'};">
+                    <h4>${i.product}</h4>
+                    <p>当前库存: ${i.stock} | 安全库存: ${i.safety} | 缺口: ${i.safety - i.stock}</p>
+                    <button class="btn btn-primary" style="margin-top: 8px;">📦 生成补货建议</button>
+                </div>
+            `).join('') || '<p style="color: #3fb950;">✅ 所有商品库存充足</p>';
+        }
+        
+        // ===== Settings =====
+        // 页面加载时读取保存的设置
+        function loadSettings() {
+            const provider = localStorage.getItem('llm_provider');
+            const apiKey = localStorage.getItem('llm_api_key');
+            const model = localStorage.getItem('llm_model');
+            const theme = localStorage.getItem('theme');
+            const language = localStorage.getItem('language');
+            
+            if (provider) document.getElementById('provider').value = provider;
+            if (apiKey) document.getElementById('api_key').value = apiKey;
+            if (model) document.getElementById('model').value = model;
+            if (theme) document.getElementById('theme').value = theme;
+            if (language) document.getElementById('language').value = language;
+            
+            // 应用主题
+            if (theme === 'light') {
+                document.body.style.filter = 'invert(1) hue-rotate(180deg)';
+            }
+            
+            // 显示配置状态
+            if (apiKey) {
+                console.log(`✅ LLM 已配置: ${provider || 'deepseek'} / ${model || 'deepseek-chat'}`);
+            }
+        }
+        
+        document.getElementById('llm-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const provider = document.getElementById('provider').value;
+            const apiKey = document.getElementById('api_key').value;
+            const model = document.getElementById('model').value;
+            
+            localStorage.setItem('llm_provider', provider);
+            localStorage.setItem('llm_api_key', apiKey);
+            localStorage.setItem('llm_model', model);
+            
+            // 显示当前配置
+            const configInfo = `
+                <div style="background: #21262d; padding: 16px; border-radius: 8px; margin-top: 12px; text-align: left;">
+                    <h4 style="color: #58a6ff; margin-bottom: 12px;">✅ 配置已保存</h4>
+                    <p><strong>Provider:</strong> ${provider}</p>
+                    <p><strong>Model:</strong> ${model || '默认'}</p>
+                    <p><strong>API Key:</strong> ${apiKey ? apiKey.substring(0, 10) + '...' : '未设置'}</p>
+                    <hr style="border-color: #30363d; margin: 12px 0;">
+                    <p style="color: #8b949e;">💡 使用方法：</p>
+                    <ol style="color: #8b949e; margin-left: 20px;">
+                        <li>运行 start_llm_api.bat 启动 LLM 服务</li>
+                        <li>在「AI 助手」页面输入问题</li>
+                        <li>点击发送，等待 AI 回复</li>
+                    </ol>
+                </div>
+            `;
+            document.getElementById('result').innerHTML = configInfo;
+        });
+        
+        async function testConnection() {
+            const apiKey = document.getElementById('api_key').value;
+            const provider = document.getElementById('provider').value;
+            const model = document.getElementById('model').value;
+            
+            if (!apiKey) {
+                showResult('请输入 API Key', 'err');
+                return;
+            }
+            
+            document.getElementById('result').innerHTML = '<span class="status-badge status-warm">🔄 测试中...</span>';
+            
+            try {
+                const response = await fetch(`${LLM_API_BASE}/api/health`);
+                const data = await response.json();
+                
+                if (data.configured) {
+                    // Try a simple chat test
+                    const chatResponse = await fetch(`${LLM_API_BASE}/api/chat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message: 'Hello' })
+                    });
+                    
+                    const chatData = await chatResponse.json();
+                    
+                    if (chatData.success) {
+                        document.getElementById('result').innerHTML = `
+                            <span class="status-badge status-ok">✅ 连接成功</span>
+                            <div style="margin-top: 12px; color: #8b949e; font-size: 13px;">
+                                Provider: ${provider}<br>
+                                Model: ${chatData.model}<br>
+                                Latency: ${chatData.latency_ms}ms<br>
+                                Tokens: ${chatData.usage.total_tokens || 'N/A'}
+                            </div>
+                        `;
+                    } else {
+                        showResult('API 错误: ' + chatData.error, 'err');
+                    }
+                } else {
+                    showResult('服务未配置: ' + data.error, 'err');
+                }
+            } catch (e) {
+                document.getElementById('result').innerHTML = `
+                    <span class="status-badge status-err">❌ 连接失败</span>
+                    <div style="margin-top: 12px; color: #8b949e;">
+                        ${e.message}<br><br>
+                        请确保 LLM API 服务已启动：<br>
+                        运行 start_llm_api.bat
+                    </div>
+                `;
+            }
+        }
+        
+        function saveGeneral() {
+            const theme = document.getElementById('theme').value;
+            const language = document.getElementById('language').value;
+            
+            localStorage.setItem('theme', theme);
+            localStorage.setItem('language', language);
+            
+            showResult('设置已保存', 'ok');
+            
+            // 应用主题
+            if (theme === 'light') {
+                document.body.style.filter = 'invert(1) hue-rotate(180deg)';
+            } else {
+                document.body.style.filter = 'none';
+            }
+            
+            setTimeout(() => {
+                document.getElementById('result').innerHTML = '';
+            }, 3000);
+        }
+        
+        function showResult(msg, type) {
+            document.getElementById('result').innerHTML = `<span class="status-badge status-${type}">${msg}</span>`;
+        }
+        
+        // ===== Video Editor =====
+        let selectedMergeFiles = [];
+        let selectedTrimFile = null;
+        let selectedBgmVideo = null;
+        let selectedBgmAudio = null;
+        let selectedCompressFile = null;
+        
+        // 文件选择监听
+        document.getElementById('merge-files')?.addEventListener('change', function(e) {
+            selectedMergeFiles = Array.from(e.target.files);
+            document.getElementById('merge-file-list').innerHTML = selectedMergeFiles.map((f, i) => 
+                `<div style="padding: 8px; background: #21262d; border-radius: 4px; margin-bottom: 4px;">${i+1}. ${f.name} (${(f.size/1024/1024).toFixed(2)} MB)</div>`
+            ).join('') || '<span style="color: #8b949e;">未选择文件</span>';
+        });
+        
+        document.getElementById('trim-file')?.addEventListener('change', function(e) {
+            selectedTrimFile = e.target.files[0];
+            document.getElementById('trim-file-name').textContent = selectedTrimFile ? 
+                `已选择: ${selectedTrimFile.name} (${(selectedTrimFile.size/1024/1024).toFixed(2)} MB)` : '';
+        });
+        
+        document.getElementById('bgm-video')?.addEventListener('change', function(e) {
+            selectedBgmVideo = e.target.files[0];
+            document.getElementById('bgm-video-name').textContent = selectedBgmVideo ? 
+                `已选择: ${selectedBgmVideo.name}` : '';
+        });
+        
+        document.getElementById('bgm-audio')?.addEventListener('change', function(e) {
+            selectedBgmAudio = e.target.files[0];
+            document.getElementById('bgm-audio-name').textContent = selectedBgmAudio ? 
+                `已选择: ${selectedBgmAudio.name}` : '';
+        });
+        
+        document.getElementById('bgm-volume')?.addEventListener('input', function(e) {
+            document.getElementById('bgm-volume-display').textContent = e.target.value;
+        });
+        
+        document.getElementById('compress-file')?.addEventListener('change', function(e) {
+            selectedCompressFile = e.target.files[0];
+            document.getElementById('compress-file-name').textContent = selectedCompressFile ? 
+                `已选择: ${selectedCompressFile.name} (${(selectedCompressFile.size/1024/1024).toFixed(2)} MB)` : '';
+        });
+        
+        document.getElementById('compress-quality')?.addEventListener('input', function(e) {
+            document.getElementById('compress-quality-display').textContent = e.target.value;
+        });
+        
+        function toggleCompressMode() {
+            const mode = document.getElementById('compress-mode').value;
+            document.getElementById('compress-size-group').style.display = mode === 'target' ? 'block' : 'none';
+            document.getElementById('compress-quality-group').style.display = mode === 'quality' ? 'block' : 'none';
+        }
+        
+        // API 基础地址
+        const VIDEO_API_BASE = 'http://localhost:5001/api';
+        
+        // 调用后端 API 处理视频
+        async function mergeVideos() {
+            if (selectedMergeFiles.length < 2) {
+                alert('请至少选择 2 个视频文件');
+                return;
+            }
+            
+            const result = document.getElementById('merge-result');
+            result.style.display = 'block';
+            result.textContent = '🔄 正在上传并合并视频...\n' + selectedMergeFiles.map((f, i) => `${i+1}. ${f.name}`).join('\n');
+            
+            const formData = new FormData();
+            selectedMergeFiles.forEach(f => formData.append('files', f));
+            
+            try {
+                const response = await fetch(`${VIDEO_API_BASE}/video/merge`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.innerHTML = `✅ 合并完成！<br><br>📤 输出文件: ${data.filename}<br><br><a href="${VIDEO_API_BASE}/download/${data.filename}" class="btn btn-success" download>⬇️ 下载视频</a>`;
+                } else {
+                    result.innerHTML = `❌ 错误: ${data.error || '合并失败'}<br><br>请确保已启动视频服务: start_video_api.bat`;
+                }
+            } catch (e) {
+                result.innerHTML = `❌ 连接失败: ${e.message}<br><br>请确保视频服务已启动:<br>1. 运行 start_video_api.bat<br>2. 刷新页面后重试`;
+            }
+        }
+        
+        async function trimVideo() {
+            if (!selectedTrimFile) {
+                alert('请选择视频文件');
+                return;
+            }
+            
+            const start = document.getElementById('trim-start').value;
+            const end = document.getElementById('trim-end').value;
+            
+            if (!start || !end) {
+                alert('请输入开始和结束时间');
+                return;
+            }
+            
+            const result = document.getElementById('trim-result');
+            result.style.display = 'block';
+            result.textContent = `✂️ 正在截取视频...\n开始: ${start}\n结束/持续: ${end}`;
+            
+            const formData = new FormData();
+            formData.append('file', selectedTrimFile);
+            formData.append('start', start);
+            formData.append('end', end);
+            
+            try {
+                const response = await fetch(`${VIDEO_API_BASE}/video/trim`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.innerHTML = `✅ 截取完成！<br><br>📤 输出文件: ${data.filename}<br>⏱️ 时间范围: ${start} - ${end}<br><br><a href="${VIDEO_API_BASE}/download/${data.filename}" class="btn btn-success" download>⬇️ 下载视频</a>`;
+                } else {
+                    result.innerHTML = `❌ 错误: ${data.error || '截取失败'}`;
+                }
+            } catch (e) {
+                result.innerHTML = `❌ 连接失败: ${e.message}<br><br>请确保视频服务已启动`;
+            }
+        }
+        
+        async function addBGM() {
+            if (!selectedBgmVideo || !selectedBgmAudio) {
+                alert('请选择视频和音频文件');
+                return;
+            }
+            
+            const volume = document.getElementById('bgm-volume').value;
+            const result = document.getElementById('bgm-result');
+            result.style.display = 'block';
+            result.textContent = `🎵 正在添加背景音乐...\n视频: ${selectedBgmVideo.name}\n音频: ${selectedBgmAudio.name}\n音量: ${volume}`;
+            
+            const formData = new FormData();
+            formData.append('video', selectedBgmVideo);
+            formData.append('audio', selectedBgmAudio);
+            formData.append('volume', volume);
+            
+            try {
+                const response = await fetch(`${VIDEO_API_BASE}/video/bgm`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.innerHTML = `✅ 背景音乐添加完成！<br><br>📤 输出文件: ${data.filename}<br>🎵 背景音乐音量: ${volume}<br><br><a href="${VIDEO_API_BASE}/download/${data.filename}" class="btn btn-success" download>⬇️ 下载视频</a>`;
+                } else {
+                    result.innerHTML = `❌ 错误: ${data.error || '添加失败'}`;
+                }
+            } catch (e) {
+                result.innerHTML = `❌ 连接失败: ${e.message}<br><br>请确保视频服务已启动`;
+            }
+        }
+        
+        async function compressVideo() {
+            if (!selectedCompressFile) {
+                alert('请选择视频文件');
+                return;
+            }
+            
+            const mode = document.getElementById('compress-mode').value;
+            const result = document.getElementById('compress-result');
+            result.style.display = 'block';
+            
+            const originalSize = selectedCompressFile.size / 1024 / 1024;
+            
+            const formData = new FormData();
+            formData.append('file', selectedCompressFile);
+            formData.append('mode', mode);
+            
+            if (mode === 'target') {
+                const targetSize = document.getElementById('compress-size').value;
+                formData.append('target_size', targetSize);
+                result.textContent = `🗜️ 正在压缩视频...\n原大小: ${originalSize.toFixed(2)} MB\n目标大小: ${targetSize} MB`;
+            } else {
+                const quality = document.getElementById('compress-quality').value;
+                formData.append('crf', quality);
+                result.textContent = `🗜️ 正在压缩视频（质量优先模式）...\nCRF: ${quality}`;
+            }
+            
+            try {
+                const response = await fetch(`${VIDEO_API_BASE}/video/compress`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const ratio = data.compression_ratio || 0;
+                    result.innerHTML = `✅ 压缩完成！<br><br>📤 输出文件: ${data.filename}<br>📊 原大小: ${(data.original_size / 1024 / 1024).toFixed(2)} MB<br>📊 压缩后: ${(data.compressed_size / 1024 / 1024).toFixed(2)} MB<br>📉 压缩率: ${ratio.toFixed(1)}%<br><br><a href="${VIDEO_API_BASE}/download/${data.filename}" class="btn btn-success" download>⬇️ 下载视频</a>`;
+                } else {
+                    result.innerHTML = `❌ 错误: ${data.error || '压缩失败'}`;
+                }
+            } catch (e) {
+                result.innerHTML = `❌ 连接失败: ${e.message}<br><br>请确保视频服务已启动`;
+            }
+        }
+        
+        // ===== Blockchain Settlement =====
+        const mockSettlements = [
+            { id: "SET-2026-001", type: "revenue_share", amount: 15800, parties: 3, status: "pending", time: "2026-05-02 14:30" },
+            { id: "SET-2026-002", type: "commission", amount: 5200, parties: 2, status: "pending", time: "2026-05-02 10:15" },
+            { id: "SET-2026-003", type: "bonus", amount: 24280, parties: 4, status: "pending", time: "2026-05-01 16:45" },
+            { id: "SET-2026-004", type: "revenue_share", amount: 45600, parties: 3, status: "completed", time: "2026-04-28 09:20" },
+            { id: "SET-2026-005", type: "cost_split", amount: 12800, parties: 2, status: "completed", time: "2026-04-25 11:30" },
+        ];
+        
+        const mockParties = [
+            { id: "P001", name: "平台运营", type: "platform", wallet: "0x7a8b...9c2d", share: 30 },
+            { id: "P002", name: "创作者A", type: "creator", wallet: "0x3e4f...5a6b", share: 40 },
+            { id: "P003", name: "供应商B", type: "supplier", wallet: "0x1c2d...3e4f", share: 20 },
+            { id: "P004", name: "推广联盟", type: "affiliate", wallet: "0x9a8b...7c6d", share: 10 },
+        ];
+        
+        const settlementTypeNames = {
+            revenue_share: '收益分成',
+            cost_split: '成本分摊',
+            commission: '佣金结算',
+            bonus: '奖励结算',
+            refund: '退款结算'
+        };
+        
+        const settlementStatusNames = {
+            pending: { name: '待结算', class: 'tag-warm' },
+            processing: { name: '结算中', class: 'tag-hot' },
+            completed: { name: '已完成', class: 'tag-hot' },
+            failed: { name: '失败', class: 'tag-err' },
+            disputed: { name: '争议中', class: 'tag-warm' }
+        };
+        
+        function loadPendingSettlements() {
+            const pending = mockSettlements.filter(s => s.status === 'pending');
+            const container = document.getElementById('pending-settlements');
+            
+            if (pending.length === 0) {
+                container.innerHTML = '<p style="color: #3fb950;">✅ 暂无待结算项</p>';
+                return;
+            }
+            
+            container.innerHTML = pending.map(s => `
+                <div class="list-item">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4>${s.id} · ${settlementTypeNames[s.type]}</h4>
+                            <p>金额: ¥${s.amount.toLocaleString()} | 参与方: ${s.parties}个 | 创建时间: ${s.time}</p>
+                        </div>
+                        <div>
+                            <span class="tag ${settlementStatusNames[s.status].class}">${settlementStatusNames[s.status].name}</span>
+                            <button class="btn btn-primary" onclick="processSettlement('${s.id}')">💰 执行结算</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function loadSettlementHistory() {
+            const tbody = document.getElementById('settlement-history-list');
+            tbody.innerHTML = mockSettlements.map(s => `
+                <tr>
+                    <td>${s.id}</td>
+                    <td>${settlementTypeNames[s.type]}</td>
+                    <td>¥${s.amount.toLocaleString()}</td>
+                    <td>${s.parties}个参与方</td>
+                    <td><span class="tag ${settlementStatusNames[s.status].class}">${settlementStatusNames[s.status].name}</span></td>
+                    <td>${s.time}</td>
+                </tr>
+            `).join('');
+        }
+        
+        function loadSettlementParties() {
+            const container = document.getElementById('settlement-parties-list');
+            container.innerHTML = mockParties.map(p => `
+                <div class="list-item">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h4>${p.name} <span class="tag">${p.type}</span></h4>
+                            <p>钱包: ${p.wallet} | 默认分成: ${p.share}%</p>
+                        </div>
+                        <button class="btn" onclick="viewPartyDetail('${p.id}')">👁️ 详情</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        
+        function addPartyRow() {
+            const container = document.getElementById('settlement-parties-config');
+            const div = document.createElement('div');
+            div.className = 'grid-2';
+            div.style.marginBottom = '12px';
+            div.innerHTML = `
+                <input type="text" placeholder="参与方名称" class="party-name">
+                <input type="number" placeholder="分成比例 %" class="party-share" min="0" max="100">
+            `;
+            container.appendChild(div);
+        }
+        
+        function createSettlement() {
+            const type = document.getElementById('settlement-type').value;
+            const amount = parseFloat(document.getElementById('settlement-amount').value);
+            
+            if (!amount || amount <= 0) {
+                alert('请输入有效的结算金额');
+                return;
+            }
+            
+            const names = document.querySelectorAll('.party-name');
+            const shares = document.querySelectorAll('.party-share');
+            const parties = [];
+            
+            for (let i = 0; i < names.length; i++) {
+                if (names[i].value && shares[i].value) {
+                    parties.push({
+                        name: names[i].value,
+                        share: parseFloat(shares[i].value)
+                    });
+                }
+            }
+            
+            if (parties.length < 2) {
+                alert('请至少添加2个参与方');
+                return;
+            }
+            
+            const totalShare = parties.reduce((a, p) => a + p.share, 0);
+            if (Math.abs(totalShare - 100) > 0.01) {
+                alert(`分成比例总和必须为100%，当前为${totalShare}%`);
+                return;
+            }
+            
+            const result = document.getElementById('settlement-create-result');
+            result.style.display = 'block';
+            result.innerHTML = '⏳ 正在创建结算...';
+            
+            setTimeout(() => {
+                const newId = `SET-2026-${String(mockSettlements.length + 1).padStart(3, '0')}`;
+                mockSettlements.unshift({
+                    id: newId,
+                    type: type,
+                    amount: amount,
+                    parties: parties.length,
+                    status: 'pending',
+                    time: new Date().toLocaleString('zh-CN')
+                });
+                
+                result.innerHTML = `✅ 结算创建成功！<br><br>结算ID: ${newId}<br>类型: ${settlementTypeNames[type]}<br>金额: ¥${amount.toLocaleString()}<br>参与方: ${parties.length}个<br><br>交易哈希: 0x${Math.random().toString(16).substr(2, 64)}`;
+                
+                // 刷新列表
+                loadPendingSettlements();
+                loadSettlementHistory();
+            }, 1500);
+        }
+        
+        function processSettlement(id) {
+            if (!confirm(`确认执行结算 ${id}？`)) return;
+            
+            const settlement = mockSettlements.find(s => s.id === id);
+            if (settlement) {
+                settlement.status = 'processing';
+                loadPendingSettlements();
+                
+                setTimeout(() => {
+                    settlement.status = 'completed';
+                    loadPendingSettlements();
+                    loadSettlementHistory();
+                    alert(`✅ 结算 ${id} 已完成！\n\n交易哈希: 0x${Math.random().toString(16).substr(2, 64)}`);
+                }, 2000);
+            }
+        }
+        
+        function viewPartyDetail(id) {
+            const party = mockParties.find(p => p.id === id);
+            if (party) {
+                alert(`参与方详情:\n\n名称: ${party.name}\n类型: ${party.type}\n钱包: ${party.wallet}\n默认分成: ${party.share}%`);
+            }
+        }
+        
+        // ===== Video Editor Page =====
+        let veMergeFiles = [];
+        let veTrimFile = null;
+        let veBgmVideo = null;
+        let veBgmAudio = null;
+        let veCompressFile = null;
+        
+        // 文件选择监听
+        document.getElementById('ve-merge-files')?.addEventListener('change', function(e) {
+            veMergeFiles = Array.from(e.target.files);
+            document.getElementById('ve-merge-file-list').innerHTML = veMergeFiles.map((f, i) => 
+                `<div style="padding: 8px; background: #21262d; border-radius: 4px; margin-bottom: 4px;">${i+1}. ${f.name} (${(f.size/1024/1024).toFixed(2)} MB)</div>`
+            ).join('') || '<span style="color: #8b949e;">未选择文件</span>';
+        });
+        
+        document.getElementById('ve-trim-file')?.addEventListener('change', function(e) {
+            veTrimFile = e.target.files[0];
+            document.getElementById('ve-trim-file-name').textContent = veTrimFile ? 
+                `已选择: ${veTrimFile.name} (${(veTrimFile.size/1024/1024).toFixed(2)} MB)` : '';
+        });
+        
+        document.getElementById('ve-bgm-video')?.addEventListener('change', function(e) {
+            veBgmVideo = e.target.files[0];
+            document.getElementById('ve-bgm-video-name').textContent = veBgmVideo ? 
+                `已选择: ${veBgmVideo.name}` : '';
+        });
+        
+        document.getElementById('ve-bgm-audio')?.addEventListener('change', function(e) {
+            veBgmAudio = e.target.files[0];
+            document.getElementById('ve-bgm-audio-name').textContent = veBgmAudio ? 
+                `已选择: ${veBgmAudio.name}` : '';
+        });
+        
+        document.getElementById('ve-bgm-volume')?.addEventListener('input', function(e) {
+            document.getElementById('ve-bgm-volume-display').textContent = e.target.value;
+        });
+        
+        document.getElementById('ve-compress-file')?.addEventListener('change', function(e) {
+            veCompressFile = e.target.files[0];
+            document.getElementById('ve-compress-file-name').textContent = veCompressFile ? 
+                `已选择: ${veCompressFile.name} (${(veCompressFile.size/1024/1024).toFixed(2)} MB)` : '';
+        });
+        
+        document.getElementById('ve-compress-quality')?.addEventListener('input', function(e) {
+            document.getElementById('ve-compress-quality-display').textContent = e.target.value;
+        });
+        
+        function veToggleCompressMode() {
+            const mode = document.getElementById('ve-compress-mode').value;
+            document.getElementById('ve-compress-size-group').style.display = mode === 'target' ? 'block' : 'none';
+            document.getElementById('ve-compress-quality-group').style.display = mode === 'quality' ? 'block' : 'none';
+        }
+        
+        async function veMergeVideos() {
+            if (veMergeFiles.length < 2) {
+                alert('请至少选择 2 个视频文件');
+                return;
+            }
+            
+            const result = document.getElementById('ve-merge-result');
+            result.style.display = 'block';
+            result.textContent = '🔄 正在上传并合并视频...\n' + veMergeFiles.map((f, i) => `${i+1}. ${f.name}`).join('\n');
+            
+            const formData = new FormData();
+            veMergeFiles.forEach(f => formData.append('files', f));
+            
+            try {
+                const response = await fetch(`${VIDEO_API_BASE}/video/merge`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.innerHTML = `✅ 合并完成！<br><br>📤 输出文件: ${data.filename}<br><br><a href="${VIDEO_API_BASE}/download/${data.filename}" class="btn btn-success" download>⬇️ 下载视频</a>`;
+                    loadOutputFiles();
+                } else {
+                    result.innerHTML = `❌ 错误: ${data.error || '合并失败'}<br><br>请确保已启动视频服务: start_video_api.bat`;
+                }
+            } catch (e) {
+                result.innerHTML = `❌ 连接失败: ${e.message}<br><br>请确保视频服务已启动:<br>1. 运行 start_video_api.bat<br>2. 刷新页面后重试`;
+            }
+        }
+        
+        async function veTrimVideo() {
+            if (!veTrimFile) {
+                alert('请选择视频文件');
+                return;
+            }
+            
+            const start = document.getElementById('ve-trim-start').value;
+            const end = document.getElementById('ve-trim-end').value;
+            
+            if (!start || !end) {
+                alert('请输入开始和结束时间');
+                return;
+            }
+            
+            const result = document.getElementById('ve-trim-result');
+            result.style.display = 'block';
+            result.textContent = `✂️ 正在截取视频...\n开始: ${start}\n结束/持续: ${end}`;
+            
+            const formData = new FormData();
+            formData.append('file', veTrimFile);
+            formData.append('start', start);
+            formData.append('end', end);
+            
+            try {
+                const response = await fetch(`${VIDEO_API_BASE}/video/trim`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.innerHTML = `✅ 截取完成！<br><br>📤 输出文件: ${data.filename}<br>⏱️ 时间范围: ${start} - ${end}<br><br><a href="${VIDEO_API_BASE}/download/${data.filename}" class="btn btn-success" download>⬇️ 下载视频</a>`;
+                    loadOutputFiles();
+                } else {
+                    result.innerHTML = `❌ 错误: ${data.error || '截取失败'}`;
+                }
+            } catch (e) {
+                result.innerHTML = `❌ 连接失败: ${e.message}<br><br>请确保视频服务已启动`;
+            }
+        }
+        
+        async function veAddBGM() {
+            if (!veBgmVideo || !veBgmAudio) {
+                alert('请选择视频和音频文件');
+                return;
+            }
+            
+            const volume = document.getElementById('ve-bgm-volume').value;
+            const result = document.getElementById('ve-bgm-result');
+            result.style.display = 'block';
+            result.textContent = `🎵 正在添加背景音乐...\n视频: ${veBgmVideo.name}\n音频: ${veBgmAudio.name}\n音量: ${volume}`;
+            
+            const formData = new FormData();
+            formData.append('video', veBgmVideo);
+            formData.append('audio', veBgmAudio);
+            formData.append('volume', volume);
+            
+            try {
+                const response = await fetch(`${VIDEO_API_BASE}/video/bgm`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    result.innerHTML = `✅ 背景音乐添加完成！<br><br>📤 输出文件: ${data.filename}<br>🎵 背景音乐音量: ${volume}<br><br><a href="${VIDEO_API_BASE}/download/${data.filename}" class="btn btn-success" download>⬇️ 下载视频</a>`;
+                    loadOutputFiles();
+                } else {
+                    result.innerHTML = `❌ 错误: ${data.error || '添加失败'}`;
+                }
+            } catch (e) {
+                result.innerHTML = `❌ 连接失败: ${e.message}<br><br>请确保视频服务已启动`;
+            }
+        }
+        
+        async function veCompressVideo() {
+            if (!veCompressFile) {
+                alert('请选择视频文件');
+                return;
+            }
+            
+            const mode = document.getElementById('ve-compress-mode').value;
+            const result = document.getElementById('ve-compress-result');
+            result.style.display = 'block';
+            
+            const originalSize = veCompressFile.size / 1024 / 1024;
+            
+            const formData = new FormData();
+            formData.append('file', veCompressFile);
+            formData.append('mode', mode);
+            
+            if (mode === 'target') {
+                const targetSize = document.getElementById('ve-compress-size').value;
+                formData.append('target_size', targetSize);
+                result.textContent = `🗜️ 正在压缩视频...\n原大小: ${originalSize.toFixed(2)} MB\n目标大小: ${targetSize} MB`;
+            } else {
+                const quality = document.getElementById('ve-compress-quality').value;
+                formData.append('crf', quality);
+                result.textContent = `🗜️ 正在压缩视频（质量优先模式）...\nCRF: ${quality}`;
+            }
+            
+            try {
+                const response = await fetch(`${VIDEO_API_BASE}/video/compress`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    const ratio = data.compression_ratio || 0;
+                    result.innerHTML = `✅ 压缩完成！<br><br>📤 输出文件: ${data.filename}<br>📊 原大小: ${(data.original_size / 1024 / 1024).toFixed(2)} MB<br>📊 压缩后: ${(data.compressed_size / 1024 / 1024).toFixed(2)} MB<br>📉 压缩率: ${ratio.toFixed(1)}%<br><br><a href="${VIDEO_API_BASE}/download/${data.filename}" class="btn btn-success" download>⬇️ 下载视频</a>`;
+                    loadOutputFiles();
+                } else {
+                    result.innerHTML = `❌ 错误: ${data.error || '压缩失败'}`;
+                }
+            } catch (e) {
+                result.innerHTML = `❌ 连接失败: ${e.message}<br><br>请确保视频服务已启动`;
+            }
+        }
+        
+        async function loadOutputFiles() {
+            const container = document.getElementById('ve-files-list');
+            container.innerHTML = '<p style="color: #8b949e;">加载中...</p>';
+            
+            try {
+                const response = await fetch(`${VIDEO_API_BASE}/files`);
+                const files = await response.json();
+                
+                document.getElementById('output-count').textContent = files.length;
+                
+                if (files.length === 0) {
+                    container.innerHTML = '<p style="color: #8b949e;">暂无输出文件</p>';
+                    return;
+                }
+                
+                container.innerHTML = `
+                    <table>
+                        <thead>
+                            <tr><th>文件名</th><th>大小</th><th>创建时间</th><th>操作</th></tr>
+                        </thead>
+                        <tbody>
+                            ${files.map(f => `
+                                <tr>
+                                    <td>${f.name}</td>
+                                    <td>${(f.size / 1024 / 1024).toFixed(2)} MB</td>
+                                    <td>${new Date(f.created).toLocaleString()}</td>
+                                    <td><a href="${VIDEO_API_BASE}/download/${f.name}" class="btn" download>⬇️ 下载</a></td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                `;
+            } catch (e) {
+                container.innerHTML = `<p style="color: #f85149;">加载失败: ${e.message}</p>`;
+            }
+        }
+        
+        function openOutputFolder() {
+            alert('输出目录: output/\n\n请在文件资源管理器中打开查看。');
+        }
+        
+        async function checkVideoService() {
+            const ffmpegStatus = document.getElementById('ffmpeg-status');
+            const apiStatus = document.getElementById('api-status');
+            
+            try {
+                const response = await fetch(`${VIDEO_API_BASE}/health`, { timeout: 3000 });
+                const data = await response.json();
+                
+                if (data.ffmpeg) {
+                    ffmpegStatus.textContent = '✅ 就绪';
+                    ffmpegStatus.className = 'card-value success';
+                } else {
+                    ffmpegStatus.textContent = '❌ 未安装';
+                    ffmpegStatus.className = 'card-value danger';
+                }
+                
+                apiStatus.textContent = '✅ 运行中';
+                apiStatus.className = 'card-value success';
+                
+                loadOutputFiles();
+            } catch (e) {
+                ffmpegStatus.textContent = '未知';
+                ffmpegStatus.className = 'card-value warning';
+                apiStatus.textContent = '❌ 未启动';
+                apiStatus.className = 'card-value danger';
+            }
+        }
+        
+        // ===== Init =====
+        window.addEventListener('load', function() {
+            // 加载所有设置
+            loadSettings();
+            
+            // 自动配置 DeepSeek API（如果未配置）
+            if (!localStorage.getItem('llm_api_key')) {
+                localStorage.setItem('llm_provider', 'deepseek');
+                localStorage.setItem('llm_api_key', 'sk-2f2181969ceb4610b8e81c8d78d20918');
+                localStorage.setItem('llm_model', 'deepseek-chat');
+                loadSettings();
+                console.log('✅ DeepSeek API 自动配置完成');
+            }
+            
+            // 检查视频服务状态
+            checkVideoService();
+            
+            // 检查 LLM 服务状态（在后台）
+            checkLLMService().then(health => {
+                if (health.available) {
+                    console.log('✅ LLM Service ready:', health.data?.services?.llm?.provider);
+                } else {
+                    console.warn('⚠️ LLM Service unavailable:', health.error);
+                }
+            });
+        });
+    </script>
+    <div class="copyright">
+        © 2024-2026 高智中科（北京）科技有限公司 | 版权所有
+    </div>
+</body>
+</html>

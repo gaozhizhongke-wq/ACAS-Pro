@@ -1,0 +1,133 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "ACAS Pro v2.1 - 系统监控",
+    "tags": ["acas-pro", "production"],
+    "timezone": "Asia/Shanghai",
+    "schemaVersion": 36,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "请求速率",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total[5m]))",
+            "legendFormat": "req/s"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "错误率",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100",
+            "legendFormat": "error %"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "P99 响应时间",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000",
+            "legendFormat": "ms"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "活跃用户数",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "acas_active_users",
+            "legendFormat": "users"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}
+      },
+      {
+        "id": 5,
+        "title": "HTTP 请求趋势",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(http_requests_total[1m])) by (status)",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}
+      },
+      {
+        "id": 6,
+        "title": "响应时间分布",
+        "type": "heatmap",
+        "targets": [
+          {
+            "expr": "sum(rate(http_request_duration_seconds_bucket[1m])) by (le)",
+            "format": "heatmap"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}
+      },
+      {
+        "id": 7,
+        "title": "数据库连接池",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "acas_database_connections",
+            "legendFormat": "{{pool_type}} - {{state}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 12}
+      },
+      {
+        "id": 8,
+        "title": "缓存命中率",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "sum(rate(acas_cache_hits_total[5m])) / (sum(rate(acas_cache_hits_total[5m])) + sum(rate(acas_cache_misses_total[5m]))) * 100",
+            "legendFormat": "hit rate %"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 12}
+      },
+      {
+        "id": 9,
+        "title": "API 调用统计",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "sum by (api_name, status) (acas_api_calls_total)",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 20}
+      },
+      {
+        "id": 10,
+        "title": "任务队列",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "acas_task_queue_size",
+            "legendFormat": "{{queue_name}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 20}
+      }
+    ]
+  }
+}

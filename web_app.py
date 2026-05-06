@@ -1,0 +1,896 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""ACAS Pro Web - Production-grade Web Dashboard
+
+Phase 1: LLM chat pipeline (bridge config → LLMClient, /api/llm/chat)
+Phase 2: JWT auth middleware, login/register
+"""
+
+import os
+import sys
+import json
+import time
+import uuid
+import hashlib
+from datetime import datetime, timedelta, timezone
+from functools import wraps
+
+# ── Load .env ──────────────────────────────────────────────────────────────
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
+if os.path.exists(env_path):
+    with open(env_path, 'r', encoding='utf-8') as f:
+        for line in f:
+            line = line.strip()
+            if line and not line.startswith('#') and '=' in line:
+                key, value = line.split('=', 1)
+                os.environ[key.strip()] = value.strip().strip('"').strip("'")
+
+src_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src')
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
+
+from flask import Flask, render_template_string, request, jsonify, g
+import jwt
+import bcrypt
+
+from acas_pro.core.config import config
+from acas_pro.core.logging import setup_logging, get_logger
+from acas_pro.services.user_service import user_service
+from acas_pro.llm.llm_client import (
+    LLMClient,
+    LLMConfig as ClientLLMConfig,
+    LLMProvider,
+    LLMMessage,
+)
+
+setup_logging()
+logger = get_logger(__name__)
+
+# ── Flask App ──────────────────────────────────────────────────────────────
+app = Flask(__name__)
+
+# SECRET_KEY: 生产环境强制要求
+_secret = os.environ.get('SECRET_KEY', config.security.secret_key)
+if not _secret or _secret in ('acas-pro-secret-key-change-me', 'dev-key-change-in-production'):
+    _secret = hashlib.sha256(uuid.uuid4().bytes).hexdigest()
+    logger.warning("SECRET_KEY not properly set — generated ephemeral key. Set SECRET_KEY in .env for production.")
+app.secret_key = _secret
+JWT_SECRET = _secret
+JWT_ALGORITHM = 'HS256'
+JWT_EXPIRY_HOURS = 24
+
+
+# ── LLM Bridge ────────────────────────────────────────────────────────────
+_PROVIDER_MAP = {
+    'openai': LLMProvider.OPENAI,
+    'anthropic': LLMProvider.ANTHROPIC,
+    'kimi': LLMProvider.KIMI,
+    'deepseek': LLMProvider.DEEPSEEK,
+    'qwen': LLMProvider.QWEN,
+    'lmstudio': LLMProvider.LMSTUDIO,
+    'ollama': LLMProvider.OLLAMA,
+}
+
+
+def create_llm_client() -> LLMClient:
+    """Bridge: config.py LLMConfig → llm_client.LLMConfig → LLMClient"""
+    llm = config.llm
+    if not llm.enabled or not llm.api_key:
+        raise RuntimeError("LLM not configured. Set DEEPSEEK_API_KEY in .env or configure via Settings page.")
+    provider_enum = _PROVIDER_MAP.get(llm.provider, LLMProvider.OPENAI)
+    client_cfg = ClientLLMConfig(
+        provider=provider_enum,
+        api_key=llm.api_key,
+        api_base=llm.api_base or '',
+        model=llm.model or '',
+        max_tokens=llm.max_tokens,
+        temperature=llm.temperature,
+        top_p=llm.top_p,
+    )
+    return LLMClient(client_cfg)
+
+
+# ── JWT Auth Helpers ───────────────────────────────────────────────────────
+def generate_token(user_id: str, account: str) -> str:
+    payload = {
+        'user_id': user_id,
+        'account': account,
+        'exp': datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRY_HOURS),
+        'iat': datetime.now(timezone.utc),
+    }
+    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+
+
+def verify_token(token: str) -> dict | None:
+    try:
+        return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+    except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        return None
+
+
+# ── Auth Middleware ────────────────────────────────────────────────────────
+_PUBLIC_PATHS = {'/api/health', '/api/auth/login', '/api/auth/register', '/'}
+_PUBLIC_PREFIXES = ('/static/',)
+
+
+@app.before_request
+def check_auth():
+    """JWT auth middleware — public paths exempted"""
+    path = request.path
+
+    # Skip OPTIONS (CORS preflight)
+    if request.method == 'OPTIONS':
+        return None
+
+    # Public paths
+    if path in _PUBLIC_PATHS or any(path.startswith(p) for p in _PUBLIC_PREFIXES):
+        return None
+
+    # Extract token
+    auth_header = request.headers.get('Authorization', '')
+    token = auth_header.removeprefix('Bearer ').strip() if auth_header.startswith('Bearer ') else ''
+
+    # Also accept token from query param (for SSE / simple clients)
+    if not token:
+        token = request.args.get('token', '')
+
+    if not token:
+        return jsonify({'error': 'Authentication required', 'code': 'AUTH_REQUIRED'}), 401
+
+    payload = verify_token(token)
+    if not payload:
+        return jsonify({'error': 'Invalid or expired token', 'code': 'AUTH_INVALID'}), 401
+
+    g.user = payload
+
+
+# ── CORS ───────────────────────────────────────────────────────────────────
+@app.after_request
+def add_cors_headers(response):
+    allowed = config.security.cors_allowed_origins or '*'
+    response.headers['Access-Control-Allow-Origin'] = allowed.split(',')[0].strip()
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    return response
+
+
+# ── Auth Routes ────────────────────────────────────────────────────────────
+@app.route('/api/auth/register', methods=['POST'])
+def auth_register():
+    data = request.json or {}
+    account = data.get('account', '').strip()
+    password = data.get('password', '').strip()
+    nickname = data.get('nickname', '').strip()
+
+    if not account or not password:
+        return jsonify({'error': 'account and password are required'}), 400
+    if len(password) < 8:
+        return jsonify({'error': 'Password must be at least 8 characters'}), 400
+
+    ok, msg, profile = user_service.register(account=account, password=password, nickname=nickname or account)
+    if not ok:
+        return jsonify({'error': msg}), 409
+
+    token = generate_token(profile.id, account)
+    return jsonify({
+        'success': True,
+        'token': token,
+        'user': {'user_id': profile.id, 'account': profile.account, 'nickname': profile.nickname}
+    })
+
+
+@app.route('/api/auth/login', methods=['POST'])
+def auth_login():
+    data = request.json or {}
+    account = data.get('account', '').strip()
+    password = data.get('password', '').strip()
+
+    if not account or not password:
+        return jsonify({'error': 'account and password are required'}), 400
+
+    ok, msg, profile = user_service.login(account=account, password=password)
+    if not ok:
+        return jsonify({'error': msg}), 401
+
+    token = generate_token(profile.id, account)
+    return jsonify({
+        'success': True,
+        'token': token,
+        'user': {'user_id': profile.id, 'account': profile.account, 'nickname': profile.nickname}
+    })
+
+
+@app.route('/api/auth/me', methods=['GET'])
+def auth_me():
+    user = g.user
+    return jsonify({'user_id': user['user_id'], 'account': user['account']})
+
+
+# ── LLM Routes ────────────────────────────────────────────────────────────
+@app.route('/api/llm/config', methods=['POST'])
+def save_llm_config():
+    data = request.json or {}
+    provider = data.get('provider', 'openai')
+    api_key = data.get('api_key', '')
+    api_base = data.get('api_base') or None
+    model = data.get('model') or None
+
+    # Update config
+    config.llm.provider = provider
+    if api_key:
+        config.llm.api_key = api_key
+    if api_base:
+        config.llm.api_base = api_base
+    if model:
+        config.llm.model = model
+    config.llm.enabled = True
+
+    # Also set environment variables for persistence
+    env_key = f'{provider.upper()}_API_KEY'
+    os.environ[env_key] = api_key
+    os.environ['LLM_PROVIDER'] = provider
+
+    config.save()
+    logger.info(f"LLM config updated: provider={provider}")
+
+    return jsonify({'success': True, 'provider': provider})
+
+
+@app.route('/api/llm/test')
+def test_llm():
+    try:
+        client = create_llm_client()
+        resp = client.quick_chat('Hello, reply with one word: OK')
+        return jsonify({'success': True, 'message': resp[:200]})
+    except Exception as e:
+        logger.error(f"LLM test failed: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+
+@app.route('/api/llm/chat', methods=['POST'])
+def chat_llm():
+    """Chat endpoint — accepts message + optional history"""
+    data = request.json or {}
+    message = data.get('message', '').strip()
+    system_prompt = data.get('system', 'You are a helpful assistant for ACAS Pro business users.')
+    history = data.get('history', [])  # [{role, content}, ...]
+
+    if not message:
+        return jsonify({'error': 'message is required'}), 400
+
+    try:
+        client = create_llm_client()
+
+        # Build message list
+        messages = [LLMMessage(role="system", content=system_prompt)]
+        for h in history[-20:]:  # Keep last 20 messages for context
+            messages.append(LLMMessage(role=h.get('role', 'user'), content=h.get('content', '')))
+        messages.append(LLMMessage(role="user", content=message))
+
+        start = time.time()
+        response = client.chat(messages)
+        latency = int((time.time() - start) * 1000)
+
+        return jsonify({
+            'success': True,
+            'content': response.content,
+            'model': response.model,
+            'usage': response.usage,
+            'latency_ms': latency,
+        })
+    except Exception as e:
+        logger.error(f"LLM chat failed: {e}")
+        return jsonify({'success': False, 'error': str(e)})
+
+
+# ── Dashboard Stats ───────────────────────────────────────────────────────
+@app.route('/api/dashboard/stats')
+def dashboard_stats():
+    """Real dashboard data from database"""
+    try:
+        from acas_pro.core.database import DatabaseManager
+        db = DatabaseManager()
+        stats = {}
+
+        # Revenue (last 30 days)
+        try:
+            result = db.fetch_one("""
+                SELECT COALESCE(SUM(amount), 0) as total
+                FROM orders WHERE created_at >= datetime('now', '-30 days')
+            """)
+            stats['revenue'] = result[0] if result else 0
+        except Exception:
+            stats['revenue'] = 0
+
+        # Active orders
+        try:
+            result = db.fetch_one("SELECT COUNT(*) FROM orders WHERE status = 'active'")
+            stats['active_orders'] = result[0] if result else 0
+        except Exception:
+            stats['active_orders'] = 0
+
+        # Inventory count
+        try:
+            result = db.fetch_one("SELECT COUNT(*) FROM products WHERE stock > 0")
+            stats['inventory'] = result[0] if result else 0
+        except Exception:
+            stats['inventory'] = 0
+
+        # Low stock alerts
+        try:
+            result = db.fetch_one("SELECT COUNT(*) FROM products WHERE stock <= reorder_point")
+            stats['low_stock'] = result[0] if result else 0
+        except Exception:
+            stats['low_stock'] = 0
+
+        # Risk alerts
+        try:
+            result = db.fetch_one("SELECT COUNT(*) FROM alerts WHERE status = 'open'")
+            stats['risk_alerts'] = result[0] if result else 0
+        except Exception:
+            stats['risk_alerts'] = 0
+
+        stats['llm_enabled'] = config.llm.enabled
+        stats['llm_provider'] = config.llm.provider if config.llm.enabled else 'disabled'
+        return jsonify(stats)
+    except Exception as e:
+        # Fallback: return config-based stats
+        return jsonify({
+            'revenue': 0,
+            'active_orders': 0,
+            'inventory': 0,
+            'low_stock': 0,
+            'risk_alerts': 0,
+            'llm_enabled': config.llm.enabled,
+            'llm_provider': config.llm.provider if config.llm.enabled else 'disabled',
+        })
+
+
+# ── Health ─────────────────────────────────────────────────────────────────
+@app.route('/api/health')
+def health():
+    return jsonify({
+        'status': 'ok',
+        'version': config.version,
+        'llm': {
+            'enabled': config.llm.enabled,
+            'provider': config.llm.provider,
+        }
+    })
+
+
+# ── HTML Template ─────────────────────────────────────────────────────────
+DASHBOARD_HTML = r'''
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACAS Pro</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0d1117; color: #c9d1d9; min-height: 100vh; }
+        .sidebar { position: fixed; left: 0; top: 0; width: 240px; height: 100vh; background: #161b22; border-right: 1px solid #30363d; padding: 20px 0; display: flex; flex-direction: column; }
+        .logo { padding: 0 20px 20px; font-size: 20px; font-weight: bold; color: #58a6ff; border-bottom: 1px solid #30363d; margin-bottom: 16px; }
+        .nav-item { display: block; padding: 12px 20px; color: #8b949e; text-decoration: none; transition: all 0.2s; cursor: pointer; }
+        .nav-item:hover, .nav-item.active { color: #58a6ff; background: #21262d; }
+        .nav-spacer { flex: 1; }
+        .nav-user { padding: 12px 20px; color: #8b949e; font-size: 12px; border-top: 1px solid #30363d; }
+        .main { margin-left: 240px; padding: 28px; }
+        .header { margin-bottom: 24px; }
+        .header h1 { font-size: 28px; margin-bottom: 8px; }
+        .header p { color: #8b949e; }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .card { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; }
+        .card-title { color: #8b949e; font-size: 13px; margin-bottom: 8px; }
+        .card-value { font-size: 28px; font-weight: bold; margin-bottom: 4px; }
+        .card-sub { font-size: 12px; }
+        .success { color: #3fb950; }
+        .accent { color: #58a6ff; }
+        .warning { color: #d29922; }
+        .danger { color: #f85149; }
+        .section-title { font-size: 16px; font-weight: bold; margin: 24px 0 16px; }
+        .btn { display: inline-block; padding: 10px 20px; background: #21262d; border: 1px solid #30363d; border-radius: 8px; color: #c9d1d9; cursor: pointer; transition: all 0.2s; font-size: 14px; }
+        .btn:hover { background: #58a6ff; color: white; border-color: #58a6ff; }
+        .btn-primary { background: #238636; border-color: #238636; color: white; }
+        .btn-primary:hover { background: #2ea043; }
+        .btn-danger { background: #da3633; border-color: #da3633; color: white; }
+        .content-area { background: #161b22; border: 1px solid #30363d; border-radius: 12px; padding: 20px; min-height: 300px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 8px; color: #8b949e; font-size: 13px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; max-width: 500px; padding: 10px 14px; background: #21262d; border: 1px solid #30363d; border-radius: 8px; color: #c9d1d9; font-size: 14px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #58a6ff; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 12px; font-size: 12px; }
+        .status-ok { background: #238636; color: white; }
+        .status-err { background: #da3633; color: white; }
+        .status-warn { background: #9e6a03; color: white; }
+
+        /* Chat UI */
+        .chat-container { display: flex; flex-direction: column; height: 500px; }
+        .chat-messages { flex: 1; overflow-y: auto; padding: 16px 0; border-bottom: 1px solid #30363d; margin-bottom: 16px; }
+        .chat-msg { margin-bottom: 12px; padding: 10px 14px; border-radius: 10px; max-width: 80%; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+        .chat-msg.user { background: #1f6feb; color: white; margin-left: auto; text-align: right; }
+        .chat-msg.assistant { background: #21262d; border: 1px solid #30363d; }
+        .chat-msg .role-label { font-size: 11px; color: #8b949e; margin-bottom: 4px; }
+        .chat-input-row { display: flex; gap: 8px; }
+        .chat-input-row input { flex: 1; }
+        .typing { color: #8b949e; font-style: italic; }
+
+        /* Login overlay */
+        .overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .overlay.hidden { display: none; }
+        .auth-box { background: #161b22; border: 1px solid #30363d; border-radius: 16px; padding: 32px; width: 380px; }
+        .auth-box h2 { margin-bottom: 24px; text-align: center; }
+        .auth-box .form-group input { max-width: 100%; }
+        .auth-toggle { text-align: center; margin-top: 16px; color: #8b949e; font-size: 13px; }
+        .auth-toggle a { color: #58a6ff; cursor: pointer; text-decoration: underline; }
+
+        /* Fade-in animation */
+        .page { animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+    <!-- Auth Overlay -->
+    <div id="auth-overlay" class="overlay hidden">
+        <div class="auth-box">
+            <h2 id="auth-title">登录 ACAS Pro</h2>
+            <div id="auth-register-fields" style="display:none">
+                <div class="form-group">
+                    <label>昵称</label>
+                    <input type="text" id="auth-nickname" placeholder="你的昵称">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>账号</label>
+                <input type="text" id="auth-account" placeholder="账号或邮箱">
+            </div>
+            <div class="form-group">
+                <label>密码</label>
+                <input type="password" id="auth-password" placeholder="至少 8 位">
+            </div>
+            <button class="btn btn-primary" style="width:100%; margin-top: 8px;" onclick="doAuth()">确认</button>
+            <div class="auth-toggle">
+                <span id="auth-switch-text">没有账号？</span>
+                <a id="auth-switch-link" onclick="toggleAuthMode()">注册</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar">
+        <div class="logo">ACAS Pro</div>
+        <a class="nav-item active" data-page="dashboard" onclick="showPage('dashboard', this)">📊 仪表盘</a>
+        <a class="nav-item" data-page="llm" onclick="showPage('llm', this)">🤖 AI 助手</a>
+        <a class="nav-item" data-page="content" onclick="showPage('content', this)">✍️ 内容创作</a>
+        <a class="nav-item" data-page="accounts" onclick="showPage('accounts', this)">👥 账号矩阵</a>
+        <a class="nav-item" data-page="festival" onclick="showPage('festival', this)">🎉 节日营销</a>
+        <a class="nav-item" data-page="forecast" onclick="showPage('forecast', this)">📈 销售预测</a>
+        <a class="nav-item" data-page="inventory" onclick="showPage('inventory', this)">📦 库存管理</a>
+        <a class="nav-item" data-page="settings" onclick="showPage('settings', this)">⚙️ 系统设置</a>
+        <div class="nav-spacer"></div>
+        <div class="nav-user" id="nav-user">未登录</div>
+    </div>
+
+    <div class="main">
+        <!-- Dashboard -->
+        <div id="page-dashboard" class="page">
+            <div class="header">
+                <h1>欢迎回来 👋</h1>
+                <p>以下是您的业务概览</p>
+            </div>
+            <div class="cards" id="dashboard-cards">
+                <div class="card"><div class="card-title">总营收</div><div class="card-value success" id="stat-revenue">--</div><div class="card-sub" id="stat-revenue-sub">加载中...</div></div>
+                <div class="card"><div class="card-title">活跃订单</div><div class="card-value accent" id="stat-orders">--</div><div class="card-sub" id="stat-orders-sub">&nbsp;</div></div>
+                <div class="card"><div class="card-title">库存商品</div><div class="card-value warning" id="stat-inventory">--</div><div class="card-sub" id="stat-inventory-sub">&nbsp;</div></div>
+                <div class="card"><div class="card-title">风险预警</div><div class="card-value danger" id="stat-alerts">--</div><div class="card-sub" id="stat-alerts-sub">&nbsp;</div></div>
+            </div>
+            <div class="section-title">快速操作</div>
+            <a class="btn" onclick="showPage('forecast', document.querySelector('[data-page=forecast]'))">📈 查看预测</a>
+            <a class="btn" onclick="showPage('inventory', document.querySelector('[data-page=inventory]'))">📦 库存检查</a>
+            <a class="btn" onclick="showPage('llm', document.querySelector('[data-page=llm]'))">🤖 AI 助手</a>
+            <a class="btn" onclick="showPage('settings', document.querySelector('[data-page=settings]'))">⚙️ 系统设置</a>
+        </div>
+
+        <!-- AI Chat -->
+        <div id="page-llm" class="page" style="display:none">
+            <div class="header">
+                <h1>AI 助手</h1>
+                <p>与 ACAS Pro AI 对话，获取商业洞察</p>
+            </div>
+            <div class="content-area">
+                <div id="llm-status" style="margin-bottom:16px;"></div>
+                <div class="chat-container">
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="chat-msg assistant">你好！我是 ACAS Pro AI 助手，有什么可以帮你的？</div>
+                    </div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chat-input" placeholder="输入消息..." onkeydown="if(event.key==='Enter')sendChat()">
+                        <button class="btn btn-primary" onclick="sendChat()">发送</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Creation -->
+        <div id="page-content" class="page" style="display:none">
+            <div class="header"><h1>内容创作</h1><p>AI 驱动的内容生成引擎</p></div>
+            <div class="content-area">
+                <div class="form-group">
+                    <label>创作平台</label>
+                    <select id="content-platform"><option value="xiaohongshu">小红书</option><option value="douyin">抖音</option><option value="weibo">微博</option><option value="wechat">微信公众号</option></select>
+                </div>
+                <div class="form-group">
+                    <label>主题 / 关键词</label>
+                    <input type="text" id="content-topic" placeholder="例如：618 大促、新品发布、夏日穿搭">
+                </div>
+                <div class="form-group">
+                    <label>内容风格</label>
+                    <select id="content-style"><option value="professional">专业</option><option value="casual">轻松</option><option value="humorous">幽默</option><option value="emotional">走心</option></select>
+                </div>
+                <button class="btn btn-primary" onclick="generateContent()">✨ AI 生成文案</button>
+                <div id="content-result" style="margin-top: 16px;"></div>
+            </div>
+        </div>
+
+        <!-- Account Matrix -->
+        <div id="page-accounts" class="page" style="display:none">
+            <div class="header"><h1>账号矩阵</h1><p>多平台账号管理</p></div>
+            <div class="content-area">
+                <p>账号矩阵管理功能正在接入中，当前可通过 AI 助手查询账号运营数据。</p>
+                <button class="btn" onclick="showPage('llm', document.querySelector('[data-page=llm]'))">🤖 问 AI 助手</button>
+            </div>
+        </div>
+
+        <!-- Festival Marketing -->
+        <div id="page-festival" class="page" style="display:none">
+            <div class="header"><h1>节日营销</h1><p>节日日历与营销计划</p></div>
+            <div class="content-area">
+                <div class="form-group">
+                    <label>查询节日</label>
+                    <input type="text" id="festival-query" placeholder="例如：即将到来的节日、618营销方案">
+                </div>
+                <button class="btn btn-primary" onclick="askFestival()">🔍 查询</button>
+                <div id="festival-result" style="margin-top: 16px;"></div>
+            </div>
+        </div>
+
+        <!-- Sales Forecast -->
+        <div id="page-forecast" class="page" style="display:none">
+            <div class="header"><h1>销售预测</h1><p>AI 驱动的销售趋势预测</p></div>
+            <div class="content-area">
+                <div class="form-group">
+                    <label>预测问题</label>
+                    <input type="text" id="forecast-query" placeholder="例如：下个月销售趋势如何？">
+                </div>
+                <button class="btn btn-primary" onclick="askForecast()">📊 预测</button>
+                <div id="forecast-result" style="margin-top: 16px;"></div>
+            </div>
+        </div>
+
+        <!-- Inventory -->
+        <div id="page-inventory" class="page" style="display:none">
+            <div class="header"><h1>库存管理</h1><p>库存优化与补货建议</p></div>
+            <div class="content-area">
+                <div class="form-group">
+                    <label>库存问题</label>
+                    <input type="text" id="inventory-query" placeholder="例如：哪些商品需要补货？">
+                </div>
+                <button class="btn btn-primary" onclick="askInventory()">📦 查询</button>
+                <div id="inventory-result" style="margin-top: 16px;"></div>
+            </div>
+        </div>
+
+        <!-- Settings -->
+        <div id="page-settings" class="page" style="display:none">
+            <div class="header"><h1>系统设置</h1><p>配置 ACAS Pro 参数</p></div>
+            <div class="content-area">
+                <h3 style="margin-bottom: 20px;">🤖 LLM 配置</h3>
+                <form id="llm-form">
+                    <div class="form-group">
+                        <label>Provider</label>
+                        <select id="llm-provider" name="provider">
+                            <option value="openai">OpenAI</option>
+                            <option value="anthropic">Anthropic</option>
+                            <option value="kimi">Kimi</option>
+                            <option value="deepseek">DeepSeek</option>
+                            <option value="qwen">通义千问</option>
+                            <option value="lmstudio">LM Studio</option>
+                            <option value="ollama">Ollama</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>API Key</label>
+                        <input type="password" id="llm-api-key" name="api_key" placeholder="输入 API Key">
+                    </div>
+                    <div class="form-group">
+                        <label>API Base (可选)</label>
+                        <input type="text" id="llm-api-base" name="api_base" placeholder="https://api.example.com/v1">
+                    </div>
+                    <div class="form-group">
+                        <label>Model</label>
+                        <input type="text" id="llm-model" name="model" placeholder="gpt-4o, deepseek-chat 等">
+                    </div>
+                    <button type="submit" class="btn btn-primary">💾 保存配置</button>
+                    <button type="button" class="btn" onclick="testLLM()">🧪 测试连接</button>
+                </form>
+                <div id="llm-result" style="margin-top: 16px;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── State ──
+        let authToken = localStorage.getItem('acas_token') || '';
+        let chatHistory = [];
+        let isRegisterMode = false;
+
+        // ── Init ──
+        (function init() {
+            loadCurrentConfig();
+            if (authToken) {
+                document.getElementById('auth-overlay').classList.add('hidden');
+                loadDashboard();
+                fetchUserInfo();
+            } else {
+                document.getElementById('auth-overlay').classList.remove('hidden');
+            }
+        })();
+
+        // ── Auth ──
+        function toggleAuthMode() {
+            isRegisterMode = !isRegisterMode;
+            document.getElementById('auth-title').textContent = isRegisterMode ? '注册 ACAS Pro' : '登录 ACAS Pro';
+            document.getElementById('auth-register-fields').style.display = isRegisterMode ? 'block' : 'none';
+            document.getElementById('auth-switch-text').textContent = isRegisterMode ? '已有账号？' : '没有账号？';
+            document.getElementById('auth-switch-link').textContent = isRegisterMode ? '登录' : '注册';
+        }
+
+        async function doAuth() {
+            const account = document.getElementById('auth-account').value.trim();
+            const password = document.getElementById('auth-password').value.trim();
+            const nickname = document.getElementById('auth-nickname').value.trim();
+            if (!account || !password) return alert('请输入账号和密码');
+
+            const endpoint = isRegisterMode ? '/api/auth/register' : '/api/auth/login';
+            const body = isRegisterMode ? {account, password, nickname} : {account, password};
+
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(body)
+            });
+            const data = await res.json();
+            if (data.success) {
+                authToken = data.token;
+                localStorage.setItem('acas_token', authToken);
+                document.getElementById('auth-overlay').classList.add('hidden');
+                loadDashboard();
+                fetchUserInfo();
+            } else {
+                alert(data.error || '操作失败');
+            }
+        }
+
+        async function fetchUserInfo() {
+            try {
+                const res = await fetch('/api/auth/me', {headers: {'Authorization': 'Bearer ' + authToken}});
+                const data = await res.json();
+                if (data.account) {
+                    document.getElementById('nav-user').textContent = '👤 ' + data.account;
+                }
+            } catch(e) {}
+        }
+
+        function authHeaders() {
+            return {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken};
+        }
+
+        // ── Navigation ──
+        function showPage(page, el) {
+            document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+            document.getElementById('page-' + page).style.display = 'block';
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            if (el) el.classList.add('active');
+            if (page === 'llm') updateLLMStatus();
+        }
+
+        // ── Dashboard ──
+        async function loadDashboard() {
+            try {
+                const res = await fetch('/api/dashboard/stats', {headers: authHeaders()});
+                const s = await res.json();
+                document.getElementById('stat-revenue').textContent = '¥' + (s.revenue || 0).toLocaleString();
+                document.getElementById('stat-revenue-sub').textContent = s.llm_enabled ? 'AI 已启用 · ' + s.llm_provider : 'AI 未启用';
+                document.getElementById('stat-orders').textContent = (s.active_orders || 0).toLocaleString();
+                document.getElementById('stat-inventory').textContent = (s.inventory || 0).toLocaleString();
+                document.getElementById('stat-inventory-sub').textContent = (s.low_stock || 0) > 0 ? (s.low_stock + '项需补货') : '库存充足';
+                document.getElementById('stat-alerts').textContent = s.risk_alerts || 0;
+                document.getElementById('stat-alerts-sub').textContent = (s.risk_alerts || 0) > 0 ? '需要关注' : '一切正常';
+            } catch(e) {
+                document.getElementById('stat-revenue-sub').textContent = '数据加载失败';
+            }
+        }
+
+        // ── LLM Status ──
+        function updateLLMStatus() {
+            const el = document.getElementById('llm-status');
+            const provider = '{{ llm_provider }}';
+            const enabled = {{ 'true' if llm_enabled else 'false' }};
+            if (enabled) {
+                el.innerHTML = '<span class="status-badge status-ok">已启用 · ' + provider + '</span>';
+            } else {
+                el.innerHTML = '<span class="status-badge status-err">未启用</span> 请先在 <a onclick="showPage(\'settings\', document.querySelector(\'[data-page=settings]\'))" style="color:#58a6ff;cursor:pointer">系统设置</a> 中配置 API Key';
+            }
+        }
+
+        // ── Chat ──
+        async function sendChat() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+            input.value = '';
+
+            // Show user message
+            appendChat('user', msg);
+            chatHistory.push({role: 'user', content: msg});
+
+            // Show typing indicator
+            const typingEl = appendChat('assistant', '思考中...', true);
+
+            try {
+                const res = await fetch('/api/llm/chat', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({message: msg, history: chatHistory.slice(-10)})
+                });
+                const data = await res.json();
+                typingEl.remove();
+                if (data.success) {
+                    appendChat('assistant', data.content);
+                    chatHistory.push({role: 'assistant', content: data.content});
+                } else {
+                    appendChat('assistant', '❌ ' + (data.error || '请求失败'));
+                }
+            } catch(e) {
+                typingEl.remove();
+                appendChat('assistant', '❌ 网络错误: ' + e.message);
+            }
+        }
+
+        function appendChat(role, content, isTyping) {
+            const container = document.getElementById('chat-messages');
+            const div = document.createElement('div');
+            div.className = 'chat-msg ' + role + (isTyping ? ' typing' : '');
+            div.textContent = content;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+            return div;
+        }
+
+        // ── Content Generation ──
+        async function generateContent() {
+            const platform = document.getElementById('content-platform').value;
+            const topic = document.getElementById('content-topic').value.trim();
+            const style = document.getElementById('content-style').value;
+            if (!topic) return alert('请输入主题');
+            const el = document.getElementById('content-result');
+            el.innerHTML = '<span class="typing">AI 正在生成...</span>';
+            const prompt = `请为${platform}平台创作一篇关于"${topic}"的内容，风格：${style}。要求：标题吸引人、内容有干货、符合平台调性、包含合适的话题标签。`;
+            const res = await chatWithAI(prompt);
+            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8;">' + escapeHtml(res) + '</div>';
+        }
+
+        // ── Festival ──
+        async function askFestival() {
+            const q = document.getElementById('festival-query').value.trim();
+            if (!q) return alert('请输入查询');
+            const el = document.getElementById('festival-result');
+            el.innerHTML = '<span class="typing">查询中...</span>';
+            const res = await chatWithAI(`关于节日营销：${q}。请提供节日信息和营销建议。`);
+            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8;">' + escapeHtml(res) + '</div>';
+        }
+
+        // ── Forecast ──
+        async function askForecast() {
+            const q = document.getElementById('forecast-query').value.trim();
+            if (!q) return alert('请输入问题');
+            const el = document.getElementById('forecast-result');
+            el.innerHTML = '<span class="typing">分析中...</span>';
+            const res = await chatWithAI(`关于销售预测：${q}。请基于一般商业知识给出分析和建议。`);
+            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8;">' + escapeHtml(res) + '</div>';
+        }
+
+        // ── Inventory ──
+        async function askInventory() {
+            const q = document.getElementById('inventory-query').value.trim();
+            if (!q) return alert('请输入问题');
+            const el = document.getElementById('inventory-result');
+            el.innerHTML = '<span class="typing">查询中...</span>';
+            const res = await chatWithAI(`关于库存管理：${q}。请给出库存优化建议。`);
+            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8;">' + escapeHtml(res) + '</div>';
+        }
+
+        // ── AI Helper ──
+        async function chatWithAI(message) {
+            try {
+                const res = await fetch('/api/llm/chat', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({message, system: '你是 ACAS Pro 商业智能助手，专精于电商运营、内容营销、库存管理和销售预测。回答要专业、实用、简洁。'})
+                });
+                const data = await res.json();
+                return data.success ? data.content : '❌ ' + (data.error || '请求失败');
+            } catch(e) {
+                return '❌ 网络错误: ' + e.message;
+            }
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+
+        // ── Settings ──
+        function loadCurrentConfig() {
+            // Pre-fill from server-rendered values
+            const provider = '{{ llm_provider }}';
+            const keyMask = '{{ llm_key_mask }}';
+            if (provider) document.getElementById('llm-provider').value = provider;
+        }
+
+        document.getElementById('llm-form').onsubmit = async function(e) {
+            e.preventDefault();
+            const data = {
+                provider: document.getElementById('llm-provider').value,
+                api_key: document.getElementById('llm-api-key').value,
+                api_base: document.getElementById('llm-api-base').value,
+                model: document.getElementById('llm-model').value,
+            };
+            const res = await fetch('/api/llm/config', {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+            document.getElementById('llm-result').innerHTML =
+                '<span class="status-badge status-' + (result.success ? 'ok' : 'err') + '">' +
+                (result.success ? '✅ 保存成功 · ' + result.provider : '❌ ' + (result.error || '保存失败')) + '</span>';
+        };
+
+        async function testLLM() {
+            const el = document.getElementById('llm-result');
+            el.innerHTML = '<span class="typing">测试中...</span>';
+            const res = await fetch('/api/llm/test', {headers: authHeaders()});
+            const result = await res.json();
+            el.innerHTML = '<span class="status-badge status-' + (result.success ? 'ok' : 'err') + '">' +
+                (result.success ? '✅ 连接成功 · ' + result.message : '❌ ' + result.error) + '</span>';
+        }
+    </script>
+</body>
+</html>
+'''
+
+
+@app.route('/')
+def index():
+    llm_provider = config.llm.provider if config.llm.enabled else '未启用'
+    llm_key = config.llm.api_key
+    llm_key_mask = llm_key[:8] + '****' if llm_key and len(llm_key) > 8 else '未设置'
+    return render_template_string(
+        DASHBOARD_HTML,
+        llm_provider=llm_provider,
+        llm_key_mask=llm_key_mask,
+        llm_enabled=config.llm.enabled,
+    )
+
+
+if __name__ == '__main__':
+    print("=" * 50)
+    print("ACAS Pro Web 版本")
+    print("=" * 50)
+    llm_status = config.llm.provider if config.llm.enabled else 'not configured'
+    print(f"LLM: {llm_status}")
+    print(f"访问地址: http://localhost:5000")
+    print("=" * 50)
+    app.run(host='0.0.0.0', port=5000, debug=False, threaded=True)

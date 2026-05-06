@@ -1,0 +1,82 @@
+{
+  "app": {
+    "name": "ACAS Pro",
+    "title": "Intelligent Customer Acquisition System",
+    "version": "v5.1.0"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "content": "Content Creation",
+    "accounts": "Account Matrix",
+    "festival": "Festival Marketing",
+    "video": "Video Maker",
+    "publish": "Publish Manager",
+    "ads": "Ad Manager",
+    "avatar": "AI Avatar",
+    "ecommerce": "E-commerce",
+    "blockchain": "Blockchain Settlement",
+    "forecast": "Sales Forecast",
+    "inventory": "Inventory",
+    "intelligence": "Market Intelligence",
+    "analytics": "Advanced Analytics",
+    "settings": "Settings"
+  },
+  "settings": {
+    "title": "System Settings",
+    "general": "General",
+    "theme": "Theme",
+    "theme_dark": "Dark Mode",
+    "theme_light": "Light Mode",
+    "language": "Language",
+    "startup": "Startup Options",
+    "auto_start": "Launch at startup",
+    "minimize_to_tray": "Minimize to tray",
+    "security": "Security",
+    "change_password": "Change Password",
+    "current_password": "Current Password",
+    "new_password": "New Password",
+    "confirm_password": "Confirm Password",
+    "session_timeout": "Session timeout (minutes)",
+    "max_login_attempts": "Max login attempts",
+    "notifications": "Notifications",
+    "enable_notifications": "Enable notifications",
+    "enable_sound": "Enable sound",
+    "updates": "Updates",
+    "auto_update": "Auto check for updates",
+    "check_now": "Check Now",
+    "current_version": "Current Version",
+    "latest_version": "Latest Version",
+    "about": "About",
+    "license": "License",
+    "copyright": "Copyright"
+  },
+  "login": {
+    "welcome": "Welcome Back",
+    "subtitle": "Login to your ACAS Pro account",
+    "username": "Username",
+    "password": "Password",
+    "remember_me": "Remember me",
+    "login": "Login",
+    "login_with_qq": "Login with QQ",
+    "login_with_wechat": "Login with WeChat",
+    "no_account": "Don't have an account?",
+    "register_now": "Register now",
+    "forgot_password": "Forgot password?"
+  },
+  "update": {
+    "checking": "Checking for updates...",
+    "available": "New version available",
+    "downloading": "Downloading update...",
+    "downloaded": "Update downloaded",
+    "install_now": "Install Now",
+    "remind_later": "Remind me later",
+    "up_to_date": "Up to date"
+  },
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "reset": "Reset",
+    "refresh": "Refresh"
+  }
+}

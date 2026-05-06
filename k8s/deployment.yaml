@@ -1,0 +1,385 @@
+# ACAS Pro - Kubernetes Deployment
+# Production-ready manifests
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: acas-pro
+  labels:
+    name: acas-pro
+    environment: production
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: acas-pro-config
+  namespace: acas-pro
+data:
+  # Application settings
+  APP_ENV: "production"
+  APP_PORT: "8000"
+  LOG_LEVEL: "info"
+  
+  # Database
+  DB_HOST: "postgres-primary"
+  DB_PORT: "5432"
+  DB_NAME: "acas_pro"
+  DB_USER: "acas_app"
+  DB_SSL_MODE: "require"
+  DB_MIN_CONNECTIONS: "5"
+  DB_MAX_CONNECTIONS: "20"
+  
+  # Redis
+  REDIS_HOST: "redis-master"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+  
+  # Vault
+  VAULT_ADDR: "http://vault:8200"
+  VAULT_KV_PATH: "secret/acas-pro"
+  
+  # Security
+  JWT_ACCESS_TOKEN_EXPIRE: "900"
+  JWT_REFRESH_TOKEN_EXPIRE: "604800"
+  MFA_ENABLED: "true"
+  
+  # Rate limiting
+  RATE_LIMIT_REQUESTS: "100"
+  RATE_LIMIT_WINDOW: "60"
+  
+  # Feature flags
+  ENABLE_BLOCKCHAIN: "true"
+  ENABLE_AI_FEATURES: "true"
+  ENABLE_VIDEO_PROCESSING: "true"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acas-pro-api
+  namespace: acas-pro
+  labels:
+    app: acas-pro
+    component: api
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: acas-pro
+      component: api
+  template:
+    metadata:
+      labels:
+        app: acas-pro
+        component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8000"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: acas-pro
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: api
+          image: acas-pro/api:v2.0.0
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+              name: http
+              protocol: TCP
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: acas-pro-secrets
+                  key: db-password
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: acas-pro-secrets
+                  key: redis-password
+            - name: JWT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: acas-pro-secrets
+                  key: jwt-secret
+            - name: VAULT_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: acas-pro-secrets
+                  key: vault-token
+          envFrom:
+            - configMapRef:
+                name: acas-pro-config
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: logs
+              mountPath: /app/logs
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: tmp
+          emptyDir: {}
+        - name: logs
+          emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - acas-pro
+                topologyKey: kubernetes.io/hostname
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acas-pro-worker
+  namespace: acas-pro
+  labels:
+    app: acas-pro
+    component: worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: acas-pro
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: acas-pro
+        component: worker
+    spec:
+      serviceAccountName: acas-pro
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+        - name: worker
+          image: acas-pro/worker:v2.0.0
+          imagePullPolicy: Always
+          envFrom:
+            - configMapRef:
+                name: acas-pro-config
+            - secretRef:
+                name: acas-pro-secrets
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+      volumes:
+        - name: tmp
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: acas-pro-api
+  namespace: acas-pro
+  labels:
+    app: acas-pro
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http
+  selector:
+    app: acas-pro
+    component: api
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: acas-pro-api-external
+  namespace: acas-pro
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 443
+      targetPort: 8000
+      name: https
+  selector:
+    app: acas-pro
+    component: api
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: acas-pro-ingress
+  namespace: acas-pro
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  tls:
+    - hosts:
+        - api.acas-pro.com
+      secretName: acas-pro-tls
+  rules:
+    - host: api.acas-pro.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: acas-pro-api
+                port:
+                  number: 8000
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: acas-pro
+  namespace: acas-pro
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT:role/acas-pro-role
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: acas-pro
+  namespace: acas-pro
+rules:
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: acas-pro
+  namespace: acas-pro
+subjects:
+  - kind: ServiceAccount
+    name: acas-pro
+    namespace: acas-pro
+roleRef:
+  kind: Role
+  name: acas-pro
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: acas-pro-api
+  namespace: acas-pro
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: acas-pro-api
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: acas-pro-api
+  namespace: acas-pro
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: acas-pro
+      component: api
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: acas-pro-secrets
+  namespace: acas-pro
+type: Opaque
+stringData:
+  db-password: changeme-in-production
+  redis-password: changeme-in-production
+  jwt-secret: changeme-in-production
+  vault-token: changeme-in-production
+  encryption-key: changeme-in-production

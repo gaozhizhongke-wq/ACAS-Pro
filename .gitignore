@@ -1,0 +1,69 @@
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+.secrets
+.secret
+*.secret
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+.eggs/
+*.manifest
+*.spec
+
+# Virtual environments
+venv/
+env/
+.env/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ACAS Pro specific
+data/
+logs/
+*.db
+*.sqlite
+*.sqlite3
+vault/
+backup/
+backups/
+
+# Test
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Build artifacts
+dist/
+build/
+*.whl
+
+# Node (if any)
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Temp files
+*.tmp
+*.temp

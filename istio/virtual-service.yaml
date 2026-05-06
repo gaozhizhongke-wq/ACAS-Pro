@@ -1,0 +1,211 @@
+# ACAS Pro - Istio Service Mesh Configuration
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: acas-gateway
+  namespace: acas-pro
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 443
+        name: https
+        protocol: HTTPS
+      tls:
+        mode: SIMPLE
+        credentialName: acas-tls-secret
+      hosts:
+        - "api.acas-pro.com"
+        - "*.acas-pro.com"
+    - port:
+        number: 80
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"
+      # HTTP 重定向到 HTTPS
+      tls:
+        httpsRedirect: true
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: acas-api
+  namespace: acas-pro
+spec:
+  hosts:
+    - api.acas-pro.com
+  gateways:
+    - acas-gateway
+  http:
+    # 健康检查 - 直接透传
+    - match:
+        - uri:
+            exact: /health
+      route:
+        - destination:
+            host: acas-pro-api
+            port:
+              number: 8000
+      timeout: 5s
+      retries:
+        attempts: 0
+    
+    # 认证接口 - 限流更严格
+    - match:
+        - uri:
+            prefix: /api/v1/auth
+      route:
+        - destination:
+            host: acas-pro-api
+            port:
+              number: 8000
+      timeout: 10s
+      retries:
+        attempts: 2
+        perTryTimeout: 5s
+        retryOn: gateway-error,connect-failure,refused-stream
+      # 认证接口限流：10 req/min per IP
+      rateLimits:
+        - stage: REQUEST
+          actions:
+            - remoteAddress: {}
+          limits:
+            - match:
+                - descriptor:
+                    key: remote_address
+              quota: 10
+              validDuration: 60s
+    
+    # 预测接口 - 超时更长
+    - match:
+        - uri:
+            prefix: /api/v1/forecast
+      route:
+        - destination:
+            host: acas-pro-api
+            port:
+              number: 8000
+          weight: 100
+        # 金丝雀发布 - 10% 流量到新版本
+        - destination:
+            host: acas-pro-api
+            subset: v2
+            port:
+              number: 8000
+          weight: 0  # 发布时改为 10
+      timeout: 30s
+      retries:
+        attempts: 1
+        perTryTimeout: 15s
+    
+    # 默认路由
+    - route:
+        - destination:
+            host: acas-pro-api
+            port:
+              number: 8000
+      timeout: 15s
+      retries:
+        attempts: 3
+        perTryTimeout: 5s
+        retryOn: gateway-error,connect-failure,refused-stream,unavailable
+      fault:
+        # 故障注入 - 测试容错 (仅测试环境启用)
+        delay:
+          percentage:
+            value: 0.0
+          fixedDelay: 5s
+---
+# 流量镜像 - 用于新版本测试
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: acas-mirror
+  namespace: acas-pro
+spec:
+  hosts:
+    - acas-pro-api
+  http:
+    - match:
+        - headers:
+            x-mirror-test:
+              exact: "true"
+      route:
+        - destination:
+            host: acas-pro-api
+            subset: stable
+          weight: 100
+        - destination:
+            host: acas-pro-api
+            subset: canary
+          weight: 0
+      mirror:
+        host: acas-pro-api
+        subset: canary
+      mirrorPercentage:
+        value: 100.0
+---
+# 断路器配置
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: acas-circuit-breaker
+  namespace: acas-pro
+spec:
+  host: acas-pro-api
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 100
+      http:
+        http1MaxPendingRequests: 50
+        http2MaxRequests: 100
+        consecutiveErrors: 5
+        interval: 30s
+        baseEjectionTime: 30s
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+    loadBalancer:
+      simple: LEAST_CONN
+  subsets:
+    - name: stable
+      labels:
+        version: v1
+    - name: canary
+      labels:
+        version: v2
+    - name: v2
+      labels:
+        version: v2
+---
+# 数据库连接池管理
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: postgres-connection-pool
+  namespace: acas-pro
+spec:
+  host: postgres.acas-pro.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 20
+        connectTimeout: 30s
+---
+# Redis 连接池
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: redis-connection-pool
+  namespace: acas-pro
+spec:
+  host: redis.acas-pro.svc.cluster.local
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 50

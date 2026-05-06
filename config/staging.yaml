@@ -1,0 +1,50 @@
+# ACAS Pro - 预发布环境配置
+app:
+  name: "ACAS Pro"
+  version: "1.0.0-staging"
+  debug: false
+  log_level: "INFO"
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  reload: false
+  workers: 2
+
+database:
+  host: "postgres-staging.acas-pro.svc.cluster.local"
+  port: 5432
+  name: "acas_pro_staging"
+  pool_size: 10
+  max_overflow: 20
+  echo: false
+
+redis:
+  host: "redis-staging.acas-pro.svc.cluster.local"
+  port: 6379
+  db: 0
+  decode_responses: true
+
+security:
+  jwt_secret: "${JWT_SECRET}"
+  jwt_expiry: 3600  # 1小时
+  password_min_length: 8
+  rate_limit: "60/minute"
+
+features:
+  enable_cache: true
+  enable_metrics: true
+  enable_swagger: true  # 预发布保留文档
+  mock_external_apis: false
+
+logging:
+  format: "json"
+  handlers:
+    - console
+    - file
+  file_path: "/var/log/acas-pro/app.log"
+
+monitoring:
+  prometheus_enabled: true
+  prometheus_port: 9090
+  health_check_interval: 30

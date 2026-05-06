@@ -1,0 +1,73 @@
+groups:
+  - name: acas_pro_alerts
+    interval: 30s
+    rules:
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: rate(acas_api_errors_total[5m]) > 0.1
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }} errors/sec"
+
+      # High Response Time
+      - alert: HighResponseTime
+        expr: histogram_quantile(0.95, rate(acas_request_duration_seconds_bucket[5m])) > 1
+        for: 3m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High response time detected"
+          description: "p95 latency is {{ $value }}s"
+
+      # Database Connection Pool Exhausted
+      - alert: DBConnectionPoolExhausted
+        expr: acas_db_connections_active / acas_db_connections_max > 0.9
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Database connection pool nearly exhausted"
+          description: "{{ $value | humanizePercentage }} of connections in use"
+
+      # Cache Hit Rate Low
+      - alert: LowCacheHitRate
+        expr: acas_cache_hit_rate < 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Cache hit rate is low"
+          description: "Current hit rate: {{ $value | humanizePercentage }}"
+
+      # Service Down
+      - alert: ServiceDown
+        expr: up{job="acas-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "ACAS API service is down"
+          description: "Service has been down for more than 1 minute"
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: acas_memory_usage_bytes / acas_memory_limit_bytes > 0.9
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value | humanizePercentage }}"
+
+      # Disk Space Low
+      - alert: LowDiskSpace
+        expr: acas_disk_free_bytes / acas_disk_total_bytes < 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Low disk space"
+          description: "Only {{ $value | humanizePercentage }} disk space remaining"

@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: acas-pro
+
+resources:
+  - namespace.yaml
+  - configmap.yaml
+  - secret.yaml
+  - postgres.yaml
+  - redis.yaml
+  - deployment.yaml
+  - service.yaml
+  - hpa.yaml
+  - ingress.yaml
+
+images:
+  - name: acas-pro
+    newTag: "1.0.0"
+
+commonLabels:
+  app.kubernetes.io/name: acas-pro
+  app.kubernetes.io/version: "1.0.0"

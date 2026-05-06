@@ -1,0 +1,1104 @@
+openapi: 3.1.0
+info:
+  title: ACAS Pro API
+  description: |
+    ACAS Pro 企业级智能营销系统 API
+    
+    ## 功能模块
+    - 用户认证与授权
+    - 销售预测引擎
+    - 库存优化
+    - 市场情报监测
+    - 内容创作引擎
+    - 多平台账号管理
+    
+    ## 认证方式
+    使用 JWT Bearer Token 认证，在请求头中添加：
+    ```
+    Authorization: Bearer <your_access_token>
+    ```
+    
+    ## 错误码
+    - 400: 请求参数错误
+    - 401: 未授权/Token过期
+    - 403: 权限不足
+    - 404: 资源不存在
+    - 429: 请求频率超限
+    - 500: 服务器内部错误
+    
+  version: 4.0.0
+  contact:
+    name: ACAS Pro Support
+    email: support@acas-pro.example.com
+  license:
+    name: Enterprise License
+    url: https://acas-pro.example.com/license
+
+servers:
+  - url: http://localhost:8000
+    description: 本地开发服务器
+  - url: https://api.acas-pro.example.com
+    description: 生产环境
+
+tags:
+  - name: auth
+    description: 用户认证与授权
+  - name: users
+    description: 用户管理
+  - name: forecast
+    description: 销售预测
+  - name: inventory
+    description: 库存管理
+  - name: intelligence
+    description: 市场情报
+  - name: content
+    description: 内容创作
+  - name: accounts
+    description: 账号管理
+  - name: health
+    description: 系统健康检查
+
+paths:
+  # ============================================
+  # Health Check Endpoints
+  # ============================================
+  /health:
+    get:
+      tags: [health]
+      summary: 存活探针
+      description: 检查应用是否运行
+      responses:
+        '200':
+          description: 应用正常运行
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [healthy]
+                  timestamp:
+                    type: string
+                    format: date-time
+                  uptime_seconds:
+                    type: number
+              example:
+                status: healthy
+                timestamp: "2026-05-01T12:00:00Z"
+                uptime_seconds: 86400
+
+  /ready:
+    get:
+      tags: [health]
+      summary: 就绪探针
+      description: 检查应用是否准备好处理请求
+      responses:
+        '200':
+          description: 应用就绪
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum: [ready]
+                  checks:
+                    type: object
+                    properties:
+                      database:
+                        type: object
+                        properties:
+                          healthy:
+                            type: boolean
+                          latency_ms:
+                            type: number
+                      cache:
+                        type: object
+                        properties:
+                          healthy:
+                            type: boolean
+                          latency_ms:
+                            type: number
+              example:
+                status: ready
+                checks:
+                  database:
+                    healthy: true
+                    latency_ms: 5.2
+                  cache:
+                    healthy: true
+                    latency_ms: 1.3
+
+  /metrics:
+    get:
+      tags: [health]
+      summary: Prometheus 指标
+      description: 获取 Prometheus 格式的监控指标
+      responses:
+        '200':
+          description: Prometheus 指标输出
+          content:
+            text/plain:
+              example: |
+                # HELP acas_http_requests_total Total HTTP requests
+                # TYPE acas_http_requests_total counter
+                acas_http_requests_total{method="GET",path="/api/v1/forecast",status="200"} 1234
+
+  # ============================================
+  # Authentication Endpoints
+  # ============================================
+  /api/v1/auth/register:
+    post:
+      tags: [auth]
+      summary: 用户注册
+      description: 创建新用户账户
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [account, password, email]
+              properties:
+                account:
+                  type: string
+                  minLength: 3
+                  maxLength: 50
+                  description: 用户账号
+                password:
+                  type: string
+                  minLength: 8
+                  description: 密码（至少8位，包含大小写字母和数字）
+                email:
+                  type: string
+                  format: email
+                  description: 邮箱地址
+                nickname:
+                  type: string
+                  maxLength: 100
+                  description: 昵称
+                phone:
+                  type: string
+                  description: 手机号
+                region:
+                  type: string
+                  default: global
+                  description: 地区
+            example:
+              account: testuser
+              password: SecurePass123
+              email: test@example.com
+              nickname: Test User
+              region: cn
+      responses:
+        '201':
+          description: 注册成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: 参数错误
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: 账号已存在
+
+  /api/v1/auth/login:
+    post:
+      tags: [auth]
+      summary: 用户登录
+      description: 使用账号密码登录，获取访问令牌
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [account, password]
+              properties:
+                account:
+                  type: string
+                  description: 用户账号
+                password:
+                  type: string
+                  description: 密码
+            example:
+              account: testuser
+              password: SecurePass123
+      responses:
+        '200':
+          description: 登录成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                    description: 访问令牌
+                  refresh_token:
+                    type: string
+                    description: 刷新令牌
+                  token_type:
+                    type: string
+                    default: Bearer
+                  expires_in:
+                    type: integer
+                    description: 令牌有效期（秒）
+                  user:
+                    $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: 账号或密码错误
+        '429':
+          description: 登录尝试次数过多，账户已锁定
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [auth]
+      summary: 刷新令牌
+      description: 使用刷新令牌获取新的访问令牌
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+                  description: 刷新令牌
+      responses:
+        '200':
+          description: 刷新成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access_token:
+                    type: string
+                  token_type:
+                    type: string
+                    default: Bearer
+                  expires_in:
+                    type: integer
+        '401':
+          description: 刷新令牌无效或已过期
+
+  /api/v1/auth/logout:
+    post:
+      tags: [auth]
+      summary: 用户登出
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 登出成功
+
+  # ============================================
+  # User Management Endpoints
+  # ============================================
+  /api/v1/users/me:
+    get:
+      tags: [users]
+      summary: 获取当前用户信息
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: 用户信息
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+    put:
+      tags: [users]
+      summary: 更新用户信息
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nickname:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                phone:
+                  type: string
+                language:
+                  type: string
+                  enum: [zh-CN, en-US, zh-TW]
+                timezone:
+                  type: string
+      responses:
+        '200':
+          description: 更新成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  /api/v1/users/me/password:
+    put:
+      tags: [users]
+      summary: 修改密码
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [old_password, new_password]
+              properties:
+                old_password:
+                  type: string
+                new_password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: 密码修改成功
+        '400':
+          description: 新密码不符合要求
+        '401':
+          description: 原密码错误
+
+  # ============================================
+  # Forecast Endpoints
+  # ============================================
+  /api/v1/forecast/{product_id}:
+    get:
+      tags: [forecast]
+      summary: 获取产品销售预测
+      description: |
+        使用 StatsForecast AutoTheta/Holt-Winters 算法预测未来销量
+        
+        - 支持最长 90 天预测周期
+        - 返回置信区间和趋势分析
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: product_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: 产品ID
+        - name: horizon
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 90
+            default: 30
+          description: 预测天数
+        - name: include_history
+          in: query
+          schema:
+            type: boolean
+            default: false
+          description: 是否包含历史数据
+      responses:
+        '200':
+          description: 预测结果
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ForecastResult'
+        '404':
+          description: 产品不存在
+
+  /api/v1/forecast/batch:
+    post:
+      tags: [forecast]
+      summary: 批量预测
+      description: 对多个产品同时进行预测
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [product_ids]
+              properties:
+                product_ids:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 100
+                horizon:
+                  type: integer
+                  default: 30
+      responses:
+        '200':
+          description: 批量预测结果
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ForecastResult'
+
+  # ============================================
+  # Inventory Endpoints
+  # ============================================
+  /api/v1/inventory:
+    get:
+      tags: [inventory]
+      summary: 获取库存列表
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: page_size
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [all, low_stock, out_of_stock, normal]
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 库存列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  page:
+                    type: integer
+                  page_size:
+                    type: integer
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InventoryItem'
+
+  /api/v1/inventory/reorder-suggestions:
+    get:
+      tags: [inventory]
+      summary: 补货建议
+      description: 基于销售预测和库存水平生成补货建议
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: min_days_of_stock
+          in: query
+          schema:
+            type: integer
+            default: 14
+          description: 最小库存天数
+      responses:
+        '200':
+          description: 补货建议列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    product_id:
+                      type: string
+                    product_name:
+                      type: string
+                    current_stock:
+                      type: integer
+                    suggested_order_qty:
+                      type: integer
+                    days_until_stockout:
+                      type: number
+                    priority:
+                      type: string
+                      enum: [critical, high, medium, low]
+
+  # ============================================
+  # Intelligence Endpoints
+  # ============================================
+  /api/v1/intelligence/news:
+    get:
+      tags: [intelligence]
+      summary: 获取情报新闻
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: keywords
+          in: query
+          schema:
+            type: string
+          description: 关键词过滤（逗号分隔）
+        - name: sentiment
+          in: query
+          schema:
+            type: string
+            enum: [positive, negative, neutral, all]
+            default: all
+        - name: source
+          in: query
+          schema:
+            type: string
+          description: 新闻来源
+        - name: days
+          in: query
+          schema:
+            type: integer
+            default: 7
+          description: 查询天数范围
+      responses:
+        '200':
+          description: 新闻列表
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                  articles:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/NewsArticle'
+
+  /api/v1/intelligence/reputation:
+    get:
+      tags: [intelligence]
+      summary: 获取品牌口碑评分
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: brand
+          in: query
+          required: true
+          schema:
+            type: string
+          description: 品牌名称
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d, 90d]
+            default: 30d
+      responses:
+        '200':
+          description: 口碑评分
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  brand:
+                    type: string
+                  score:
+                    type: number
+                    minimum: 0
+                    maximum: 100
+                  grade:
+                    type: string
+                    enum: [A, B, C, D, F]
+                  sentiment_distribution:
+                    type: object
+                    properties:
+                      positive:
+                        type: number
+                      neutral:
+                        type: number
+                      negative:
+                        type: number
+                  platform_breakdown:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        platform:
+                          type: string
+                        mentions:
+                          type: integer
+                        avg_sentiment:
+                          type: number
+
+  /api/v1/intelligence/alerts:
+    get:
+      tags: [intelligence]
+      summary: 获取告警列表
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: severity
+          in: query
+          schema:
+            type: string
+            enum: [critical, warning, info, all]
+            default: all
+        - name: acknowledged
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: 告警列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alert'
+
+    post:
+      tags: [intelligence]
+      summary: 发送测试告警
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message:
+                  type: string
+                severity:
+                  type: string
+                  enum: [critical, warning, info]
+                  default: info
+                channels:
+                  type: array
+                  items:
+                    type: string
+                    enum: [wechat_work, dingtalk, feishu, email]
+                  default: [wechat_work]
+      responses:
+        '200':
+          description: 告警发送成功
+
+  # ============================================
+  # Content Endpoints
+  # ============================================
+  /api/v1/content/trends:
+    get:
+      tags: [content]
+      summary: 获取热点趋势
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: platform
+          in: query
+          schema:
+            type: string
+            enum: [douyin, xiaohongshu, kuaishou, bilibili, weibo, all]
+            default: all
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 200
+      responses:
+        '200':
+          description: 热点列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TrendItem'
+
+  /api/v1/content/generate:
+    post:
+      tags: [content]
+      summary: 生成文案
+      description: 使用 AI 生成营销文案
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [topic, style]
+              properties:
+                topic:
+                  type: string
+                  description: 文案主题
+                style:
+                  type: string
+                  enum: [spoken, story, knowledge, recommendation, emotional, promotional]
+                  description: 文案风格
+                platform:
+                  type: string
+                  enum: [douyin, xiaohongshu, kuaishou, bilibili, weibo]
+                  description: 目标平台
+                keywords:
+                  type: array
+                  items:
+                    type: string
+                  description: 关键词
+                region:
+                  type: string
+                  enum: [northwest, middle_east, mongolia, general]
+                  default: general
+                  description: 地域文化适配
+                festival:
+                  type: string
+                  description: 节日主题
+            example:
+              topic: 黑茶养生功效
+              style: knowledge
+              platform: douyin
+              keywords: ["安化黑茶", "养生", "茶文化"]
+              region: northwest
+      responses:
+        '200':
+          description: 生成的文案
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  content:
+                    type: string
+                  word_count:
+                    type: integer
+                  platform:
+                    type: string
+                  estimated_read_time:
+                    type: string
+
+  # ============================================
+  # Account Management Endpoints
+  # ============================================
+  /api/v1/accounts:
+    get:
+      tags: [accounts]
+      summary: 获取账号列表
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: platform
+          in: query
+          schema:
+            type: string
+            enum: [douyin, xiaohongshu, kuaishou, bilibili, weibo, all]
+            default: all
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, expired, error, all]
+            default: all
+      responses:
+        '200':
+          description: 账号列表
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SocialAccount'
+
+  /api/v1/accounts/{account_id}:
+    delete:
+      tags: [accounts]
+      summary: 删除账号
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: 删除成功
+        '404':
+          description: 账号不存在
+
+  /api/v1/accounts/{account_id}/refresh:
+    post:
+      tags: [accounts]
+      summary: 刷新账号 Token
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: account_id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: 刷新成功
+        '400':
+          description: 刷新失败，需要重新授权
+
+# ============================================
+# Components
+# ============================================
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT 访问令牌
+
+  schemas:
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        account:
+          type: string
+        nickname:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [admin, user, viewer]
+        status:
+          type: string
+          enum: [active, inactive, locked]
+        region:
+          type: string
+        language:
+          type: string
+        timezone:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        last_login:
+          type: string
+          format: date-time
+        wallet_balance:
+          type: number
+        model_preference:
+          type: string
+
+    UserResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserProfile'
+
+    ForecastResult:
+      type: object
+      properties:
+        product_id:
+          type: string
+        trend_direction:
+          type: string
+          enum: [up, down, stable]
+        trend_magnitude:
+          type: number
+          description: 趋势幅度（百分比）
+        seasonality_detected:
+          type: boolean
+        model_version:
+          type: string
+        generated_at:
+          type: string
+          format: date-time
+        forecast:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              value:
+                type: number
+              lower:
+                type: number
+                description: 置信区间下限
+              upper:
+                type: number
+                description: 置信区间上限
+              confidence:
+                type: number
+                description: 置信度
+
+    InventoryItem:
+      type: object
+      properties:
+        product_id:
+          type: string
+        sku:
+          type: string
+        name:
+          type: string
+        category:
+          type: string
+        stock_quantity:
+          type: integer
+        reorder_point:
+          type: integer
+        status:
+          type: string
+          enum: [normal, low_stock, out_of_stock]
+        last_updated:
+          type: string
+          format: date-time
+
+    NewsArticle:
+      type: object
+      properties:
+        article_id:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+        source:
+          type: string
+        sentiment:
+          type: string
+          enum: [positive, negative, neutral]
+        sentiment_score:
+          type: number
+          minimum: -1
+          maximum: 1
+        keywords:
+          type: array
+          items:
+            type: string
+        published_at:
+          type: string
+          format: date-time
+        fetched_at:
+          type: string
+          format: date-time
+
+    Alert:
+      type: object
+      properties:
+        alert_id:
+          type: string
+        type:
+          type: string
+        severity:
+          type: string
+          enum: [critical, warning, info]
+        message:
+          type: string
+        source:
+          type: string
+        acknowledged:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    TrendItem:
+      type: object
+      properties:
+        trend_id:
+          type: string
+        title:
+          type: string
+        platform:
+          type: string
+        heat_index:
+          type: number
+        growth_rate:
+          type: number
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        sample_content:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    SocialAccount:
+      type: object
+      properties:
+        account_id:
+          type: string
+        platform:
+          type: string
+        account_name:
+          type: string
+        status:
+          type: string
+          enum: [active, expired, error]
+        followers_count:
+          type: integer
+        last_sync:
+          type: string
+          format: date-time
+        expires_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        error_code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+      example:
+        error: "ValidationError"
+        error_code: "VAL001"
+        message: "请求参数验证失败"
+        details:
+          field: "password"
+          reason: "密码长度至少8位"

@@ -1,0 +1,167 @@
+{
+  "dashboard": {
+    "title": "ACAS Pro - 生产监控",
+    "tags": ["acas", "production"],
+    "timezone": "Asia/Shanghai",
+    "schemaVersion": 36,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "请求速率 (RPS)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{method}} {{endpoint}}"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "P95 延迟",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "P95"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "错误率",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total{status=~\"5..\"}[5m]) / rate(http_requests_total[5m])",
+            "legendFormat": "5xx %"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0}
+      },
+      {
+        "id": 4,
+        "title": "活跃连接",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "active_connections",
+            "legendFormat": "Connections"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0}
+      },
+      {
+        "id": 5,
+        "title": "请求延迟趋势",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.50, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "P50"
+          },
+          {
+            "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "P95"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))",
+            "legendFormat": "P99"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4}
+      },
+      {
+        "id": 6,
+        "title": "HTTP 状态码分布",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(http_requests_total[5m])",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4}
+      },
+      {
+        "id": 7,
+        "title": "数据库连接池",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "db_connections_active",
+            "legendFormat": "Active"
+          },
+          {
+            "expr": "db_connections_idle",
+            "legendFormat": "Idle"
+          },
+          {
+            "expr": "db_connections_max",
+            "legendFormat": "Max"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 8, "x": 0, "y": 12}
+      },
+      {
+        "id": 8,
+        "title": "预测引擎指标",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(forecast_requests_total[5m])",
+            "legendFormat": "Requests/s"
+          },
+          {
+            "expr": "forecast_duration_seconds",
+            "legendFormat": "Duration"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 8, "x": 8, "y": 12}
+      },
+      {
+        "id": 9,
+        "title": "业务指标",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(content_published_total[5m])",
+            "legendFormat": "Content/min"
+          },
+          {
+            "expr": "rate(account_token_refresh_total[5m])",
+            "legendFormat": "Token Refresh/min"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 8, "x": 16, "y": 12}
+      },
+      {
+        "id": 10,
+        "title": "JVM/进程内存",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "process_resident_memory_bytes / 1024 / 1024",
+            "legendFormat": "RSS MB"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 12, "x": 0, "y": 18}
+      },
+      {
+        "id": 11,
+        "title": "登录失败率",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "rate(login_failures_total[5m]) / rate(login_attempts_total[5m])",
+            "legendFormat": "Failure %"
+          }
+        ],
+        "gridPos": {"h": 6, "w": 12, "x": 12, "y": 18}
+      }
+    ]
+  }
+}

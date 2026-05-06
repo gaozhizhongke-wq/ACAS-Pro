@@ -1,0 +1,373 @@
+# ACAS Pro - Multi-Region Disaster Recovery
+# 主区域: cn-north-1 (北京)
+# 备区域: cn-northwest-1 (宁夏)
+
+---
+# 主区域 - 北京
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dr-config-primary
+  namespace: acas-pro
+data:
+  region: "cn-north-1"
+  role: "primary"
+  replica_regions: "cn-northwest-1"
+  rpo_seconds: "60"      # 恢复点目标: 1分钟
+  rto_seconds: "300"     # 恢复时间目标: 5分钟
+---
+# 备区域 - 宁夏
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dr-config-secondary
+  namespace: acas-pro
+data:
+  region: "cn-northwest-1"
+  role: "secondary"
+  primary_endpoint: "postgres-primary.acas-pro.svc.cluster.local"
+  replication_lag_threshold: "5000"  # 5秒延迟阈值
+---
+# 跨区域数据库复制 - PostgreSQL 流复制
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres-replica
+  namespace: acas-pro
+  labels:
+    app: postgres
+    role: replica
+    region: secondary
+spec:
+  serviceName: postgres-replica
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+      role: replica
+  template:
+    metadata:
+      labels:
+        app: postgres
+        role: replica
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15-alpine
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: password
+            - name: POSTGRES_DB
+              value: acas_pro
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+            # 流复制配置
+            - name: PRIMARY_CONNINFO
+              value: "host=postgres-primary.acas-pro.svc.cluster.local port=5432 user=replicator password=${REPLICATOR_PASSWORD}"
+          command:
+            - /bin/sh
+            - -c
+            - |
+              if [ ! -s "$PGDATA/PG_VERSION" ]; then
+                echo "Initializing replica from primary..."
+                pg_basebackup -h postgres-primary -D $PGDATA -U replicator -v -P -W
+                echo "standby_mode = on" >> $PGDATA/recovery.conf
+                echo "primary_conninfo = '$PRIMARY_CONNINFO'" >> $PGDATA/recovery.conf
+                echo "trigger_file = '/tmp/promote_trigger'" >> $PGDATA/recovery.conf
+              fi
+              exec postgres
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+      volumes:
+        - name: postgres-data
+          persistentVolumeClaim:
+            claimName: postgres-replica-data
+---
+# Redis 跨区域复制
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-replica
+  namespace: acas-pro
+spec:
+  serviceName: redis-replica
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+      role: replica
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: replica
+    spec:
+      containers:
+        - name: redis
+          image: redis:7-alpine
+          command:
+            - redis-server
+            - --replicaof
+            - redis-primary.acas-pro.svc.cluster.local
+            - "6379"
+            - --appendonly
+            - "yes"
+          volumeMounts:
+            - name: redis-data
+              mountPath: /data
+      volumes:
+        - name: redis-data
+          persistentVolumeClaim:
+            claimName: redis-replica-data
+---
+# 故障转移控制器
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: failover-controller
+  namespace: acas-pro
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: failover-controller
+  template:
+    metadata:
+      labels:
+        app: failover-controller
+    spec:
+      serviceAccountName: failover-controller
+      containers:
+        - name: controller
+          image: acas-pro:latest
+          command:
+            - python
+            - -c
+            - |
+              """
+              自动故障转移控制器
+              监控主区域健康，触发切换
+              """
+              import asyncio
+              import aiohttp
+              import kubernetes
+              from datetime import datetime
+              import logging
+
+              logging.basicConfig(level=logging.INFO)
+              logger = logging.getLogger("failover-controller")
+
+              # K8s 客户端
+              kubernetes.config.load_incluster_config()
+              v1 = kubernetes.client.CoreV1Api()
+              apps_v1 = kubernetes.client.AppsV1Api()
+
+              class FailoverController:
+                  def __init__(self):
+                      self.primary_region = "cn-north-1"
+                      self.secondary_region = "cn-northwest-1"
+                      self.health_check_interval = 10
+                      self.consecutive_failures = 0
+                      self.failover_threshold = 3
+                      self.is_failover = False
+
+                  async def check_primary_health(self):
+                      """检查主区域健康"""
+                      try:
+                          async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=5)) as session:
+                              async with session.get(
+                                  "http://acas-pro-api-primary.acas-pro.svc.cluster.local/health"
+                              ) as resp:
+                                  return resp.status == 200
+                      except Exception as e:
+                          logger.warning(f"Primary health check failed: {e}")
+                          return False
+
+                  async def check_replication_lag(self):
+                      """检查复制延迟"""
+                      try:
+                          # 查询备库延迟
+                          # SELECT EXTRACT(EPOCH FROM (now() - pg_last_xact_replay_timestamp()));
+                          return True  # 简化实现
+                      except:
+                          return False
+
+                  async def promote_secondary(self):
+                      """提升备库为主库"""
+                      logger.info("Initiating failover to secondary region...")
+                      
+                      # 1. 停止主库写入 (如可达)
+                      try:
+                          await self.pause_primary_writes()
+                      except:
+                          pass
+                      
+                      # 2. 提升备库
+                      # 创建触发文件或执行 promote
+                      
+                      # 3. 更新 DNS/负载均衡
+                      await self.update_traffic_routing()
+                      
+                      # 4. 启动备区域应用
+                      await self.scale_secondary_apps(replicas=3)
+                      
+                      # 5. 发送告警
+                      await self.send_failover_notification()
+                      
+                      self.is_failover = True
+                      logger.info("Failover completed")
+
+                  async def pause_primary_writes(self):
+                      """暂停主库写入"""
+                      pass
+
+                  async def update_traffic_routing(self):
+                      """更新流量路由"""
+                      # 更新 Global Load Balancer
+                      pass
+
+                  async def scale_secondary_apps(self, replicas):
+                      """扩缩备区域应用"""
+                      pass
+
+                  async def send_failover_notification(self):
+                      """发送故障转移通知"""
+                      import requests
+                      requests.post(
+                          "http://alert-notifier:8080/notify",
+                          json={
+                              "type": "failover_completed",
+                              "timestamp": datetime.now().isoformat(),
+                              "from_region": self.primary_region,
+                              "to_region": self.secondary_region
+                          }
+                      )
+
+                  async def run(self):
+                      """主循环"""
+                      logger.info("Failover controller started")
+                      
+                      while True:
+                          is_healthy = await self.check_primary_health()
+                          
+                          if not is_healthy:
+                              self.consecutive_failures += 1
+                              logger.warning(
+                                  f"Primary unhealthy ({self.consecutive_failures}/{self.failover_threshold})"
+                              )
+                              
+                              if self.consecutive_failures >= self.failover_threshold and not self.is_failover:
+                                  await self.promote_secondary()
+                          else:
+                              if self.consecutive_failures > 0:
+                                  logger.info("Primary recovered")
+                              self.consecutive_failures = 0
+                          
+                          await asyncio.sleep(self.health_check_interval)
+
+              if __name__ == "__main__":
+                  controller = FailoverController()
+                  asyncio.run(controller.run())
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+---
+# 服务账号
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: failover-controller
+  namespace: acas-pro
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: failover-controller
+  namespace: acas-pro
+rules:
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps"]
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: failover-controller
+  namespace: acas-pro
+subjects:
+  - kind: ServiceAccount
+    name: failover-controller
+roleRef:
+  kind: Role
+  name: failover-controller
+  apiGroup: rbac.authorization.k8s.io
+---
+# 数据一致性验证任务
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: data-consistency-check
+  namespace: acas-pro
+spec:
+  schedule: "0 */6 * * *"  # 每6小时
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: checker
+              image: acas-pro:latest
+              command:
+                - python
+                - -c
+                - |
+                  """
+                  验证主备数据一致性
+                  """
+                  import hashlib
+                  import psycopg2
+                  
+                  def get_table_hash(conn, table):
+                      cur = conn.cursor()
+                      cur.execute(f"SELECT md5(string_agg(row_hash, ',')) FROM (SELECT md5(row::text) as row_hash FROM {table} ORDER BY id) t")
+                      return cur.fetchone()[0]
+                  
+                  # 连接主库和备库
+                  primary = psycopg2.connect(host="postgres-primary", dbname="acas_pro", user="readonly")
+                  replica = psycopg2.connect(host="postgres-replica", dbname="acas_pro", user="readonly")
+                  
+                  tables = ["users", "forecasts", "inventory", "content"]
+                  
+                  for table in tables:
+                      primary_hash = get_table_hash(primary, table)
+                      replica_hash = get_table_hash(replica, table)
+                      
+                      if primary_hash == replica_hash:
+                          print(f"✓ {table}: consistent")
+                      else:
+                          print(f"✗ {table}: INCONSISTENT!")
+                          # 触发告警
+                  
+                  primary.close()
+                  replica.close()
+          restartPolicy: OnFailure

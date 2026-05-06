@@ -1,0 +1,143 @@
+version: '3.8'
+
+# ACAS Pro v2.1 - Docker Compose 生产编排
+# 高智中科（北京）科技有限公司
+
+services:
+  # PostgreSQL 数据库
+  postgres:
+    image: postgres:15-alpine
+    container_name: acas_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: acas_pro
+      POSTGRES_USER: acas
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme_in_production}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U acas"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - acas_network
+
+  # Redis 缓存
+  redis:
+    image: redis:7-alpine
+    container_name: acas_redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - acas_network
+
+  # ACAS Pro API 服务
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: acas_api
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql://acas:${DB_PASSWORD:-changeme_in_production}@postgres:5432/acas_pro
+      - REDIS_URL=redis://redis:6379/0
+      - JWT_SECRET=${JWT_SECRET:-auto_generate_on_first_run}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:8080}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY:-}
+    volumes:
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+      - ./.keys:/app/.keys
+      - ./certs:/app/certs:ro
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - acas_network
+
+  # Nginx 反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: acas_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+      - ./web_static:/usr/share/nginx/html:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - api
+    networks:
+      - acas_network
+
+  # 可选：Prometheus 监控
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: acas_prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    networks:
+      - acas_network
+    profiles:
+      - monitoring
+
+  # 可选：Grafana 仪表板
+  grafana:
+    image: grafana/grafana:latest
+    container_name: acas_grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana-dashboard.json:/var/lib/grafana/dashboards/acas.json:ro
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD:-admin}
+    networks:
+      - acas_network
+    profiles:
+      - monitoring
+
+volumes:
+  postgres_data:
+  redis_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  acas_network:
+    driver: bridge

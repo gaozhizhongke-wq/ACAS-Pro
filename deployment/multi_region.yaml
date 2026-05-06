@@ -1,0 +1,360 @@
+# ACAS Pro - Multi-Region Deployment
+# Global infrastructure with CDN
+
+# ==================== Primary Region ====================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: acas-pro-primary
+  labels:
+    region: us-east-1
+    role: primary
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acas-pro-api
+  namespace: acas-pro-primary
+spec:
+  replicas: 5
+  selector:
+    matchLabels:
+      app: acas-pro-api
+  template:
+    metadata:
+      labels:
+        app: acas-pro-api
+        region: us-east-1
+    spec:
+      containers:
+        - name: api
+          image: acas-pro/api:v2.0.0
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          env:
+            - name: REGION
+              value: "us-east-1"
+            - name: IS_PRIMARY
+              value: "true"
+            - name: DB_HOST
+              value: "postgres-primary.us-east-1.rds.amazonaws.com"
+            - name: REDIS_HOST
+              value: "redis-primary.us-east-1.cache.amazonaws.com"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: acas-pro-api
+  namespace: acas-pro-primary
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 443
+      targetPort: 8000
+  selector:
+    app: acas-pro-api
+---
+# ==================== Secondary Region ====================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: acas-pro-secondary
+  labels:
+    region: eu-west-1
+    role: secondary
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acas-pro-api
+  namespace: acas-pro-secondary
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: acas-pro-api
+  template:
+    metadata:
+      labels:
+        app: acas-pro-api
+        region: eu-west-1
+    spec:
+      containers:
+        - name: api
+          image: acas-pro/api:v2.0.0
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          env:
+            - name: REGION
+              value: "eu-west-1"
+            - name: IS_PRIMARY
+              value: "false"
+            - name: DB_HOST
+              value: "postgres-replica.eu-west-1.rds.amazonaws.com"
+            - name: REDIS_HOST
+              value: "redis-replica.eu-west-1.cache.amazonaws.com"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: acas-pro-api
+  namespace: acas-pro-secondary
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 443
+      targetPort: 8000
+  selector:
+    app: acas-pro-api
+---
+# ==================== Tertiary Region ====================
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: acas-pro-tertiary
+  labels:
+    region: ap-southeast-1
+    role: tertiary
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: acas-pro-api
+  namespace: acas-pro-tertiary
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: acas-pro-api
+  template:
+    metadata:
+      labels:
+        app: acas-pro-api
+        region: ap-southeast-1
+    spec:
+      containers:
+        - name: api
+          image: acas-pro/api:v2.0.0
+          ports:
+            - containerPort: 8000
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "2000m"
+          env:
+            - name: REGION
+              value: "ap-southeast-1"
+            - name: IS_PRIMARY
+              value: "false"
+            - name: DB_HOST
+              value: "postgres-replica.ap-southeast-1.rds.amazonaws.com"
+            - name: REDIS_HOST
+              value: "redis-replica.ap-southeast-1.cache.amazonaws.com"
+---
+# ==================== Global Load Balancer ====================
+apiVersion: networking.gke.io/v1
+kind: MultiClusterService
+metadata:
+  name: acas-pro-global
+  namespace: acas-pro-primary
+  annotations:
+    networking.gke.io/health-check: "\/health"
+spec:
+  template:
+    spec:
+      selector:
+        app: acas-pro-api
+      ports:
+        - port: 443
+          targetPort: 8000
+---
+apiVersion: networking.gke.io/v1
+kind: MultiClusterIngress
+metadata:
+  name: acas-pro-global-ingress
+  namespace: acas-pro-primary
+  annotations:
+    networking.gke.io/static-ip: acas-pro-global-ip
+    networking.gke.io/pre-shared-certs: acas-pro-ssl-cert
+    networking.gke.io/health-check: "\/health"
+spec:
+  template:
+    spec:
+      backend:
+        serviceName: acas-pro-global
+        servicePort: 443
+      rules:
+        - host: api.acas-pro.com
+          http:
+            paths:
+              - path: /
+                pathType: Prefix
+                backend:
+                  serviceName: acas-pro-global
+                  servicePort: 443
+---
+# ==================== CDN Configuration ====================
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: acas-pro-cdn
+  namespace: acas-pro-primary
+  annotations:
+    kubernetes.io/ingress.class: gce
+    networking.gke.io/managed-certificates: acas-pro-cert
+    networking.gke.io/v1beta1.FrontendConfig: acas-pro-frontend-config
+spec:
+  rules:
+    - host: cdn.acas-pro.com
+      http:
+        paths:
+          - path: /static/*
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: acas-pro-static
+                port:
+                  number: 80
+---
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: acas-pro-frontend-config
+  namespace: acas-pro-primary
+spec:
+  sslPolicy: acas-pro-ssl-policy
+  redirectToHttps:
+    enabled: true
+---
+# ==================== Disaster Recovery ====================
+apiVersion: velero.io/v1
+kind: Schedule
+metadata:
+  name: acas-pro-backup
+  namespace: velero
+spec:
+  schedule: "0 */6 * * *"  # Every 6 hours
+  template:
+    includedNamespaces:
+      - acas-pro-primary
+    excludedResources:
+      - events
+      - pods
+    storageLocation: aws-primary
+    volumeSnapshotLocations:
+      - aws-primary
+    ttl: 720h0m0s  # 30 days
+---
+apiVersion: velero.io/v1
+kind: Restore
+metadata:
+  name: acas-pro-dr-restore
+  namespace: velero
+  annotations:
+    velero.io/priority: "high"
+spec:
+  backupName: acas-pro-backup
+  includedNamespaces:
+    - acas-pro-secondary
+  namespaceMapping:
+    acas-pro-primary: acas-pro-secondary
+---
+# ==================== Cross-Region Replication ====================
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: db-replication-check
+  namespace: acas-pro-primary
+spec:
+  schedule: "*/5 * * * *"  # Every 5 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: replication-check
+              image: postgres:16-alpine
+              command:
+                - sh
+                - -c
+                - |
+                  psql -h $PRIMARY_DB -c "SELECT pg_last_xact_replay_timestamp();" && \
+                  psql -h $SECONDARY_DB -c "SELECT pg_last_xact_replay_timestamp();" && \
+                  psql -h $TERTIARY_DB -c "SELECT pg_last_xact_replay_timestamp();"
+              env:
+                - name: PRIMARY_DB
+                  value: "postgres-primary.us-east-1.rds.amazonaws.com"
+                - name: SECONDARY_DB
+                  value: "postgres-replica.eu-west-1.rds.amazonaws.com"
+                - name: TERTIARY_DB
+                  value: "postgres-replica.ap-southeast-1.rds.amazonaws.com"
+                - name: PGPASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: db-credentials
+                      key: password
+          restartPolicy: OnFailure
+---
+# ==================== Monitoring ====================
+apiVersion: monitoring.googleapis.com/v1
+kind: PodMonitoring
+metadata:
+  name: acas-pro-metrics
+  namespace: acas-pro-primary
+spec:
+  selector:
+    matchLabels:
+      app: acas-pro-api
+  endpoints:
+    - port: 8000
+      interval: 30s
+      path: /metrics
+---
+apiVersion: monitoring.googleapis.com/v1
+kind: Rules
+metadata:
+  name: acas-pro-alerts
+  namespace: acas-pro-primary
+spec:
+  groups:
+    - name: cross-region
+      interval: 60s
+      rules:
+        - alert: CrossRegionReplicationLag
+          expr: |
+            pg_stat_replication_lag_seconds > 30
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Cross-region replication lag detected"
+        - alert: RegionDown
+          expr: |
+            up{job="acas-pro-api", region!="us-east-1"} == 0
+          for: 2m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Secondary region is down"

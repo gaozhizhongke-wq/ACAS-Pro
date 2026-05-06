@@ -1,0 +1,164 @@
+# ACAS Pro - Chaos Engineering
+# Litmus Chaos Experiment: Pod Failure
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: acas-pod-failure
+  namespace: acas-pro
+spec:
+  appinfo:
+    appns: 'acas-pro'
+    applabel: 'app=acas-pro-api'
+    appkind: 'deployment'
+  # 停止条件 - 错误率超过10%自动停止
+  experiments:
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            # 目标Pod数量
+            - name: TOTAL_CHAOS_DURATION
+              value: '60'
+            # 杀死Pod的间隔
+            - name: CHAOS_INTERVAL
+              value: '10'
+            # 强制删除
+            - name: FORCE
+              value: 'true'
+          probe:
+            # HTTP Probe - 验证服务可用性
+            - name: "health-check-probe"
+              type: "httpProbe"
+              mode: "Continuous"
+              runProperties:
+                probeTimeout: "5s"
+                retry: 2
+                interval: "5s"
+                probePollingInterval: "2s"
+                initialDelay: "2s"
+              httpProbe/inputs:
+                url: "http://acas-pro-api.acas-pro.svc.cluster.local:8000/health"
+                insecureSkipVerify: false
+                method:
+                  get:
+                    criteria: "=="
+                    responseCode: "200"
+---
+# 网络延迟实验
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: acas-network-latency
+  namespace: acas-pro
+spec:
+  appinfo:
+    appns: 'acas-pro'
+    applabel: 'app=acas-pro-api'
+    appkind: 'deployment'
+  experiments:
+    - name: network-latency
+      spec:
+        components:
+          env:
+            - name: TARGET_CONTAINER
+              value: 'api'
+            - name: NETWORK_INTERFACE
+              value: 'eth0'
+            - name: LIB_IMAGE
+              value: 'litmuschaos/go-runner:latest'
+            - name: TC_IMAGE
+              value: 'gaiadocker/iproute2'
+            - name: NETWORK_LATENCY
+              value: '2000'  # 2秒延迟
+            - name: TOTAL_CHAOS_DURATION
+              value: '120'
+            - name: CHAOS_INTERVAL
+              value: '10'
+---
+# 数据库故障实验
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: acas-db-failure
+  namespace: acas-pro
+spec:
+  appinfo:
+    appns: 'acas-pro'
+    applabel: 'app=postgres'
+    appkind: 'statefulset'
+  experiments:
+    - name: pod-cpu-hog
+      spec:
+        components:
+          env:
+            - name: CPU_CORES
+              value: '2'
+            - name: TOTAL_CHAOS_DURATION
+              value: '60'
+    - name: pod-memory-hog
+      spec:
+        components:
+          env:
+            - name: MEMORY_CONSUMPTION
+              value: '500'  # 500MB
+            - name: TOTAL_CHAOS_DURATION
+              value: '60'
+---
+# 自定义实验 - API级故障注入
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: chaos-api-fault-injection
+  namespace: acas-pro
+spec:
+  template:
+    spec:
+      containers:
+        - name: chaos-injector
+          image: acas-pro:latest
+          command:
+            - python
+            - -c
+            - |
+              import requests
+              import time
+              import random
+              
+              # 故障注入配置
+              FAULTS = [
+                  {"type": "latency", "probability": 0.1, "delay_ms": 5000},
+                  {"type": "error", "probability": 0.05, "status_code": 500},
+                  {"type": "timeout", "probability": 0.03, "timeout": 0.001},
+              ]
+              
+              print("Starting API fault injection...")
+              
+              for i in range(100):
+                  fault = random.choice(FAULTS)
+                  if random.random() < fault["probability"]:
+                      print(f"Injecting {fault['type']} fault")
+                      
+                      if fault["type"] == "latency":
+                          time.sleep(fault["delay_ms"] / 1000)
+                      
+                      elif fault["type"] == "error":
+                          # 通过管理接口触发错误
+                          requests.post(
+                              "http://acas-pro-api:8000/admin/inject-error",
+                              json={"status_code": fault["status_code"]},
+                              timeout=5
+                          )
+                      
+                      elif fault["type"] == "timeout":
+                          try:
+                              requests.get(
+                                  "http://acas-pro-api:8000/slow-endpoint",
+                                  timeout=fault["timeout"]
+                              )
+                          except:
+                              pass
+                  
+                  time.sleep(1)
+              
+              print("Fault injection completed")
+      restartPolicy: Never

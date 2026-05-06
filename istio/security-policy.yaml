@@ -1,0 +1,179 @@
+# ACAS Pro - Istio Security Policies
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: acas-pro
+spec:
+  mtls:
+    mode: STRICT  # 强制 mTLS
+---
+# 命名空间级 mTLS
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: acas-pro-mtls
+  namespace: acas-pro
+spec:
+  selector:
+    matchLabels:
+      app: acas-pro-api
+  mtls:
+    mode: STRICT
+  portLevelMtls:
+    8000:
+      mode: STRICT
+---
+# 授权策略 - 默认拒绝所有
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all
+  namespace: acas-pro
+spec:
+  {}
+---
+# API 访问策略
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: acas-api-policy
+  namespace: acas-pro
+spec:
+  selector:
+    matchLabels:
+      app: acas-pro-api
+  action: ALLOW
+  rules:
+    # 健康检查 - 允许所有
+    - to:
+        - operation:
+            paths: ["/health", "/ready", "/metrics"]
+      from:
+        - source:
+            namespaces: ["istio-system", "acas-pro", "monitoring"]
+    
+    # 公开 API - 允许外部
+    - to:
+        - operation:
+            paths: ["/api/v1/auth/*", "/api/v1/public/*"]
+            methods: ["POST", "GET"]
+    
+    # 内部 API - 仅允许已认证
+    - to:
+        - operation:
+            paths: ["/api/v1/*"]
+            methods: ["*"]
+      from:
+        - source:
+            requestPrincipals: ["*"]
+      when:
+        - key: request.auth.claims[iss]
+          values: ["https://acas-pro.auth0.com/"]
+    
+    # 管理接口 - 仅允许特定 IP
+    - to:
+        - operation:
+            paths: ["/admin/*"]
+            methods: ["*"]
+      from:
+        - source:
+            remoteIpBlocks: ["10.0.0.0/8", "172.16.0.0/12"]
+---
+# 请求认证 - JWT
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: acas-jwt
+  namespace: acas-pro
+spec:
+  selector:
+    matchLabels:
+      app: acas-pro-api
+  jwtRules:
+    - issuer: "https://acas-pro.auth0.com/"
+      jwksUri: "https://acas-pro.auth0.com/.well-known/jwks.json"
+      audiences: ["acas-pro-api"]
+      forwardOriginalToken: true
+      fromHeaders:
+        - name: authorization
+          prefix: "Bearer "
+---
+# 速率限制 - 全局
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: rate-limit-policy
+  namespace: acas-pro
+spec:
+  selector:
+    matchLabels:
+      app: acas-pro-api
+  action: ALLOW
+  rules:
+    - to:
+        - operation:
+            paths: ["*"]
+      # 配合 EnvoyFilter 实现细粒度限流
+---
+# EnvoyFilter - 高级限流
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: acas-rate-limit
+  namespace: acas-pro
+spec:
+  workloadSelector:
+    labels:
+      app: acas-pro-api
+  configPatches:
+    - applyTo: HTTP_FILTER
+      match:
+        context: SIDECAR_INBOUND
+        listener:
+          filterChain:
+            filter:
+              name: envoy.filters.network.http_connection_manager
+      patch:
+        operation: INSERT_BEFORE
+        value:
+          name: envoy.filters.http.local_ratelimit
+          typed_config:
+            "@type": type.googleapis.com/udpa.type.v1.TypedStruct
+            type_url: type.googleapis.com/envoy.extensions.filters.http.local_ratelimit.v3.LocalRateLimit
+            value:
+              stat_prefix: http_local_rate_limiter
+              token_bucket:
+                max_tokens: 100
+                tokens_per_fill: 10
+                fill_interval: 1s
+              filter_enabled:
+                runtime_key: local_rate_limit_enabled
+                default_value:
+                  numerator: 100
+                  denominator: HUNDRED
+              filter_enforced:
+                runtime_key: local_rate_limit_enforced
+                default_value:
+                  numerator: 100
+                  denominator: HUNDRED
+              response_headers_to_add:
+                - append_action: OVERWRITE_IF_EXISTS_OR_ADD
+                  header:
+                    key: x-local-rate-limit
+                    value: 'true'
+---
+# 出口流量控制
+apiVersion: networking.istio.io/v1beta1
+kind: Sidecar
+metadata:
+  name: default
+  namespace: acas-pro
+spec:
+  outboundTrafficPolicy:
+    mode: REGISTRY_ONLY  # 只允许访问注册的服务
+  egress:
+    - hosts:
+        - "./postgres.acas-pro.svc.cluster.local"
+        - "./redis.acas-pro.svc.cluster.local"
+        - "istio-system/prometheus.istio-system.svc.cluster.local"
