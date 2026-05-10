@@ -1,350 +1,386 @@
-"""ACAS Pro - E2E 端到端测试
-使用 Playwright 模拟真实用户操作
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""ACAS Pro E2E Tests - End-to-End Integration Tests
 
-注意：E2E 测试需要 Playwright 浏览器环境，在 CI/无头环境自动跳过。
-手动运行: pytest tests/test_e2e.py -m e2e --run-e2e
+Tests the complete user journey from HTTP request to response.
 """
+
 import pytest
-import shutil
+import requests
+import time
+import subprocess
+import sys
+import os
+import signal
+from datetime import datetime
 
-# Check if Playwright browsers are available
-try:
-    from playwright.sync_api import sync_playwright
-    _BROWSER_AVAILABLE = True
-except ImportError:
-    _BROWSER_AVAILABLE = False
-
-# E2E tests use async fixtures incompatible with pytest 9.x sync test classes.
-# Force skip until tests are rewritten with async test functions.
-pytestmark = pytest.mark.skip(reason="E2E tests require async test rewrite for pytest 9.x compatibility")
-import asyncio
-from typing import AsyncGenerator
-from playwright.async_api import async_playwright, Page, Browser, BrowserContext
+# Skip marker for E2E tests that require running server
+pytestmark = pytest.mark.skipif(
+    os.environ.get('SKIP_E2E') == '1',
+    reason='E2E tests require running server (set SKIP_E2E=1 to skip)'
+)
 
 
-@pytest.fixture(scope="session")
-async def browser() -> AsyncGenerator[Browser, None]:
-    """启动浏览器"""
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        yield browser
-        await browser.close()
+class TestHealthEndpoint:
+    """Test health check endpoint"""
+    
+    def test_health_returns_200(self, server):
+        """GET /api/health should return 200"""
+        resp = requests.get(f'{server}/api/health', timeout=5)
+        assert resp.status_code == 200
+        data = resp.json()
+        assert data['status'] == 'healthy'
+    
+    def test_health_has_timestamp(self, server):
+        """Health response should include timestamp"""
+        resp = requests.get(f'{server}/api/health', timeout=5)
+        data = resp.json()
+        assert 'timestamp' in data
 
 
-@pytest.fixture
-async def context(browser: Browser) -> AsyncGenerator[BrowserContext, None]:
-    """创建新上下文"""
-    context = await browser.new_context(
-        viewport={"width": 1920, "height": 1080},
-        record_video_dir="./test-videos/"
+class TestAuthFlow:
+    """Test complete authentication flow"""
+    
+    def test_register_new_user(self, server, unique_user):
+        """Register a new user should return 201"""
+        resp = requests.post(
+            f'{server}/api/auth/register',
+            json={
+                'account': unique_user['account'],
+                'password': unique_user['password'],
+                'email': unique_user['email']
+            },
+            timeout=5
+        )
+        assert resp.status_code in (200, 201, 409)  # 409 if user exists
+    
+    def test_login_returns_token(self, server, test_user):
+        """Login should return JWT token"""
+        # First register
+        requests.post(
+            f'{server}/api/auth/register',
+            json={
+                'account': test_user['account'],
+                'password': test_user['password'],
+                'email': test_user['email']
+            },
+            timeout=5
+        )
+        
+        # Then login
+        resp = requests.post(
+            f'{server}/api/auth/login',
+            json={
+                'account': test_user['account'],
+                'password': test_user['password']
+            },
+            timeout=5
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert 'token' in data
+        assert len(data['token']) > 50  # JWT should be long
+    
+    def test_login_wrong_password(self, server, test_user):
+        """Login with wrong password should return 401"""
+        requests.post(
+            f'{server}/api/auth/register',
+            json={
+                'account': test_user['account'],
+                'password': test_user['password'],
+                'email': test_user['email']
+            },
+            timeout=5
+        )
+        
+        resp = requests.post(
+            f'{server}/api/auth/login',
+            json={
+                'account': test_user['account'],
+                'password': 'WrongPassword123!'
+            },
+            timeout=5
+        )
+        assert resp.status_code == 401
+    
+    def test_protected_route_requires_token(self, server):
+        """Protected routes should reject requests without token"""
+        resp = requests.get(f'{server}/api/auth/me', timeout=5)
+        assert resp.status_code == 401
+    
+    def test_protected_route_accepts_valid_token(self, server, test_user):
+        """Protected routes should accept valid JWT token"""
+        # Register and login
+        requests.post(
+            f'{server}/api/auth/register',
+            json={
+                'account': test_user['account'],
+                'password': test_user['password'],
+                'email': test_user['email']
+            },
+            timeout=5
+        )
+        
+        login_resp = requests.post(
+            f'{server}/api/auth/login',
+            json={
+                'account': test_user['account'],
+                'password': test_user['password']
+            },
+            timeout=5
+        )
+        token = login_resp.json()['token']
+        
+        # Access protected route
+        resp = requests.get(
+            f'{server}/api/auth/me',
+            headers={'Authorization': f'Bearer {token}'},
+            timeout=5
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert 'account' in data
+
+
+class TestDashboardFlow:
+    """Test dashboard data flow"""
+    
+    def test_dashboard_stats_requires_auth(self, server):
+        """Dashboard stats should require authentication"""
+        resp = requests.get(f'{server}/api/dashboard/stats', timeout=5)
+        assert resp.status_code == 401
+    
+    def test_dashboard_stats_returns_data(self, server, auth_token):
+        """Dashboard stats should return data structure"""
+        resp = requests.get(
+            f'{server}/api/dashboard/stats',
+            headers={'Authorization': f'Bearer {auth_token}'},
+            timeout=5
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        # Should have these keys even if values are 0
+        assert 'revenue' in data
+        assert 'orders' in data
+        assert 'inventory' in data
+        assert 'risk_alerts' in data
+
+
+class TestLLMFlow:
+    """Test LLM chat flow"""
+    
+    def test_llm_config_requires_auth(self, server):
+        """LLM config endpoint should require authentication"""
+        resp = requests.post(
+            f'{server}/api/llm/config',
+            json={'provider': 'deepseek'},
+            timeout=5
+        )
+        assert resp.status_code == 401
+    
+    def test_llm_chat_requires_auth(self, server):
+        """LLM chat endpoint should require authentication"""
+        resp = requests.post(
+            f'{server}/api/llm/chat',
+            json={'message': 'Hello'},
+            timeout=5
+        )
+        assert resp.status_code == 401
+    
+    @pytest.mark.skipif(
+        os.environ.get('DEEPSEEK_API_KEY') is None,
+        reason='Requires DEEPSEEK_API_KEY'
     )
-    yield context
-    await context.close()
+    def test_llm_chat_returns_response(self, server, auth_token):
+        """LLM chat should return AI response"""
+        resp = requests.post(
+            f'{server}/api/llm/chat',
+            headers={'Authorization': f'Bearer {auth_token}'},
+            json={
+                'message': 'What is 2+2?',
+                'conversation_id': 'test-conv-001'
+            },
+            timeout=30  # LLM may take time
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert 'response' in data or 'message' in data
+
+
+class TestAccountsFlow:
+    """Test accounts management flow"""
+    
+    def test_accounts_requires_auth(self, server):
+        """Accounts endpoint should require authentication"""
+        resp = requests.get(f'{server}/api/accounts', timeout=5)
+        assert resp.status_code == 401
+    
+    def test_accounts_returns_list(self, server, auth_token):
+        """Accounts should return a list"""
+        resp = requests.get(
+            f'{server}/api/accounts',
+            headers={'Authorization': f'Bearer {auth_token}'},
+            timeout=5
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert isinstance(data, list) or 'accounts' in data
+
+
+class TestFestivalsFlow:
+    """Test festivals management flow"""
+    
+    def test_festivals_requires_auth(self, server):
+        """Festivals endpoint should require authentication"""
+        resp = requests.get(f'{server}/api/festivals', timeout=5)
+        assert resp.status_code == 401
+    
+    def test_festivals_returns_list(self, server, auth_token):
+        """Festivals should return a list"""
+        resp = requests.get(
+            f'{server}/api/festivals',
+            headers={'Authorization': f'Bearer {auth_token}'},
+            timeout=5
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert isinstance(data, list) or 'festivals' in data
+
+
+class TestForecastFlow:
+    """Test sales forecast flow"""
+    
+    def test_forecast_requires_auth(self, server):
+        """Forecast endpoint should require authentication"""
+        resp = requests.get(f'{server}/api/forecast/daily', timeout=5)
+        assert resp.status_code == 401
+    
+    def test_forecast_returns_data(self, server, auth_token):
+        """Forecast should return prediction data"""
+        resp = requests.get(
+            f'{server}/api/forecast/daily',
+            headers={'Authorization': f'Bearer {auth_token}'},
+            timeout=5
+        )
+        assert resp.status_code == 200
+        # Response can be list or dict with 'forecast' key
+
+
+class TestProductsFlow:
+    """Test products/inventory flow"""
+    
+    def test_products_requires_auth(self, server):
+        """Products endpoint should require authentication"""
+        resp = requests.get(f'{server}/api/products', timeout=5)
+        assert resp.status_code == 401
+    
+    def test_products_returns_list(self, server, auth_token):
+        """Products should return a list"""
+        resp = requests.get(
+            f'{server}/api/products',
+            headers={'Authorization': f'Bearer {auth_token}'},
+            timeout=5
+        )
+        assert resp.status_code == 200
+        data = resp.json()
+        assert isinstance(data, list) or 'products' in data
+
+
+# ── Fixtures ──────────────────────────────────────────────────────────────
+
+@pytest.fixture(scope='session')
+def server():
+    """Start Flask server for E2E tests"""
+    port = 5555
+    base_url = f'http://127.0.0.1:{port}'
+    
+    # Check if server already running
+    try:
+        resp = requests.get(f'{base_url}/api/health', timeout=2)
+        if resp.status_code == 200:
+            yield base_url
+            return
+    except:
+        pass
+    
+    # Start server
+    env = os.environ.copy()
+    env['FLASK_ENV'] = 'testing'
+    
+    proc = subprocess.Popen(
+        [sys.executable, '-m', 'flask', 'run', '--port', str(port)],
+        cwd=os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+        env=env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    
+    # Wait for server to start
+    max_wait = 10
+    for i in range(max_wait):
+        try:
+            resp = requests.get(f'{base_url}/api/health', timeout=1)
+            if resp.status_code == 200:
+                break
+        except:
+            time.sleep(1)
+    
+    yield base_url
+    
+    # Cleanup
+    proc.terminate()
+    try:
+        proc.wait(timeout=5)
+    except:
+        proc.kill()
 
 
 @pytest.fixture
-async def page(context: BrowserContext) -> AsyncGenerator[Page, None]:
-    """创建新页面"""
-    page = await context.new_page()
-    yield page
-    await page.close()
+def unique_user():
+    """Generate unique user for each test"""
+    timestamp = int(time.time() * 1000)
+    return {
+        'account': f'test_user_{timestamp}',
+        'password': 'TestPass123!@#',
+        'email': f'test_{timestamp}@example.com'
+    }
 
 
-# ============================================
-# 认证流程 E2E
-# ============================================
-@pytest.mark.e2e
-@pytest.mark.asyncio
-class TestAuthE2E:
-    """认证端到端测试"""
-    
-    BASE_URL = "http://localhost:8000"
-    
-    async def test_login_success(self, page: Page):
-        """成功登录流程"""
-        # 打开登录页
-        await page.goto(f"{self.BASE_URL}/login")
-        
-        # 输入凭证
-        await page.fill("[data-testid='username']", "test_user")
-        await page.fill("[data-testid='password']", "Test123!@#")
-        
-        # 点击登录
-        await page.click("[data-testid='login-btn']")
-        
-        # 验证跳转
-        await page.wait_for_url("**/dashboard")
-        
-        # 验证元素存在
-        assert await page.is_visible("[data-testid='user-menu']")
-    
-    async def test_login_failure(self, page: Page):
-        """登录失败流程"""
-        await page.goto(f"{self.BASE_URL}/login")
-        
-        await page.fill("[data-testid='username']", "test_user")
-        await page.fill("[data-testid='password']", "wrong_password")
-        await page.click("[data-testid='login-btn']")
-        
-        # 验证错误提示
-        await page.wait_for_selector("[data-testid='error-msg']")
-        error_text = await page.inner_text("[data-testid='error-msg']")
-        assert "用户名或密码错误" in error_text
-    
-    async def test_logout(self, page: Page):
-        """登出流程"""
-        # 先登录
-        await page.goto(f"{self.BASE_URL}/login")
-        await page.fill("[data-testid='username']", "test_user")
-        await page.fill("[data-testid='password']", "Test123!@#")
-        await page.click("[data-testid='login-btn']")
-        await page.wait_for_url("**/dashboard")
-        
-        # 点击用户菜单
-        await page.click("[data-testid='user-menu']")
-        
-        # 点击登出
-        await page.click("[data-testid='logout-btn']")
-        
-        # 验证跳转回登录页
-        await page.wait_for_url("**/login")
+@pytest.fixture
+def test_user():
+    """Standard test user"""
+    return {
+        'account': 'e2e_test_user',
+        'password': 'E2ETest123!@#',
+        'email': 'e2e@example.com'
+    }
 
 
-# ============================================
-# 销售预测 E2E
-# ============================================
-@pytest.mark.e2e
-@pytest.mark.asyncio
-class TestForecastE2E:
-    """销售预测端到端测试"""
+@pytest.fixture
+def auth_token(server, test_user):
+    """Get authentication token for tests"""
+    # Register user
+    requests.post(
+        f'{server}/api/auth/register',
+        json={
+            'account': test_user['account'],
+            'password': test_user['password'],
+            'email': test_user['email']
+        },
+        timeout=5
+    )
     
-    BASE_URL = "http://localhost:8000"
+    # Login
+    resp = requests.post(
+        f'{server}/api/auth/login',
+        json={
+            'account': test_user['account'],
+            'password': test_user['password']
+        },
+        timeout=5
+    )
     
-    async def test_create_forecast_job(self, page: Page):
-        """创建预测任务"""
-        await page.goto(f"{self.BASE_URL}/forecast")
-        
-        # 选择产品
-        await page.click("[data-testid='product-select']")
-        await page.click("text=产品 A")
-        
-        # 选择时间范围
-        await page.fill("[data-testid='start-date']", "2024-01-01")
-        await page.fill("[data-testid='end-date']", "2024-12-31")
-        
-        # 选择预测天数
-        await page.fill("[data-testid='forecast-days']", "30")
-        
-        # 提交
-        await page.click("[data-testid='submit-btn']")
-        
-        # 验证加载状态
-        await page.wait_for_selector("[data-testid='loading-spinner']")
-        
-        # 验证结果出现
-        await page.wait_for_selector("[data-testid='forecast-chart']", timeout=30000)
-        
-        # 验证图表数据
-        assert await page.is_visible("[data-testid='forecast-chart']")
+    if resp.status_code == 200:
+        return resp.json()['token']
     
-    async def test_forecast_with_inventory(self, page: Page):
-        """预测+库存优化联动"""
-        await page.goto(f"{self.BASE_URL}/forecast")
-        
-        # 创建预测
-        await page.click("[data-testid='product-select']")
-        await page.click("text=产品 B")
-        await page.fill("[data-testid='forecast-days']", "30")
-        
-        # 勾选库存优化
-        await page.check("[data-testid='enable-inventory']")
-        
-        await page.click("[data-testid='submit-btn']")
-        
-        # 等待结果
-        await page.wait_for_selector("[data-testid='inventory-suggestion']", timeout=30000)
-        
-        # 验证库存建议
-        suggestion = await page.inner_text("[data-testid='inventory-suggestion']")
-        assert "安全库存" in suggestion
-        assert "EOQ" in suggestion
-
-
-# ============================================
-# 内容发布 E2E
-# ============================================
-@pytest.mark.e2e
-@pytest.mark.asyncio
-class TestContentE2E:
-    """内容发布端到端测试"""
-    
-    BASE_URL = "http://localhost:8000"
-    
-    async def test_create_content(self, page: Page):
-        """创建内容任务"""
-        await page.goto(f"{self.BASE_URL}/content")
-        
-        # 选择平台
-        await page.click("[data-testid='platform-xiaohongshu']")
-        
-        # 输入主题
-        await page.fill("[data-testid='content-topic']", "夏季护肤新品推荐")
-        
-        # 选择风格
-        await page.click("[data-testid='style-casual']")
-        
-        # 生成内容
-        await page.click("[data-testid='generate-btn']")
-        
-        # 等待生成
-        await page.wait_for_selector("[data-testid='generated-content']", timeout=60000)
-        
-        # 验证内容生成
-        content = await page.inner_text("[data-testid='generated-content']")
-        assert len(content) > 50
-    
-    async def test_publish_content(self, page: Page):
-        """发布内容到平台"""
-        await page.goto(f"{self.BASE_URL}/content")
-        
-        # 选择已有内容
-        await page.click("[data-testid='content-item']:first-child")
-        
-        # 点击发布
-        await page.click("[data-testid='publish-btn']")
-        
-        # 确认发布
-        await page.click("[data-testid='confirm-publish']")
-        
-        # 等待发布完成
-        await page.wait_for_selector("[data-testid='publish-success']", timeout=120000)
-        
-        # 验证状态
-        status = await page.inner_text("[data-testid='publish-status']")
-        assert "发布成功" in status
-
-
-# ============================================
-# 市场情报 E2E
-# ============================================
-@pytest.mark.e2e
-@pytest.mark.asyncio
-class TestIntelligenceE2E:
-    """市场情报端到端测试"""
-    
-    BASE_URL = "http://localhost:8000"
-    
-    async def test_view_market_trends(self, page: Page):
-        """查看市场趋势"""
-        await page.goto(f"{self.BASE_URL}/intelligence")
-        
-        # 等待数据加载
-        await page.wait_for_selector("[data-testid='trend-chart']")
-        
-        # 验证图表
-        assert await page.is_visible("[data-testid='trend-chart']")
-        
-        # 切换时间范围
-        await page.click("[data-testid='range-7d']")
-        
-        # 验证数据更新
-        await page.wait_for_selector("[data-testid='chart-updated']")
-    
-    async def test_competitor_analysis(self, page: Page):
-        """竞品分析"""
-        await page.goto(f"{self.BASE_URL}/intelligence/competitors")
-        
-        # 添加竞品
-        await page.fill("[data-testid='competitor-url']", "https://example.com/product")
-        await page.click("[data-testid='add-competitor']")
-        
-        # 等待分析
-        await page.wait_for_selector("[data-testid='analysis-result']", timeout=30000)
-        
-        # 验证分析结果
-        result = await page.inner_text("[data-testid='analysis-result']")
-        assert "价格" in result or "销量" in result
-
-
-# ============================================
-# 性能 E2E
-# ============================================
-@pytest.mark.e2e
-@pytest.mark.asyncio
-class TestPerformanceE2E:
-    """性能端到端测试"""
-    
-    BASE_URL = "http://localhost:8000"
-    
-    async def test_page_load_time(self, page: Page):
-        """页面加载时间"""
-        import time
-        
-        start = time.time()
-        await page.goto(f"{self.BASE_URL}/dashboard")
-        await page.wait_for_load_state("networkidle")
-        load_time = time.time() - start
-        
-        # 断言加载时间 < 3s
-        assert load_time < 3.0, f"页面加载时间 {load_time}s 超过 3s"
-    
-    async def test_api_response_time(self, page: Page):
-        """API 响应时间"""
-        # 监听网络请求
-        async with page.expect_response("**/api/v1/forecast") as response_info:
-            await page.goto(f"{self.BASE_URL}/forecast")
-            await page.click("[data-testid='product-select']")
-            await page.click("text=产品 A")
-            await page.click("[data-testid='submit-btn']")
-        
-        response = await response_info.value
-        
-        # 获取响应时间
-        timing = await response.request.timing()
-        response_time = timing["responseEnd"] - timing["startTime"]
-        
-        # 断言响应时间 < 5s
-        assert response_time < 5000, f"API 响应时间 {response_time}ms 超过 5s"
-
-
-# ============================================
-# 并发 E2E
-# ============================================
-@pytest.mark.e2e
-@pytest.mark.asyncio
-class TestConcurrencyE2E:
-    """并发端到端测试"""
-    
-    BASE_URL = "http://localhost:8000"
-    
-    async def test_concurrent_forecasts(self, browser: Browser):
-        """并发预测请求"""
-        async def create_forecast_task(index: int):
-            context = await browser.new_context()
-            page = await context.new_page()
-            
-            try:
-                await page.goto(f"{self.BASE_URL}/forecast")
-                await page.click("[data-testid='product-select']")
-                await page.click(f"text=产品 {chr(65 + index)}")
-                await page.fill("[data-testid='forecast-days']", "30")
-                await page.click("[data-testid='submit-btn']")
-                
-                await page.wait_for_selector(
-                    "[data-testid='forecast-chart']",
-                    timeout=30000
-                )
-                return True
-            except Exception as e:
-                print(f"Task {index} failed: {e}")
-                return False
-            finally:
-                await context.close()
-        
-        # 并发 5 个预测任务
-        tasks = [create_forecast_task(i) for i in range(5)]
-        results = await asyncio.gather(*tasks)
-        
-        # 验证至少 80% 成功
-        success_rate = sum(results) / len(results)
-        assert success_rate >= 0.8, f"并发成功率 {success_rate*100}% < 80%"
+    pytest.skip('Could not get auth token')

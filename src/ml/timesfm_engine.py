@@ -8,7 +8,7 @@ Enterprise-grade time series forecasting
 import numpy as np
 from dataclasses import dataclass
 from typing import List, Tuple, Dict, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from statistics import mean, stdev
 
 from acas_pro.core.logging import get_logger
@@ -136,7 +136,7 @@ class TimesFMEngine:
             trend_magnitude=trend["magnitude"],
             seasonality_detected=has_seasonality,
             model_version=self.MODEL_VERSION,
-            generated_at=datetime.utcnow()
+            generated_at=datetime.now(timezone.utc)
         )
     
     def _calculate_trend(self, values: List[float]) -> Dict:
@@ -258,7 +258,7 @@ class TimesFMEngine:
             last_date = historical_data[-1][0]
         else:
             last_value = 100
-            last_date = datetime.utcnow()
+            last_date = datetime.now(timezone.utc)
         
         forecast_points = []
         for i in range(horizon_days):
@@ -278,7 +278,7 @@ class TimesFMEngine:
             trend_magnitude=0.0,
             seasonality_detected=False,
             model_version=f"{self.MODEL_VERSION}-fallback",
-            generated_at=datetime.utcnow()
+            generated_at=datetime.now(timezone.utc)
         )
 
 

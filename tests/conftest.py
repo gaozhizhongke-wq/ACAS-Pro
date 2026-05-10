@@ -16,6 +16,22 @@ import sys
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
 
+# ── pytest-qt: use offscreen platform (no display required) ──
+os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
+
+
+def pytest_configure(config):
+    """Configure pytest-qt for offscreen testing."""
+    config.option.qt_flags = ['offscreen']
+
+
+# ── pytest-qt hooks ──
+@pytest.hookimpl(tryfirst=True)
+def qtbot_wait_callback(timeout):
+    """Reduce wait time for CI speed."""
+    pass
+
+
 @pytest.fixture
 def temp_dir():
     """Create temporary directory for tests"""

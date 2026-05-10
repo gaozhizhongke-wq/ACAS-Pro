@@ -8,7 +8,7 @@ Enterprise news aggregation and risk detection
 import hashlib
 import random
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Optional, Set
 from enum import Enum
 
@@ -167,13 +167,13 @@ class MarketIntelligenceEngine:
             List of news articles
         """
         # Check cache
-        if self._cache_time and datetime.utcnow() - self._cache_time < self._cache_ttl:
+        if self._cache_time and datetime.now(timezone.utc) - self._cache_time < self._cache_ttl:
             articles = self._cache
         else:
             # Generate simulated data (in production, this would fetch from APIs)
             articles = self._generate_sample_data(100)
             self._cache = articles
-            self._cache_time = datetime.utcnow()
+            self._cache_time = datetime.now(timezone.utc)
         
         # Apply filters
         filtered = articles
@@ -188,7 +188,7 @@ class MarketIntelligenceEngine:
             ]
         
         # Filter by time
-        cutoff = datetime.utcnow() - timedelta(hours=hours_back)
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours_back)
         filtered = [a for a in filtered if a.published_at > cutoff]
         
         # Sort by relevance and time
@@ -199,7 +199,7 @@ class MarketIntelligenceEngine:
     def _generate_sample_data(self, count: int) -> List[NewsArticle]:
         """Generate simulated news data"""
         articles = []
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         templates = [
             {
@@ -319,15 +319,15 @@ class MarketIntelligenceEngine:
                 
                 # Create alert
                 alert = RiskAlert(
-                    id=f"alert_{pattern_key}_{datetime.utcnow().strftime('%Y%m%d%H%M')}",
+                    id=f"alert_{pattern_key}_{datetime.now(timezone.utc).strftime('%Y%m%d%H%M')}",
                     level=pattern_data["risk_level"],
                     title=f"{pattern_key.replace('_', ' ').title()} Risk Detected",
                     description=f"Multiple indicators of {pattern_key.replace('_', ' ')} detected in {len(matched_articles)} reports.",
                     category=pattern_data["category"],
                     source_articles=[a.id for a in matched_articles[:5]],
                     affected_regions=list(affected_regions),
-                    detected_at=datetime.utcnow(),
-                    expires_at=datetime.utcnow() + timedelta(days=3),
+                    detected_at=datetime.now(timezone.utc),
+                    expires_at=datetime.now(timezone.utc) + timedelta(days=3),
                     recommended_actions=self._get_recommended_actions(pattern_key)
                 )
                 alerts.append(alert)

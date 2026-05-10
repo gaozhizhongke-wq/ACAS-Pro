@@ -9,7 +9,7 @@ import hashlib
 import time
 import urllib.parse
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Optional
 
 import requests

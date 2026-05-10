@@ -6,7 +6,7 @@ Calculate brand reputation scores from sentiment analysis results
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Optional
 from collections import defaultdict
 from enum import Enum
@@ -57,7 +57,7 @@ class ReputationScore:
     
     def __post_init__(self):
         if self.calculated_at is None:
-            self.calculated_at = datetime.utcnow()
+            self.calculated_at = datetime.now(timezone.utc)
     
     def to_dict(self) -> Dict:
         return {
@@ -436,7 +436,7 @@ if __name__ == "__main__":
             title="产品体验很好",
             content="...",
             source="weibo",
-            published_at=datetime.utcnow(),
+            published_at=datetime.now(timezone.utc),
             sentiment_score=0.8,
             sentiment_level="positive",
             platform="weibo",
@@ -447,7 +447,7 @@ if __name__ == "__main__":
             title="物流太慢了",
             content="...",
             source="douyin",
-            published_at=datetime.utcnow(),
+            published_at=datetime.now(timezone.utc),
             sentiment_score=-0.6,
             sentiment_level="negative",
             platform="douyin",
@@ -458,7 +458,7 @@ if __name__ == "__main__":
             title="质量不错",
             content="...",
             source="xiaohongshu",
-            published_at=datetime.utcnow(),
+            published_at=datetime.now(timezone.utc),
             sentiment_score=0.5,
             sentiment_level="positive",
             platform="xiaohongshu",

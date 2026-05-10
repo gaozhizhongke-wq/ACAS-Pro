@@ -7,7 +7,7 @@ Enterprise inventory management with AI-powered recommendations
 
 from dataclasses import dataclass
 from typing import List, Dict, Optional, Tuple
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from statistics import mean, stdev
 
 from acas_pro.core.logging import get_logger
@@ -270,7 +270,7 @@ class InventoryOptimizer:
                     impact = 3
                     actions = ["维持当前策略"]
                 
-                stockout_date = datetime.utcnow() + timedelta(days=days_to_stockout)
+                stockout_date = datetime.now(timezone.utc) + timedelta(days=days_to_stockout)
                 
                 risk = StockoutRisk(
                     product_id=product_id,

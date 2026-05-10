@@ -1,41 +1,61 @@
-# ACAS Pro v2.1 - Docker 镜像
-# 高智中科（北京）科技有限公司
+# ACAS Pro - Production Dockerfile
+# Multi-stage build for optimized production image
 
-FROM python:3.11-slim
+# Stage 1: Build dependencies
+FROM python:3.11-slim as builder
 
-# 设置工作目录
 WORKDIR /app
 
-# 安装系统依赖
-RUN apt-get update && apt-get install -y \
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
-    postgresql-client \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+# Install Python dependencies
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
+
+# Stage 2: Production image
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# 复制依赖文件
-COPY requirements.txt .
+# Copy virtual environment from builder
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
-# 安装 Python 依赖
-RUN pip install --no-cache-dir -r requirements.txt
-
-# 复制应用代码
-COPY . .
-
-# 创建必要目录
-RUN mkdir -p logs backups .keys certs
-
-# 非 root 用户运行
+# Create non-root user
 RUN useradd -m -u 1000 acas && \
+    mkdir -p /app/data /app/logs && \
     chown -R acas:acas /app
+
+# Copy application code
+COPY --chown=acas:acas src/ ./src/
+COPY --chown=acas:acas web_app.py .
+COPY --chown=acas:acas wsgi.py .
+COPY --chown=acas:acas .env.example .
+
+# Switch to non-root user
 USER acas
 
-# 暴露端口
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:5000/api/health || exit 1
+
+# Expose port
 EXPOSE 5000
 
-# 健康检查
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:5000/health || exit 1
-
-# 启动命令
-CMD ["python", "api_server_v2.py"]
+# Run production server
+CMD ["python", "wsgi.py"]

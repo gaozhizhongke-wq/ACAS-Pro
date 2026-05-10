@@ -10,7 +10,7 @@ import secrets
 import hashlib
 import hmac
 import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from typing import Optional, Dict, Any, Tuple
 
 from acas_pro.core.config import config
@@ -110,7 +110,7 @@ class JWTManager:
     @staticmethod
     def generate_token(user_id: str, extra_claims: Dict[str, Any] = None) -> str:
         """Generate JWT token"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         payload = {
             'sub': user_id,
             'iat': now,
@@ -163,7 +163,7 @@ class SessionManager:
                        user_agent: str = None) -> str:
         """Create new session"""
         token = secrets.token_urlsafe(32)
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         expires = now + timedelta(minutes=config.security.session_timeout_minutes)
         
         session_data = {
@@ -214,7 +214,7 @@ class SessionManager:
                 return None
             
             expires = datetime.fromisoformat(row['expires_at'])
-            if datetime.utcnow() > expires:
+            if datetime.now(timezone.utc) > expires:
                 # Session expired
                 db.execute("DELETE FROM sessions WHERE token = ?", (token,))
                 return None
@@ -255,7 +255,7 @@ class RateLimiter:
     def is_allowed(self, key: str, max_attempts: int = 5, 
                    window_seconds: int = 300) -> bool:
         """Check if action is allowed under rate limit"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         window_start = now - timedelta(seconds=window_seconds)
         
         # Clean old attempts
@@ -274,7 +274,7 @@ class RateLimiter:
         """Record an attempt"""
         if key not in self._attempts:
             self._attempts[key] = []
-        self._attempts[key].append(datetime.utcnow())
+        self._attempts[key].append(datetime.now(timezone.utc))
     
     def reset(self, key: str):
         """Reset attempts for key"""

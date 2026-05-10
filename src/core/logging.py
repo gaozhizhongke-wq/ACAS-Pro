@@ -10,7 +10,7 @@ import json
 import logging
 import logging.handlers
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from functools import wraps
 
@@ -50,7 +50,7 @@ class StructuredFormatter(logging.Formatter):
     
     def format(self, record: logging.LogRecord) -> str:
         log_data = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "level": record.levelname,
             "logger": record.name,
             "message": record.getMessage(),
@@ -86,7 +86,7 @@ class ConsoleFormatter(logging.Formatter):
         color = self.COLORS.get(record.levelname, self.COLORS["RESET"])
         reset = self.COLORS["RESET"]
         
-        timestamp = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
         return f"{color}[{timestamp}] [{record.levelname}] {record.name}: {record.getMessage()}{reset}"
 
 
@@ -175,7 +175,7 @@ class AuditLogger:
                 INSERT INTO audit_log (timestamp, event_type, user_id, ip_address, details, severity)
                 VALUES (?, ?, ?, ?, ?, ?)
             """, (
-                datetime.utcnow().isoformat(),
+                datetime.now(timezone.utc).isoformat(),
                 event_type,
                 user_id,
                 ip_address,

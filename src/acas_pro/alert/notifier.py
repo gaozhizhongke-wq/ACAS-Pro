@@ -8,7 +8,7 @@ Enterprise alert notification system with WeChat Work, Email, SMS support
 import json
 import smtplib
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from typing import List, Dict, Optional, Callable
@@ -53,7 +53,7 @@ class AlertMessage:
     
     def __post_init__(self):
         if self.timestamp is None:
-            self.timestamp = datetime.utcnow()
+            self.timestamp = datetime.now(timezone.utc)
     
     def to_markdown(self) -> str:
         """Format as markdown for WeChat Work"""
@@ -345,7 +345,7 @@ class AlertNotifier:
         record = {
             "alert": alert.to_dict(),
             "channels": {c.value: s for c, s in results.items()},
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         
         self._history.append(record)

@@ -194,7 +194,7 @@ class SentimentAnalyzer:
             key_phrases=key_phrases,
             entities=entities,
             language=language,
-            analyzed_at=datetime.utcnow().isoformat()
+            analyzed_at=datetime.now(timezone.utc).isoformat()
         )
     
     def _detect_language(self, text: str) -> str:
@@ -326,7 +326,7 @@ class SentimentAnalyzer:
         return [self.analyze(text) for text in texts]
 
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Global instance
 sentiment_analyzer = SentimentAnalyzer()

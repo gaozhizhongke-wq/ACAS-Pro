@@ -8,7 +8,7 @@
     "is_active": true,
     "mfa_enabled": false,
     "created_at": "2026-05-03T12:00:03.322662",
-    "last_login": "2026-05-06T00:16:24.264246"
+    "last_login": "2026-05-10T09:20:09.468041"
   },
   "CnHIMc2kP1svANcpeGbV4A": {
     "id": "CnHIMc2kP1svANcpeGbV4A",
@@ -272,6 +272,138 @@
     "is_active": true,
     "mfa_enabled": false,
     "created_at": "2026-05-06T00:16:24.186671",
+    "last_login": null
+  },
+  "lNoQIlpnIqAoz85WmEQNfw": {
+    "id": "lNoQIlpnIqAoz85WmEQNfw",
+    "email": "test@acas.pro",
+    "name": "Test User",
+    "role": "operator",
+    "tenant_id": "tenant-test",
+    "is_active": true,
+    "mfa_enabled": false,
+    "created_at": "2026-05-06T03:29:12.150348",
+    "last_login": null
+  },
+  "AWmUK8WpmNA3SlqIKOJxmg": {
+    "id": "AWmUK8WpmNA3SlqIKOJxmg",
+    "email": "test@acas.pro",
+    "name": "Test User",
+    "role": "operator",
+    "tenant_id": "tenant-test",
+    "is_active": true,
+    "mfa_enabled": false,
+    "created_at": "2026-05-06T04:38:01.949072",
+    "last_login": null
+  },
+  "ShcKZ69AjTpOvKLI_UtxfQ": {
+    "id": "ShcKZ69AjTpOvKLI_UtxfQ",
+    "email": "test@acas.pro",
+    "name": "Test User",
+    "role": "operator",
+    "tenant_id": "tenant-test",
+    "is_active": true,
+    "mfa_enabled": false,
+    "created_at": "2026-05-06T04:40:16.065528",
+    "last_login": null
+  },
+  "kGtgFqq4boTlQ8IT4RToMw": {
+    "id": "kGtgFqq4boTlQ8IT4RToMw",
+    "email": "test@acas.pro",
+    "name": "Test User",
+    "role": "operator",
+    "tenant_id": "tenant-test",
+    "is_active": true,
+    "mfa_enabled": false,
+    "created_at": "2026-05-06T23:44:18.091601",
+    "last_login": null
+  },
+  "1F6eNj6s11JVJ3zcL6AKBg": {
+    "id": "1F6eNj6s11JVJ3zcL6AKBg",
+    "email": "test@acas.pro",
+    "name": "Test User",
+    "role": "operator",
+    "tenant_id": "tenant-test",
+    "is_active": true,
+    "mfa_enabled": false,
+    "created_at": "2026-05-07T00:23:26.140757",
+    "last_login": null
+  },
+  "Mdj9ehBWysGXCNhiC501wQ": {
+    "id": "Mdj9ehBWysGXCNhiC501wQ",
+    "email": "test@acas.pro",
+    "name": "Test User",
+    "role": "operator",
+    "tenant_id": "tenant-test",
+    "is_active": true,
+    "mfa_enabled": false,
+    "created_at": "2026-05-07T02:02:26.473639",
+    "last_login": null
+  },
+  "9De0bCYOgCguFoWXHZbBxQ": {
+    "id": "9De0bCYOgCguFoWXHZbBxQ",
+    "email": "test@acas.pro",
+    "name": "Test User",
+    "role": "operator",
+    "tenant_id": "tenant-test",
+    "is_active": true,
+    "mfa_enabled": false,
+    "created_at": "2026-05-07T08:28:19.031731",
+    "last_login": null
+  },
+  "bLZkdgwDo9zPc5cHdJ7lRw": {
+    "id": "bLZkdgwDo9zPc5cHdJ7lRw",
+    "email": "test@acas.pro",
+    "name": "Test User",
+    "role": "operator",
+    "tenant_id": "tenant-test",
+    "is_active": true,
+    "mfa_enabled": false,
+    "created_at": "2026-05-09T11:44:38.478457",
+    "last_login": null
+  },
+  "zTbhK_aioIQI4HoZB6Oojw": {
+    "id": "zTbhK_aioIQI4HoZB6Oojw",
+    "email": "test@acas.pro",
+    "name": "Test User",
+    "role": "operator",
+    "tenant_id": "tenant-test",
+    "is_active": true,
+    "mfa_enabled": false,
+    "created_at": "2026-05-09T13:15:21.028277",
+    "last_login": null
+  },
+  "J025nQDaZ3u_SKLo641l7A": {
+    "id": "J025nQDaZ3u_SKLo641l7A",
+    "email": "test@acas.pro",
+    "name": "Test User",
+    "role": "operator",
+    "tenant_id": "tenant-test",
+    "is_active": true,
+    "mfa_enabled": false,
+    "created_at": "2026-05-10T09:04:24.295382",
+    "last_login": null
+  },
+  "lYik4bVnbyreviivlAYfqw": {
+    "id": "lYik4bVnbyreviivlAYfqw",
+    "email": "test@acas.pro",
+    "name": "Test User",
+    "role": "operator",
+    "tenant_id": "tenant-test",
+    "is_active": true,
+    "mfa_enabled": false,
+    "created_at": "2026-05-10T09:19:57.238351",
+    "last_login": null
+  },
+  "KN3NddTWng3sAJm33RzTRA": {
+    "id": "KN3NddTWng3sAJm33RzTRA",
+    "email": "test@acas.pro",
+    "name": "Test User",
+    "role": "operator",
+    "tenant_id": "tenant-test",
+    "is_active": true,
+    "mfa_enabled": false,
+    "created_at": "2026-05-10T09:20:09.389042",
     "last_login": null
   }
 }

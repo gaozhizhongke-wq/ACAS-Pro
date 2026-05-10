@@ -8,7 +8,7 @@ Health checks, metrics, and observability
 import time
 import json
 import psutil
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Optional
 from dataclasses import dataclass, field
 from collections import defaultdict
@@ -102,7 +102,7 @@ class HealthChecker:
         """
         return {
             "status": "alive",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "version": config.version
         }
     
@@ -122,7 +122,7 @@ class HealthChecker:
         
         return {
             "status": "ready" if all_healthy else "not_ready",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "checks": {
                 name: {
                     "healthy": status.healthy,
@@ -280,7 +280,7 @@ class RequestTracker:
             "user_id": user_id,
             "ip_address": ip_address,
             "start_time": time.time(),
-            "start_timestamp": datetime.utcnow().isoformat()
+            "start_timestamp": datetime.now(timezone.utc).isoformat()
         }
         
         return request_id
@@ -297,7 +297,7 @@ class RequestTracker:
             "status_code": status_code,
             "duration_ms": round(duration_ms, 2),
             "error": error,
-            "end_timestamp": datetime.utcnow().isoformat()
+            "end_timestamp": datetime.now(timezone.utc).isoformat()
         }
         
         # Add to log (keep last 1000)
