@@ -7,10 +7,14 @@ Third-party login integration (QQ/WeChat)
 import json
 import urllib.request
 import urllib.parse
+import urllib.error
 import secrets
-from typing import Optional, Dict, Tuple
+import logging
+from typing import Optional, Dict, Tuple, NamedTuple
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -23,6 +27,15 @@ class OAuthUserInfo:
     email: Optional[str] = None
 
 
+class TokenResponse(NamedTuple):
+    """OAuth token response"""
+    access_token: str
+    expires_in: int
+    refresh_token: Optional[str] = None
+    openid: Optional[str] = None
+    scope: Optional[str] = None
+
+
 class OAuthProvider(ABC):
     """OAuth提供者基类"""
     
@@ -32,12 +45,12 @@ class OAuthProvider(ABC):
         pass
     
     @abstractmethod
-    def get_access_token(self, code: str) -> Optional[str]:
-        """通过授权码获取访问令牌"""
+    def get_token_response(self, code: str) -> Optional[TokenResponse]:
+        """通过授权码获取完整token响应"""
         pass
     
     @abstractmethod
-    def get_user_info(self, access_token: str) -> Optional[OAuthUserInfo]:
+    def get_user_info(self, access_token: str, openid: str) -> Optional[OAuthUserInfo]:
         """获取用户信息"""
         pass
 
@@ -45,7 +58,6 @@ class OAuthProvider(ABC):
 class QQOAuth(OAuthProvider):
     """QQ OAuth"""
     
-    # QQ互联配置（从 config.oauth 读取）
     @property
     def APP_ID(self): return self._cfg.qq_app_id
     @property
@@ -57,6 +69,7 @@ class QQOAuth(OAuthProvider):
     
     AUTH_URL = "https://graph.qq.com/oauth2.0/authorize"
     TOKEN_URL = "https://graph.qq.com/oauth2.0/token"
+    OPENID_URL = "https://graph.qq.com/oauth2.0/me"
     USER_INFO_URL = "https://graph.qq.com/user/get_user_info"
     
     def get_authorization_url(self, state: str) -> str:
@@ -69,7 +82,7 @@ class QQOAuth(OAuthProvider):
         }
         return f"{self.AUTH_URL}?{urllib.parse.urlencode(params)}"
     
-    def get_access_token(self, code: str) -> Optional[str]:
+    def get_token_response(self, code: str) -> Optional[TokenResponse]:
         params = {
             "grant_type": "authorization_code",
             "client_id": self.APP_ID,
@@ -81,32 +94,50 @@ class QQOAuth(OAuthProvider):
             url = f"{self.TOKEN_URL}?{urllib.parse.urlencode(params)}"
             with urllib.request.urlopen(url, timeout=10) as response:
                 data = urllib.parse.parse_qs(response.read().decode())
-                return data.get("access_token", [None])[0]
-        except Exception:
+                access_token = data.get("access_token", [None])[0]
+                if not access_token:
+                    return None
+                return TokenResponse(
+                    access_token=access_token,
+                    expires_in=int(data.get("expires_in", ["7200"])[0]),
+                    refresh_token=data.get("refresh_token", [None])[0]
+                )
+        except urllib.error.HTTPError as e:
+            logger.error(f"QQ OAuth HTTP error: {e.code} - {e.reason}")
+            return None
+        except urllib.error.URLError as e:
+            logger.error(f"QQ OAuth URL error: {e.reason}")
+            return None
+        except Exception as e:
+            logger.error(f"QQ OAuth error: {e}")
             return None
     
-    def get_user_info(self, access_token: str) -> Optional[OAuthUserInfo]:
-        # QQ需要先获取openid
+    def get_openid(self, access_token: str) -> Optional[str]:
+        """获取QQ的openid"""
         try:
-            # 获取openid
-            openid_url = f"https://graph.qq.com/oauth2.0/me?access_token={access_token}"
-            with urllib.request.urlopen(openid_url, timeout=10) as response:
-                # 解析JSONP响应
+            url = f"{self.OPENID_URL}?access_token={access_token}"
+            with urllib.request.urlopen(url, timeout=10) as response:
                 text = response.read().decode()
-                # 移除callback
+                # Parse JSONP response
                 if "callback" in text:
-                    text = text[text.index("(")+1:text.rindex(")")]
+                    text = text[text.index("(") + 1:text.rindex(")")]
                 data = json.loads(text)
-                openid = data.get("openid")
-                client_id = data.get("client_id")
-            
+                return data.get("openid")
+        except Exception as e:
+            logger.error(f"QQ openid error: {e}")
+            return None
+    
+    def get_user_info(self, access_token: str, openid: str) -> Optional[OAuthUserInfo]:
+        if not openid:
+            # Get openid first
+            openid = self.get_openid(access_token)
             if not openid:
                 return None
-            
-            # 获取用户信息
+        
+        try:
             params = {
                 "access_token": access_token,
-                "oauth_consumer_key": client_id or self.APP_ID,
+                "oauth_consumer_key": self.APP_ID,
                 "openid": openid
             }
             url = f"{self.USER_INFO_URL}?{urllib.parse.urlencode(params)}"
@@ -120,14 +151,14 @@ class QQOAuth(OAuthProvider):
                 avatar=data.get("figureurl_qq_2", data.get("figureurl", "")),
                 email=None
             )
-        except Exception:
+        except Exception as e:
+            logger.error(f"QQ user info error: {e}")
             return None
 
 
 class WeChatOAuth(OAuthProvider):
     """微信 OAuth"""
     
-    # 微信开放平台配置（从 config.oauth 读取）
     @property
     def APP_ID(self): return self._cfg.wechat_app_id
     @property
@@ -139,6 +170,7 @@ class WeChatOAuth(OAuthProvider):
     
     AUTH_URL = "https://open.weixin.qq.com/connect/qrconnect"
     TOKEN_URL = "https://api.weixin.qq.com/sns/oauth2/access_token"
+    REFRESH_URL = "https://api.weixin.qq.com/sns/oauth2/refresh_token"
     USER_INFO_URL = "https://api.weixin.qq.com/sns/userinfo"
     
     def get_authorization_url(self, state: str) -> str:
@@ -151,7 +183,11 @@ class WeChatOAuth(OAuthProvider):
         }
         return f"{self.AUTH_URL}?{urllib.parse.urlencode(params)}#wechat_redirect"
     
-    def get_access_token(self, code: str) -> Optional[str]:
+    def get_token_response(self, code: str) -> Optional[TokenResponse]:
+        """
+        获取微信token响应
+        微信的token响应包含: access_token, expires_in, refresh_token, openid, scope
+        """
         params = {
             "appid": self.APP_ID,
             "secret": self.APP_SECRET,
@@ -162,31 +198,81 @@ class WeChatOAuth(OAuthProvider):
             url = f"{self.TOKEN_URL}?{urllib.parse.urlencode(params)}"
             with urllib.request.urlopen(url, timeout=10) as response:
                 data = json.loads(response.read().decode())
-                return data.get("access_token")
-        except Exception:
+                
+            # Check for error response from WeChat
+            if "errcode" in data and data["errcode"] != 0:
+                logger.error(f"WeChat token error: {data.get('errmsg', 'unknown')}")
+                return None
+            
+            access_token = data.get("access_token")
+            if not access_token:
+                logger.error("WeChat token response missing access_token")
+                return None
+            
+            return TokenResponse(
+                access_token=access_token,
+                expires_in=data.get("expires_in", 7200),
+                refresh_token=data.get("refresh_token"),
+                openid=data.get("openid"),  # Critical: WeChat returns openid here!
+                scope=data.get("scope")
+            )
+        except urllib.error.HTTPError as e:
+            logger.error(f"WeChat OAuth HTTP error: {e.code} - {e.reason}")
+            return None
+        except urllib.error.URLError as e:
+            logger.error(f"WeChat OAuth URL error: {e.reason}")
+            return None
+        except json.JSONDecodeError as e:
+            logger.error(f"WeChat OAuth JSON decode error: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"WeChat OAuth error: {e}")
             return None
     
-    def get_user_info(self, access_token: str) -> Optional[OAuthUserInfo]:
-        # 微信需要在获取token时保存openid
-        # 这里简化处理，实际需要完整流程
+    def get_user_info(self, access_token: str, openid: str) -> Optional[OAuthUserInfo]:
+        """
+        获取微信用户信息
+        必须传入从token响应中获取的openid
+        """
+        if not openid:
+            logger.error("WeChat get_user_info called without openid")
+            return None
+        
         try:
-            # 假设我们有openid
             params = {
                 "access_token": access_token,
-                "openid": "placeholder"  # 实际需要从token响应中获取
+                "openid": openid  # Use the openid from token response
             }
             url = f"{self.USER_INFO_URL}?{urllib.parse.urlencode(params)}"
             with urllib.request.urlopen(url, timeout=10) as response:
                 data = json.loads(response.read().decode())
             
+            # Check for WeChat API errors
+            if "errcode" in data and data["errcode"] != 0:
+                logger.error(f"WeChat userinfo error: {data.get('errmsg', 'unknown')}")
+                return None
+            
+            # Use unionid if available (for cross-app linking), fallback to openid
+            user_openid = data.get("unionid") or data.get("openid", openid)
+            
             return OAuthUserInfo(
                 provider="wechat",
-                openid=data.get("unionid", data.get("openid", "")),
+                openid=user_openid,
                 nickname=data.get("nickname", ""),
                 avatar=data.get("headimgurl", ""),
                 email=None
             )
-        except Exception:
+        except urllib.error.HTTPError as e:
+            logger.error(f"WeChat user info HTTP error: {e.code} - {e.reason}")
+            return None
+        except urllib.error.URLError as e:
+            logger.error(f"WeChat user info URL error: {e.reason}")
+            return None
+        except json.JSONDecodeError as e:
+            logger.error(f"WeChat user info JSON decode error: {e}")
+            return None
+        except Exception as e:
+            logger.error(f"WeChat user info error: {e}")
             return None
 
 
@@ -210,16 +296,65 @@ class OAuthService:
         return url, state
     
     def handle_callback(self, provider: str, code: str) -> Optional[OAuthUserInfo]:
-        """处理授权回调"""
+        """
+        处理授权回调
+        
+        微信流程:
+        1. get_token_response(code) -> TokenResponse(access_token, openid, ...)
+        2. get_user_info(access_token, openid) -> OAuthUserInfo
+        
+        返回完整的用户信息
+        """
         provider_obj = self._providers.get(provider)
         if not provider_obj:
+            logger.error(f"Unknown OAuth provider: {provider}")
             return None
         
-        access_token = provider_obj.get_access_token(code)
-        if not access_token:
+        # Step 1: Get token response (contains openid for WeChat)
+        token_resp = provider_obj.get_token_response(code)
+        if not token_resp:
+            logger.error(f"Failed to get token for {provider}")
             return None
         
-        return provider_obj.get_user_info(access_token)
+        # Step 2: Get user info using access_token and openid from token response
+        user_info = provider_obj.get_user_info(token_resp.access_token, token_resp.openid)
+        if not user_info:
+            logger.error(f"Failed to get user info for {provider}")
+            return None
+        
+        logger.info(f"OAuth login success: {provider}/{user_info.openid}")
+        return user_info
+    
+    def refresh_token(self, provider: str, refresh_token: str) -> Optional[TokenResponse]:
+        """刷新access_token"""
+        if provider != "wechat":
+            logger.warning(f"Token refresh not supported for {provider}")
+            return None
+        
+        try:
+            params = {
+                "appid": self._cfg.wechat_app_id,
+                "grant_type": "refresh_token",
+                "refresh_token": refresh_token
+            }
+            url = f"{WeChatOAuth.REFRESH_URL}?{urllib.parse.urlencode(params)}"
+            with urllib.request.urlopen(url, timeout=10) as response:
+                data = json.loads(response.read().decode())
+            
+            if "errcode" in data and data["errcode"] != 0:
+                logger.error(f"WeChat refresh error: {data.get('errmsg')}")
+                return None
+            
+            return TokenResponse(
+                access_token=data.get("access_token"),
+                expires_in=data.get("expires_in", 7200),
+                refresh_token=data.get("refresh_token"),
+                openid=data.get("openid"),
+                scope=data.get("scope")
+            )
+        except Exception as e:
+            logger.error(f"WeChat token refresh error: {e}")
+            return None
     
     def available_providers(self) -> list:
         """获取可用的OAuth提供者"""

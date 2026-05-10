@@ -125,7 +125,7 @@ class RSSCollector:
         
         # Collect concurrently
         all_articles = []
-        cutoff_time = datetime.utcnow() - timedelta(hours=hours_back)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours_back)
         
         with ThreadPoolExecutor(max_workers=5) as executor:
             futures = {
@@ -209,7 +209,7 @@ class RSSCollector:
         elif hasattr(entry, 'updated_parsed') and entry.updated_parsed:
             return datetime(*entry.updated_parsed[:6])
         else:
-            return datetime.utcnow()
+            return datetime.now(timezone.utc)
     
     def _detect_language(self, text: str) -> str:
         """Detect language from text"""

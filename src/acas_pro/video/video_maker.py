@@ -167,7 +167,7 @@ class VideoMaker:
         "dissolve",       # 溶解
     ]
     
-    def __init__(self, db: Database = None, output_dir: str = None):
+    def __init__(self, db: 'DatabaseManager' = None, output_dir: str = None):
         self.db = db or DatabaseManager()
         self.output_dir = output_dir or os.path.expanduser("~/ACAS-Videos")
         self._init_database()

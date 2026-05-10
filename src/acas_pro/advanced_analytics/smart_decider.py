@@ -715,11 +715,8 @@ class SmartDecider:
     
     def _generate_decision_id(self) -> str:
         """生成决策ID"""
-        import hashlib
-        timestamp = datetime.now().isoformat()
-        random_str = str(random.random())
-        hash_input = f"{timestamp}_{random_str}"
-        return f"DEC_{hashlib.md5(hash_input.encode()).hexdigest()[:10].upper()}"
+        import uuid
+        return f"DEC_{uuid.uuid4().hex[:16].upper()}"
     
     def approve_decision(self, decision_id: str) -> bool:
         """批准决策"""
@@ -848,10 +845,8 @@ class SmartDecider:
     
     def _generate_report_id(self) -> str:
         """生成报告ID"""
-        import hashlib
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-        hash_input = f"{timestamp}_report"
-        return f"RPT_{hashlib.md5(hash_input.encode()).hexdigest()[:8].upper()}"
+        import uuid
+        return f"RPT_{uuid.uuid4().hex[:12].upper()}"
     
     def export_decisions(self, decisions: List[Decision], format: str = 'json') -> str:
         """导出决策列表"""

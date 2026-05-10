@@ -171,7 +171,7 @@ class PublishManager:
         },
     }
     
-    def __init__(self, db: Database = None):
+    def __init__(self, db: 'DatabaseManager' = None):
         self.db = db or DatabaseManager()
         self._init_database()
         
@@ -274,7 +274,7 @@ class PublishManager:
         
     def get_task(self, task_id: str) -> Optional[PublishTask]:
         """获取任务"""
-        row = self.db.fetchone("SELECT * FROM publish_tasks WHERE id = ?", (task_id,))
+        row = self.db.execute_one("SELECT * FROM publish_tasks WHERE id = ?", (task_id,))
         if not row:
             return None
         return self._row_to_task(row)
@@ -518,7 +518,7 @@ class PublishManager:
         query += " ORDER BY created_at DESC LIMIT ?"
         params.append(limit)
         
-        rows = self.db.fetchall(query, params)
+        rows = self.db.execute(query, tuple(params))
         tasks = [self._row_to_task(row) for row in rows]
         
         # 平台筛选（在内存中处理）

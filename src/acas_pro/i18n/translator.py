@@ -27,8 +27,9 @@ class Translator:
                 with open(lang_file, "r", encoding="utf-8") as f:
                     self._translations[lang] = json.load(f)
                 return True
-            except Exception:
-                pass
+            except Exception as e:
+                import logging
+                logging.warning(f'Failed to load language file {lang_file}: {e}')
         return False
     
     def set_language(self, lang: str) -> bool:

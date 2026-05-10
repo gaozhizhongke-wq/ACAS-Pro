@@ -52,7 +52,8 @@ class ShopCredentials:
         try:
             expiry = datetime.fromisoformat(self.expires_at)
             return datetime.now() > expiry
-        except:
+        except Exception as e:
+            logger.warning(f"Failed to parse expiry date: {e}")
             return True
 
 

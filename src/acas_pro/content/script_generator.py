@@ -186,7 +186,7 @@ class ScriptGenerator:
         },
     }
     
-    def __init__(self, db: Database = None):
+    def __init__(self, db: 'DatabaseManager' = None):
         self.db = db or DatabaseManager()
         self._init_database()
         

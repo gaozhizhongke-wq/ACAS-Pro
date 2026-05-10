@@ -74,9 +74,9 @@ class UserService:
             return False, "Account already exists", None
         
         # Create user
-        user_id = f"U{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3]}"
+        user_id = f"U{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')[:-3]}"
         password_hash = password_hasher.hash(password)
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         
         # Determine language from region
         language = "zh"
@@ -158,8 +158,8 @@ class UserService:
         # Check if locked
         if user.get("locked_until"):
             locked_until = datetime.fromisoformat(user["locked_until"])
-            if datetime.utcnow() < locked_until:
-                remaining = (locked_until - datetime.utcnow()).seconds // 60
+            if datetime.now(timezone.utc) < locked_until:
+                remaining = (locked_until - datetime.now(timezone.utc)).seconds // 60
                 return False, f"Account is locked. Try again in {remaining} minutes.", None
         
         # Check status
@@ -173,7 +173,7 @@ class UserService:
             
             if failed_count >= 5:
                 # Lock account
-                lock_until = (datetime.utcnow() + timedelta(minutes=30)).isoformat()
+                lock_until = (datetime.now(timezone.utc) + timedelta(minutes=30)).isoformat()
                 db.update("users",
                     {"failed_login_count": failed_count, "locked_until": lock_until},
                     "id = ?", (user["id"],)
@@ -203,7 +203,7 @@ class UserService:
             return False, "Invalid account or password", None
         
         # Successful login
-        now = datetime.utcnow().isoformat()
+        now = datetime.now(timezone.utc).isoformat()
         db.update("users", {
             "last_login": now,
             "login_count": user.get("login_count", 0) + 1,
@@ -227,8 +227,8 @@ class UserService:
     
     def login_guest(self) -> UserProfile:
         """Create guest session"""
-        guest_id = f"G{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3]}"
-        now = datetime.utcnow().isoformat()
+        guest_id = f"G{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')[:-3]}"
+        now = datetime.now(timezone.utc).isoformat()
         
         db.insert("users", {
             "id": guest_id,

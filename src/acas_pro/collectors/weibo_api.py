@@ -225,8 +225,9 @@ class WeiboCollector:
         created_at_str = status.get('created_at', '')
         try:
             created_at = datetime.strptime(created_at_str, "%a %b %d %H:%M:%S %z %Y")
-        except:
-            created_at = datetime.utcnow()
+        except Exception as e:
+            logger.debug(f"Failed to parse created_at '{created_at_str}': {e}, using utcnow")
+            created_at = datetime.now(timezone.utc)
         
         # Extract images
         pics = []

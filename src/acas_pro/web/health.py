@@ -38,6 +38,7 @@ class HealthChecker:
             self._check_database,
             self._check_config,
             self._check_disk_space,
+            self._check_llm,
         ]
     
     def check_all(self) -> Dict:
@@ -189,6 +190,81 @@ class HealthChecker:
                 status=HealthStatus.DEGRADED,
                 response_time_ms=(time.time() - start) * 1000,
                 message=f'Disk check failed: {str(e)}'
+            )
+
+
+    def _check_llm(self) -> HealthCheckResult:
+        """Check LLM service availability and configuration"""
+        start = time.time()
+        try:
+            if not config.llm.enabled:
+                return HealthCheckResult(
+                    name='llm',
+                    status=HealthStatus.DEGRADED,
+                    response_time_ms=(time.time() - start) * 1000,
+                    message='LLM is disabled',
+                    details={'enabled': False}
+                )
+            
+            if not config.llm.api_key:
+                return HealthCheckResult(
+                    name='llm',
+                    status=HealthStatus.UNHEALTHY,
+                    response_time_ms=(time.time() - start) * 1000,
+                    message='LLM API key not configured',
+                    details={'enabled': True, 'api_key_set': False}
+                )
+            
+            # Try to import and test LLM client
+            try:
+                from acas_pro.llm.llm_client import LLMClient, LLMProvider, LLMConfig as ClientConfig
+                
+                llm_config = ClientConfig(
+                    provider=LLMProvider(config.llm.provider),
+                    api_key=config.llm.api_key,
+                    model=config.llm.model,
+                    base_url=config.llm.base_url
+                )
+                
+                client = LLMClient(llm_config)
+                
+                # Simple test - just verify client can be instantiated
+                # Don't make actual API call in health check to avoid rate limits
+                return HealthCheckResult(
+                    name='llm',
+                    status=HealthStatus.HEALTHY,
+                    response_time_ms=(time.time() - start) * 1000,
+                    message=f'LLM configured: {config.llm.provider}/{config.llm.model}',
+                    details={
+                        'enabled': True,
+                        'api_key_set': True,
+                        'provider': config.llm.provider,
+                        'model': config.llm.model
+                    }
+                )
+            except ImportError as e:
+                return HealthCheckResult(
+                    name='llm',
+                    status=HealthStatus.DEGRADED,
+                    response_time_ms=(time.time() - start) * 1000,
+                    message=f'LLM module not available: {str(e)}',
+                    details={'enabled': True, 'module_error': True}
+                )
+            except Exception as e:
+                return HealthCheckResult(
+                    name='llm',
+                    status=HealthStatus.DEGRADED,
+                    response_time_ms=(time.time() - start) * 1000,
+                    message=f'LLM configuration error: {str(e)}',
+                    details={'enabled': True, 'config_error': str(e)}
+                )
+                
+        except Exception as e:
+            return HealthCheckResult(
+                name='llm',
+                status=HealthStatus.UNHEALTHY,
+                response_time_ms=(time.time() - start) * 1000,
+                message=f'LLM check failed: {str(e)}'
             )
 
 

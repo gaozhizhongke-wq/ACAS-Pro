@@ -176,7 +176,7 @@ def _startup_cleanup():
     # Clean stale guest accounts (older than 24 hours)
     try:
         from datetime import timedelta as td
-        cutoff = (datetime.utcnow() - td(hours=24)).isoformat()
+        cutoff = (datetime.now(timezone.utc) - td(hours=24)).isoformat()
         db = DatabaseManager()
         deleted = db.db.execute(
             "DELETE FROM users WHERE account_type='guest' AND created_at < ?", (cutoff,)

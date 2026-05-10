@@ -524,8 +524,9 @@ class ACASTools:
                     "content": response,
                     "summary": f"已为{platform_names.get(platform, platform)}生成关于「{topic}」的{style_desc}风格内容"
                 }
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.debug(f"{type(e).__name__}: {e}")
         
         # Fallback: template-based content
         templates = {
@@ -581,8 +582,9 @@ class ACASTools:
                     "data": account,
                     "summary": f"账号{account_id}的{metric}数据分析完成"
                 }
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.debug(f"{type(e).__name__}: {e}")
         
         return {
             "account_id": account_id,
@@ -709,6 +711,7 @@ class ACASTools:
                     max_tokens=config.llm.get('max_tokens', 4096),
                     temperature=config.llm.get('temperature', 0.7)
                 )
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.debug(f"{type(e).__name__}: {e}")
         return None

@@ -594,9 +594,8 @@ class AttributionEngine:
     
     def _generate_report_id(self) -> str:
         """生成报告ID"""
-        timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
-        hash_input = f"{timestamp}_{id(self)}"
-        return f"ATTR_{hashlib.md5(hash_input.encode()).hexdigest()[:8].upper()}"
+        import uuid
+        return f"ATTR_{uuid.uuid4().hex[:12].upper()}"
     
     def compare_models(
         self,

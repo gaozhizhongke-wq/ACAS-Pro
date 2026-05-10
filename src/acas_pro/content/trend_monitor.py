@@ -89,7 +89,7 @@ class TrendMonitor:
     4. 实时热点推送
     """
     
-    def __init__(self, db: Database = None):
+    def __init__(self, db: 'DatabaseManager' = None):
         self.db = db or DatabaseManager()
         self._running = False
         self._monitor_thread = None

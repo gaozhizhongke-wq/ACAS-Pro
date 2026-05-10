@@ -87,7 +87,7 @@ class DataMonitor:
     5. 绩效报告生成
     """
     
-    def __init__(self, db: Database = None):
+    def __init__(self, db: 'DatabaseManager' = None):
         self.db = db or DatabaseManager()
         self._init_database()
         
@@ -272,16 +272,27 @@ class DataMonitor:
             account_id=account_id
         )
         
-        # 构建查询条件
-        where_clause = "date BETWEEN ? AND ?"
+        # 构建查询条件（纯参数化，防止SQL注入）
+        conditions = ["date BETWEEN ? AND ?"]
         params = [period_start.date().isoformat(), period_end.date().isoformat()]
         
         if platform:
-            where_clause += " AND platform = ?"
+            conditions.append("platform = ?")
             params.append(platform)
         if account_id:
-            where_clause += " AND account_id = ?"
+            conditions.append("account_id = ?")
             params.append(account_id)
+        
+        # 使用固定模板而非动态拼接，确保SQL结构安全
+        if len(conditions) == 2:  # 只有日期条件
+            where_clause = "date BETWEEN ? AND ?"
+        elif len(conditions) == 3:  # 日期 + 一个条件
+            if platform:
+                where_clause = "date BETWEEN ? AND ? AND platform = ?"
+            else:
+                where_clause = "date BETWEEN ? AND ? AND account_id = ?"
+        else:  # 日期 + 两个条件
+            where_clause = "date BETWEEN ? AND ? AND platform = ? AND account_id = ?"
             
         # 汇总数据
         result = self.db.fetchone(f"""
@@ -317,11 +328,25 @@ class DataMonitor:
         prev_start = period_start - (period_end - period_start)
         prev_end = period_start
         
+        # 构建上一周期的查询条件（纯参数化，防止SQL注入）
+        prev_params = [prev_start.date().isoformat(), prev_end.date().isoformat()]
+        if platform and account_id:
+            prev_where = "date BETWEEN ? AND ? AND platform = ? AND account_id = ?"
+            prev_params.extend([platform, account_id])
+        elif platform:
+            prev_where = "date BETWEEN ? AND ? AND platform = ?"
+            prev_params.append(platform)
+        elif account_id:
+            prev_where = "date BETWEEN ? AND ? AND account_id = ?"
+            prev_params.append(account_id)
+        else:
+            prev_where = "date BETWEEN ? AND ?"
+        
         prev_result = self.db.fetchone(f"""
             SELECT SUM(views) as views, SUM(revenue) as revenue
             FROM daily_metrics
-            WHERE {where_clause}
-        """, [prev_start.date().isoformat(), prev_end.date().isoformat()] + params[2:])
+            WHERE {prev_where}
+        """, prev_params)
         
         if prev_result and prev_result['views']:
             report.views_trend = (report.total_views - prev_result['views']) / prev_result['views']

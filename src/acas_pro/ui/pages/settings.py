@@ -702,8 +702,9 @@ class SettingsPage(QWidget):
             self.wx_enabled_cb.setChecked(wx_enabled)
             self.wx_app_id.setText(config.oauth.wx_app_id)
             self.wx_redirect.setText(config.oauth.wx_redirect_uri)
-        except Exception:
-            pass
+        except Exception as e:
+            import logging
+            logging.debug(f"{type(e).__name__}: {e}")
 
     def _save_oauth_settings(self):
         """保存 OAuth 设置"""
