@@ -6,6 +6,7 @@ Production-grade authentication and encryption
 """
 
 import re
+import json
 import secrets
 import hashlib
 import hmac
@@ -337,38 +338,67 @@ class SessionManager:
 
 
 class RateLimiter:
-    """Simple in-memory rate limiter"""
+    """
+    File-based rate limiter for multi-process safety (gunicorn workers).
     
-    def __init__(self):
-        self._attempts: Dict[str, list] = {}
-    
-    def is_allowed(self, key: str, max_attempts: int = 5, 
+    Uses a JSON file on disk to track attempt timestamps per key,
+    so that rate limits persist across worker processes and restarts.
+    """
+
+    def __init__(self, storage_path: str = None):
+        if storage_path is None:
+            storage_path = os.path.join(
+                os.environ.get('ACAS_DATA_DIR',
+                               os.path.join(Path.home(), '.acas-pro')),
+                '.rate_limit.json'
+            )
+        self._path = storage_path
+        os.makedirs(os.path.dirname(self._path), exist_ok=True)
+
+    def _load(self) -> Dict[str, list]:
+        try:
+            with open(self._path, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            return {}
+
+    def _save(self, data: Dict[str, list]):
+        with open(self._path + '.tmp', 'w', encoding='utf-8') as f:
+            json.dump(data, f, default=str)
+        os.replace(self._path + '.tmp', self._path)
+
+    def is_allowed(self, key: str, max_attempts: int = 5,
                    window_seconds: int = 300) -> bool:
         """Check if action is allowed under rate limit"""
         now = datetime.now(timezone.utc)
         window_start = now - timedelta(seconds=window_seconds)
-        
-        # Clean old attempts
-        if key in self._attempts:
-            self._attempts[key] = [
-                t for t in self._attempts[key] 
-                if t > window_start
-            ]
-        else:
-            self._attempts[key] = []
-        
-        # Check limit
-        return len(self._attempts[key]) < max_attempts
-    
+
+        data = self._load()
+        # Prune old entries for this key
+        data[key] = [t for t in data.get(key, []) if _parse_dt(t) > window_start]
+        self._save(data)
+        return len(data[key]) < max_attempts
+
     def record_attempt(self, key: str):
         """Record an attempt"""
-        if key not in self._attempts:
-            self._attempts[key] = []
-        self._attempts[key].append(datetime.now(timezone.utc))
-    
+        data = self._load()
+        if key not in data:
+            data[key] = []
+        data[key].append(datetime.now(timezone.utc).isoformat())
+        self._save(data)
+
     def reset(self, key: str):
         """Reset attempts for key"""
-        self._attempts.pop(key, None)
+        data = self._load()
+        data.pop(key, None)
+        self._save(data)
+
+
+def _parse_dt(val) -> datetime:
+    """Parse datetime from string or datetime object."""
+    if isinstance(val, datetime):
+        return val
+    return datetime.fromisoformat(val)
 
 
 class CryptoManager:
@@ -526,3 +556,83 @@ crypto_manager = CryptoManager()
 # Aliases for backward compatibility
 encrypt_data = crypto_manager.encrypt
 decrypt_data = crypto_manager.decrypt
+
+
+
+# ── JWT httpOnly Cookie ──────────────────────────────────────────────────────
+# Store JWT in httpOnly cookie to prevent XSS exfiltration.
+# JavaScript can still read the JWT from cookie for Authorization header,
+# but httpOnly prevents direct document.cookie exfiltration by XSS.
+
+JWT_COOKIE_NAME = 'acas_jwt'
+JWT_COOKIE_MAX_AGE = 3600 * 8  # 8 hours
+
+
+def set_jwt_cookie(response, token: str) -> None:
+    response.set_cookie(
+        JWT_COOKIE_NAME, token,
+        max_age=JWT_COOKIE_MAX_AGE,
+        httponly=True,   # Block JS read — prevents XSS exfiltration
+        secure=True,     # HTTPS only
+        samesite='Lax',
+    )
+
+
+def clear_jwt_cookie(response) -> None:
+    response.set_cookie(
+        JWT_COOKIE_NAME, '',
+        max_age=0,
+        httponly=True,
+        secure=True,
+        samesite='Lax',
+    )
+
+
+def get_jwt_from_cookie(request) -> str:
+    return request.cookies.get(JWT_COOKIE_NAME, '')
+
+
+# ── CSRF Protection ─────────────────────────────────────────────────────────
+
+CSRF_STATE_SECRET = os.environ.get('CSRF_STATE_SECRET') or secrets.token_hex(32)
+
+
+def generate_csrf_token() -> str:
+    return secrets.token_hex(32)
+
+
+def create_csrf_cookie(response) -> str:
+    token = generate_csrf_token()
+    response.set_cookie(
+        'csrf_token', token,
+        max_age=3600 * 24,
+        httponly=False, secure=True, samesite='Lax',
+    )
+    return token
+
+
+def validate_csrf_request(request) -> Tuple[bool, str]:
+    header_token = request.headers.get('X-CSRF-Token', '').strip()
+    cookie_token = request.cookies.get('csrf_token', '').strip()
+    if not header_token:
+        return False, 'Missing CSRF token (X-CSRF-Token header required)'
+    if not cookie_token:
+        return False, 'CSRF cookie not set — please refresh and try again'
+    if header_token != cookie_token:
+        return False, 'CSRF token mismatch'
+    if not re.fullmatch(r'[0-9a-f]{64}', header_token):
+        return False, 'Invalid CSRF token format'
+    return True, ''
+
+
+def require_csrf(f):
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        if request.method not in ('POST', 'PUT', 'DELETE', 'PATCH'):
+            return f(*args, **kwargs)
+        ok, msg = validate_csrf_request(request)
+        if not ok:
+            from flask import jsonify
+            return jsonify({'error': msg, 'code': 'CSRF_INVALID'}), 403
+        return f(*args, **kwargs)
+    return wrapped

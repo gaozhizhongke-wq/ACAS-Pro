@@ -29,10 +29,10 @@ src_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src')
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
 
-from flask import Flask, render_template_string, request, jsonify, g
+from flask import Flask, render_template_string, request, jsonify, g, make_response
 import jwt
 
-from acas_pro.core.security import password_validator as pv, JWTManager, rate_limiter
+from acas_pro.core.security import password_validator as pv, JWTManager, rate_limiter, create_csrf_cookie, generate_csrf_token, require_csrf, set_jwt_cookie, clear_jwt_cookie, get_jwt_from_cookie
 from acas_pro.core.config import config
 from acas_pro.core.logging import setup_logging, get_logger
 from acas_pro.services.user_service import user_service
@@ -205,9 +205,13 @@ def check_auth():
     if path in _PUBLIC_PATHS or any(path.startswith(p) for p in _PUBLIC_PREFIXES):
         return None
 
-    # Extract token (Authorization header only — token in URL leaks in logs/proxies)
+    # Extract token: Authorization header (preferred), fallback to httpOnly cookie
     auth_header = request.headers.get('Authorization', '')
     token = auth_header.removeprefix('Bearer ').strip() if auth_header.startswith('Bearer ') else ''
+
+    # Fallback: read JWT from httpOnly cookie (XSS-safe storage)
+    if not token:
+        token = get_jwt_from_cookie(request)
 
     if not token:
         return jsonify({'error': 'Authentication required', 'code': 'AUTH_REQUIRED'}), 401
@@ -257,6 +261,7 @@ def health_check():
 
 # ── Auth Routes ────────────────────────────────────────────────────────────
 @app.route('/api/auth/register', methods=['POST'])
+@require_csrf
 def auth_register():
     from acas_pro.core.security import rate_limiter
     
@@ -284,14 +289,18 @@ def auth_register():
         return jsonify({'error': msg}), 409
 
     token = generate_token(profile.id, account)
-    return jsonify({
+    resp = jsonify({
         'success': True,
         'token': token,
         'user': {'user_id': profile.id, 'account': profile.account, 'nickname': profile.nickname}
     })
+    create_csrf_cookie(resp)
+    set_jwt_cookie(resp, token)
+    return resp
 
 
 @app.route('/api/auth/login', methods=['POST'])
+@require_csrf
 def auth_login():
     data = request.json or {}
     account = data.get('account', '').strip()
@@ -311,11 +320,14 @@ def auth_login():
         return jsonify({'error': msg}), 401
 
     token = generate_token(profile.id, account)
-    return jsonify({
+    resp = jsonify({
         'success': True,
         'token': token,
         'user': {'user_id': profile.id, 'account': profile.account, 'nickname': profile.nickname}
     })
+    create_csrf_cookie(resp)
+    set_jwt_cookie(resp, token)
+    return resp
 
 
 @app.route('/api/auth/me', methods=['GET'])
@@ -326,6 +338,7 @@ def auth_me():
 
 # ── LLM Routes ────────────────────────────────────────────────────────────
 @app.route('/api/llm/config', methods=['POST'])
+@require_csrf
 def save_llm_config():
     data = request.json or {}
     provider = data.get('provider', 'openai')
@@ -902,6 +915,11 @@ DASHBOARD_HTML = r'''
             document.getElementById('auth-switch-link').textContent = isRegisterMode ? '登录' : '注册';
         }
 
+        function getCsrfToken() {
+            const match = document.cookie.match(/csrf_token=([0-9a-f]{64})/);
+            return match ? match[1] : '';
+        }
+
         async function doAuth() {
             const account = document.getElementById('auth-account').value.trim();
             const password = document.getElementById('auth-password').value.trim();
@@ -913,8 +931,12 @@ DASHBOARD_HTML = r'''
 
             const res = await fetch(endpoint, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify(body)
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': getCsrfToken(),
+                },
+                body: JSON.stringify(body),
+                credentials: 'include',
             });
             const data = await res.json();
             if (data.success) {
@@ -939,7 +961,11 @@ DASHBOARD_HTML = r'''
         }
 
         function authHeaders() {
-            return {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + authToken};
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + authToken,
+                'X-CSRF-Token': getCsrfToken(),
+            };
         }
 
         // ── Navigation ──
@@ -975,10 +1001,10 @@ DASHBOARD_HTML = r'''
         // ── LLM Status ──
         function updateLLMStatus() {
             const el = document.getElementById('llm-status');
-            const provider = '{{ llm_provider }}';
+            const provider = '{{ llm_provider | safe }}';
             const enabled = {{ 'true' if llm_enabled else 'false' }};
             if (enabled) {
-                el.innerHTML = '<span class="status-badge status-ok">已启用 · ' + provider + '</span>';
+                el.innerHTML = '<span class="status-badge status-ok">已启用 · ' + escapeHtml(provider) + '</span>';
             } else {
                 el.innerHTML = '<span class="status-badge status-err">未启用</span> 请先在 <a onclick="showPage(\'settings\', document.querySelector(\'[data-page=settings]\'))" style="color:#58a6ff;cursor:pointer">系统设置</a> 中配置 API Key';
             }
@@ -1014,7 +1040,7 @@ DASHBOARD_HTML = r'''
                 }
             } catch(e) {
                 typingEl.remove();
-                appendChat('assistant', '❌ 网络错误: ' + e.message);
+                appendChat('assistant', '❌ 网络错误: ' + escapeHtml(String(e.message)));
             }
         }
 
@@ -1057,16 +1083,16 @@ DASHBOARD_HTML = r'''
                     const date = `${f.month}月${f.day}日`;
                     const themes = f.themes ? f.themes.substring(0,30) : '';
                     return '<tr style="border-bottom:1px solid #21262d">'
-                        + `<td style="padding:8px 12px">${f.name}</td>`
+                        + `<td style="padding:8px 12px">${escapeHtml(String(f.name))}</td>`
                         + `<td style="padding:8px 12px;text-align:center">${date}</td>`
-                        + `<td style="padding:8px 12px;text-align:center">${f.festival_type || '-'}</td>`
+                        + `<td style="padding:8px 12px;text-align:center">${escapeHtml(String(f.festival_type || '-'))}</td>`
                         + `<td style="padding:8px 12px;text-align:center">${imp}</td>`
                         + `<td style="padding:8px 12px;text-align:center">${f.duration_days || 0}天</td>`
-                        + `<td style="padding:8px 12px">${themes}${themes?'...':''}</td>`
+                        + `<td style="padding:8px 12px">${escapeHtml(String(themes))}${themes?'...':''}</td>`
                         + '</tr>';
                 }).join('');
             } catch(e) {
-                el.innerHTML = '<tr><td colspan="6" style="padding:20px;color:#f85149">加载失败: ' + e.message + '</td></tr>';
+                el.innerHTML = '<tr><td colspan="6" style="padding:20px;color:#f85149">加载失败: ' + escapeHtml(String(e.message)) + '</td></tr>';
             }
         }
 
@@ -1101,15 +1127,15 @@ DASHBOARD_HTML = r'''
                 tbody.innerHTML = rows.slice(-20).map(r => {
                     const rev = (r.revenue || 0).toLocaleString();
                     return '<tr style="border-bottom:1px solid #21262d">'
-                        + `<td style="padding:8px 12px">${r.date || '-'}</td>`
-                        + `<td style="padding:8px 12px">${r.platform || '-'}</td>`
+                        + `<td style="padding:8px 12px">${escapeHtml(String(r.date || '-'))}</td>`
+                        + `<td style="padding:8px 12px">${escapeHtml(String(r.platform || '-'))}</td>`
                         + `<td style="padding:8px 12px;text-align:right;color:#3fb950">¥${rev}</td>`
-                        + `<td style="padding:8px 12px;text-align:right">${r.orders || 0}</td>`
+                        + `<td style="padding:8px 12px;text-align:right">${(r.orders || 0)}</td>`
                         + `<td style="padding:8px 12px;text-align:right">${(r.views || 0).toLocaleString()}</td>`
                         + '</tr>';
                 }).join('');
             } catch(e) {
-                tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;color:#f85149">加载失败: ' + e.message + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;color:#f85149">加载失败: ' + escapeHtml(String(e.message)) + '</td></tr>';
             }
         }
 
@@ -1139,8 +1165,8 @@ DASHBOARD_HTML = r'''
                         : p.stock_quantity <= (p.reorder_point || 0) ? '<span style="color:#d29922">预警</span>'
                         : '<span style="color:#3fb950">正常</span>';
                     return '<tr style="border-bottom:1px solid #21262d">'
-                        + `<td style="padding:8px 12px">${p.name || '-'}</td>`
-                        + `<td style="padding:8px 12px">${p.category || '-'}</td>`
+                        + `<td style="padding:8px 12px">${escapeHtml(String(p.name || '-'))}</td>`
+                        + `<td style="padding:8px 12px">${escapeHtml(String(p.category || '-'))}</td>`
                         + `<td style="padding:8px 12px;text-align:right">¥${(p.price || 0).toLocaleString()}</td>`
                         + `<td style="padding:8px 12px;text-align:right">${p.stock_quantity || 0}</td>`
                         + `<td style="padding:8px 12px;text-align:right">${p.reorder_point || 0}</td>`
@@ -1148,7 +1174,7 @@ DASHBOARD_HTML = r'''
                         + '</tr>';
                 }).join('');
             } catch(e) {
-                tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;color:#f85149">加载失败: ' + e.message + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;color:#f85149">加载失败: ' + escapeHtml(String(e.message)) + '</td></tr>';
             }
         }
 
@@ -1165,8 +1191,8 @@ DASHBOARD_HTML = r'''
                 tbody.innerHTML = '<tr><td colspan="6" style="padding:8px 12px;color:#d29922;font-weight:bold">⚠ 低库存预警 (' + escapeHtml(String(data.products.length)) + ' 项)</td></tr>'
                     + data.products.map(p => {
                     return '<tr style="border-bottom:1px solid #21262d; background:#1a1500">'
-                        + `<td style="padding:8px 12px">${p.name || '-'}</td>`
-                        + `<td style="padding:8px 12px">${p.category || '-'}</td>`
+                        + `<td style="padding:8px 12px">${escapeHtml(String(p.name || '-'))}</td>`
+                        + `<td style="padding:8px 12px">${escapeHtml(String(p.category || '-'))}</td>`
                         + `<td style="padding:8px 12px;text-align:right">¥${(p.price || 0).toLocaleString()}</td>`
                         + `<td style="padding:8px 12px;text-align:right;color:#f85149">${p.stock_quantity || 0}</td>`
                         + `<td style="padding:8px 12px;text-align:right">${p.reorder_point || 0}</td>`
@@ -1174,7 +1200,7 @@ DASHBOARD_HTML = r'''
                         + '</tr>';
                 }).join('');
             } catch(e) {
-                tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;color:#f85149">加载失败: ' + e.message + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;color:#f85149">加载失败: ' + escapeHtml(String(e.message)) + '</td></tr>';
             }
         }
 
@@ -1191,10 +1217,10 @@ DASHBOARD_HTML = r'''
                 tbody.innerHTML = data.accounts.map(a => {
                     const status = a.status === 'active' ? '<span style="color:#3fb950">活跃</span>'
                         : a.status === 'inactive' ? '<span style="color:#8b949e">停用</span>'
-                        : '<span style="color:#d29922">' + (a.status || '-') + '</span>';
+                        : '<span style="color:#d29922">' + escapeHtml(String(a.status || '-')) + '</span>';
                     return '<tr style="border-bottom:1px solid #21262d">'
-                        + `<td style="padding:8px 12px">${a.platform || '-'}</td>`
-                        + `<td style="padding:8px 12px">${a.account_name || '-'}</td>`
+                        + `<td style="padding:8px 12px">${escapeHtml(String(a.platform || '-'))}</td>`
+                        + `<td style="padding:8px 12px">${escapeHtml(String(a.account_name || '-'))}</td>`
                         + `<td style="padding:8px 12px;text-align:right">${(a.followers || 0).toLocaleString()}</td>`
                         + `<td style="padding:8px 12px;text-align:right">${a.content_count || 0}</td>`
                         + `<td style="padding:8px 12px;text-align:right">${(a.total_views || 0).toLocaleString()}</td>`
@@ -1202,7 +1228,7 @@ DASHBOARD_HTML = r'''
                         + '</tr>';
                 }).join('');
             } catch(e) {
-                tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;color:#f85149">加载失败: ' + e.message + '</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;color:#f85149">加载失败: ' + escapeHtml(String(e.message)) + '</td></tr>';
             }
         }
 
@@ -1270,7 +1296,7 @@ DASHBOARD_HTML = r'''
             const res = await fetch('/api/llm/test', {headers: authHeaders()});
             const result = await res.json();
             el.innerHTML = '<span class="status-badge status-' + (result.success ? 'ok' : 'err') + '">' +
-                (result.success ? '✅ 连接成功 · ' + result.message : '❌ ' + result.error) + '</span>';
+                (result.success ? '✅ 连接成功 · ' + escapeHtml(String(result.message)) : '❌ ' + escapeHtml(String(result.error))) + '</span>';
         }
 
     </script>
