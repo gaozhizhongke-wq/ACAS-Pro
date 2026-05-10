@@ -8,6 +8,7 @@ Production-grade authentication and encryption
 import re
 import json
 import secrets
+import time
 import hashlib
 import hmac
 import jwt
@@ -550,13 +551,83 @@ password_validator = PasswordValidator()
 password_hasher = PasswordHasher()
 jwt_manager = JWTManager()
 session_manager = SessionManager()
-rate_limiter = RateLimiter()
 crypto_manager = CryptoManager()
 
 # Aliases for backward compatibility
 encrypt_data = crypto_manager.encrypt
 decrypt_data = crypto_manager.decrypt
 
+
+
+
+# ── Redis-backed Rate Limiter ────────────────────────────────────────────────
+
+class RedisRateLimiter:
+    """
+    Redis-backed rate limiter for distributed multi-worker deployments.
+    Uses Redis ZADD with timestamp score for sliding-window rate limiting.
+    Falls back to file-based RateLimiter if Redis unavailable.
+    """
+
+    def __init__(self, redis_url: str = None):
+        self.redis_url = redis_url or os.environ.get('REDIS_URL')
+        self._client = None
+        if self.redis_url:
+            try:
+                import redis as _redis
+                self._client = _redis.from_url(
+                    self.redis_url,
+                    decode_responses=True,
+                    socket_connect_timeout=2,
+                    socket_timeout=2,
+                )
+                self._client.ping()
+            except Exception:
+                self._client = None
+
+    @property
+    def available(self) -> bool:
+        return self._client is not None
+
+    def is_allowed(self, key: str, max_attempts: int = 5,
+                   window_seconds: int = 300) -> bool:
+        if not self.available:
+            return RateLimiter().is_allowed(key, max_attempts, window_seconds)
+        now = time.time()
+        window_start = now - window_seconds
+        pipe = self._client.pipeline()
+        pipe.zremrangebyscore(key, 0, window_start)
+        pipe.zcard(key)
+        pipe.execute()
+        count = self._client.zcard(key)
+        return count < max_attempts
+
+    def record_attempt(self, key: str):
+        if not self.available:
+            return RateLimiter().record_attempt(key)
+        now = time.time()
+        pipe = self._client.pipeline()
+        pipe.zadd(key, {str(now): now})
+        pipe.expire(key, 86400)
+        pipe.execute()
+
+    def reset(self, key: str):
+        if not self.available:
+            return RateLimiter().reset(key)
+        self._client.delete(key)
+
+
+# Convenience: unified rate_limiter with auto-detection
+def _build_rate_limiter():
+    redis_url = os.environ.get('REDIS_URL')
+    if redis_url:
+        rl = RedisRateLimiter(redis_url)
+        if rl.available:
+            return rl
+    return RateLimiter()
+
+
+rate_limiter = _build_rate_limiter()
 
 
 # ── JWT httpOnly Cookie ──────────────────────────────────────────────────────
