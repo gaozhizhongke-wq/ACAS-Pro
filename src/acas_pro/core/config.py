@@ -387,24 +387,57 @@ class AppConfig:
                     alert=AlertConfig(**data.get('alert', {})),
                     worldmonitor=WorldMonitorConfig(**data.get('worldmonitor', {}))
                 )
-            except Exception:
-                pass
-        
+            except Exception as e:
+                import logging
+                logging.warning(f'Failed to load config from {path}: {e}. Using defaults.')
+
         # Create default config
         config = cls()
         config.save(path)
         return config
-    
+
     def save(self, path: Optional[str] = None) -> None:
-        """Save configuration to file"""
+        """Save configuration to file — sensitive fields are redacted."""
         if path is None:
             path = str(Path.home() / ".acas-pro" / "config.json")
-        
+
         config_path = Path(path)
         config_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
+        def _redact(obj):
+            """Recursively redact sensitive values (field names containing key/secret/token/password/uri)."""
+            if isinstance(obj, dict):
+                result = {}
+                for k, v in obj.items():
+                    if any(p in k.lower() for p in ('key', 'secret', 'token', 'password', 'uri')):
+                        result[k] = '***REDACTED***'
+                    else:
+                        result[k] = _redact(v)
+                return result
+            elif isinstance(obj, list):
+                return [_redact(item) for item in obj]
+            else:
+                return obj
+
+        data = _redact(asdict(self))
         with open(config_path, "w", encoding="utf-8") as f:
-            json.dump(asdict(self), f, indent=2, ensure_ascii=False)
+            json.dump(data, f, indent=2, ensure_ascii=False)
+
+    def load_env(self) -> "AppConfig":
+        """Reload LLM/security keys from environment variables (secrets never written to disk)."""
+        # Re-read env vars so running processes pick up .env changes
+        for key in ('OPENAI_API_KEY', 'ANTHROPIC_API_KEY', 'KIMI_API_KEY',
+                    'DEEPSEEK_API_KEY', 'DASHSCOPE_API_KEY', 'GOOGLE_API_KEY',
+                    'LLM_API_KEY', 'LLM_PROVIDER', 'LLM_MODEL'):
+            val = os.environ.get(key)
+            if val:
+                if 'KEY' in key:
+                    self.llm.api_key = val
+                if 'PROVIDER' in key:
+                    self.llm.provider = val
+                if 'MODEL' in key:
+                    self.llm.model = val
+        return self
 
 
 # Global config instance

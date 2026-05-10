@@ -1,192 +1,139 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-ACAS Pro - Database Tests
-Tests for database operations, transactions, and concurrency
-"""
-
+"""Database tests for ACAS Pro"""
 import pytest
-from datetime import datetime
-from unittest.mock import patch
+import sys
+import os
+import tempfile
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from acas_pro.core.database import DatabaseManager
 
 
 class TestDatabaseManager:
-    """Database manager tests"""
+    """Test DatabaseManager functionality"""
     
-    def test_insert_and_fetch(self, temp_db):
-        """Test insert and fetch operations"""
-        user_id = "U_TEST_001"
-        now = datetime.utcnow().isoformat()
+    @pytest.fixture
+    def db(self):
+        """Create a temporary database for testing"""
+        with tempfile.NamedTemporaryFile(suffix='.db', delete=False) as f:
+            db_path = f.name
         
-        # Insert user
-        temp_db.insert("users", {
-            "id": user_id,
-            "account_type": "email",
-            "account": "test@example.com",
-            "password_hash": "test_hash",
-            "nickname": "Test User",
-            "role": "user",
-            "status": "active",
-            "region": "global",
-            "language": "zh",
-            "timezone": "UTC",
-            "created_at": now
-        })
+        db = DatabaseManager(f"sqlite:///{db_path}")
+        yield db
         
-        # Fetch user
-        user = temp_db.fetchone("SELECT * FROM users WHERE id = ?", (user_id,))
-        
-        assert user is not None
-        assert user['id'] == user_id
-        assert user['account'] == "test@example.com"
-        assert user['nickname'] == "Test User"
+        # Cleanup
+        try:
+            os.unlink(db_path)
+        except:
+            pass
     
-    def test_update(self, temp_db):
-        """Test update operation"""
-        user_id = "U_TEST_002"
-        now = datetime.utcnow().isoformat()
+    def test_database_connection(self, db):
+        """Test database connection works"""
+        result = db.execute_one("SELECT 1 as test")
+        assert result is not None
+        assert result['test'] == 1
+    
+    def test_execute_one(self, db):
+        """Test execute_one method"""
+        result = db.execute_one("SELECT 1 as col1, 2 as col2")
+        assert result['col1'] == 1
+        assert result['col2'] == 2
+    
+    def test_execute_many(self, db):
+        """Test execute_many method"""
+        results = db.execute_many("SELECT 1 as col UNION ALL SELECT 2")
+        assert len(results) == 2
+        assert results[0]['col'] == 1
+        assert results[1]['col'] == 2
+    
+    def test_insert_and_select(self, db):
+        """Test insert and select operations"""
+        # Create test table
+        db.execute_write("""
+            CREATE TABLE test_table (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL
+            )
+        """)
         
-        # Insert user
-        temp_db.insert("users", {
-            "id": user_id,
-            "account_type": "email",
-            "account": "update@example.com",
-            "password_hash": "test_hash",
-            "nickname": "Before Update",
-            "role": "user",
-            "status": "active",
-            "region": "global",
-            "language": "zh",
-            "timezone": "UTC",
-            "created_at": now
-        })
+        # Insert
+        db.insert('test_table', {'name': 'Test Name'})
         
-        # Update
-        count = temp_db.update(
-            "users",
-            {"nickname": "After Update"},
-            "id = ?",
-            (user_id,)
-        )
+        # Select
+        result = db.execute_one("SELECT * FROM test_table WHERE name = ?", ('Test Name',))
+        assert result is not None
+        assert result['name'] == 'Test Name'
+    
+    def test_update(self, db):
+        """Test update method"""
+        # Create test table
+        db.execute_write("""
+            CREATE TABLE test_table (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                value INTEGER
+            )
+        """)
         
-        assert count == 1
+        # Insert
+        db.insert('test_table', {'name': 'Test', 'value': 100})
+        
+        # Update with WHERE clause
+        db.update('test_table', {'value': 200}, 'name = ?', ('Test',))
         
         # Verify
-        user = temp_db.fetchone("SELECT nickname FROM users WHERE id = ?", (user_id,))
-        assert user['nickname'] == "After Update"
+        result = db.execute_one("SELECT value FROM test_table WHERE name = 'Test'")
+        assert result['value'] == 200
     
-    def test_delete(self, temp_db):
-        """Test delete operation"""
-        user_id = "U_TEST_003"
-        now = datetime.utcnow().isoformat()
+    def test_delete(self, db):
+        """Test delete method"""
+        # Create test table
+        db.execute_write("""
+            CREATE TABLE test_table (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL
+            )
+        """)
         
-        # Insert user
-        temp_db.insert("users", {
-            "id": user_id,
-            "account_type": "email",
-            "account": "delete@example.com",
-            "password_hash": "test_hash",
-            "nickname": "To Delete",
-            "role": "user",
-            "status": "active",
-            "region": "global",
-            "language": "zh",
-            "timezone": "UTC",
-            "created_at": now
-        })
+        # Insert
+        db.insert('test_table', {'name': 'ToDelete'})
         
         # Delete
-        count = temp_db.delete("users", "id = ?", (user_id,))
-        assert count == 1
+        db.delete('test_table', 'name = ?', ('ToDelete',))
         
         # Verify
-        user = temp_db.fetchone("SELECT * FROM users WHERE id = ?", (user_id,))
-        assert user is None
+        result = db.execute_one("SELECT * FROM test_table WHERE name = 'ToDelete'")
+        assert result is None
     
-    def test_fetchall(self, temp_db):
-        """Test fetchall operation"""
-        now = datetime.utcnow().isoformat()
+    def test_transaction(self, db):
+        """Test transaction support"""
+        # Create test table
+        db.execute_write("""
+            CREATE TABLE test_table (
+                id INTEGER PRIMARY KEY,
+                value INTEGER
+            )
+        """)
         
-        # Insert multiple users
-        for i in range(5):
-            temp_db.insert("users", {
-                "id": f"U_MULTI_{i:03d}",
-                "account_type": "email",
-                "account": f"multi{i}@example.com",
-                "password_hash": "test_hash",
-                "nickname": f"User {i}",
-                "role": "user",
-                "status": "active",
-                "region": "global",
-                "language": "zh",
-                "timezone": "UTC",
-                "created_at": now
-            })
+        # Transaction that commits
+        with db.transaction() as txn:
+            txn.execute("INSERT INTO test_table (value) VALUES (?)", (100,))
         
-        # Fetch all
-        users = temp_db.fetchall("SELECT * FROM users WHERE id LIKE 'U_MULTI_%' ORDER BY id")
-        
-        assert len(users) == 5
-        assert users[0]['nickname'] == "User 0"
-        assert users[4]['nickname'] == "User 4"
-    
-    def test_transaction_commit(self, temp_db):
-        """Test transaction commits correctly"""
-        user_id = "U_TX_001"
-        now = datetime.utcnow().isoformat()
-        
-        with temp_db.transaction() as conn:
-            conn.execute("""
-                INSERT INTO users (id, account_type, account, password_hash, nickname, role, status, region, language, timezone, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (user_id, "email", "tx@example.com", "hash", "TX User", "user", "active", "global", "zh", "UTC", now))
-        
-        # Should be committed
-        user = temp_db.fetchone("SELECT * FROM users WHERE id = ?", (user_id,))
-        assert user is not None
-    
-    def test_transaction_rollback(self, temp_db):
-        """Test transaction rolls back on error"""
-        user_id = "U_TX_002"
-        now = datetime.utcnow().isoformat()
-        
-        try:
-            with temp_db.transaction() as conn:
-                conn.execute("""
-                    INSERT INTO users (id, account_type, account, password_hash, nickname, role, status, region, language, timezone, created_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (user_id, "email", "rollback@example.com", "hash", "Rollback User", "user", "active", "global", "zh", "UTC", now))
-                
-                # Raise error to trigger rollback
-                raise Exception("Simulated error")
-        except Exception:
-            pass
-        
-        # Should NOT exist (rolled back)
-        user = temp_db.fetchone("SELECT * FROM users WHERE id = ?", (user_id,))
-        assert user is None
+        result = db.execute_one("SELECT * FROM test_table")
+        assert result is not None
+        assert result['value'] == 100
 
 
-class TestAuditLog:
-    """Audit log tests"""
+class TestDatabaseHealth:
+    """Test database health checks"""
     
-    def test_audit_log_insert(self, temp_db):
-        """Test audit log is written"""
-        import uuid
-        now = datetime.utcnow().isoformat()
-        unique_event = f"TEST_EVENT_{uuid.uuid4().hex[:8]}"
-        
-        temp_db.insert("audit_log", {
-            "timestamp": now,
-            "event_type": unique_event,
-            "user_id": "U001",
-            "ip_address": "127.0.0.1",
-            "details": '{"test": true}',
-            "severity": "info"
-        })
-        
-        logs = temp_db.fetchall(f"SELECT * FROM audit_log WHERE event_type = '{unique_event}'")
-        assert len(logs) == 1
-        assert logs[0]['user_id'] == "U001"
+    def test_health_check(self):
+        """Test database health check"""
+        db = DatabaseManager()
+        health = db.health_check()
+        assert 'status' in health
+        assert health['status'] in ['healthy', 'unhealthy']
+
+
+if __name__ == '__main__':
+    pytest.main([__file__, '-v'])

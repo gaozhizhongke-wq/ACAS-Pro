@@ -31,8 +31,8 @@ if src_path not in sys.path:
 
 from flask import Flask, render_template_string, request, jsonify, g
 import jwt
-import bcrypt
 
+from acas_pro.core.security import password_validator as pv, JWTManager, rate_limiter
 from acas_pro.core.config import config
 from acas_pro.core.logging import setup_logging, get_logger
 from acas_pro.services.user_service import user_service
@@ -42,16 +42,49 @@ from acas_pro.llm.llm_client import (
     LLMProvider,
     LLMMessage,
 )
+from acas_pro.core.database import DatabaseManager
+from acas_pro.core.security_headers import SecurityHeaders, InputValidator
+
+# New production middleware
+from acas_pro.web.middleware import RequestContext, ErrorHandler
+from acas_pro.web.health import health_checker
+from acas_pro.web.api_spec import register_api_docs
 
 setup_logging()
 logger = get_logger(__name__)
 
+# ── HTTPS Enforcement (Production) ──────────────────────────────────────────
+if config.environment == 'production':
+    from flask import request
+    if not request.is_secure:
+        logger.warning("HTTPS not enforced — configure your reverse proxy (nginx) to redirect HTTP → HTTPS in production")
+
 # ── Flask App ──────────────────────────────────────────────────────────────
 app = Flask(__name__)
+
+# Initialize security headers
+security = SecurityHeaders(app)
+
+# Initialize production middleware
+RequestContext.init_app(app)
+ErrorHandler.init_app(app)
+logger.info("Production middleware initialized")
+
+# Register API documentation
+register_api_docs(app)
+logger.info("API documentation registered at /api/docs")
 
 # SECRET_KEY: 生产环境强制要求
 _secret = os.environ.get('SECRET_KEY', config.security.secret_key)
 if not _secret or _secret in ('acas-pro-secret-key-change-me', 'dev-key-change-in-production'):
+    # 生产环境必须设置 SECRET_KEY
+    env_name = os.environ.get('ENVIRONMENT', os.environ.get('FLASK_ENV', 'development'))
+    if env_name in ('production', 'prod'):
+        raise ValueError(
+            "SECRET_KEY must be set in production! "
+            "Add SECRET_KEY=<your-secret> to .env file. "
+            "Generate one: python -c \"import secrets; print(secrets.token_urlsafe(48))\""
+        )
     _secret = hashlib.sha256(uuid.uuid4().bytes).hexdigest()
     logger.warning("SECRET_KEY not properly set — generated ephemeral key. Set SECRET_KEY in .env for production.")
 app.secret_key = _secret
@@ -90,22 +123,68 @@ def create_llm_client() -> LLMClient:
     return LLMClient(client_cfg)
 
 
-# ── JWT Auth Helpers ───────────────────────────────────────────────────────
+# ── JWT Auth Helpers (unified with security.py JWTManager) ───────────────────────
+# NOTE: JWTManager issues short-lived tokens (15 min). Old 24h tokens are still
+# accepted for backward compatibility via the dual-claim check in verify_token().
+
+
 def generate_token(user_id: str, account: str) -> str:
-    payload = {
-        'user_id': user_id,
-        'account': account,
-        'exp': datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRY_HOURS),
-        'iat': datetime.now(timezone.utc),
-    }
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
+    """Generate JWT using JWTManager (unified auth system)."""
+    return JWTManager.generate_token(user_id, extra_claims={'account': account})
 
 
 def verify_token(token: str) -> dict | None:
+    """
+    Verify JWT using JWTManager. Supports both:
+    - New tokens (JWTManager, claim='sub')
+    - Old tokens (legacy, claim='user_id') for backward compatibility
+    """
+    payload = JWTManager.verify_token(token, expected_type='access')
+    if payload:
+        return payload
+    # Fallback: try legacy format (user_id claim, 24h expiry)
     try:
-        return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
+        if payload.get('user_id'):
+            return payload
     except (jwt.ExpiredSignatureError, jwt.InvalidTokenError):
+        pass
+    return None
+
+
+# ── Startup Cleanup ─────────────────────────────────────────────────────────
+# Run once on first request: clean stale guest accounts + warn about in-memory rate limiter
+_cleanup_done = False
+
+
+@app.before_request
+def _startup_cleanup():
+    """Execute one-time startup tasks on first request."""
+    global _cleanup_done
+    if _cleanup_done:
         return None
+    _cleanup_done = True
+
+    # Warn about in-memory rate limiter (not safe for multi-process deployments)
+    if config.environment == 'production':
+        logger.warning(
+            "SECURITY: Using in-memory RateLimiter. "
+            "In multi-process deployments (gunicorn -w N, N>1), rate limits are per-process "
+            "and can be bypassed. Use a database-backed rate limiter (Redis) for production."
+        )
+
+    # Clean stale guest accounts (older than 24 hours)
+    try:
+        from datetime import timedelta as td
+        cutoff = (datetime.utcnow() - td(hours=24)).isoformat()
+        db = DatabaseManager()
+        deleted = db.db.execute(
+            "DELETE FROM users WHERE account_type='guest' AND created_at < ?", (cutoff,)
+        ).rowcount
+        if deleted > 0:
+            logger.info(f"Startup cleanup: removed {deleted} stale guest account(s)")
+    except Exception as e:
+        logger.warning(f"Guest account cleanup failed (non-fatal): {e}")
 
 
 # ── Auth Middleware ────────────────────────────────────────────────────────
@@ -126,13 +205,9 @@ def check_auth():
     if path in _PUBLIC_PATHS or any(path.startswith(p) for p in _PUBLIC_PREFIXES):
         return None
 
-    # Extract token
+    # Extract token (Authorization header only — token in URL leaks in logs/proxies)
     auth_header = request.headers.get('Authorization', '')
     token = auth_header.removeprefix('Bearer ').strip() if auth_header.startswith('Bearer ') else ''
-
-    # Also accept token from query param (for SSE / simple clients)
-    if not token:
-        token = request.args.get('token', '')
 
     if not token:
         return jsonify({'error': 'Authentication required', 'code': 'AUTH_REQUIRED'}), 401
@@ -147,16 +222,37 @@ def check_auth():
 # ── CORS ───────────────────────────────────────────────────────────────────
 @app.after_request
 def add_cors_headers(response):
-    allowed = config.security.cors_allowed_origins or '*'
-    response.headers['Access-Control-Allow-Origin'] = allowed.split(',')[0].strip()
+    origins = config.security.cors_allowed_origins
+    if origins:
+        # Use first origin (no wildcard in production — prevents credential leakage)
+        allowed = origins.split(',')[0].strip()
+        response.headers['Access-Control-Allow-Origin'] = allowed
+        response.headers['Access-Control-Allow-Credentials'] = 'true'
+    else:
+        response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     return response
 
 
+# ── Health Check ──────────────────────────────────────────────────────────
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    """Comprehensive health check endpoint for load balancers and monitoring"""
+    result = health_checker.check_all()
+    
+    # Return appropriate status code
+    status_code = 200 if result['status'] == 'healthy' else \
+                  200 if result['status'] == 'degraded' else 503
+    
+    return jsonify(result), status_code
+
+
 # ── Auth Routes ────────────────────────────────────────────────────────────
 @app.route('/api/auth/register', methods=['POST'])
 def auth_register():
+    from acas_pro.core.security import rate_limiter
+    
     data = request.json or {}
     account = data.get('account', '').strip()
     password = data.get('password', '').strip()
@@ -164,8 +260,17 @@ def auth_register():
 
     if not account or not password:
         return jsonify({'error': 'account and password are required'}), 400
-    if len(password) < 8:
-        return jsonify({'error': 'Password must be at least 8 characters'}), 400
+    
+    # Enforce strong password policy (not just length — use validator)
+    is_valid, pw_msg = pv.PasswordValidator.validate(password)
+    if not is_valid:
+        return jsonify({'error': pw_msg}), 400
+    
+    # Rate limit registration (10 per 10 minutes per account)
+    rate_key = f"register:{account}"
+    if not rate_limiter.is_allowed(rate_key, max_attempts=10, window_seconds=600):
+        return jsonify({'error': 'Too many registration attempts. Please try again later.'}), 429
+    rate_limiter.record_attempt(rate_key)
 
     ok, msg, profile = user_service.register(account=account, password=password, nickname=nickname or account)
     if not ok:
@@ -187,6 +292,12 @@ def auth_login():
 
     if not account or not password:
         return jsonify({'error': 'account and password are required'}), 400
+
+    # Rate limit login attempts: 20 per 10 minutes per account (brute-force protection)
+    rate_key = f"login:{account}"
+    if not rate_limiter.is_allowed(rate_key, max_attempts=20, window_seconds=600):
+        return jsonify({'error': 'Too many login attempts. Please try again later.'}), 429
+    rate_limiter.record_attempt(rate_key)
 
     ok, msg, profile = user_service.login(account=account, password=password)
     if not ok:
@@ -286,55 +397,83 @@ def chat_llm():
 # ── Dashboard Stats ───────────────────────────────────────────────────────
 @app.route('/api/dashboard/stats')
 def dashboard_stats():
-    """Real dashboard data from database"""
+    """Real dashboard data from database — fixed 5-layer bug"""
+    import logging
+    logger = logging.getLogger(__name__)
     try:
-        from acas_pro.core.database import DatabaseManager
         db = DatabaseManager()
         stats = {}
 
-        # Revenue (last 30 days)
+        # Revenue: transactions table, total_amount, last 30 days
         try:
-            result = db.fetch_one("""
-                SELECT COALESCE(SUM(amount), 0) as total
-                FROM orders WHERE created_at >= datetime('now', '-30 days')
-            """)
-            stats['revenue'] = result[0] if result else 0
-        except Exception:
+            result = db.fetchone(
+                "SELECT COALESCE(SUM(amount), 0) AS total "
+                "FROM transactions "
+                "WHERE created_at >= datetime('now', '-30 days') "
+                "  AND status IN ('completed', 'settled')"
+            )
+            stats['revenue'] = result['total'] if result else 0
+        except Exception as e:
+            logger.error(f'revenue query failed: {e}')
             stats['revenue'] = 0
 
-        # Active orders
+        # Active orders: orders table (0 rows — use transactions as proxy)
         try:
-            result = db.fetch_one("SELECT COUNT(*) FROM orders WHERE status = 'active'")
-            stats['active_orders'] = result[0] if result else 0
-        except Exception:
-            stats['active_orders'] = 0
+            result = db.fetchone(
+                "SELECT COUNT(*) AS cnt "
+                "FROM orders "
+                "WHERE status IN ('pending', 'processing', 'shipped')"
+            )
+            stats['active_orders'] = result['cnt'] if result else 0
+        except Exception as e:
+            logger.error(f'active_orders query failed: {e}')
+            # Fallback: count recent transactions
+            try:
+                result = db.fetchone(
+                    "SELECT COUNT(*) AS cnt FROM transactions "
+                    "WHERE created_at >= datetime('now', '-7 days')"
+                )
+                stats['active_orders'] = result['cnt'] if result else 0
+            except Exception:
+                stats['active_orders'] = 0
 
-        # Inventory count
+        # Inventory: products.stock_quantity > 0
         try:
-            result = db.fetch_one("SELECT COUNT(*) FROM products WHERE stock > 0")
-            stats['inventory'] = result[0] if result else 0
-        except Exception:
+            result = db.fetchone(
+                "SELECT COUNT(*) AS cnt FROM products WHERE stock_quantity > 0"
+            )
+            stats['inventory'] = result['cnt'] if result else 0
+        except Exception as e:
+            logger.error(f'inventory query failed: {e}')
             stats['inventory'] = 0
 
-        # Low stock alerts
+        # Low stock: stock_quantity <= reorder_point
         try:
-            result = db.fetch_one("SELECT COUNT(*) FROM products WHERE stock <= reorder_point")
-            stats['low_stock'] = result[0] if result else 0
-        except Exception:
+            result = db.fetchone(
+                "SELECT COUNT(*) AS cnt "
+                "FROM products "
+                "WHERE stock_quantity > 0 AND stock_quantity <= reorder_point"
+            )
+            stats['low_stock'] = result['cnt'] if result else 0
+        except Exception as e:
+            logger.error(f'low_stock query failed: {e}')
             stats['low_stock'] = 0
 
-        # Risk alerts
+        # Risk alerts: data_alerts table, unacknowledged
         try:
-            result = db.fetch_one("SELECT COUNT(*) FROM alerts WHERE status = 'open'")
-            stats['risk_alerts'] = result[0] if result else 0
-        except Exception:
+            result = db.fetchone(
+                "SELECT COUNT(*) AS cnt FROM data_alerts WHERE acknowledged = 0"
+            )
+            stats['risk_alerts'] = result['cnt'] if result else 0
+        except Exception as e:
+            logger.error(f'risk_alerts query failed: {e}')
             stats['risk_alerts'] = 0
 
         stats['llm_enabled'] = config.llm.enabled
         stats['llm_provider'] = config.llm.provider if config.llm.enabled else 'disabled'
         return jsonify(stats)
     except Exception as e:
-        # Fallback: return config-based stats
+        logger.error(f'dashboard_stats outer exception: {e}')
         return jsonify({
             'revenue': 0,
             'active_orders': 0,
@@ -347,16 +486,86 @@ def dashboard_stats():
 
 
 # ── Health ─────────────────────────────────────────────────────────────────
-@app.route('/api/health')
-def health():
-    return jsonify({
-        'status': 'ok',
-        'version': config.version,
-        'llm': {
-            'enabled': config.llm.enabled,
-            'provider': config.llm.provider,
-        }
-    })
+# NOTE: /api/health is registered at line ~163 (health_check).
+# The duplicate definition below is removed — Flask only uses the first.
+
+@app.route('/api/festivals', methods=['GET'])
+def list_festivals():
+    db = DatabaseManager()
+    try:
+        rows = db.fetchall(
+            "SELECT id, name, festival_type, importance, month, day, "
+            "       duration_days, themes, keywords, is_active "
+            "FROM festivals ORDER BY month, day"
+        )
+        return jsonify({'success': True, 'festivals': rows})
+    except Exception as e:
+        logger.error(f'festivals query failed: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/products', methods=['GET'])
+def list_products():
+    db = DatabaseManager()
+    try:
+        rows = db.fetchall(
+            "SELECT id, name, category, price, stock_quantity, reorder_point, status "
+            "FROM products ORDER BY name LIMIT 200"
+        )
+        return jsonify({'success': True, 'products': rows})
+    except Exception as e:
+        logger.error(f'products query failed: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/products/low-stock', methods=['GET'])
+def low_stock_products():
+    db = DatabaseManager()
+    try:
+        rows = db.fetchall(
+            "SELECT id, name, category, price, stock_quantity, reorder_point, "
+            "       (reorder_point - stock_quantity) AS deficit "
+            "FROM products "
+            "WHERE stock_quantity > 0 AND stock_quantity <= reorder_point "
+            "ORDER BY deficit DESC"
+        )
+        return jsonify({'success': True, 'products': rows})
+    except Exception as e:
+        logger.error(f'low-stock query failed: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/accounts', methods=['GET'])
+def list_accounts():
+    db = DatabaseManager()
+    try:
+        rows = db.fetchall(
+            "SELECT id, platform, account_name, followers, content_count, "
+            "       total_views, total_likes, status, phase, last_login_at "
+            "FROM platform_accounts ORDER BY platform LIMIT 100"
+        )
+        return jsonify({'success': True, 'accounts': rows})
+    except Exception as e:
+        logger.error(f'accounts query failed: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@app.route('/api/forecast/daily', methods=['GET'])
+def forecast_daily():
+    db = DatabaseManager()
+    try:
+        rows = db.fetchall(
+            "SELECT date, platform, SUM(revenue) AS revenue, "
+            "       SUM(orders) AS orders, SUM(views) AS views "
+            "FROM daily_metrics "
+            "WHERE date >= date('now', '-30 days') "
+            "GROUP BY date, platform "
+            "ORDER BY date ASC LIMIT 90"
+        )
+        return jsonify({'success': True, 'data': rows})
+    except Exception as e:
+        logger.error(f'daily_metrics query failed: {e}')
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 # ── HTML Template ─────────────────────────────────────────────────────────
@@ -536,8 +745,18 @@ DASHBOARD_HTML = r'''
         <div id="page-accounts" class="page" style="display:none">
             <div class="header"><h1>账号矩阵</h1><p>多平台账号管理</p></div>
             <div class="content-area">
-                <p>账号矩阵管理功能正在接入中，当前可通过 AI 助手查询账号运营数据。</p>
-                <button class="btn" onclick="showPage('llm', document.querySelector('[data-page=llm]'))">🤖 问 AI 助手</button>
+                <div style="margin-bottom:12px"><button class="btn btn-primary" onclick="loadAccounts()">🔄 刷新</button></div>
+                <table id="accounts-table" style="width:100%;border-collapse:collapse;font-size:13px">
+                    <thead><tr style="border-bottom:1px solid #30363d">
+                        <th style="text-align:left;padding:8px 12px;color:#8b949e">平台</th>
+                        <th style="text-align:left;padding:8px 12px;color:#8b949e">账号</th>
+                        <th style="text-align:right;padding:8px 12px;color:#8b949e">粉丝</th>
+                        <th style="text-align:right;padding:8px 12px;color:#8b949e">内容数</th>
+                        <th style="text-align:right;padding:8px 12px;color:#8b949e">总浏览</th>
+                        <th style="text-align:center;padding:8px 12px;color:#8b949e">状态</th>
+                    </tr></thead>
+                    <tbody id="accounts-tbody"><tr><td colspan="6" style="padding:20px;text-align:center;color:#8b949e">加载中...</td></tr></tbody>
+                </table>
             </div>
         </div>
 
@@ -545,12 +764,19 @@ DASHBOARD_HTML = r'''
         <div id="page-festival" class="page" style="display:none">
             <div class="header"><h1>节日营销</h1><p>节日日历与营销计划</p></div>
             <div class="content-area">
-                <div class="form-group">
-                    <label>查询节日</label>
-                    <input type="text" id="festival-query" placeholder="例如：即将到来的节日、618营销方案">
-                </div>
-                <button class="btn btn-primary" onclick="askFestival()">🔍 查询</button>
-                <div id="festival-result" style="margin-top: 16px;"></div>
+                <div style="margin-bottom:12px"><button class="btn btn-primary" onclick="loadFestivals()">🔄 刷新节日</button> <button class="btn" onclick="askFestival()">🤖 AI 营销建议</button></div>
+                <table id="festivals-table" style="width:100%;border-collapse:collapse;font-size:13px">
+                    <thead><tr style="border-bottom:1px solid #30363d">
+                        <th style="text-align:left;padding:8px 12px;color:#8b949e">节日</th>
+                        <th style="text-align:center;padding:8px 12px;color:#8b949e">日期</th>
+                        <th style="text-align:center;padding:8px 12px;color:#8b949e">类型</th>
+                        <th style="text-align:center;padding:8px 12px;color:#8b949e">重要性</th>
+                        <th style="text-align:center;padding:8px 12px;color:#8b949e">持续</th>
+                        <th style="text-align:left;padding:8px 12px;color:#8b949e">主题</th>
+                    </tr></thead>
+                    <tbody id="festivals-tbody"><tr><td colspan="6" style="padding:20px;text-align:center;color:#8b949e">加载中...</td></tr></tbody>
+                </table>
+                <div id="festival-result" style="margin-top:16px"></div>
             </div>
         </div>
 
@@ -558,12 +784,19 @@ DASHBOARD_HTML = r'''
         <div id="page-forecast" class="page" style="display:none">
             <div class="header"><h1>销售预测</h1><p>AI 驱动的销售趋势预测</p></div>
             <div class="content-area">
-                <div class="form-group">
-                    <label>预测问题</label>
-                    <input type="text" id="forecast-query" placeholder="例如：下个月销售趋势如何？">
-                </div>
-                <button class="btn btn-primary" onclick="askForecast()">📊 预测</button>
-                <div id="forecast-result" style="margin-top: 16px;"></div>
+                <div style="margin-bottom:12px"><button class="btn btn-primary" onclick="loadForecast()">🔄 刷新数据</button> <button class="btn" onclick="askForecast()">🤖 AI 预测</button></div>
+                <div id="forecast-chart" style="margin-bottom:16px;font-size:13px;color:#8b949e">加载中...</div>
+                <table id="forecast-table" style="width:100%;border-collapse:collapse;font-size:13px">
+                    <thead><tr style="border-bottom:1px solid #30363d">
+                        <th style="text-align:left;padding:8px 12px;color:#8b949e">日期</th>
+                        <th style="text-align:left;padding:8px 12px;color:#8b949e">平台</th>
+                        <th style="text-align:right;padding:8px 12px;color:#8b949e">营收</th>
+                        <th style="text-align:right;padding:8px 12px;color:#8b949e">订单</th>
+                        <th style="text-align:right;padding:8px 12px;color:#8b949e">浏览</th>
+                    </tr></thead>
+                    <tbody id="forecast-tbody"><tr><td colspan="5" style="padding:20px;text-align:center;color:#8b949e">加载中...</td></tr></tbody>
+                </table>
+                <div id="forecast-result" style="margin-top:16px"></div>
             </div>
         </div>
 
@@ -571,12 +804,19 @@ DASHBOARD_HTML = r'''
         <div id="page-inventory" class="page" style="display:none">
             <div class="header"><h1>库存管理</h1><p>库存优化与补货建议</p></div>
             <div class="content-area">
-                <div class="form-group">
-                    <label>库存问题</label>
-                    <input type="text" id="inventory-query" placeholder="例如：哪些商品需要补货？">
-                </div>
-                <button class="btn btn-primary" onclick="askInventory()">📦 查询</button>
-                <div id="inventory-result" style="margin-top: 16px;"></div>
+                <div style="margin-bottom:12px"><button class="btn btn-primary" onclick="loadInventory()">🔄 刷新</button> <button class="btn btn-danger" onclick="loadLowStock()">⚠️ 低库存预警</button> <button class="btn" onclick="askInventory()">🤖 AI 补货建议</button></div>
+                <table id="inventory-table" style="width:100%;border-collapse:collapse;font-size:13px">
+                    <thead><tr style="border-bottom:1px solid #30363d">
+                        <th style="text-align:left;padding:8px 12px;color:#8b949e">商品</th>
+                        <th style="text-align:left;padding:8px 12px;color:#8b949e">分类</th>
+                        <th style="text-align:right;padding:8px 12px;color:#8b949e">价格</th>
+                        <th style="text-align:right;padding:8px 12px;color:#8b949e">库存</th>
+                        <th style="text-align:right;padding:8px 12px;color:#8b949e">补货点</th>
+                        <th style="text-align:center;padding:8px 12px;color:#8b949e">状态</th>
+                    </tr></thead>
+                    <tbody id="inventory-tbody"><tr><td colspan="6" style="padding:20px;text-align:center;color:#8b949e">加载中...</td></tr></tbody>
+                </table>
+                <div id="inventory-result" style="margin-top:16px"></div>
             </div>
         </div>
 
@@ -692,6 +932,10 @@ DASHBOARD_HTML = r'''
             document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
             if (el) el.classList.add('active');
             if (page === 'llm') updateLLMStatus();
+            if (page === 'accounts') loadAccounts();
+            if (page === 'festival') loadFestivals();
+            if (page === 'forecast') loadForecast();
+            if (page === 'inventory') loadInventory();
         }
 
         // ── Dashboard ──
@@ -781,33 +1025,178 @@ DASHBOARD_HTML = r'''
         }
 
         // ── Festival ──
+        async function loadFestivals() {
+            const el = document.getElementById('festivals-tbody');
+            el.innerHTML = '<tr><td colspan="6" style="padding:20px;text-align:center;color:#8b949e">加载中...</td></tr>';
+            try {
+                const res = await fetch('/api/festivals', {headers: authHeaders()});
+                const data = await res.json();
+                if (!data.success || !data.festivals || data.festivals.length === 0) {
+                    el.innerHTML = '<tr><td colspan="6" style="padding:20px;text-align:center;color:#8b949e">暂无节日数据</td></tr>';
+                    return;
+                }
+                el.innerHTML = data.festivals.map(f => {
+                    const imp = {5:'&#9733;&#9733;&#9733;', 4:'&#9733;&#9733;&#9733;&#9733;', 3:'&#9733;&#9733;&#9733;', 2:'&#9733;&#9733;', 1:'&#9733;'}[f.importance] || '-';
+                    const date = `${f.month}月${f.day}日`;
+                    const themes = f.themes ? f.themes.substring(0,30) : '';
+                    return '<tr style="border-bottom:1px solid #21262d">'
+                        + `<td style="padding:8px 12px">${f.name}</td>`
+                        + `<td style="padding:8px 12px;text-align:center">${date}</td>`
+                        + `<td style="padding:8px 12px;text-align:center">${f.festival_type || '-'}</td>`
+                        + `<td style="padding:8px 12px;text-align:center">${imp}</td>`
+                        + `<td style="padding:8px 12px;text-align:center">${f.duration_days || 0}天</td>`
+                        + `<td style="padding:8px 12px">${themes}${themes?'...':''}</td>`
+                        + '</tr>';
+                }).join('');
+            } catch(e) {
+                el.innerHTML = '<tr><td colspan="6" style="padding:20px;color:#f85149">加载失败: ' + e.message + '</td></tr>';
+            }
+        }
+
         async function askFestival() {
+            await loadFestivals();
             const q = document.getElementById('festival-query').value.trim();
-            if (!q) return alert('请输入查询');
+            if (!q) return;
             const el = document.getElementById('festival-result');
-            el.innerHTML = '<span class="typing">查询中...</span>';
+            el.innerHTML = '<span class="typing">AI 分析中...</span>';
             const res = await chatWithAI(`关于节日营销：${q}。请提供节日信息和营销建议。`);
-            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8;">' + escapeHtml(res) + '</div>';
+            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8; margin-top:12px; padding:12px; background:#21262d; border-radius:8px;">' + res.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
         }
 
         // ── Forecast ──
+        async function loadForecast() {
+            const tbody = document.getElementById('forecast-tbody');
+            const chartEl = document.getElementById('forecast-chart');
+            tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:#8b949e">加载中...</td></tr>';
+            chartEl.innerHTML = '加载中...';
+            try {
+                const res = await fetch('/api/forecast/daily', {headers: authHeaders()});
+                const data = await res.json();
+                if (!data.success || !data.data || data.data.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;text-align:center;color:#8b949e">暂无数据</td></tr>';
+                    chartEl.innerHTML = '近30天无销售数据';
+                    return;
+                }
+                const rows = data.data;
+                let totalRevenue = 0;
+                rows.forEach(r => { totalRevenue += (r.revenue || 0); });
+                chartEl.innerHTML = `近30天共 <b style="color:#3fb950">${rows.length}</b> 条记录，总营收 <b style="color:#3fb950">¥${totalRevenue.toLocaleString()}</b>`;
+                tbody.innerHTML = rows.slice(-20).map(r => {
+                    const rev = (r.revenue || 0).toLocaleString();
+                    return '<tr style="border-bottom:1px solid #21262d">'
+                        + `<td style="padding:8px 12px">${r.date || '-'}</td>`
+                        + `<td style="padding:8px 12px">${r.platform || '-'}</td>`
+                        + `<td style="padding:8px 12px;text-align:right;color:#3fb950">¥${rev}</td>`
+                        + `<td style="padding:8px 12px;text-align:right">${r.orders || 0}</td>`
+                        + `<td style="padding:8px 12px;text-align:right">${(r.views || 0).toLocaleString()}</td>`
+                        + '</tr>';
+                }).join('');
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;color:#f85149">加载失败: ' + e.message + '</td></tr>';
+            }
+        }
+
         async function askForecast() {
+            await loadForecast();
             const q = document.getElementById('forecast-query').value.trim();
-            if (!q) return alert('请输入问题');
+            if (!q) return;
             const el = document.getElementById('forecast-result');
-            el.innerHTML = '<span class="typing">分析中...</span>';
+            el.innerHTML = '<span class="typing">AI 分析中...</span>';
             const res = await chatWithAI(`关于销售预测：${q}。请基于一般商业知识给出分析和建议。`);
-            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8;">' + escapeHtml(res) + '</div>';
+            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8; margin-top:12px; padding:12px; background:#21262d; border-radius:8px;">' + res.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
         }
 
         // ── Inventory ──
+        async function loadInventory() {
+            const tbody = document.getElementById('inventory-tbody');
+            tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;text-align:center;color:#8b949e">加载中...</td></tr>';
+            try {
+                const res = await fetch('/api/products', {headers: authHeaders()});
+                const data = await res.json();
+                if (!data.success || !data.products || data.products.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;text-align:center;color:#8b949e">暂无商品数据</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.products.map(p => {
+                    const status = p.stock_quantity === 0 ? '<span style="color:#f85149">缺货</span>'
+                        : p.stock_quantity <= (p.reorder_point || 0) ? '<span style="color:#d29922">预警</span>'
+                        : '<span style="color:#3fb950">正常</span>';
+                    return '<tr style="border-bottom:1px solid #21262d">'
+                        + `<td style="padding:8px 12px">${p.name || '-'}</td>`
+                        + `<td style="padding:8px 12px">${p.category || '-'}</td>`
+                        + `<td style="padding:8px 12px;text-align:right">¥${(p.price || 0).toLocaleString()}</td>`
+                        + `<td style="padding:8px 12px;text-align:right">${p.stock_quantity || 0}</td>`
+                        + `<td style="padding:8px 12px;text-align:right">${p.reorder_point || 0}</td>`
+                        + `<td style="padding:8px 12px;text-align:center">${status}</td>`
+                        + '</tr>';
+                }).join('');
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;color:#f85149">加载失败: ' + e.message + '</td></tr>';
+            }
+        }
+
+        async function loadLowStock() {
+            const tbody = document.getElementById('inventory-tbody');
+            tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;text-align:center;color:#8b949e">加载中...</td></tr>';
+            try {
+                const res = await fetch('/api/products/low-stock', {headers: authHeaders()});
+                const data = await res.json();
+                if (!data.success || !data.products || data.products.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;text-align:center;color:#3fb950">库存充足，无需补货</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = '<tr><td colspan="6" style="padding:8px 12px;color:#d29922;font-weight:bold">⚠ 低库存预警 (' + data.products.length + ' 项)</td></tr>'
+                    + data.products.map(p => {
+                    return '<tr style="border-bottom:1px solid #21262d; background:#1a1500">'
+                        + `<td style="padding:8px 12px">${p.name || '-'}</td>`
+                        + `<td style="padding:8px 12px">${p.category || '-'}</td>`
+                        + `<td style="padding:8px 12px;text-align:right">¥${(p.price || 0).toLocaleString()}</td>`
+                        + `<td style="padding:8px 12px;text-align:right;color:#f85149">${p.stock_quantity || 0}</td>`
+                        + `<td style="padding:8px 12px;text-align:right">${p.reorder_point || 0}</td>`
+                        + `<td style="padding:8px 12px;text-align:center;color:#f85149">缺 ${p.deficit || 0} 件</td>`
+                        + '</tr>';
+                }).join('');
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;color:#f85149">加载失败: ' + e.message + '</td></tr>';
+            }
+        }
+
+        async function loadAccounts() {
+            const tbody = document.getElementById('accounts-tbody');
+            tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;text-align:center;color:#8b949e">加载中...</td></tr>';
+            try {
+                const res = await fetch('/api/accounts', {headers: authHeaders()});
+                const data = await res.json();
+                if (!data.success || !data.accounts || data.accounts.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;text-align:center;color:#8b949e">暂无账号数据</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.accounts.map(a => {
+                    const status = a.status === 'active' ? '<span style="color:#3fb950">活跃</span>'
+                        : a.status === 'inactive' ? '<span style="color:#8b949e">停用</span>'
+                        : '<span style="color:#d29922">' + (a.status || '-') + '</span>';
+                    return '<tr style="border-bottom:1px solid #21262d">'
+                        + `<td style="padding:8px 12px">${a.platform || '-'}</td>`
+                        + `<td style="padding:8px 12px">${a.account_name || '-'}</td>`
+                        + `<td style="padding:8px 12px;text-align:right">${(a.followers || 0).toLocaleString()}</td>`
+                        + `<td style="padding:8px 12px;text-align:right">${a.content_count || 0}</td>`
+                        + `<td style="padding:8px 12px;text-align:right">${(a.total_views || 0).toLocaleString()}</td>`
+                        + `<td style="padding:8px 12px;text-align:center">${status}</td>`
+                        + '</tr>';
+                }).join('');
+            } catch(e) {
+                tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;color:#f85149">加载失败: ' + e.message + '</td></tr>';
+            }
+        }
+
         async function askInventory() {
+            await loadInventory();
             const q = document.getElementById('inventory-query').value.trim();
-            if (!q) return alert('请输入问题');
+            if (!q) return;
             const el = document.getElementById('inventory-result');
-            el.innerHTML = '<span class="typing">查询中...</span>';
+            el.innerHTML = '<span class="typing">AI 分析中...</span>';
             const res = await chatWithAI(`关于库存管理：${q}。请给出库存优化建议。`);
-            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8;">' + escapeHtml(res) + '</div>';
+            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8; margin-top:12px; padding:12px; background:#21262d; border-radius:8px;">' + res.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
         }
 
         // ── AI Helper ──
@@ -866,6 +1255,7 @@ DASHBOARD_HTML = r'''
             el.innerHTML = '<span class="status-badge status-' + (result.success ? 'ok' : 'err') + '">' +
                 (result.success ? '✅ 连接成功 · ' + result.message : '❌ ' + result.error) + '</span>';
         }
+
     </script>
 </body>
 </html>

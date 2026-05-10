@@ -174,7 +174,7 @@ class UserService:
             if failed_count >= 5:
                 # Lock account
                 lock_until = (datetime.utcnow() + timedelta(minutes=30)).isoformat()
-                db.update("users", 
+                db.update("users",
                     {"failed_login_count": failed_count, "locked_until": lock_until},
                     "id = ?", (user["id"],)
                 )
@@ -187,7 +187,7 @@ class UserService:
                 )
                 return False, "Account locked due to too many failed attempts. Try again in 30 minutes.", None
             else:
-                db.update("users", 
+                db.update("users",
                     {"failed_login_count": failed_count},
                     "id = ?", (user["id"],)
                 )
@@ -301,11 +301,9 @@ class UserService:
             return False, "No valid fields to update"
         
         try:
-            count = db.update("users", filtered_updates, "id = ?", (user_id,))
-            if count > 0:
-                audit_logger.log("PROFILE_UPDATED", user_id, {"fields": list(filtered_updates.keys())})
-                return True, "Profile updated successfully"
-            return False, "User not found"
+            db.update("users", filtered_updates, "id = ?", (user_id,))
+            audit_logger.log("PROFILE_UPDATED", user_id, {"fields": list(filtered_updates.keys())})
+            return True, "Profile updated successfully"
         except Exception as e:
             logger.error(f"Profile update failed: {e}")
             return False, "Update failed"

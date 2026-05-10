@@ -407,20 +407,40 @@ class CryptoManager:
     
     def _derive_fernet_key(self, password: str) -> Fernet:
         """
-        Derive Fernet key from password using PBKDF2
-        
-        Fernet requires 32 url-safe base64-encoded bytes
+        Derive Fernet key from password using PBKDF2.
+
+        Fernet requires 32 url-safe base64-encoded bytes.
+
+        IMPORTANT: Salt MUST come from the ACAS_ENCRYPTION_SALT env var
+        (at least 16 bytes, randomly generated once per deployment).
+        If the salt is hardcoded the KDF provides zero additional security.
         """
-        # Use fixed salt derived from app identifier (not secret)
-        salt = b'ACAS-Pro-Encryption-Key-v1'
-        
+        salt_env = os.environ.get('ACAS_ENCRYPTION_SALT')
+        if salt_env:
+            salt = salt_env.encode('utf-8')
+        else:
+            # CRITICAL: ACAS_ENCRYPTION_SALT must be set in production.
+            # Fall back to a random salt ONLY in development (warn loudly).
+            if config.environment == 'production':
+                logger.error(
+                    "ACAS_ENCRYPTION_SALT is not set! Set it to a random 32-byte hex string:\n"
+                    "  python -c \"import secrets; print(secrets.token_hex(32))\""
+                )
+                raise ValueError("ACAS_ENCRYPTION_SALT must be set in production")
+            else:
+                logger.warning(
+                    "ACAS_ENCRYPTION_SALT not set — using insecure ephemeral salt. "
+                    "Set ACAS_ENCRYPTION_SALT in .env for production."
+                )
+                salt = secrets.token_hex(16).encode('utf-8')
+
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
             length=32,
             salt=salt,
-            iterations=600000,  # Same as password hashing
+            iterations=600000,
         )
-        
+
         key = base64.urlsafe_b64encode(kdf.derive(password.encode('utf-8')))
         return Fernet(key)
     

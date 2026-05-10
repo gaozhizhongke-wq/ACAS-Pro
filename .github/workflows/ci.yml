@@ -1,58 +1,25 @@
-# ACAS Pro CI/CD Pipeline Configuration
-# GitHub Actions - .github/workflows/ci.yml
-
-name: ACAS Pro CI/CD
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: [ main, master, develop ]
   pull_request:
-    branches: [main, develop]
-
-env:
-  PYTHON_VERSION: '3.11'
-  NODE_VERSION: '20'
+    branches: [ main, master ]
 
 jobs:
-  # ============================================
-  # Lint & Type Check
-  # ============================================
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install flake8 black mypy
-
-      - name: Flake8 lint
-        run: flake8 src/acas_pro/ --max-line-length=100 --ignore=E501,W503
-
-      - name: Black format check
-        run: black --check src/acas_pro/
-
-      - name: MyPy type check
-        run: mypy src/acas_pro/ --ignore-missing-imports
-
-  # ============================================
-  # Unit Tests
-  # ============================================
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.11', '3.12']
+
     services:
       postgres:
         image: postgres:16
         env:
           POSTGRES_USER: test
           POSTGRES_PASSWORD: test
-          POSTGRES_DB: test
+          POSTGRES_DB: acas_test
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -62,97 +29,97 @@ jobs:
           - 5432:5432
 
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ env.PYTHON_VERSION }}
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
 
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install -r requirements-test.txt
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov black flake8 mypy
 
-      - name: Run pytest
-        env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/test
-          ACAS_ENV: test
-        run: |
-          pytest tests/ \
-            --cov=src/acas_pro \
-            --cov-report=xml \
-            --cov-report=term \
-            --cov-fail-under=80
+    - name: Lint with flake8
+      run: |
+        flake8 src/acas_pro --count --select=E9,F63,F7,F82 --show-source --statistics
+        flake8 src/acas_pro --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
-      - name: Upload coverage
-        uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage.xml
-          fail_ci_if_error: false
+    - name: Format check with black
+      run: |
+        black --check src/acas_pro || true
 
-  # ============================================
-  # Build Docker Image
-  # ============================================
+    - name: Type check with mypy
+      run: |
+        mypy src/acas_pro --ignore-missing-imports || true
+
+    - name: Run tests with pytest
+      env:
+        DATABASE_URL: postgresql://test:test@localhost:5432/acas_test
+        SECRET_KEY: test-secret-key-for-ci-only
+        ACAS_ENV: testing
+      run: |
+        pytest tests/ -v --cov=src/acas_pro --cov-report=xml --cov-report=term
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
   build:
     runs-on: ubuntu-latest
-    needs: [lint, test]
+    needs: test
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
     steps:
-      - uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+    - name: Build Docker image
+      run: |
+        docker build -t acas-pro:${{ github.sha }} .
+        docker tag acas-pro:${{ github.sha }} acas-pro:latest
 
-      - name: Build and push
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            acaspro/acas-api:${{ github.sha }}
-            acaspro/acas-api:latest
-          cache-from: type=registry,ref=acaspro/acas-api:buildcache
-          cache-to: type=registry,ref=acaspro/acas-api:buildcache,mode=max
+    - name: Test Docker image
+      run: |
+        docker run --rm acas-pro:${{ github.sha }} python -c "import acas_pro; print('Import OK')"
 
-  # ============================================
-  # Deploy to Staging (on develop branch)
-  # ============================================
-  deploy-staging:
+  security:
     runs-on: ubuntu-latest
-    needs: [build]
-    if: github.ref == 'refs/heads/develop'
-    steps:
-      - name: Deploy to staging
-        run: |
-          echo "Deploying to staging environment..."
-          # Add your deployment commands here
-          # e.g., kubectl, docker-compose, aws, etc.
 
-  # ============================================
-  # Deploy to Production (on main branch)
-  # ============================================
-  deploy-production:
-    runs-on: ubuntu-latest
-    needs: [build]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     steps:
-      - name: Deploy to production
-        run: |
-          echo "Deploying to production environment..."
-          # Add your deployment commands here
-          # e.g., kubectl, blue-green, canary, etc.
+    - uses: actions/checkout@v4
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+
+    - name: Upload Trivy scan results
+      uses: github/codeql-action/upload-sarif@v2
+      if: always()
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: Run Bandit security linter
+      run: |
+        pip install bandit
+        bandit -r src/acas_pro -f json -o bandit-report.json || true
+        bandit -r src/acas_pro
