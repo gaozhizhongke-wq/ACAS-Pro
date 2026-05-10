@@ -224,12 +224,19 @@ def check_auth():
 def add_cors_headers(response):
     origins = config.security.cors_allowed_origins
     if origins:
-        # Use first origin (no wildcard in production — prevents credential leakage)
-        allowed = origins.split(',')[0].strip()
-        response.headers['Access-Control-Allow-Origin'] = allowed
-        response.headers['Access-Control-Allow-Credentials'] = 'true'
+        # Strip trailing commas/whitespace
+        origin = origins.split(',')[0].strip()
+        if not origin or origin == '*':
+            # No specific origin: don't send credentials with wildcard
+            response.headers['Access-Control-Allow-Origin'] = '*'
+            # Do NOT send Credentials: true with wildcard — browser rejects it
+        else:
+            # Specific origin + credentials
+            response.headers['Access-Control-Allow-Origin'] = origin
+            response.headers['Access-Control-Allow-Credentials'] = 'true'
     else:
         response.headers['Access-Control-Allow-Origin'] = '*'
+        # No Credentials header when using wildcard
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
     return response
@@ -859,6 +866,16 @@ DASHBOARD_HTML = r'''
     </div>
 
     <script>
+        function escapeHtml(str) {
+            if (str == null) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         // ── State ──
         let authToken = localStorage.getItem('acas_token') || '';
         let chatHistory = [];
@@ -1060,7 +1077,7 @@ DASHBOARD_HTML = r'''
             const el = document.getElementById('festival-result');
             el.innerHTML = '<span class="typing">AI 分析中...</span>';
             const res = await chatWithAI(`关于节日营销：${q}。请提供节日信息和营销建议。`);
-            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8; margin-top:12px; padding:12px; background:#21262d; border-radius:8px;">' + res.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
+            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8; margin-top:12px; padding:12px; background:#21262d; border-radius:8px;">' + escapeHtml(res) + '</div>';
         }
 
         // ── Forecast ──
@@ -1103,7 +1120,7 @@ DASHBOARD_HTML = r'''
             const el = document.getElementById('forecast-result');
             el.innerHTML = '<span class="typing">AI 分析中...</span>';
             const res = await chatWithAI(`关于销售预测：${q}。请基于一般商业知识给出分析和建议。`);
-            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8; margin-top:12px; padding:12px; background:#21262d; border-radius:8px;">' + res.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
+            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8; margin-top:12px; padding:12px; background:#21262d; border-radius:8px;">' + escapeHtml(res) + '</div>';
         }
 
         // ── Inventory ──
@@ -1145,7 +1162,7 @@ DASHBOARD_HTML = r'''
                     tbody.innerHTML = '<tr><td colspan="6" style="padding:20px;text-align:center;color:#3fb950">库存充足，无需补货</td></tr>';
                     return;
                 }
-                tbody.innerHTML = '<tr><td colspan="6" style="padding:8px 12px;color:#d29922;font-weight:bold">⚠ 低库存预警 (' + data.products.length + ' 项)</td></tr>'
+                tbody.innerHTML = '<tr><td colspan="6" style="padding:8px 12px;color:#d29922;font-weight:bold">⚠ 低库存预警 (' + escapeHtml(String(data.products.length)) + ' 项)</td></tr>'
                     + data.products.map(p => {
                     return '<tr style="border-bottom:1px solid #21262d; background:#1a1500">'
                         + `<td style="padding:8px 12px">${p.name || '-'}</td>`
@@ -1196,7 +1213,7 @@ DASHBOARD_HTML = r'''
             const el = document.getElementById('inventory-result');
             el.innerHTML = '<span class="typing">AI 分析中...</span>';
             const res = await chatWithAI(`关于库存管理：${q}。请给出库存优化建议。`);
-            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8; margin-top:12px; padding:12px; background:#21262d; border-radius:8px;">' + res.replace(/</g,'&lt;').replace(/>/g,'&gt;') + '</div>';
+            el.innerHTML = '<div style="white-space:pre-wrap; line-height:1.8; margin-top:12px; padding:12px; background:#21262d; border-radius:8px;">' + escapeHtml(res) + '</div>';
         }
 
         // ── AI Helper ──
@@ -1208,9 +1225,9 @@ DASHBOARD_HTML = r'''
                     body: JSON.stringify({message, system: '你是 ACAS Pro 商业智能助手，专精于电商运营、内容营销、库存管理和销售预测。回答要专业、实用、简洁。'})
                 });
                 const data = await res.json();
-                return data.success ? data.content : '❌ ' + (data.error || '请求失败');
+                return data.success ? escapeHtml(data.content) : '❌ ' + escapeHtml(data.error || '请求失败');
             } catch(e) {
-                return '❌ 网络错误: ' + e.message;
+                return '❌ 网络错误: ' + escapeHtml(e.message);
             }
         }
 
