@@ -17,10 +17,15 @@ from contextlib import contextmanager
 from dataclasses import asdict
 from urllib.parse import urlparse
 
-from .config import config
 from .logging import get_logger
 
-logger = get_logger(__name__)
+# Lazy-loaded logger and config
+def _get_logger():
+    return get_logger(__name__)
+
+def _get_config():
+    from .config import get_config
+    return get_config()
 
 
 class DatabaseManager:
@@ -83,11 +88,12 @@ class DatabaseManager:
             self._init_sqlite()
         
         self._initialized = True
-        logger.info(f"DatabaseManager initialized ({'PostgreSQL' if self._is_postgres else 'SQLite'})")
+        _get_logger().info(f"DatabaseManager initialized ({'PostgreSQL' if self._is_postgres else 'SQLite'})")
     
     def _init_sqlite(self):
         """Initialize SQLite backend"""
-        self._db_path = config.database.path if hasattr(config, 'database') else 'data/acas.db'
+        cfg = _get_config()
+        self._db_path = cfg.database.path if hasattr(cfg, 'database') else 'data/acas.db'
         self._local = threading.local()
         self._pool = None
         self._init_sqlite_db()
@@ -361,7 +367,7 @@ class DatabaseManager:
         results = self.execute(query, params)
         return results[0] if results else None
 
-    # Compatibility aliases — web_app.py and user_service.py call fetchone/fetchall
+    # Compatibility aliases �?web_app.py and user_service.py call fetchone/fetchall
     def fetchone(self, query: str, params: tuple = None) -> Optional[Dict]:
         """Alias for execute_one()"""
         return self.execute_one(query, params)
@@ -416,7 +422,7 @@ class DatabaseManager:
             query = f"UPDATE {table} SET {', '.join([f'{c} = {p}' for c, p in zip(columns, placeholders)])} WHERE {where_clause}"
         else:
             # Fallback: UPDATE ... WHERE id = ? (legacy single-id form)
-            # This path is no longer used by callers — kept for potential migrations
+            # This path is no longer used by callers �?kept for potential migrations
             raise ValueError(
                 "db.update() requires explicit where_clause and where_params. "
                 "Use: db.update('table', data, 'id = ?', (id_value,))"
@@ -455,5 +461,17 @@ class DatabaseManager:
             return {'status': 'unhealthy', 'error': str(e)}
 
 
-# Global instance
-db = DatabaseManager()
+# Lazy-loaded global instance
+_db_instance: Optional['DatabaseManager'] = None
+
+
+def get_db() -> 'DatabaseManager':
+    """Get database manager singleton (lazy-loaded)"""
+    global _db_instance
+    if _db_instance is None:
+        _db_instance = DatabaseManager()
+    return _db_instance
+
+
+# Backward compatibility - deprecated, use get_db()
+db = get_db()

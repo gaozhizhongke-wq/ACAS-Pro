@@ -14,10 +14,16 @@ from dataclasses import dataclass, field
 from collections import defaultdict
 import threading
 
-from .config import config
+from .config import get_config
 from .logging import get_logger
 
-logger = get_logger(__name__)
+# Lazy-loaded logger
+def _get_logger():
+    return get_logger(__name__)
+
+# Lazy-loaded config
+def _get_config():
+    return get_config()
 
 
 @dataclass

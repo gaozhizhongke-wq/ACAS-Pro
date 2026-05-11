@@ -22,10 +22,14 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 import base64
 
-from .config import config
+from .config import get_config
 from .logging import get_logger, audit_logger
 
 logger = get_logger(__name__)
+
+# Lazy config accessor for module-level usage
+def _cfg():
+    return get_config()
 
 
 class PasswordValidator:
@@ -76,14 +80,14 @@ class PasswordHasher:
     @staticmethod
     def hash(password: str) -> str:
         """Hash password with random salt"""
-        salt = secrets.token_hex(config.security.salt_length)
+        salt = secrets.token_hex(_cfg().security.salt_length)
         dk = hashlib.pbkdf2_hmac(
             'sha256',
             password.encode('utf-8'),
             salt.encode('utf-8'),
-            config.security.pbkdf2_iterations
+            _cfg().security.pbkdf2_iterations
         )
-        return f"pbkdf2:sha256:{config.security.pbkdf2_iterations}${salt}${dk.hex()}"
+        return f"pbkdf2:sha256:{_cfg().security.pbkdf2_iterations}${salt}${dk.hex()}"
     
     @staticmethod
     def verify(password: str, password_hash: str) -> bool:
@@ -138,9 +142,9 @@ class JWTManager:
         # Priority: env var > config
         key = os.environ.get('ACAS_JWT_SECRET')
         if not key:
-            key = config.security.secret_key
+            key = _cfg().security.secret_key
         if not key:
-            raise ValueError("JWT secret key not configured. Set ACAS_JWT_SECRET env var or config.security.secret_key")
+            raise ValueError("JWT secret key not configured. Set ACAS_JWT_SECRET env var or _cfg().security.secret_key")
         return key
     
     @classmethod
@@ -162,7 +166,7 @@ class JWTManager:
         return jwt.encode(
             payload,
             cls._get_secret_key(),
-            algorithm=config.security.jwt_algorithm
+            algorithm=_cfg().security.jwt_algorithm
         )
     
     @classmethod
@@ -180,7 +184,7 @@ class JWTManager:
         return jwt.encode(
             payload,
             cls._get_secret_key(),
-            algorithm=config.security.jwt_algorithm
+            algorithm=_cfg().security.jwt_algorithm
         )
     
     @classmethod
@@ -199,7 +203,7 @@ class JWTManager:
             payload = jwt.decode(
                 token,
                 cls._get_secret_key(),
-                algorithms=[config.security.jwt_algorithm]
+                algorithms=[_cfg().security.jwt_algorithm]
             )
             
             # Verify token type
@@ -256,7 +260,7 @@ class SessionManager:
         """Create new session"""
         token = secrets.token_urlsafe(32)
         now = datetime.now(timezone.utc)
-        expires = now + timedelta(minutes=config.security.session_timeout_minutes)
+        expires = now + timedelta(minutes=_cfg().security.session_timeout_minutes)
         
         session_data = {
             'user_id': user_id,
@@ -430,7 +434,7 @@ class CryptoManager:
                 self._fernet = self._derive_fernet_key(env_key)
             else:
                 # Derive from secret_key with proper KDF
-                secret = config.security.secret_key
+                secret = _cfg().security.secret_key
                 self._fernet = self._derive_fernet_key(secret)
         
         # Store key file path for key rotation
@@ -452,7 +456,7 @@ class CryptoManager:
         else:
             # CRITICAL: ACAS_ENCRYPTION_SALT must be set in production.
             # Development: use persistent salt file to avoid data corruption on restart
-            if config.environment == 'production':
+            if _cfg().environment == 'production':
                 logger.error(
                     "ACAS_ENCRYPTION_SALT is not set! Set it to a random 32-byte hex string:\n"
                     "  python -c \"import secrets; print(secrets.token_hex(32))\""

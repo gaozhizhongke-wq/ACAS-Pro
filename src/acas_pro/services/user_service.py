@@ -10,11 +10,18 @@ from datetime import datetime, timedelta
 from typing import Optional, Tuple, Dict, Any
 from dataclasses import dataclass, asdict
 
-from ..core.database import db
+from ..core.database import get_db
 from ..core.security import (
-    password_validator, password_hasher, 
-    session_manager, rate_limiter
+    get_password_validator, get_password_hasher, 
+    get_session_manager, get_rate_limiter
 )
+
+# Lazy-loaded instances
+db = get_db()
+password_validator = get_password_validator()
+password_hasher = get_password_hasher()
+session_manager = get_session_manager()
+rate_limiter = get_rate_limiter()
 from ..core.logging import get_logger, audit_logger
 
 logger = get_logger(__name__)

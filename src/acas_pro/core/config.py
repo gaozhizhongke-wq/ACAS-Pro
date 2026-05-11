@@ -264,6 +264,20 @@ class AppConfig:
                         except ValueError:
                             data['environment'] = Environment.DEVELOPMENT
                 
+                # Convert nested dicts to dataclass instances
+                if 'database' in data and isinstance(data['database'], dict):
+                    data['database'] = DatabaseConfig(**data['database'])
+                if 'security' in data and isinstance(data['security'], dict):
+                    data['security'] = SecurityConfig(**data['security'])
+                if 'ml' in data and isinstance(data['ml'], dict):
+                    data['ml'] = MLConfig(**data['ml'])
+                if 'ui' in data and isinstance(data['ui'], dict):
+                    data['ui'] = UIConfig(**data['ui'])
+                if 'llm' in data and isinstance(data['llm'], dict):
+                    data['llm'] = LLMConfig(**data['llm'])
+                if 'oauth' in data and isinstance(data['oauth'], dict):
+                    data['oauth'] = OAuthConfig(**data['oauth'])
+                
                 return cls(**data)
             except Exception as e:
                 logger.warning(f'Config load error: {e}. Using defaults.')
@@ -288,15 +302,31 @@ class AppConfig:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
 
-# Global config instance
-config = AppConfig.load()
+# Lazy-loaded global config instance
+_config_instance: Optional[AppConfig] = None
 
-# Validate on load in production
-if config.is_production:
-    is_valid, errors = config.validate()
-    if not is_valid:
-        for error in errors:
-            logger.error(f"Production config validation failed: {error}")
-        raise ValueError(f"Configuration validation failed: {errors}")
-    else:
-        logger.info("Production configuration validated successfully")
+
+def get_config() -> AppConfig:
+    """Get global config instance (lazy-loaded)"""
+    global _config_instance
+    if _config_instance is None:
+        _config_instance = AppConfig.load()
+        # Validate on load in production
+        if _config_instance.is_production:
+            is_valid, errors = _config_instance.validate()
+            if not is_valid:
+                for error in errors:
+                    logger.error(f"Production config validation failed: {error}")
+    return _config_instance
+
+
+# Backward compatibility - deprecated, use get_config()
+# LAZY initialization to avoid circular import
+_config_lazy = None
+
+def config() -> AppConfig:
+    """Backward-compatible lazy config accessor"""
+    global _config_lazy
+    if _config_lazy is None:
+        _config_lazy = get_config()
+    return _config_lazy

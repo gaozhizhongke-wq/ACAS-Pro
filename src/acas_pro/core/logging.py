@@ -14,7 +14,11 @@ from datetime import datetime
 from typing import Dict, Any, Optional
 from functools import wraps
 
-from .config import config
+from .config import get_config
+
+# Lazy-loaded config
+def _get_config():
+    return get_config()
 
 
 class PIIRedactor:
@@ -99,6 +103,7 @@ def setup_logging():
     """Setup application logging"""
     
     # Create logger
+    config = _get_config()
     logger = logging.getLogger("acas_pro")
     logger.setLevel(logging.DEBUG if config.debug else logging.INFO)
     
@@ -173,8 +178,8 @@ class AuditLogger:
         # Log to database
         try:
             if self.db is None:
-                from .database import db
-                self.db = db
+                from .database import get_db
+                self.db = get_db()
             
             self.db.execute("""
                 INSERT INTO audit_log (timestamp, event_type, user_id, ip_address, details, severity)

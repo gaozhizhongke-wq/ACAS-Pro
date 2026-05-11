@@ -111,7 +111,11 @@ class TimesFMEngine:
     """
     
     MODEL_VERSION = "acas-pro-2.0-statsforecast"
-    _STATUS_FILE = Path.home() / ".acas-pro" / ".statsforecast_status"
+    
+    @property
+    def _STATUS_FILE(self) -> Path:
+        """Lazy-loaded status file path"""
+        return Path.home() / ".acas-pro" / ".statsforecast_status"
     
     def __init__(self):
         self.alpha = 0.3  # Level smoothing
