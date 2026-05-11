@@ -9,7 +9,7 @@ import os
 import sys
 import json
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Optional, Callable
 from dataclasses import dataclass
 from enum import Enum
@@ -84,7 +84,7 @@ class MigrationManager:
     def create_migration(self, name: str, description: str = "") -> Migration:
         """创建新迁移"""
         # 生成版本号 (时间戳)
-        version = datetime.utcnow().strftime('%Y%m%d%H%M%S')
+        version = datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')
         
         # 创建迁移文件
         filename = f"{version}_{name}.sql"
@@ -92,7 +92,7 @@ class MigrationManager:
         
         template = f'''-- Migration: {name}
 -- Version: {version}
--- Created: {datetime.utcnow().isoformat()}
+-- Created: {datetime.now(timezone.utc).isoformat()}
 -- Description: {description}
 
 -- UP (Apply)
@@ -231,13 +231,13 @@ COMMIT;
             # 执行迁移
             logger.info(f"Applying migration {migration.version}: {migration.name}")
             
-            start_time = datetime.utcnow()
+            start_time = datetime.now(timezone.utc)
             try:
                 # 执行SQL
                 self.db.execute(migration.up_sql)
                 
                 # 记录迁移
-                execution_time = int((datetime.utcnow() - start_time).total_seconds() * 1000)
+                execution_time = int((datetime.now(timezone.utc) - start_time).total_seconds() * 1000)
                 
                 self.db.execute('''
                     INSERT INTO schema_migrations 
@@ -248,13 +248,13 @@ COMMIT;
                     migration.name,
                     migration.description,
                     migration.checksum,
-                    datetime.utcnow(),
+                    datetime.now(timezone.utc),
                     MigrationStatus.APPLIED.value,
                     execution_time
                 ))
                 
                 migration.status = MigrationStatus.APPLIED
-                migration.applied_at = datetime.utcnow()
+                migration.applied_at = datetime.now(timezone.utc)
                 migration.execution_time_ms = execution_time
                 
                 applied.append(migration)

@@ -6,7 +6,7 @@ Trust Services Criteria controls
 """
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
@@ -94,7 +94,7 @@ class SOC2Manager:
                 evidence=["rbac_config", "mfa_logs"],
                 status=ControlStatus.IMPLEMENTED,
                 tested_by="Internal Audit",
-                tested_at=datetime.utcnow(),
+                tested_at=datetime.now(timezone.utc),
                 findings="No exceptions noted",
                 remediation=None
             ),
@@ -106,7 +106,7 @@ class SOC2Manager:
                 evidence=["ssl_config", "encryption_audit"],
                 status=ControlStatus.IMPLEMENTED,
                 tested_by="Internal Audit",
-                tested_at=datetime.utcnow(),
+                tested_at=datetime.now(timezone.utc),
                 findings="No exceptions noted",
                 remediation=None
             ),
@@ -118,7 +118,7 @@ class SOC2Manager:
                 evidence=["offboarding_logs"],
                 status=ControlStatus.IMPLEMENTED,
                 tested_by="Internal Audit",
-                tested_at=datetime.utcnow(),
+                tested_at=datetime.now(timezone.utc),
                 findings="No exceptions noted",
                 remediation=None
             ),
@@ -130,7 +130,7 @@ class SOC2Manager:
                 evidence=["vault_audit_logs", "key_rotation_records"],
                 status=ControlStatus.IMPLEMENTED,
                 tested_by="Internal Audit",
-                tested_at=datetime.utcnow(),
+                tested_at=datetime.now(timezone.utc),
                 findings="No exceptions noted",
                 remediation=None
             ),
@@ -144,7 +144,7 @@ class SOC2Manager:
                 evidence=["monitoring_dashboards", "alert_logs"],
                 status=ControlStatus.IMPLEMENTED,
                 tested_by="Internal Audit",
-                tested_at=datetime.utcnow(),
+                tested_at=datetime.now(timezone.utc),
                 findings="No exceptions noted",
                 remediation=None
             ),
@@ -156,7 +156,7 @@ class SOC2Manager:
                 evidence=["backup_logs", "dr_test_results"],
                 status=ControlStatus.IMPLEMENTED,
                 tested_by="Internal Audit",
-                tested_at=datetime.utcnow(),
+                tested_at=datetime.now(timezone.utc),
                 findings="No exceptions noted",
                 remediation=None
             ),
@@ -170,7 +170,7 @@ class SOC2Manager:
                 evidence=["data_classification_policy"],
                 status=ControlStatus.IMPLEMENTED,
                 tested_by="Internal Audit",
-                tested_at=datetime.utcnow(),
+                tested_at=datetime.now(timezone.utc),
                 findings="No exceptions noted",
                 remediation=None
             ),
@@ -182,7 +182,7 @@ class SOC2Manager:
                 evidence=["nda_records"],
                 status=ControlStatus.IMPLEMENTED,
                 tested_by="Internal Audit",
-                tested_at=datetime.utcnow(),
+                tested_at=datetime.now(timezone.utc),
                 findings="No exceptions noted",
                 remediation=None
             ),
@@ -212,7 +212,7 @@ class SOC2Manager:
         if remediation:
             control.remediation = remediation
         
-        control.tested_at = datetime.utcnow()
+        control.tested_at = datetime.now(timezone.utc)
         
         logger.info(f"Control {control_id} status updated to {status.value}")
     
@@ -239,7 +239,7 @@ class SOC2Manager:
             'severity': severity,
             'remediation_plan': remediation_plan,
             'target_date': target_date.isoformat(),
-            'recorded_at': datetime.utcnow().isoformat(),
+            'recorded_at': datetime.now(timezone.utc).isoformat(),
             'status': 'open'
         }
         
@@ -252,7 +252,7 @@ class SOC2Manager:
     def generate_control_matrix(self) -> Dict:
         """生成控制矩阵"""
         matrix = {
-            'generated_at': datetime.utcnow().isoformat(),
+            'generated_at': datetime.now(timezone.utc).isoformat(),
             'summary': {
                 'total_controls': len(self.controls),
                 'by_criteria': {},
@@ -303,7 +303,7 @@ class SOC2Manager:
         readiness_score = (implemented + partial * 0.5) / total if total > 0 else 0
         
         report = {
-            'report_date': datetime.utcnow().isoformat(),
+            'report_date': datetime.now(timezone.utc).isoformat(),
             'readiness_score': f"{readiness_score:.1%}",
             'summary': {
                 'total_controls': total,
@@ -411,15 +411,15 @@ if __name__ == '__main__':
         description="Temporary access granted for emergency",
         severity="medium",
         remediation_plan="Revoke access and document justification",
-        target_date=datetime.utcnow() + timedelta(days=7)
+        target_date=datetime.now(timezone.utc) + timedelta(days=7)
     )
     print(f"    Exception ID: {exc['exception_id']}")
     
     # 审计报告
     print("\n[4] Audit report...")
     audit = soc2.generate_audit_report(
-        start_date=datetime.utcnow() - timedelta(days=90),
-        end_date=datetime.utcnow()
+        start_date=datetime.now(timezone.utc) - timedelta(days=90),
+        end_date=datetime.now(timezone.utc)
     )
     print(f"    Controls tested: {audit['executive_summary']['total_controls_tested']}")
     print(f"    Controls passed: {audit['executive_summary']['controls_passed']}")

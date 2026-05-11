@@ -111,14 +111,45 @@ class TimesFMEngine:
     """
     
     MODEL_VERSION = "acas-pro-2.0-statsforecast"
+    _STATUS_FILE = Path.home() / ".acas-pro" / ".statsforecast_status"
     
     def __init__(self):
         self.alpha = 0.3  # Level smoothing
         self.beta = 0.1   # Trend smoothing
         self.gamma = 0.1  # Seasonal smoothing
         self.season_length = 7  # Weekly seasonality
-        self.statsforecast_ok = True  # Try StatsForecast first
-        logger.info("TimesFM Engine initialized (StatsForecast + Holt-Winters fallback)")
+        self.statsforecast_ok = self._load_statsforecast_status()
+        logger.info(f"TimesFM Engine initialized (StatsForecast available: {self.statsforecast_ok})")
+    
+    def _load_statsforecast_status(self) -> bool:
+        """Load StatsForecast availability from persistent storage"""
+        try:
+            if self._STATUS_FILE.exists():
+                import json
+                data = json.loads(self._STATUS_FILE.read_text())
+                # Reset if last failure was > 24 hours ago
+                if data.get("available", True) is False:
+                    last_fail = datetime.fromisoformat(data.get("last_failure", "2000-01-01"))
+                    if (datetime.now(timezone.utc) - last_fail).total_seconds() > 86400:
+                        return True  # Retry after 24h
+                return data.get("available", True)
+        except Exception:
+            pass
+        return True
+    
+    def _save_statsforecast_status(self, available: bool):
+        """Persist StatsForecast availability status"""
+        try:
+            import json
+            self._STATUS_FILE.parent.mkdir(parents=True, exist_ok=True)
+            data = {
+                "available": available,
+                "last_failure": datetime.now(timezone.utc).isoformat() if not available else None,
+                "updated": datetime.now(timezone.utc).isoformat()
+            }
+            self._STATUS_FILE.write_text(json.dumps(data))
+        except Exception as e:
+            logger.debug(f"Failed to save statsforecast status: {e}")
     
     def forecast(
         self,

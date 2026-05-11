@@ -10,7 +10,7 @@ import json
 import hashlib
 import hmac
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
 from enum import Enum
@@ -126,7 +126,7 @@ class ImmutableAuditLogger:
     
     def _get_current_log_file(self) -> str:
         """获取当前日志文件 (按小时轮转)"""
-        timestamp = datetime.utcnow().strftime("%Y%m%d-%H")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H")
         return os.path.join(self.log_dir, f"audit-{timestamp}.log")
     
     def _calculate_hash(self, event_data: Dict[str, Any]) -> str:
@@ -180,12 +180,12 @@ class ImmutableAuditLogger:
             details: 详细信息
         """
         with self.lock:
-            event_id = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S%f')}-{user_id[:8]}"
+            event_id = f"{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')}-{user_id[:8]}"
             
             # 构建事件数据
             event_data = {
                 'event_id': event_id,
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'event_type': event_type.value,
                 'user_id': user_id,
                 'user_email': user_email,
@@ -217,7 +217,7 @@ class ImmutableAuditLogger:
             # 创建事件对象
             event = AuditEvent(
                 event_id=event_id,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 event_type=event_type,
                 user_id=user_id,
                 user_email=user_email,
@@ -262,7 +262,7 @@ class ImmutableAuditLogger:
     def _trigger_alert(self, event: AuditEvent):
         """触发告警"""
         alert = {
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'severity': 'high' if event.event_type == AuditEventType.SECURITY_VIOLATION else 'medium',
             'event_id': event.event_id,
             'event_type': event.event_type.value,
@@ -392,7 +392,7 @@ class ImmutableAuditLogger:
         
         report = {
             'export_metadata': {
-                'generated_at': datetime.utcnow().isoformat(),
+                'generated_at': datetime.now(timezone.utc).isoformat(),
                 'date_range': {
                     'start': start_date.isoformat(),
                     'end': end_date.isoformat()

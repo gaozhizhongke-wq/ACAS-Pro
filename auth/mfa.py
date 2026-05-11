@@ -13,7 +13,7 @@ import base64
 import secrets
 from typing import Dict, Optional, Tuple
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import logging
 
@@ -42,7 +42,7 @@ class MFAConfig:
     
     def __post_init__(self):
         if self.created_at is None:
-            self.created_at = datetime.utcnow()
+            self.created_at = datetime.now(timezone.utc)
         if self.backup_codes is None:
             self.backup_codes = []
 
@@ -142,7 +142,7 @@ class MFAManager:
         totp = pyotp.TOTP(config.secret)
         
         if totp.verify(code, valid_window=1):
-            config.last_used = datetime.utcnow()
+            config.last_used = datetime.now(timezone.utc)
             return True
         
         # 检查备用码
@@ -162,7 +162,7 @@ class MFAManager:
         self.sms_codes[user_id] = {
             'code': code,
             'phone': phone_number,
-            'expires_at': datetime.utcnow() + self.sms_code_ttl,
+            'expires_at': datetime.now(timezone.utc) + self.sms_code_ttl,
             'attempts': 0
         }
         
@@ -180,7 +180,7 @@ class MFAManager:
             return False
         
         # 检查过期
-        if datetime.utcnow() > sms_data['expires_at']:
+        if datetime.now(timezone.utc) > sms_data['expires_at']:
             del self.sms_codes[user_id]
             return False
         
@@ -233,7 +233,7 @@ class MFAManager:
             self.trusted_devices[user_id] = {}
         
         self.trusted_devices[user_id][device_fingerprint] = \
-            datetime.utcnow() + self.trusted_device_ttl
+            datetime.now(timezone.utc) + self.trusted_device_ttl
         
         logger.info(f"Device trusted for user {user_id}")
     
@@ -245,7 +245,7 @@ class MFAManager:
         if not expires_at:
             return False
         
-        if datetime.utcnow() > expires_at:
+        if datetime.now(timezone.utc) > expires_at:
             # 过期，移除
             del devices[device_fingerprint]
             return False

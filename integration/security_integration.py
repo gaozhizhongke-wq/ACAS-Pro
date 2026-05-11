@@ -12,7 +12,7 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
 from typing import Dict, Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 # Import security modules
@@ -153,7 +153,7 @@ class SecurityContext:
         )
         
         # 更新最后登录时间
-        user.last_login = datetime.utcnow()
+        user.last_login = datetime.now(timezone.utc)
         self.rbac._save_data()
         
         # 记录成功日志

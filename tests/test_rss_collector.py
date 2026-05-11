@@ -5,7 +5,7 @@ ACAS Pro - RSS Collector Tests
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from unittest.mock import Mock, patch, MagicMock
 
 from acas_pro.collectors.rss_collector import RSSCollector, RSSArticle
@@ -22,7 +22,7 @@ class TestRSSArticle:
             summary="Test summary",
             source="Test Source",
             source_url="https://example.com/article",
-            published_at=datetime.utcnow()
+            published_at=datetime.now(timezone.utc)
         )
         
         assert article.title == "Test Title"
@@ -31,7 +31,7 @@ class TestRSSArticle:
     
     def test_article_to_dict(self):
         """Test article to dict"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         article = RSSArticle(
             title="Test",
             content="Content",
@@ -119,7 +119,7 @@ class TestRSSCollector:
     
     def test_deduplicate(self, collector):
         """Test deduplicate articles"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         articles = [
             RSSArticle("Title A", "Content", "Summary", "Source", "url1", now),
             RSSArticle("Title B", "Content", "Summary", "Source", "url2", now),

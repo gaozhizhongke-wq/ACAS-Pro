@@ -7,7 +7,7 @@ Tests for password hashing, JWT, encryption, and session management
 
 import pytest
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from acas_pro.core.security import (
     PasswordValidator,
@@ -130,7 +130,7 @@ class TestJWTManager:
         import jwt
         
         # Create expired token
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         payload = {
             'sub': 'U001',
             'iat': now - timedelta(hours=2),

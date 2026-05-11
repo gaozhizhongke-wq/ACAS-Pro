@@ -10,7 +10,7 @@ All Rights Reserved.
 import os
 import subprocess
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional, Tuple
 
@@ -54,7 +54,7 @@ class CertificateManager:
                     date_str = line.split('=')[1].strip()
                     # 格式: Nov  3 12:00:00 2025 GMT
                     expiry = datetime.strptime(date_str, '%b %d %H:%M:%S %Y %Z')
-                    days_remaining = (expiry - datetime.utcnow()).days
+                    days_remaining = (expiry - datetime.now(timezone.utc)).days
                     
                     # 证书有效且剩余超过 7 天
                     is_valid = days_remaining > 7

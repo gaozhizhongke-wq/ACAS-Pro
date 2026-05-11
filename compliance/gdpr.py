@@ -7,7 +7,7 @@ Data protection and privacy controls
 
 import json
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
@@ -103,7 +103,7 @@ class GDPRManager:
             version: 同意条款版本
             validity_days: 有效期天数
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         record = ConsentRecord(
             user_id=user_id,
@@ -130,7 +130,7 @@ class GDPRManager:
         if user_id not in self.consent_records:
             return False
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         withdrawn = False
         
         for record in self.consent_records[user_id]:
@@ -151,7 +151,7 @@ class GDPRManager:
         if user_id not in self.consent_records:
             return False
         
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         for record in self.consent_records[user_id]:
             if record.purpose != purpose:
@@ -183,13 +183,13 @@ class GDPRManager:
         Returns:
             包含所有用户数据的字典
         """
-        request_id = f"export-{user_id}-{datetime.utcnow().timestamp()}"
+        request_id = f"export-{user_id}-{datetime.now(timezone.utc).timestamp()}"
         
         # 收集用户数据
         export_data = {
             'request_id': request_id,
             'user_id': user_id,
-            'exported_at': datetime.utcnow().isoformat(),
+            'exported_at': datetime.now(timezone.utc).isoformat(),
             'format': format,
             'data': {
                 'profile': {},  # 应由具体业务填充
@@ -213,8 +213,8 @@ class GDPRManager:
             'type': 'export',
             'user_id': user_id,
             'status': 'completed',
-            'created_at': datetime.utcnow(),
-            'completed_at': datetime.utcnow()
+            'created_at': datetime.now(timezone.utc),
+            'completed_at': datetime.now(timezone.utc)
         }
         
         logger.info(f"Data export completed: {request_id}")
@@ -228,12 +228,12 @@ class GDPRManager:
         Returns:
             删除报告
         """
-        request_id = f"delete-{user_id}-{datetime.utcnow().timestamp()}"
+        request_id = f"delete-{user_id}-{datetime.now(timezone.utc).timestamp()}"
         
         deletion_report = {
             'request_id': request_id,
             'user_id': user_id,
-            'requested_at': datetime.utcnow().isoformat(),
+            'requested_at': datetime.now(timezone.utc).isoformat(),
             'deleted_items': [],
             'retained_items': [],
             'retention_reasons': {}
@@ -248,7 +248,7 @@ class GDPRManager:
             'type': 'deletion',
             'user_id': user_id,
             'status': 'processing',
-            'created_at': datetime.utcnow()
+            'created_at': datetime.now(timezone.utc)
         }
         
         logger.info(f"Data deletion requested: {request_id}")
@@ -258,13 +258,13 @@ class GDPRManager:
     def request_data_rectification(self, user_id: str, 
                                    corrections: Dict[str, Any]) -> Dict:
         """数据更正请求"""
-        request_id = f"rectify-{user_id}-{datetime.utcnow().timestamp()}"
+        request_id = f"rectify-{user_id}-{datetime.now(timezone.utc).timestamp()}"
         
         # 实际更正应由业务层处理
         rectification_report = {
             'request_id': request_id,
             'user_id': user_id,
-            'requested_at': datetime.utcnow().isoformat(),
+            'requested_at': datetime.now(timezone.utc).isoformat(),
             'corrections': corrections,
             'status': 'pending_review'
         }
@@ -273,7 +273,7 @@ class GDPRManager:
             'type': 'rectification',
             'user_id': user_id,
             'status': 'pending',
-            'created_at': datetime.utcnow()
+            'created_at': datetime.now(timezone.utc)
         }
         
         logger.info(f"Data rectification requested: {request_id}")
@@ -289,7 +289,7 @@ class GDPRManager:
                                      security_measures: List[str],
                                      legal_basis: ProcessingBasis) -> DataProcessingRecord:
         """注册处理活动"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         record = DataProcessingRecord(
             activity_id=activity_id,
@@ -327,14 +327,14 @@ class GDPRManager:
         """
         report = {
             'breach_id': breach_id,
-            'reported_at': datetime.utcnow().isoformat(),
+            'reported_at': datetime.now(timezone.utc).isoformat(),
             'description': description,
             'affected_users_count': len(affected_users),
             'affected_data_categories': data_categories,
             'likelihood_of_harm': likelihood_of_harm,
             'severity': severity,
             'notification_required': severity in ['high', 'critical'],
-            'notification_deadline': (datetime.utcnow() + timedelta(hours=72)).isoformat()
+            'notification_deadline': (datetime.now(timezone.utc) + timedelta(hours=72)).isoformat()
         }
         
         self.breach_reports.append(report)

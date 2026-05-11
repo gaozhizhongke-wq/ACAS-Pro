@@ -5,7 +5,7 @@ ACAS Pro - Weibo Collector Tests
 """
 
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import Mock, patch, MagicMock
 
 from acas_pro.collectors.weibo_api import WeiboCollector, WeiboPost
@@ -21,7 +21,7 @@ class TestWeiboPost:
             text="Test weibo content",
             author="TestUser",
             author_id="789",
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             reposts_count=10,
             comments_count=5,
             attitudes_count=20,
@@ -34,7 +34,7 @@ class TestWeiboPost:
     
     def test_post_to_dict(self):
         """Test post to dict"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         post = WeiboPost(
             id="123",
             text="Test",

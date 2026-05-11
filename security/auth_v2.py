@@ -11,7 +11,7 @@ import os
 import re
 import jwt
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 from typing import Optional, Dict, List, Callable
 from dataclasses import dataclass, field
@@ -138,8 +138,8 @@ class AuthManager:
             "role": user.role.value,
             "team_id": user.team_id,
             "password_changed": user.password_changed,
-            "iat": datetime.utcnow(),
-            "exp": datetime.utcnow() + timedelta(hours=expires_hours),
+            "iat": datetime.now(timezone.utc),
+            "exp": datetime.now(timezone.utc) + timedelta(hours=expires_hours),
             "jti": os.urandom(16).hex()  # JWT ID，用于撤销
         }
         

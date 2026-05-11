@@ -12,7 +12,7 @@ import time
 from contextlib import contextmanager
 from typing import Optional, List, Dict, Any, Generator
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 # Database drivers
@@ -62,8 +62,8 @@ class ConnectionWrapper:
         self._conn = conn
         self._pool = pool_manager
         self._is_primary = is_primary
-        self._created_at = datetime.utcnow()
-        self._last_used = datetime.utcnow()
+        self._created_at = datetime.now(timezone.utc)
+        self._last_used = datetime.now(timezone.utc)
         self._use_count = 0
         self._is_closed = False
     
@@ -84,12 +84,12 @@ class ConnectionWrapper:
     
     def is_expired(self) -> bool:
         """检查连接是否过期"""
-        age = (datetime.utcnow() - self._created_at).total_seconds()
+        age = (datetime.now(timezone.utc) - self._created_at).total_seconds()
         return age > self._pool.config.max_lifetime
     
     def mark_used(self):
         """标记使用"""
-        self._last_used = datetime.utcnow()
+        self._last_used = datetime.now(timezone.utc)
         self._use_count += 1
 
 

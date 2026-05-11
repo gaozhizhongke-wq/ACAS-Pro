@@ -13,7 +13,7 @@ import hashlib
 import hmac
 import base64
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Tuple
 from pathlib import Path
 
@@ -98,12 +98,12 @@ class KeyManager:
             old_key = self._keys[name]
             old_name = f"{name}_v{old_key['version']}"
             self._keys[old_name] = old_key.copy()
-            self._keys[old_name]['expires_at'] = datetime.utcnow() + timedelta(days=7)
+            self._keys[old_name]['expires_at'] = datetime.now(timezone.utc) + timedelta(days=7)
             self._save_key(old_name, self._keys[old_name])
         
         self._keys[name] = {
             'version': version,
-            'created_at': datetime.utcnow(),
+            'created_at': datetime.now(timezone.utc),
             'expires_at': None,  # JWT secret 不过期，通过轮换更新
             'value': secret
         }
@@ -134,8 +134,8 @@ class KeyManager:
         
         self._keys[name] = {
             'version': 1,
-            'created_at': datetime.utcnow(),
-            'expires_at': datetime.utcnow() + timedelta(days=expires_days),
+            'created_at': datetime.now(timezone.utc),
+            'expires_at': datetime.now(timezone.utc) + timedelta(days=expires_days),
             'value': key_hash,  # 存储哈希
             'prefix': prefix
         }
@@ -154,7 +154,7 @@ class KeyManager:
         key_data = self._keys[name]
         
         # 检查过期
-        if key_data.get('expires_at') and datetime.utcnow() > key_data['expires_at']:
+        if key_data.get('expires_at') and datetime.now(timezone.utc) > key_data['expires_at']:
             logger.warning(f"API Key {name} 已过期")
             return False
         
@@ -194,7 +194,7 @@ class KeyManager:
             return False
         
         key_file = self.keys_dir / f"{name}.key"
-        revoked_file = self.keys_dir / f"{name}.revoked.{datetime.utcnow().strftime('%Y%m%d')}"
+        revoked_file = self.keys_dir / f"{name}.revoked.{datetime.now(timezone.utc).strftime('%Y%m%d')}"
         
         try:
             key_file.rename(revoked_file)
@@ -213,14 +213,14 @@ class KeyManager:
                 'version': data['version'],
                 'created_at': data['created_at'].isoformat(),
                 'expires_at': data['expires_at'].isoformat() if data['expires_at'] else None,
-                'status': 'active' if not data.get('expires_at') or datetime.utcnow() < data['expires_at'] else 'expired'
+                'status': 'active' if not data.get('expires_at') or datetime.now(timezone.utc) < data['expires_at'] else 'expired'
             }
         return result
     
     def cleanup_expired(self) -> int:
         """清理过期密钥，返回清理数量"""
         cleaned = 0
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         for name in list(self._keys.keys()):
             data = self._keys[name]

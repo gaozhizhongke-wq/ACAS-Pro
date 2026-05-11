@@ -9,7 +9,7 @@ import os
 import jwt
 import secrets
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional, Tuple, List
 from dataclasses import dataclass
 from enum import Enum
@@ -93,7 +93,7 @@ class JWTAuthManager:
             device_fingerprint: 设备指纹
         """
         token_id = secrets.token_urlsafe(16)
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         # Access Token
         access_payload = {
@@ -280,7 +280,7 @@ class JWTAuthManager:
     
     def cleanup_expired_tokens(self):
         """清理过期Token"""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         expired = [
             token_id for token_id, info in self.refresh_token_store.items()
             if datetime.fromisoformat(info['expires_at']) < now

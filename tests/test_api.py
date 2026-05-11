@@ -165,8 +165,8 @@ class TestAuthEndpoints:
         # Create expired token
         expired_payload = {
             "sub": "user123",
-            "exp": datetime.utcnow() - timedelta(hours=1),
-            "iat": datetime.utcnow() - timedelta(hours=2)
+            "exp": datetime.now(timezone.utc) - timedelta(hours=1),
+            "iat": datetime.now(timezone.utc) - timedelta(hours=2)
         }
         
         expired_token = jwt.encode(
@@ -235,7 +235,7 @@ class TestForecastEndpoints:
         
         points = [
             ForecastPoint(
-                timestamp=datetime.utcnow() + timedelta(days=i),
+                timestamp=datetime.now(timezone.utc) + timedelta(days=i),
                 value=100.0 + i * 10,
                 lower_bound=90.0 + i * 10,
                 upper_bound=110.0 + i * 10,
@@ -251,7 +251,7 @@ class TestForecastEndpoints:
             trend_magnitude=15.5,
             seasonality_detected=True,
             model_version="test-v1",
-            generated_at=datetime.utcnow()
+            generated_at=datetime.now(timezone.utc)
         )
         
         # Check structure
@@ -340,9 +340,9 @@ class TestForecastEndpoints:
         
         # Less than 14 days of data
         historical = [
-            (datetime.utcnow() - timedelta(days=3), 100.0),
-            (datetime.utcnow() - timedelta(days=2), 110.0),
-            (datetime.utcnow() - timedelta(days=1), 105.0),
+            (datetime.now(timezone.utc) - timedelta(days=3), 100.0),
+            (datetime.now(timezone.utc) - timedelta(days=2), 110.0),
+            (datetime.now(timezone.utc) - timedelta(days=1), 105.0),
         ]
         
         result = engine.forecast("P001", historical, horizon_days=7)
@@ -391,7 +391,7 @@ class TestInventoryEndpoints:
             product_id="P001",
             risk_level="high",
             probability=0.75,
-            estimated_stockout_date=datetime.utcnow(),
+            estimated_stockout_date=datetime.now(timezone.utc),
             revenue_at_risk=5000.0,
             impact_score=8.5,
             mitigation_actions=["Rush order from supplier", "Transfer from other warehouse"]

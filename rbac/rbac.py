@@ -13,7 +13,7 @@ import secrets
 from enum import Enum
 from dataclasses import dataclass, field
 from typing import Dict, List, Set, Optional, Callable
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 import logging
 
@@ -354,7 +354,7 @@ class RBACManager:
         passwords[user_id] = {
             'salt': salt,
             'hash': pwd_hash,
-            'created_at': datetime.utcnow().isoformat()
+            'created_at': datetime.now(timezone.utc).isoformat()
         }
         
         with open(passwords_file, 'w') as f:
@@ -380,7 +380,7 @@ class RBACManager:
     def _audit_log(self, action: str, user_id: str, resource: str):
         """审计日志"""
         log_entry = {
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'action': action,
             'user_id': user_id,
             'resource': resource

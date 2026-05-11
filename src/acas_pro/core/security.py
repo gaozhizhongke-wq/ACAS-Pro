@@ -451,7 +451,7 @@ class CryptoManager:
             salt = salt_env.encode('utf-8')
         else:
             # CRITICAL: ACAS_ENCRYPTION_SALT must be set in production.
-            # Fall back to a random salt ONLY in development (warn loudly).
+            # Development: use persistent salt file to avoid data corruption on restart
             if config.environment == 'production':
                 logger.error(
                     "ACAS_ENCRYPTION_SALT is not set! Set it to a random 32-byte hex string:\n"
@@ -459,11 +459,21 @@ class CryptoManager:
                 )
                 raise ValueError("ACAS_ENCRYPTION_SALT must be set in production")
             else:
-                logger.warning(
-                    "ACAS_ENCRYPTION_SALT not set — using insecure ephemeral salt. "
-                    "Set ACAS_ENCRYPTION_SALT in .env for production."
-                )
-                salt = secrets.token_hex(16).encode('utf-8')
+                # Use persistent dev salt file
+                dev_salt_file = Path.home() / ".acas-pro" / ".dev_encryption_salt"
+                if dev_salt_file.exists():
+                    salt = dev_salt_file.read_text().strip().encode('utf-8')
+                    logger.debug("Using persistent development salt")
+                else:
+                    # Generate and save persistent salt
+                    salt = secrets.token_hex(16).encode('utf-8')
+                    dev_salt_file.parent.mkdir(parents=True, exist_ok=True)
+                    dev_salt_file.write_text(salt.decode('utf-8'))
+                    os.chmod(dev_salt_file, 0o600)
+                    logger.warning(
+                        f"ACAS_ENCRYPTION_SALT not set — using persistent dev salt: {dev_salt_file}. "
+                        "Set ACAS_ENCRYPTION_SALT in .env for production."
+                    )
 
         kdf = PBKDF2HMAC(
             algorithm=hashes.SHA256(),
