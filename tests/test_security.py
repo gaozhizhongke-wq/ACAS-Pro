@@ -138,8 +138,8 @@ class TestJWTManager:
             'type': 'access'
         }
         
-        from acas_pro.core.config import config
-        token = jwt.encode(payload, config.security.secret_key, algorithm='HS256')
+        from acas_pro.core.config import get_config
+        token = jwt.encode(payload, get_config().security.secret_key, algorithm='HS256')
         
         # Should fail verification
         result = JWTManager.verify_token(token)

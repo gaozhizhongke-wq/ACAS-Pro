@@ -161,7 +161,10 @@ class TestAdManager:
 
     def test_init_without_db_path(self):
         """测试不带数据库路径初始化"""
-        manager = AdManager()
+        import tempfile
+        import uuid
+        db_path = os.path.join(tempfile.gettempdir(), f"test_ads_{uuid.uuid4().hex}.db")
+        manager = AdManager(db_path=db_path)
         assert manager is not None
 
     def test_add_account(self, ad_manager, sample_ad_account):
