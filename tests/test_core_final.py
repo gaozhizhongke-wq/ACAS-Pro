@@ -50,12 +50,16 @@ class TestAppConfig:
                 config = AppConfig(environment="production")
                 assert config.environment == "development"
     
-    def test_validate_returns_list(self, tmp_path):
-        """validate() must return a list of errors"""
+    def test_validate_returns_tuple(self, tmp_path):
+        """validate() must return a tuple (is_valid, errors)"""
         with patch.object(Path, 'home', return_value=tmp_path):
             config = AppConfig()
             result = config.validate()
-            assert isinstance(result, list)
+            assert isinstance(result, tuple)
+            assert len(result) == 2
+            is_valid, errors = result
+            assert isinstance(is_valid, bool)
+            assert isinstance(errors, list)
     
     def test_save_creates_file(self, tmp_path):
         """save() must create a config file"""
