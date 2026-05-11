@@ -133,13 +133,14 @@ class AppConfig:
     oauth: OAuthConfig = None
     
     def __post_init__(self):
-        # Load environment from ACAS_ENV first
+        # ACAS_ENV always takes precedence over any other configuration
         env = os.environ.get('ACAS_ENV', '').lower()
         if env:
             try:
                 self.environment = Environment(env)
+                logger.info(f"Environment set from ACAS_ENV: {self.environment.value}")
             except ValueError:
-                logger.warning(f"Invalid ACAS_ENV value: {env}, using current")
+                logger.warning(f"Invalid ACAS_ENV value: {env}, keeping current: {self.environment.value}")
         
         if not self.data_dir:
             self.data_dir = str(Path.home() / ".acas-pro" / "data")

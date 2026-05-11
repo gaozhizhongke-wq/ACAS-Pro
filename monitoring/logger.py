@@ -14,6 +14,7 @@ import logging
 import traceback
 import uuid
 from datetime import datetime
+from datetime import timezone
 from typing import Optional, Dict, Any, Union
 from contextvars import ContextVar
 from pythonjsonlogger import jsonlogger
@@ -29,7 +30,7 @@ class CustomJsonFormatter(jsonlogger.JsonFormatter):
         super().add_fields(log_record, record, message_dict)
         
         # 添加时间戳
-        log_record['timestamp'] = datetime.utcnow().isoformat() + 'Z'
+        log_record['timestamp'] = datetime.now(timezone.utc).isoformat() + 'Z'
         log_record['level'] = record.levelname
         log_record['logger'] = record.name
         

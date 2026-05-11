@@ -11,6 +11,7 @@ import json
 import logging
 import logging.handlers
 from datetime import datetime
+from datetime import timezone
 from functools import wraps
 from pathlib import Path
 
@@ -26,7 +27,7 @@ class JSONFormatter(logging.Formatter):
     """JSON 格式日志，便于日志分析"""
     def format(self, record):
         log_data = {
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'level': record.levelname,
             'logger': record.name,
             'message': record.getMessage(),
@@ -96,16 +97,16 @@ def log_execution(logger=None, level=logging.INFO):
         
         @wraps(func)
         def wrapper(*args, **kwargs):
-            start = datetime.utcnow()
+            start = datetime.now(timezone.utc)
             func_name = func.__name__
             
             try:
                 result = func(*args, **kwargs)
-                duration = (datetime.utcnow() - start).total_seconds()
+                duration = (datetime.now(timezone.utc) - start).total_seconds()
                 log.log(level, f"[{func_name}] 执行成功 | 耗时: {duration:.3f}s")
                 return result
             except Exception as e:
-                duration = (datetime.utcnow() - start).total_seconds()
+                duration = (datetime.now(timezone.utc) - start).total_seconds()
                 log.error(f"[{func_name}] 执行失败 | 耗时: {duration:.3f}s | 错误: {str(e)}", 
                          exc_info=True)
                 raise
@@ -120,18 +121,18 @@ def log_api_call(func):
     def wrapper(*args, **kwargs):
         from flask import request, g
         
-        start = datetime.utcnow()
+        start = datetime.now(timezone.utc)
         endpoint = request.endpoint or 'unknown'
         method = request.method
         path = request.path
         
         try:
             result = func(*args, **kwargs)
-            duration = (datetime.utcnow() - start).total_seconds()
+            duration = (datetime.now(timezone.utc) - start).total_seconds()
             api_logger.info(f"[{method}] {path} | {endpoint} | {duration:.3f}s | 200")
             return result
         except Exception as e:
-            duration = (datetime.utcnow() - start).total_seconds()
+            duration = (datetime.now(timezone.utc) - start).total_seconds()
             api_logger.error(f"[{method}] {path} | {endpoint} | {duration:.3f}s | 500 | {str(e)}")
             raise
     
@@ -146,11 +147,11 @@ class PerformanceMonitor:
         self.start = None
     
     def __enter__(self):
-        self.start = datetime.utcnow()
+        self.start = datetime.now(timezone.utc)
         return self
     
     def __exit__(self, exc_type, exc_val, exc_tb):
-        duration = (datetime.utcnow() - self.start).total_seconds()
+        duration = (datetime.now(timezone.utc) - self.start).total_seconds()
         if exc_type:
             self.logger.error(f"[{self.name}] 失败 | 耗时: {duration:.3f}s | {exc_val}")
         else:

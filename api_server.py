@@ -16,6 +16,7 @@ import json
 import time
 import traceback
 from datetime import datetime
+from datetime import timezone
 from functools import wraps
 
 from flask import Flask, request, jsonify, g
@@ -74,7 +75,7 @@ def success_response(data=None, message="success"):
         "success": True,
         "message": message,
         "data": data,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
 
 def error_response(message, code="ERROR", status_code=500):
@@ -89,7 +90,7 @@ def error_response(message, code="ERROR", status_code=500):
     return jsonify({
         "success": False,
         "error": {"code": code, "message": message},
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }), status_code
 
 # ========== 健康检查 ==========

@@ -10,6 +10,7 @@ import sys
 import time
 import traceback
 from datetime import datetime
+from datetime import timezone
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 
@@ -37,7 +38,7 @@ def success_response(data: dict, message: str = "success") -> dict:
         "success": True,
         "message": message,
         "data": data,
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     }
 
 
@@ -48,7 +49,7 @@ def error_response(message: str, code: str = "INTERNAL_ERROR", status_code: int 
         "error": {
             "code": code,
             "message": message,
-            "timestamp": datetime.utcnow().isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
     }
     return jsonify(response), status_code

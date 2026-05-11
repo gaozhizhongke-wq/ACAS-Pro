@@ -19,6 +19,7 @@ import sys
 import json
 import logging
 from datetime import datetime
+from datetime import timezone
 from functools import wraps
 
 from flask import Flask, request, jsonify, g
@@ -70,7 +71,7 @@ CORS(app, resources={
 def before_request():
     """请求前处理"""
     g.request_id = os.urandom(8).hex()
-    g.start_time = datetime.utcnow()
+    g.start_time = datetime.now(timezone.utc)
     
     # 记录请求日志
     logger.info(f"[{g.request_id}] {request.method} {request.path} - {request.remote_addr}")
@@ -79,7 +80,7 @@ def before_request():
 @app.after_request
 def after_request(response):
     """请求后处理"""
-    duration = (datetime.utcnow() - g.start_time).total_seconds() * 1000
+    duration = (datetime.now(timezone.utc) - g.start_time).total_seconds() * 1000
     
     # 添加安全响应头
     response.headers['X-Content-Type-Options'] = 'nosniff'
@@ -129,7 +130,7 @@ def health_check():
     return jsonify({
         "status": "healthy",
         "version": "2.1.0",
-        "timestamp": datetime.utcnow().isoformat()
+        "timestamp": datetime.now(timezone.utc).isoformat()
     })
 
 
@@ -272,7 +273,7 @@ def create_content():
     db = get_db()
     content_id = db.execute(
         "INSERT INTO contents (title, body, created_by, created_at) VALUES (?, ?, ?, ?)",
-        (data['title'], data.get('body', ''), g.user_id, datetime.utcnow().isoformat())
+        (data['title'], data.get('body', ''), g.user_id, datetime.now(timezone.utc).isoformat())
     )
     
     logger.info(f"内容创建: {content_id} by {g.user_id}")

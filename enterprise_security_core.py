@@ -132,7 +132,7 @@ class EnterpriseSecurityCore:
             'resource': resource,
             'result': result,
             'details': details or {},
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'prev_hash': self._last_hash
         }
         

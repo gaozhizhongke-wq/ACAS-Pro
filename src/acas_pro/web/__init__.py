@@ -11,6 +11,13 @@ def create_app():
     """Application factory pattern"""
     app = Flask(__name__)
     
+    # Validate configuration before starting
+    is_valid, errors = config.validate()
+    if not is_valid:
+        for error in errors:
+            logger.error(f"Configuration validation failed: {error}")
+        raise ValueError(f"Invalid configuration: {', '.join(errors)}")
+    
     # Load configuration
     _configure_app(app)
     

@@ -10,6 +10,7 @@ import uuid
 import traceback
 from functools import wraps
 from datetime import datetime
+from datetime import timezone
 
 from flask import request, g, jsonify
 
@@ -80,7 +81,7 @@ class RequestMiddleware:
                     'message': '服务器内部错误',
                     'request_id': request_id
                 },
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
             return jsonify(response), 500
