@@ -13,7 +13,7 @@ import hashlib
 import hmac
 import jwt
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, Tuple
 from pathlib import Path
 

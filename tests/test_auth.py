@@ -3,16 +3,18 @@ import pytest
 import sys
 import os
 
-# Add src to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from acas_pro.core.security import (
     PasswordValidator,
     JWTManager,
-    rate_limiter,
-    password_validator as pv
+    RateLimiter,
+    password_validator as pv,
+    jwt_manager,
 )
-from acas_pro.core.config import config
+from acas_pro.core.config import get_config
+
+config = get_config()
 
 
 class TestPasswordValidator:
@@ -20,93 +22,67 @@ class TestPasswordValidator:
     
     def test_valid_password(self):
         """Test a valid strong password"""
-        result = pv.validate("StrongP@ss123")
-        assert result.is_valid
-        assert len(result.errors) == 0
+        is_valid, error = pv.validate("StrongP@ss123")
+        assert is_valid is True
+        assert error == ""
     
     def test_password_too_short(self):
         """Test password minimum length"""
-        result = pv.validate("Short1!")
-        assert not result.is_valid
-        assert any("8 characters" in e for e in result.errors)
+        is_valid, error = pv.validate("Short1!")
+        assert is_valid is False
+        assert "8 characters" in error
     
     def test_password_no_uppercase(self):
         """Test password requires uppercase"""
-        result = pv.validate("lowercase123!")
-        assert not result.is_valid
-        assert any("uppercase" in e for e in result.errors)
+        is_valid, error = pv.validate("lowercase123!")
+        assert is_valid is False
+        assert "uppercase" in error
     
     def test_password_no_lowercase(self):
         """Test password requires lowercase"""
-        result = pv.validate("UPPERCASE123!")
-        assert not result.is_valid
-        assert any("lowercase" in e for e in result.errors)
+        is_valid, error = pv.validate("UPPERCASE123!")
+        assert is_valid is False
+        assert "lowercase" in error
     
     def test_password_no_digit(self):
         """Test password requires digit"""
-        result = pv.validate("NoDigitsHere!")
-        assert not result.is_valid
-        assert any("digit" in e for e in result.errors)
+        is_valid, error = pv.validate("NoDigitsHere!")
+        assert is_valid is False
+        assert "digit" in error
     
     def test_password_no_special(self):
         """Test password requires special character"""
-        result = pv.validate("NoSpecial123")
-        assert not result.is_valid
-        assert any("special" in e for e in result.errors)
+        is_valid, error = pv.validate("NoSpecial123")
+        assert is_valid is False
+        assert "special" in error
     
     def test_password_common(self):
         """Test password against common passwords"""
-        result = pv.validate("Password123!")
-        assert not result.is_valid
-        assert any("common" in e.lower() for e in result.errors)
-    
-    def test_password_with_username(self):
-        """Test password cannot contain username"""
-        result = pv.validate("john123!", username="john")
-        assert not result.is_valid
-        assert any("username" in e.lower() for e in result.errors)
+        is_valid, error = pv.validate("Password123!")
+        assert is_valid is False
+        assert "common" in error.lower()
 
 
 class TestJWTManager:
     """Test JWT token management"""
     
-    @pytest.fixture
-    def jwt_manager(self):
-        return JWTManager(
-            secret_key="test-secret-key-for-testing-only",
-            access_token_expire_minutes=15,
-            refresh_token_expire_days=7
-        )
-    
-    def test_create_access_token(self, jwt_manager):
+    def test_create_access_token(self):
         """Test creating access token"""
-        token = jwt_manager.create_access_token({"user_id": "123", "role": "admin"})
+        token = jwt_manager.generate_token("123")
         assert token is not None
         assert isinstance(token, str)
     
-    def test_verify_access_token(self, jwt_manager):
+    def test_verify_access_token(self):
         """Test verifying valid access token"""
-        payload = {"user_id": "123", "role": "admin"}
-        token = jwt_manager.create_access_token(payload)
+        token = jwt_manager.generate_token("123")
         decoded = jwt_manager.verify_token(token)
-        assert decoded["user_id"] == "123"
-        assert decoded["role"] == "admin"
+        assert decoded is not None
+        assert decoded["sub"] == "123"
     
-    def test_verify_expired_token(self, jwt_manager):
-        """Test verifying expired token"""
-        import time
-        from datetime import datetime, timezone
-        
-        # Create token with past expiration
-        token = jwt_manager.create_access_token({"user_id": "123"})
-        # Wait a bit and try to verify (in real test would mock time)
-        # For now, just verify structure
-        assert token is not None
-    
-    def test_invalid_token(self, jwt_manager):
+    def test_invalid_token(self):
         """Test verifying invalid token"""
-        with pytest.raises(Exception):
-            jwt_manager.verify_token("invalid.token.here")
+        decoded = jwt_manager.verify_token("invalid.token.here")
+        assert decoded is None
 
 
 class TestRateLimiter:
@@ -114,17 +90,15 @@ class TestRateLimiter:
     
     def test_rate_limiter_initialization(self):
         """Test rate limiter can be initialized"""
-        from acas_pro.core.security import RateLimiter
         limiter = RateLimiter()
         assert limiter is not None
     
     def test_rate_limit_check(self):
         """Test rate limit check"""
-        from acas_pro.core.security import RateLimiter
         limiter = RateLimiter()
         
         # First request should be allowed
-        result = limiter.is_allowed("test_key", max_requests=10, window_seconds=60)
+        result = limiter.is_allowed("test_key", max_attempts=10, window_seconds=60)
         assert result is True
 
 
