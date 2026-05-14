@@ -50,7 +50,6 @@ class TestFestivalCalendar:
         result = fc.get_festival('spring-festival')
         assert result is None
 
-    @pytest.mark.skip(reason="内部实现: get_festival 内部 json.loads 接收 list 导致 TypeError")
     def test_get_festival_found(self):
         mock_db = MagicMock()
         mock_db.fetchone.return_value = {
@@ -243,7 +242,6 @@ class TestDataMonitor:
         dm.acknowledge_alert(alert_id=1, user='admin')
         mock_db.execute.assert_called()
 
-    @pytest.mark.skip(reason="内部实现: fetchone 返回值缺少 'views' 字段导致 KeyError")
     def test_generate_report(self):
         mock_db = MagicMock()
         mock_db.fetchall.return_value = []

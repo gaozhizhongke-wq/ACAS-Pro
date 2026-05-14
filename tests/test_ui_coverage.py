@@ -8,9 +8,11 @@ import pytest
 class TestUIPages:
     """Test UI page imports"""
     
-    @pytest.mark.skip(reason="Missing dependency: numpy")
     def test_ui_pages_import(self):
-        pass
+        from acas_pro.ui.pages import dashboard, ad_manager, content_creation
+        assert dashboard is not None
+        assert ad_manager is not None
+        assert content_creation is not None
     
     def test_ui_logic_import(self):
         from acas_pro.ui.logic import analytics_logic, campaign_logic
@@ -21,17 +23,18 @@ class TestUIPages:
         from acas_pro.ui.logic import settings_logic, video_logic
         assert True
     
-    @pytest.mark.skip(reason="Import error")
     def test_main_window_import(self):
-        pass
+        from acas_pro.ui.pages import dashboard
+        assert dashboard is not None
 
 
 class TestWebRoutes:
     """Test web route imports"""
     
-    @pytest.mark.skip(reason="Import error")
     def test_web_routes_import(self):
-        pass
+        from acas_pro.web.routes import auth, dashboard as dash
+        assert auth is not None
+        assert dash is not None
     
     def test_web_health_import(self):
         from acas_pro.web import health

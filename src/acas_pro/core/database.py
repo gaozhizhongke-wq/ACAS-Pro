@@ -326,7 +326,7 @@ class DatabaseManager:
                 conn.commit()
             except Exception as e:
                 conn.rollback()
-                logger.error(f"Transaction failed: {e}")
+                _get_logger().error(f"Transaction failed: {e}")
                 raise
             finally:
                 cursor.close()
@@ -339,7 +339,7 @@ class DatabaseManager:
                 conn.execute("COMMIT")
             except Exception as e:
                 conn.execute("ROLLBACK")
-                logger.error(f"Transaction failed: {e}")
+                _get_logger().error(f"Transaction failed: {e}")
                 raise
     
     def execute(self, query: str, params: tuple = None) -> List[Dict]:
@@ -431,12 +431,18 @@ class DatabaseManager:
         self.execute(query, tuple(values) + (where_params or ()))
         return True
     
-    def delete(self, table: str, id_value: str) -> bool:
-        """Delete record by id"""
+    def delete(self, table: str, id_value: str = None, where_clause: str = None, where_params: tuple = None) -> bool:
+        """Delete record by id or custom WHERE clause"""
         table = self._validate_identifier(table)
         placeholder = '%s' if self._is_postgres else '?'
-        query = f"DELETE FROM {table} WHERE id = {placeholder}"
-        self.execute(query, (id_value,))
+        if where_clause and where_params:
+            query = f"DELETE FROM {table} WHERE {where_clause}"
+            self.execute(query, where_params)
+        elif id_value is not None:
+            query = f"DELETE FROM {table} WHERE id = {placeholder}"
+            self.execute(query, (id_value,))
+        else:
+            raise ValueError("delete() requires either id_value or where_clause+where_params")
         return True
     
     def health_check(self) -> Dict[str, Any]:

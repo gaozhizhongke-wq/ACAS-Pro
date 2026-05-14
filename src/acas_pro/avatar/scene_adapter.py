@@ -284,7 +284,7 @@ class SceneAdapter:
     
     def _load_custom_scenes(self):
         """加载自定义场景"""
-        scenes_dir = Path(config.data_dir) / "avatars" / "scenes"
+        scenes_dir = Path(config().data_dir) / "avatars" / "scenes"
         scenes_dir.mkdir(parents=True, exist_ok=True)
         
         for scene_file in scenes_dir.glob("*.json"):
@@ -346,7 +346,7 @@ class SceneAdapter:
     
     def _save_scene(self, scene: SceneConfig):
         """保存场景配置"""
-        scenes_dir = Path(config.data_dir) / "avatars" / "scenes"
+        scenes_dir = Path(config().data_dir) / "avatars" / "scenes"
         scenes_dir.mkdir(parents=True, exist_ok=True)
         
         scene_file = scenes_dir / f"{scene.id}.json"
@@ -405,7 +405,7 @@ class SceneAdapter:
     
     def delete_scene(self, scene_id: str) -> bool:
         """删除场景"""
-        scenes_dir = Path(config.data_dir) / "avatars" / "scenes"
+        scenes_dir = Path(config().data_dir) / "avatars" / "scenes"
         scene_file = scenes_dir / f"{scene_id}.json"
         
         if scene_file.exists():

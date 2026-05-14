@@ -348,9 +348,9 @@ class DataMonitor:
             WHERE {prev_where}
         """, prev_params)
         
-        if prev_result and prev_result['views']:
+        if prev_result and prev_result.get('views'):
             report.views_trend = (report.total_views - prev_result['views']) / prev_result['views']
-        if prev_result and prev_result['revenue']:
+        if prev_result and prev_result.get('revenue'):
             report.revenue_trend = (report.total_revenue - prev_result['revenue']) / prev_result['revenue']
             
         return report

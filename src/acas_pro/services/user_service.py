@@ -6,7 +6,7 @@ Enterprise user management with security controls
 """
 
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple, Dict, Any
 from dataclasses import dataclass, asdict
 

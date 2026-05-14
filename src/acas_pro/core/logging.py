@@ -10,7 +10,7 @@ import json
 import logging
 import logging.handlers
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 from functools import wraps
 

@@ -147,8 +147,8 @@ class TestProductManager:
     def mock_db(self):
         mock = Mock()
         mock.execute = Mock()
-        mock.fetch_one = Mock(return_value=None)
-        mock.fetch_all = Mock(return_value=[])
+        mock.fetchone = Mock(return_value=None)
+        mock.fetchall = Mock(return_value=[])
         return mock
     
     @pytest.fixture
@@ -178,7 +178,7 @@ class TestProductManager:
     
     def test_get_product_not_found(self, manager, mock_db):
         """Test get product not found"""
-        mock_db.fetch_one.return_value = None
+        mock_db.fetchone.return_value = None
         
         result = manager.get_product("nonexistent")
         
@@ -186,7 +186,7 @@ class TestProductManager:
     
     def test_get_products_by_shop_empty(self, manager, mock_db):
         """Test get products by shop empty"""
-        mock_db.fetch_all.return_value = []
+        mock_db.fetchall.return_value = []
         
         products = manager.get_products_by_shop("shop_001")
         
@@ -194,7 +194,7 @@ class TestProductManager:
     
     def test_update_product_not_found(self, manager, mock_db):
         """Test update product not found"""
-        mock_db.fetch_one.return_value = None
+        mock_db.fetchone.return_value = None
         
         result = manager.update_product("nonexistent", {"price": 199.0})
         
@@ -209,7 +209,7 @@ class TestProductManager:
     
     def test_update_stock_not_found(self, manager, mock_db):
         """Test update stock not found"""
-        mock_db.fetch_one.return_value = None
+        mock_db.fetchone.return_value = None
         
         result = manager.update_stock("nonexistent", 10)
         
@@ -217,7 +217,7 @@ class TestProductManager:
     
     def test_get_low_stock_products_empty(self, manager, mock_db):
         """Test get low stock products empty"""
-        mock_db.fetch_all.return_value = []
+        mock_db.fetchall.return_value = []
         
         products = manager.get_low_stock_products("shop_001")
         
@@ -225,7 +225,7 @@ class TestProductManager:
     
     def test_sync_to_platform_not_found(self, manager, mock_db):
         """Test sync to platform product not found"""
-        mock_db.fetch_one.return_value = None
+        mock_db.fetchone.return_value = None
         
         result = manager.sync_to_platform("nonexistent", "douyin", "shop_001")
         
@@ -234,7 +234,7 @@ class TestProductManager:
     
     def test_batch_sync_to_platform(self, manager, mock_db):
         """Test batch sync to platform"""
-        mock_db.fetch_one.return_value = None
+        mock_db.fetchone.return_value = None
         
         result = manager.batch_sync_to_platform(
             ["prod_001", "prod_002"],

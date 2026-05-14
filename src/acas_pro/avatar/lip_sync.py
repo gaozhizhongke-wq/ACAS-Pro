@@ -127,7 +127,7 @@ class LipSyncEngine:
     
     def _get_model_path(self) -> str:
         """获取模型路径"""
-        model_dir = Path(config.data_dir) / "models" / "lip_sync"
+        model_dir = Path(config().data_dir) / "models" / "lip_sync"
         model_dir.mkdir(parents=True, exist_ok=True)
         
         model_files = {

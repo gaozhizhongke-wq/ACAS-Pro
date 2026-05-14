@@ -22,7 +22,6 @@ class TestAdvancedAnalyticsCoverage:
 class TestAlertCoverage:
     """Alert module coverage"""
     
-    @pytest.mark.skip(reason="Missing dependency")
     def test_notifier_import(self):
         from acas_pro.alert.notifier import AlertNotifier, AlertChannel, AlertPriority
         assert AlertChannel is not None
@@ -32,22 +31,18 @@ class TestAlertCoverage:
 class TestAvatarCoverage:
     """Avatar module coverage"""
     
-    @pytest.mark.skip(reason="Missing dependency")
     def test_avatar_engine_import(self):
         from acas_pro.avatar.avatar_engine import AvatarEngine, AvatarType, AvatarStyle
         assert AvatarType is not None
     
-    @pytest.mark.skip(reason="Missing dependency")
     def test_gesture_generator_import(self):
         from acas_pro.avatar.gesture_generator import GestureGenerator, GestureType
         assert GestureType is not None
     
-    @pytest.mark.skip(reason="Missing dependency")
     def test_lip_sync_import(self):
         from acas_pro.avatar.lip_sync import LipSyncEngine, LipSyncModel
         assert LipSyncModel is not None
     
-    @pytest.mark.skip(reason="Missing dependency")
     def test_scene_adapter_import(self):
         from acas_pro.avatar.scene_adapter import SceneAdapter, SceneType
         assert SceneType is not None
@@ -56,12 +51,10 @@ class TestAvatarCoverage:
 class TestCollectorsCoverage:
     """Collectors module coverage"""
     
-    @pytest.mark.skip(reason="Missing dependency: feedparser")
     def test_rss_collector_import(self):
         from acas_pro.collectors.rss_collector import RSSArticle
         assert RSSArticle is not None
     
-    @pytest.mark.skip(reason="Missing dependency: requests")
     def test_weibo_api_import(self):
         from acas_pro.collectors.weibo_api import WeiboPost
         assert WeiboPost is not None
@@ -161,12 +154,10 @@ class TestMetricsCoverage:
 class TestMLCoverage:
     """ML module coverage"""
     
-    @pytest.mark.skip(reason="Missing dependency: numpy")
     def test_inventory_optimizer(self):
         from acas_pro.ml.inventory_optimizer import InventoryOptimizer, InventoryRecommendation
         assert InventoryRecommendation is not None
     
-    @pytest.mark.skip(reason="Missing dependency: numpy")
     def test_timesfm_engine(self):
         from acas_pro.ml.timesfm_engine import TimesFMEngine, ForecastPoint
         assert ForecastPoint is not None

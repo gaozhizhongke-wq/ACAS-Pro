@@ -11,7 +11,7 @@ API_SPEC = {
     "info": {
         "title": "ACAS Pro API",
         "description": "Automatic Customer Acquisition System - Production API",
-        "version": config.version,
+        "version": config().version,
         "contact": {
             "name": "ACAS Pro Team"
         },

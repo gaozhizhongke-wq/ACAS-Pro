@@ -72,8 +72,8 @@ class HealthChecker:
         return {
             'status': overall.value,
             'timestamp': datetime.now(timezone.utc).isoformat(),
-            'version': config.version,
-            'environment': config.environment,
+            'version': config().version,
+            'environment': config().environment,
             'response_time_ms': round(total_time, 2),
             'checks': [
                 {
@@ -101,7 +101,7 @@ class HealthChecker:
                     status=HealthStatus.HEALTHY,
                     response_time_ms=(time.time() - start) * 1000,
                     message='Database connection OK',
-                    details={'type': config.database.type}
+                    details={'type': config().database.type}
                 )
             else:
                 return HealthCheckResult(
@@ -124,11 +124,11 @@ class HealthChecker:
         issues = []
         
         # Check critical config values
-        if not config.security.secret_key or len(config.security.secret_key) < 32:
+        if not config().security.secret_key or len(config().security.secret_key) < 32:
             issues.append('SECRET_KEY too short or not set')
         
-        if config.environment == 'production':
-            if config.security.secret_key in ('acas-pro-secret-key-change-me', 'dev-key-change-in-production'):
+        if config().environment == 'production':
+            if config().security.secret_key in ('acas-pro-secret-key-change-me', 'dev-key-change-in-production'):
                 issues.append('Using default SECRET_KEY in production')
         
         if issues:
@@ -155,7 +155,7 @@ class HealthChecker:
             import os
             
             # Check data directory
-            data_dir = config.data_dir or 'data'
+            data_dir = config().data_dir or 'data'
             os.makedirs(data_dir, exist_ok=True)
             
             stat = shutil.disk_usage(data_dir)
@@ -197,7 +197,7 @@ class HealthChecker:
         """Check LLM service availability and configuration"""
         start = time.time()
         try:
-            if not config.llm.enabled:
+            if not config().llm.enabled:
                 return HealthCheckResult(
                     name='llm',
                     status=HealthStatus.DEGRADED,
@@ -206,10 +206,10 @@ class HealthChecker:
                     details={'enabled': False}
                 )
             
-            if not config.llm.api_key:
+            if not config().llm.api_key:
                 return HealthCheckResult(
                     name='llm',
-                    status=HealthStatus.UNHEALTHY,
+                    status=HealthStatus.DEGRADED,  # Changed from UNHEALTHY - missing API key is config issue, not outage
                     response_time_ms=(time.time() - start) * 1000,
                     message='LLM API key not configured',
                     details={'enabled': True, 'api_key_set': False}
@@ -220,10 +220,10 @@ class HealthChecker:
                 from acas_pro.llm.llm_client import LLMClient, LLMProvider, LLMConfig as ClientConfig
                 
                 llm_config = ClientConfig(
-                    provider=LLMProvider(config.llm.provider),
-                    api_key=config.llm.api_key,
-                    model=config.llm.model,
-                    base_url=config.llm.base_url
+                    provider=LLMProvider(config().llm.provider),
+                    api_key=config().llm.api_key,
+                    model=config().llm.model,
+                    base_url=config().llm.base_url
                 )
                 
                 client = LLMClient(llm_config)
@@ -234,12 +234,12 @@ class HealthChecker:
                     name='llm',
                     status=HealthStatus.HEALTHY,
                     response_time_ms=(time.time() - start) * 1000,
-                    message=f'LLM configured: {config.llm.provider}/{config.llm.model}',
+                    message=f'LLM configured: {config().llm.provider}/{config().llm.model}',
                     details={
                         'enabled': True,
                         'api_key_set': True,
-                        'provider': config.llm.provider,
-                        'model': config.llm.model
+                        'provider': config().llm.provider,
+                        'model': config().llm.model
                     }
                 )
             except ImportError as e:

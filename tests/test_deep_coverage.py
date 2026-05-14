@@ -61,9 +61,16 @@ class TestBiddingEngineDeep:
         bid = engine.calculate_bid(config, context)
         assert 0.5 <= bid <= 5.0
     
-    @pytest.mark.skip(reason="API mismatch")
     def test_calculate_bid_respects_min(self):
-        pass
+        from acas_pro.ads.bidding_engine import BiddingEngine, BiddingConfig, BiddingStrategy
+        engine = BiddingEngine()
+        config = BiddingConfig(
+            strategy=BiddingStrategy.AUTO_OCPC, base_bid=0.1, max_bid=5.0,
+            min_bid=0.5, target_cpa=50.0, target_roi=2.0, adjustments=[]
+        )
+        context = {"hour": 14, "day_of_week": 4, "conversion_rate": 0.05, "competition_level": "medium"}
+        bid = engine.calculate_bid(config, context)
+        assert bid >= 0.5
 
 
 class TestSecurityDeep:
@@ -125,13 +132,16 @@ class TestSecurityDeep:
 class TestDatabaseDeep:
     """Deep test database"""
     
-    @pytest.mark.skip(reason="API mismatch")
-    def test_execute_many_rows(self):
-        pass
-    
-    @pytest.mark.skip(reason="API mismatch")
     def test_delete_row(self):
-        pass
+        from acas_pro.core.database import DatabaseManager
+        import uuid
+        db = DatabaseManager()
+        uid = uuid.uuid4().hex[:8]
+        db.execute(f"CREATE TABLE IF NOT EXISTS test_del_{uid} (id INTEGER, name TEXT)")
+        db.execute(f"INSERT INTO test_del_{uid} VALUES (1, 'test')")
+        db.delete(f"test_del_{uid}", where_clause="id = ?", where_params=(1,))
+        rows = db.fetchall(f"SELECT * FROM test_del_{uid}")
+        assert len(rows) == 0
 
 
 class TestFestivalCalendarDeep:
@@ -143,37 +153,53 @@ class TestFestivalCalendarDeep:
         festivals = calendar.get_upcoming_festivals(days=30)
         assert isinstance(festivals, list)
     
-    @pytest.mark.skip(reason="API mismatch")
     def test_get_marketing_plan(self):
-        pass
+        from acas_pro.analytics.festival_calendar import FestivalCalendar
+        calendar = FestivalCalendar()
+        plans = calendar.get_marketing_plans()
+        assert isinstance(plans, list)
 
 
 class TestConversationDeep:
     """Deep test conversation"""
     
-    @pytest.mark.skip(reason="API mismatch")
     def test_add_message(self):
-        pass
+        from acas_pro.llm.conversation import Conversation
+        conv = Conversation(id="test", title="Test")
+        conv.add_message("user", "hello")
+        assert len(conv.messages) == 1
     
-    @pytest.mark.skip(reason="API mismatch")
     def test_get_context(self):
-        pass
+        from acas_pro.llm.conversation import Conversation
+        conv = Conversation(id="test", title="Test")
+        conv.add_message("user", "hello")
+        ctx = conv.get_context_window()
+        assert isinstance(ctx, list)
 
 
 class TestOAuthDeep:
     """Deep test OAuth"""
     
-    @pytest.mark.skip(reason="API mismatch")
     def test_oauth_service_init(self):
-        pass
+        from acas_pro.services.oauth.oauth_service import OAuthService
+        from unittest.mock import MagicMock
+        cfg = MagicMock()
+        svc = OAuthService(cfg)
+        assert svc is not None
     
-    @pytest.mark.skip(reason="API mismatch")
     def test_qq_oauth_init(self):
-        pass
+        from acas_pro.services.oauth.oauth_service import QQOAuth
+        from unittest.mock import MagicMock
+        cfg = MagicMock()
+        oauth = QQOAuth(cfg)
+        assert oauth is not None
     
-    @pytest.mark.skip(reason="API mismatch")
     def test_wechat_oauth_init(self):
-        pass
+        from acas_pro.services.oauth.oauth_service import WeChatOAuth
+        from unittest.mock import MagicMock
+        cfg = MagicMock()
+        oauth = WeChatOAuth(cfg)
+        assert oauth is not None
 
 
 if __name__ == '__main__':

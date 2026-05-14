@@ -178,6 +178,11 @@ class ProductManager:
                 weekly_sales INTEGER DEFAULT 0
             )
         """)
+        # Ensure shop_id column exists (for compatibility with existing tables)
+        try:
+            self.db.execute("ALTER TABLE products ADD COLUMN shop_id TEXT")
+        except Exception:
+            pass  # Column may already exist
     
     def create_product(
         self,
@@ -236,7 +241,7 @@ class ProductManager:
     
     def get_product(self, product_id: str) -> Optional[Product]:
         """获取商品"""
-        row = self.db.fetch_one("SELECT * FROM products WHERE id = ?", (product_id,))
+        row = self.db.fetchone("SELECT * FROM products WHERE id = ?", (product_id,))
         if row:
             return self._row_to_product(row)
         return None
@@ -244,12 +249,12 @@ class ProductManager:
     def get_products_by_shop(self, shop_id: str, status: Optional[ProductStatus] = None) -> List[Product]:
         """获取店铺商品"""
         if status:
-            rows = self.db.fetch_all(
+            rows = self.db.fetchall(
                 "SELECT * FROM products WHERE shop_id = ? AND status = ? ORDER BY created_at DESC",
                 (shop_id, status.value)
             )
         else:
-            rows = self.db.fetch_all(
+            rows = self.db.fetchall(
                 "SELECT * FROM products WHERE shop_id = ? ORDER BY created_at DESC",
                 (shop_id,)
             )

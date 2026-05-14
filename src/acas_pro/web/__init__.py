@@ -12,7 +12,7 @@ def create_app():
     app = Flask(__name__)
     
     # Validate configuration before starting
-    is_valid, errors = config.validate()
+    is_valid, errors = config().validate()
     if not is_valid:
         for error in errors:
             logger.error(f"Configuration validation failed: {error}")
@@ -34,7 +34,7 @@ def _configure_app(app):
     import hashlib
     
     # SECRET_KEY
-    _secret = os.environ.get('SECRET_KEY', config.security.secret_key)
+    _secret = os.environ.get('SECRET_KEY', config().security.secret_key)
     if not _secret or _secret in ('acas-pro-secret-key-change-me', 'dev-key-change-in-production'):
         env_name = os.environ.get('ENVIRONMENT', os.environ.get('FLASK_ENV', 'development'))
         if env_name in ('production', 'prod'):
@@ -48,7 +48,7 @@ def _configure_app(app):
     app.secret_key = _secret
     
     # HTTPS check in production
-    if config.environment == 'production':
+    if config().environment == 'production':
         logger.warning("HTTPS not enforced — configure nginx to redirect HTTP → HTTPS in production")
 
 

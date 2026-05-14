@@ -102,25 +102,33 @@ class TestBiddingEngineMethods:
 class TestProductManagerMethods:
     """Test ProductManager methods"""
     
-    @pytest.mark.skip(reason="API mismatch")
     def test_get_products_by_shop(self):
-        pass
+        from acas_pro.ecommerce.product_manager import ProductManager
+        pm = ProductManager()
+        products = pm.get_products_by_shop("shop1")
+        assert isinstance(products, list)
     
-    @pytest.mark.skip(reason="API mismatch")
     def test_update_stock(self):
-        pass
+        from acas_pro.ecommerce.product_manager import ProductManager
+        pm = ProductManager()
+        result = pm.update_stock("prod1", 100)
+        assert result is not None
 
 
 class TestAccountManagerMethods:
     """Test AccountManager methods"""
     
-    @pytest.mark.skip(reason="API mismatch")
     def test_get_accounts(self):
-        pass
+        from acas_pro.platforms.account_manager import AccountManager
+        am = AccountManager()
+        accounts = am.list_accounts()
+        assert isinstance(accounts, list)
     
-    @pytest.mark.skip(reason="API mismatch")
     def test_get_account_stats(self):
-        pass
+        from acas_pro.platforms.account_manager import AccountManager
+        am = AccountManager()
+        stats = am.get_account_summary()
+        assert stats is not None
 
 
 class TestConversationMethods:
@@ -178,13 +186,24 @@ class TestConfigMethods:
 class TestDatabaseMethods:
     """Test Database methods"""
     
-    @pytest.mark.skip(reason="API mismatch")
     def test_execute_many(self):
-        pass
+        from acas_pro.core.database import DatabaseManager
+        db = DatabaseManager()
+        uid = __import__('uuid').uuid4().hex[:8]
+        db.execute(f"CREATE TABLE IF NOT EXISTS test_many_{uid} (id INTEGER)")
+        # execute_many not available, use multiple execute
+        for i in range(3):
+            db.execute(f"INSERT INTO test_many_{uid} VALUES (?)", (i,))
+        rows = db.fetchall(f"SELECT * FROM test_many_{uid}")
+        assert len(rows) == 3
     
-    @pytest.mark.skip(reason="API mismatch")
     def test_table_exists(self):
-        pass
+        from acas_pro.core.database import DatabaseManager
+        db = DatabaseManager()
+        uid = __import__('uuid').uuid4().hex[:8]
+        db.execute(f"CREATE TABLE IF NOT EXISTS test_exists_{uid} (id INTEGER)")
+        rows = db.fetchall(f"SELECT name FROM sqlite_master WHERE type='table' AND name='test_exists_{uid}'")
+        assert len(rows) == 1
 
 
 if __name__ == '__main__':

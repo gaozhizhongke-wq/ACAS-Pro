@@ -27,6 +27,13 @@ class TestAuthEndpoints:
     
     def test_login_endpoint(self):
         """Test login endpoint"""
+        # DIAG
+        import acas_pro.core.security as _sec
+        from unittest.mock import MagicMock as _MM
+        _gc = _sec.__dict__.get('get_config')
+        print(f'[TEST_START] sec.get_config type={type(_gc).__name__}, is_Mock={isinstance(_gc, _MM)}')
+        _cfg_result = _sec._cfg()
+        print(f'[TEST_START] _cfg().jwt_alg={_cfg_result.security.jwt_algorithm!r}, is_Mock={isinstance(_cfg_result.security.jwt_algorithm, _MM)}')
         token = jwt_manager.generate_token("test_user")
         assert token is not None
         assert isinstance(token, str)

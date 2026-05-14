@@ -293,13 +293,11 @@ class TestAudienceTargeting:
         targeting = AudienceTargeting(db_path=temp_db)
         assert targeting is not None
 
-    @pytest.mark.skip(reason="模块bug: AgeRange.to_dict() 返回 min/max，但 get_segment 需要 min_age/max_age")
     def test_create_segment(self, audience_targeting, sample_audience_segment):
         """测试创建人群包"""
         result = audience_targeting.create_segment(sample_audience_segment)
         assert result is True
 
-    @pytest.mark.skip(reason="模块bug: AgeRange 序列化/反序列化不兼容")
     def test_get_segment(self, audience_targeting, sample_audience_segment):
         """测试获取人群包"""
         audience_targeting.create_segment(sample_audience_segment)
@@ -312,7 +310,6 @@ class TestAudienceTargeting:
         segment = audience_targeting.get_segment("nonexistent")
         assert segment is None
 
-    @pytest.mark.skip(reason="模块bug: AgeRange 序列化/反序列化不兼容")
     def test_get_segments(self, audience_targeting, sample_audience_segment):
         """测试获取人群包列表"""
         audience_targeting.create_segment(sample_audience_segment)

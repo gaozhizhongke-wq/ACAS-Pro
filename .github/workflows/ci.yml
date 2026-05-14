@@ -63,13 +63,31 @@ jobs:
       run: |
         mypy src/acas_pro --ignore-missing-imports || true
 
-    - name: Run tests with pytest
+    - name: Run unit tests with pytest
       env:
         DATABASE_URL: postgresql://test:test@localhost:5432/acas_test
         SECRET_KEY: test-secret-key-for-ci-only
         ACAS_ENV: testing
+        SKIP_E2E: '1'
       run: |
-        pytest tests/ -v --cov=src/acas_pro --cov-report=xml --cov-report=term
+        pytest tests/ --ignore=tests/e2e_playwright --ignore=tests/test_e2e.py -v --cov=src/acas_pro --cov-report=xml --cov-report=term
+
+    - name: Run E2E tests
+      env:
+        DATABASE_URL: postgresql://test:test@localhost:5432/acas_test
+        SECRET_KEY: test-secret-key-for-ci-only
+        ACAS_ENV: testing
+        FLASK_ENV: testing
+      run: |
+        # Start Flask server in background
+        python -m flask run --port 5555 &
+        FLASK_PID=$!
+        # Wait for server
+        sleep 5
+        # Run E2E tests
+        pytest tests/test_e2e.py -v || true
+        # Cleanup
+        kill $FLASK_PID || true
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v3

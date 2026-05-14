@@ -1,0 +1,40 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.0.3, pluggy-1.6.0
+rootdir: F:\自动获客系统\ACAS-Pro
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: cov-7.1.0
+collected 673 items
+
+tests\test_account_manager.py .............                              [  1%]
+tests\test_ads_modules.py ...................ss.s.............           [  7%]
+tests\test_all_modules.py ............................s.....             [ 12%]
+tests\test_analytics_core.py ....s....................s.......           [ 17%]
+tests\test_api.py .........                                              [ 18%]
+tests\test_auth.py ...............                                       [ 20%]
+tests\test_business_logic.py .......s..                                  [ 22%]
+tests\test_comprehensive_mock.py .                                       [ 22%]
+tests\test_conversation.py ......................                        [ 25%]
+tests\test_core_0pct.py ................................                 [ 30%]
+tests\test_coverage_boost.py ..........s.ss.                             [ 32%]
+tests\test_database.py ........                                          [ 33%]
+tests\test_deep_coverage.py ...s.....ss.ssssss                           [ 36%]
+tests\test_extreme_coverage.py .                                         [ 36%]
+tests\test_festival_calendar.py .................                        [ 39%]
+tests\test_final_all.py .                                                [ 39%]
+tests\test_final_comprehensive.py .                                      [ 39%]
+tests\test_final_coverage.py ...............................             [ 44%]
+tests\test_final_mock.py .                                               [ 44%]
+tests\test_final_mock_all.py .                                           [ 44%]
+tests\test_full_coverage.py ....................                         [ 47%]
+tests\test_import_coverage.py ...............                            [ 49%]
+tests\test_llm_engines.py ........................                       [ 53%]
+tests\test_llm_tools_new.py ...............                              [ 55%]
+tests\test_logic_and_analytics.py ...............F
+
+================================== FAILURES ===================================
+E   TypeError: ScriptTemplate.__init__() got an unexpected keyword argument 'content'
+F:\自动获客系统\ACAS-Pro\tests\test_logic_and_analytics.py:215: TypeError: ScriptTemplate.__init__() got an unexpected keyword argument 'content'
+=========================== short test summary info ===========================
+FAILED tests/test_logic_and_analytics.py::TestContentLogic::test_import - Typ...
+!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!
+================== 1 failed, 369 passed, 19 skipped in 5.10s ==================

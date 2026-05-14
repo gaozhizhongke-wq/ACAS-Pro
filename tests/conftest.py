@@ -7,21 +7,154 @@ import tempfile
 import pytest
 from pathlib import Path
 from unittest.mock import MagicMock, patch
+from types import ModuleType
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
 
-# Mock PySide6 for UI tests
-sys.modules['PySide6'] = MagicMock()
-sys.modules['PySide6.QtWidgets'] = MagicMock()
-sys.modules['PySide6.QtCore'] = MagicMock()
-sys.modules['PySide6.QtGui'] = MagicMock()
-sys.modules['PySide6.QtCharts'] = MagicMock()
+# --- Comprehensive PySide6 mock ---
+def _make_widget_mock():
+    """Create a comprehensive PySide6 module mock with all needed widget classes."""
+    pyside6 = ModuleType('mock_pyside6')
+    widgets = ModuleType('mock_widgets')
+    core = ModuleType('mock_core')
+    gui = ModuleType('mock_gui')
+    charts = ModuleType('mock_charts')
+
+    widget_names = [
+        'QWidget', 'QMainWindow', 'QDialog', 'QDialogButtonBox',
+        'QLabel', 'QPushButton', 'QVBoxLayout', 'QHBoxLayout',
+        'QStackedWidget', 'QFrame', 'QScrollArea', 'QMessageBox',
+        'QLineEdit', 'QTableWidget', 'QTableWidgetItem', 'QHeaderView',
+        'QGroupBox', 'QComboBox', 'QSpinBox', 'QDoubleSpinBox',
+        'QTextEdit', 'QCheckBox', 'QSlider', 'QSpacerItem', 'QSizePolicy',
+        'QTabWidget', 'QTabBar', 'QListWidget', 'QListWidgetItem',
+        'QProgressBar', 'QSplitter', 'QMenu', 'QMenuBar', 'QToolBar',
+        'QStatusBar', 'QAction', 'QTimer', 'QGraphicsView',
+        'QGraphicsScene', 'QGraphicsPixmapItem', 'QGraphicsTextItem',
+        'QGraphicsEffect', 'QGraphicsOpacityEffect', 'QGraphicsBlurEffect',
+        'QPointF', 'QLineF', 'QRectF', 'QSize', 'QPoint',
+        'QGridLayout', 'QFormLayout', 'QRadioButton', 'QButtonGroup',
+        'QPropertyAnimation', 'QEasingCurve', 'QPalette', 'QColor',
+        'QFont', 'QFontMetrics', 'QPixmap', 'QImage', 'QByteArray',
+        'QBuffer', 'QIODevice', 'QDateEdit', 'QDateTimeEdit', 'QDate',
+        'QTime', 'QDateTime', 'QUrl', 'QFileDialog', 'QInputDialog',
+        'QPainter', 'QPen', 'QBrush', 'QLinearGradient', 'QRadialGradient',
+        'QPolygonF', 'QAbstractItemView', 'QTextCursor', 'QTextBlock',
+        'QTextCharFormat', 'QSyntaxHighlighter', 'QStandardItemModel',
+        'QStandardItem', 'QTreeView', 'QTreeWidget', 'QTreeWidgetItem',
+        'QAbstractSpinBox', 'QCompleter', 'QToolButton', 'QTextEdit',
+        'QWebEngineView', 'QWebEnginePage', 'QCalendarWidget',
+        'QTextBrowser', 'QPlainTextEdit',
+    ]
+
+    for name in widget_names:
+        setattr(widgets, name, MagicMock(return_value=MagicMock()))
+
+    mock_qt = MagicMock()
+    for attr in ['AlignLeft', 'AlignRight', 'AlignCenter', 'AlignTop', 'AlignBottom',
+                 'Horizontal', 'Vertical', 'Window', 'Dialog', 'Tool', 'Sheet',
+                 'DisplayRole', 'EditRole', 'CheckStateRole', 'UserRole',
+                 'LeftToRight', 'NoFocus', 'NoFrame']:
+        setattr(mock_qt, attr, 1)
+    mock_qt.AlignmentFlag = type('AlignmentFlag', (), {
+        'AlignLeft': 1, 'AlignRight': 2, 'AlignCenter': 4, 'AlignHCenter': 8
+    })
+    mock_qt.ItemDataRole = type('ItemDataRole', (), {'DisplayRole': 0, 'EditRole': 1})
+    mock_qt.Orientation = type('Orientation', (), {'Horizontal': 0, 'Vertical': 1})
+    mock_qt.WindowType = type('WindowType', (), {'Window': 1, 'Dialog': 2})
+    mock_qt.CheckState = type('CheckState', (), {'Checked': 2, 'Unchecked': 0})
+    mock_qt.GlobalColor = type('GlobalColor', (), {
+        'white': 0, 'black': 1, 'red': 2, 'green': 3, 'blue': 4,
+        'cyan': 5, 'magenta': 6, 'yellow': 7, 'gray': 8, 'lightGray': 9
+    })
+    mock_qt.SizePolicy = type('SizePolicy', (), {
+        'Fixed': 0, 'Minimum': 1, 'Maximum': 4, 'Preferred': 5,
+        'Expanding': 7, 'MinimumExpanding': 3, 'Ignored': 13,
+    })
+    core.Qt = mock_qt
+    core.Signal = MagicMock
+    core.Slot = MagicMock
+    core.Property = MagicMock
+    core.QSize = MagicMock(return_value=MagicMock())
+    core.QTimer = MagicMock(return_value=MagicMock())
+    core.QThread = MagicMock
+    core.QObject = MagicMock
+    core.QCoreApplication = MagicMock
+    core.QDate = MagicMock
+    core.QDateTime = MagicMock
+    core.QUrl = MagicMock
+
+    gui.QFont = MagicMock(return_value=MagicMock())
+    gui.QIcon = MagicMock(return_value=MagicMock())
+    gui.QPixmap = MagicMock(return_value=MagicMock())
+    gui.QImage = MagicMock(return_value=MagicMock())
+    gui.QColor = MagicMock(return_value=MagicMock())
+    gui.QPalette = MagicMock(return_value=MagicMock())
+    gui.QPainter = MagicMock()
+    gui.QPen = MagicMock(return_value=MagicMock())
+    gui.QBrush = MagicMock(return_value=MagicMock())
+    gui.QLinearGradient = MagicMock(return_value=MagicMock())
+    gui.QFontMetrics = MagicMock(return_value=MagicMock())
+    gui.QCursor = MagicMock
+    gui.QPolygonF = MagicMock
+    gui.QTextCursor = MagicMock
+    gui.QSyntaxHighlighter = MagicMock
+    gui.QTextCharFormat = MagicMock
+    gui.QAction = MagicMock
+
+    sys.modules['PySide6'] = pyside6
+    sys.modules['PySide6.QtWidgets'] = widgets
+    sys.modules['PySide6.QtCore'] = core
+    sys.modules['PySide6.QtGui'] = gui
+    sys.modules['PySide6.QtCharts'] = charts
+    for key in list(sys.modules.keys()):
+        if 'PySide6.Qt' in key and key not in ['PySide6.QtWidgets', 'PySide6.QtCore', 'PySide6.QtGui', 'PySide6.QtCharts']:
+            del sys.modules[key]
+
+
+_make_widget_mock()
 
 # Mock Flask for web tests
 sys.modules['flask'] = MagicMock()
 sys.modules['flask_cors'] = MagicMock()
 sys.modules['flask_limiter'] = MagicMock()
+
+# Mock psycopg2 for database_pg tests
+if 'psycopg2' not in sys.modules:
+    _psycopg2 = MagicMock()
+    _psycopg2.pool = MagicMock()
+    _psycopg2.pool.ThreadedConnectionPool = MagicMock
+    _psycopg2.extras = MagicMock()
+    _psycopg2.extras.RealDictCursor = MagicMock
+    _psycopg2.sql = MagicMock()
+    sys.modules['psycopg2'] = _psycopg2
+    sys.modules['psycopg2.pool'] = _psycopg2.pool
+    sys.modules['psycopg2.extras'] = _psycopg2.extras
+    sys.modules['psycopg2.sql'] = _psycopg2.sql
+
+# NOTE: Do NOT globally mock requests - E2E tests need real HTTP calls
+# If specific tests need mocked requests, use local fixtures instead
+
+# Mock psutil for monitoring
+if 'psutil' not in sys.modules:
+    sys.modules['psutil'] = MagicMock()
+
+# Mock ML/data science libraries
+# NOTE: Removed 'playwright' from global mock - tests needing real playwright should import it directly
+for _ml_mod in ['numpy', 'torch', 'transformers', 'scikit-learn', 'sklearn',
+                 'pandas', 'scipy', 'matplotlib', 'PIL', 'pillow', 'cv2',
+                 'feedparser', 'bs4', 'beautifulsoup4', 'lxml',
+                 'openai', 'anthropic', 'google.generativeai',
+                 'tqdm', 'aiohttp', 'httpx', 'boto3',
+                 'schedule', 'apscheduler', 'celery',
+                 'qrcode', 'Pillow', 'moviepy', 'pydub',
+                 'selenium', 'undetected_chromedriver',
+                 'praw', 'tweepy', 'weibo', 'douban',
+                 'timesfm', 'prophet', 'statsmodels',
+                 'sqlalchemy', 'alembic']:
+    if _ml_mod not in sys.modules:
+        sys.modules[_ml_mod] = MagicMock()
 
 
 @pytest.fixture

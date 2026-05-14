@@ -18,12 +18,16 @@ from .config import get_config
 from .logging import get_logger
 
 # Lazy-loaded logger
+logger = get_logger(__name__)
+
 def _get_logger():
-    return get_logger(__name__)
+    return logger
 
 # Lazy-loaded config
+config = get_config()
+
 def _get_config():
-    return get_config()
+    return config
 
 
 @dataclass

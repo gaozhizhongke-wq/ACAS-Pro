@@ -202,7 +202,7 @@ class AdManager:
     """广告账户管理器"""
     
     def __init__(self, db_path: Optional[str] = None):
-        self.db_path = db_path or config.database.path
+        self.db_path = db_path or config().database.path
         self._init_database()
         self.logger = logger.getChild("ad_manager")
     

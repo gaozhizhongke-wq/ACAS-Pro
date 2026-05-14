@@ -37,7 +37,7 @@ class AgeRange:
     max_age: int = 65
     
     def to_dict(self) -> Dict[str, int]:
-        return {'min': self.min_age, 'max': self.max_age}
+        return {'min_age': self.min_age, 'max_age': self.max_age}
 
 
 @dataclass
@@ -167,7 +167,7 @@ class AudienceTargeting:
     }
     
     def __init__(self, db_path: Optional[str] = None):
-        self.db_path = db_path or config.database.path
+        self.db_path = db_path or config().database.path
         self._init_database()
         self.logger = logger.getChild("audience_targeting")
     
@@ -467,31 +467,31 @@ class AudienceTargeting:
                 'interests': ['美妆护肤', '电商购物'],
                 'behaviors': ['最近购买', '深度浏览'],
                 'gender': 'female',
-                'age_range': {'min': 18, 'max': 45}
+                'age_range': {'min_age': 18, 'max_age': 45}
             },
             '数码': {
                 'interests': ['数码科技', '电商购物'],
                 'behaviors': ['对比商品', '查看评价'],
                 'gender': 'all',
-                'age_range': {'min': 18, 'max': 50}
+                'age_range': {'min_age': 18, 'max_age': 50}
             },
             '母婴': {
                 'interests': ['母婴育儿', '电商购物'],
                 'behaviors': ['最近购买', '复购用户'],
                 'gender': 'female',
-                'age_range': {'min': 22, 'max': 40}
+                'age_range': {'min_age': 22, 'max_age': 40}
             },
             '食品': {
                 'interests': ['美食餐饮', '电商购物'],
                 'behaviors': ['最近购买', '高频购买'],
                 'gender': 'all',
-                'age_range': {'min': 18, 'max': 60}
+                'age_range': {'min_age': 18, 'max_age': 60}
             },
             '服装': {
                 'interests': ['电商购物', '美妆护肤'],
                 'behaviors': ['加购未买', '多次浏览'],
                 'gender': 'female',
-                'age_range': {'min': 18, 'max': 50}
+                'age_range': {'min_age': 18, 'max_age': 50}
             }
         }
         
@@ -499,5 +499,5 @@ class AudienceTargeting:
             'interests': ['电商购物'],
             'behaviors': ['活跃用户'],
             'gender': 'all',
-            'age_range': {'min': 18, 'max': 65}
+            'age_range': {'min_age': 18, 'max_age': 65}
         })

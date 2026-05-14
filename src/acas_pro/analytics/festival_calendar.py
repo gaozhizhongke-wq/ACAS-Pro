@@ -357,12 +357,22 @@ class FestivalCalendar:
         
     def _row_to_festival(self, row: dict) -> Festival:
         """将数据库行转换为节日对象"""
+        def _json_loads(val):
+            if isinstance(val, str):
+                return json.loads(val)
+            return val if val is not None else []
+        def _parse_dt(val):
+            if isinstance(val, datetime):
+                return val
+            if isinstance(val, str):
+                return datetime.fromisoformat(val)
+            return datetime.now()
         return Festival(
             id=row['id'],
             name=row['name'],
             name_en=row['name_en'],
             festival_type=FestivalType(row['festival_type']),
-            markets=[MarketType(m) for m in json.loads(row['markets'])],
+            markets=[MarketType(m) for m in _json_loads(row['markets'])],
             month=row['month'],
             day=row['day'],
             lunar=bool(row['lunar']),
@@ -371,12 +381,12 @@ class FestivalCalendar:
             importance=row['importance'],
             duration_days=row['duration_days'],
             pre_heat_days=row['pre_heat_days'],
-            themes=json.loads(row['themes']) if row['themes'] else [],
-            keywords=json.loads(row['keywords']) if row['keywords'] else [],
+            themes=_json_loads(row['themes']),
+            keywords=_json_loads(row['keywords']),
             visual_style=row['visual_style'],
             content_tips=row['content_tips'],
             is_active=bool(row['is_active']),
-            created_at=datetime.fromisoformat(row['created_at'])
+            created_at=_parse_dt(row['created_at'])
         )
         
     def list_festivals(
@@ -497,21 +507,28 @@ class FestivalCalendar:
         
         rows = self.db.fetchall(query, params)
         
+        def _parse_dt(val):
+            if isinstance(val, datetime):
+                return val
+            if isinstance(val, str):
+                return datetime.fromisoformat(val)
+            return datetime.now()
+        
         plans = []
         for row in rows:
             plan = MarketingPlan(
                 id=row['id'],
                 festival_id=row['festival_id'],
                 name=row['name'],
-                start_date=datetime.fromisoformat(row['start_date']),
-                end_date=datetime.fromisoformat(row['end_date']),
-                target_platforms=json.loads(row['target_platforms']),
-                target_accounts=json.loads(row['target_accounts']),
+                start_date=_parse_dt(row['start_date']),
+                end_date=_parse_dt(row['end_date']),
+                target_platforms=json.loads(row['target_platforms']) if isinstance(row['target_platforms'], str) else row['target_platforms'],
+                target_accounts=json.loads(row['target_accounts']) if isinstance(row['target_accounts'], str) else row['target_accounts'],
                 content_count=row['content_count'],
-                content_types=json.loads(row['content_types']),
+                content_types=json.loads(row['content_types']) if isinstance(row['content_types'], str) else row['content_types'],
                 budget=row['budget'],
                 status=row['status'],
-                created_at=datetime.fromisoformat(row['created_at'])
+                created_at=_parse_dt(row['created_at'])
             )
             plans.append(plan)
             

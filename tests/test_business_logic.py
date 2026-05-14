@@ -162,9 +162,11 @@ class TestProductManagerBusiness:
         manager = ProductManager()
         assert manager is not None
     
-    @pytest.mark.skip(reason="API mismatch")
     def test_get_low_stock(self):
-        pass
+        from acas_pro.ecommerce.product_manager import ProductManager
+        manager = ProductManager()
+        products = manager.get_low_stock_products(shop_id="shop1")
+        assert isinstance(products, list)
 
 
 class TestSettlementEngineBusiness:

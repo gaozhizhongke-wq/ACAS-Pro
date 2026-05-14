@@ -54,7 +54,7 @@ setup_logging()
 logger = get_logger(__name__)
 
 # ── HTTPS Enforcement (Production) ──────────────────────────────────────────
-if config.environment == 'production':
+if config().environment == 'production':
     from flask import request
     if not request.is_secure:
         logger.warning("HTTPS not enforced — configure your reverse proxy (nginx) to redirect HTTP → HTTPS in production")
@@ -75,7 +75,7 @@ register_api_docs(app)
 logger.info("API documentation registered at /api/docs")
 
 # SECRET_KEY: 生产环境强制要求
-_secret = os.environ.get('SECRET_KEY', config.security.secret_key)
+_secret = os.environ.get('SECRET_KEY', config().security.secret_key)
 if not _secret or _secret in ('acas-pro-secret-key-change-me', 'dev-key-change-in-production'):
     # 生产环境必须设置 SECRET_KEY
     env_name = os.environ.get('ENVIRONMENT', os.environ.get('FLASK_ENV', 'development'))
@@ -106,8 +106,8 @@ _PROVIDER_MAP = {
 
 
 def create_llm_client() -> LLMClient:
-    """Bridge: config.py LLMConfig → llm_client.LLMConfig → LLMClient"""
-    llm = config.llm
+    """Bridge: config().py LLMConfig → llm_client.LLMConfig → LLMClient"""
+    llm = config().llm
     if not llm.enabled or not llm.api_key:
         raise RuntimeError("LLM not configured. Set DEEPSEEK_API_KEY in .env or configure via Settings page.")
     provider_enum = _PROVIDER_MAP.get(llm.provider, LLMProvider.OPENAI)
@@ -166,7 +166,7 @@ def _startup_cleanup():
     _cleanup_done = True
 
     # Warn about in-memory rate limiter (not safe for multi-process deployments)
-    if config.environment == 'production':
+    if config().environment == 'production':
         logger.warning(
             "SECURITY: Using in-memory RateLimiter. "
             "In multi-process deployments (gunicorn -w N, N>1), rate limits are per-process "
@@ -226,7 +226,7 @@ def check_auth():
 # ── CORS ───────────────────────────────────────────────────────────────────
 @app.after_request
 def add_cors_headers(response):
-    origins = config.security.cors_allowed_origins
+    origins = config().security.cors_allowed_origins
     if origins:
         # Strip trailing commas/whitespace
         origin = origins.split(',')[0].strip()
@@ -274,7 +274,7 @@ def auth_register():
         return jsonify({'error': 'account and password are required'}), 400
     
     # Enforce strong password policy (not just length — use validator)
-    is_valid, pw_msg = pv.PasswordValidator.validate(password)
+    is_valid, pw_msg = pv.validate(password)
     if not is_valid:
         return jsonify({'error': pw_msg}), 400
     
@@ -347,21 +347,21 @@ def save_llm_config():
     model = data.get('model') or None
 
     # Update config
-    config.llm.provider = provider
+    config().llm.provider = provider
     if api_key:
-        config.llm.api_key = api_key
+        config().llm.api_key = api_key
     if api_base:
-        config.llm.api_base = api_base
+        config().llm.api_base = api_base
     if model:
-        config.llm.model = model
-    config.llm.enabled = True
+        config().llm.model = model
+    config().llm.enabled = True
 
     # Also set environment variables for persistence
     env_key = f'{provider.upper()}_API_KEY'
     os.environ[env_key] = api_key
     os.environ['LLM_PROVIDER'] = provider
 
-    config.save()
+    config().save()
     logger.info(f"LLM config updated: provider={provider}")
 
     return jsonify({'success': True, 'provider': provider})
@@ -489,8 +489,8 @@ def dashboard_stats():
             logger.error(f'risk_alerts query failed: {e}')
             stats['risk_alerts'] = 0
 
-        stats['llm_enabled'] = config.llm.enabled
-        stats['llm_provider'] = config.llm.provider if config.llm.enabled else 'disabled'
+        stats['llm_enabled'] = config().llm.enabled
+        stats['llm_provider'] = config().llm.provider if config().llm.enabled else 'disabled'
         return jsonify(stats)
     except Exception as e:
         logger.error(f'dashboard_stats outer exception: {e}')
@@ -500,8 +500,8 @@ def dashboard_stats():
             'inventory': 0,
             'low_stock': 0,
             'risk_alerts': 0,
-            'llm_enabled': config.llm.enabled,
-            'llm_provider': config.llm.provider if config.llm.enabled else 'disabled',
+            'llm_enabled': config().llm.enabled,
+            'llm_provider': config().llm.provider if config().llm.enabled else 'disabled',
         })
 
 
@@ -1307,14 +1307,14 @@ DASHBOARD_HTML = r'''
 
 @app.route('/')
 def index():
-    llm_provider = config.llm.provider if config.llm.enabled else '未启用'
-    llm_key = config.llm.api_key
+    llm_provider = config().llm.provider if config().llm.enabled else '未启用'
+    llm_key = config().llm.api_key
     llm_key_mask = llm_key[:8] + '****' if llm_key and len(llm_key) > 8 else '未设置'
     return render_template_string(
         DASHBOARD_HTML,
         llm_provider=llm_provider,
         llm_key_mask=llm_key_mask,
-        llm_enabled=config.llm.enabled,
+        llm_enabled=config().llm.enabled,
     )
 
 
@@ -1322,7 +1322,7 @@ if __name__ == '__main__':
     print("=" * 50)
     print("ACAS Pro Web 版本")
     print("=" * 50)
-    llm_status = config.llm.provider if config.llm.enabled else 'not configured'
+    llm_status = config().llm.provider if config().llm.enabled else 'not configured'
     print(f"LLM: {llm_status}")
     print(f"访问地址: http://localhost:5000")
     print("=" * 50)

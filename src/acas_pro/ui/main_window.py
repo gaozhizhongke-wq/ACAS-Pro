@@ -97,7 +97,7 @@ class MainWindow(QMainWindow):
     def _on_login_success(self, user_data):
         """登录成功回调"""
         self.current_user = user_data
-        self.setWindowTitle(f"{config.name} v{config.version} - {user_data.get('nickname', user_data.get('username', ''))}")
+        self.setWindowTitle(f"{config().name} v{config().version} - {user_data.get('nickname', user_data.get('username', ''))}")
         
         # 更新仪表盘欢迎信息
         if hasattr(self, 'dashboard_page'):
@@ -114,8 +114,8 @@ class MainWindow(QMainWindow):
             QWidget {{
                 background-color: {COLORS['bg']};
                 color: {COLORS['text']};
-                font-family: "{config.ui.font_family}";
-                font-size: {config.ui.font_size}pt;
+                font-family: "{config().ui.font_family}";
+                font-size: {config().ui.font_size}pt;
             }}
             QLabel {{
                 color: {COLORS['text']};
@@ -161,8 +161,8 @@ class MainWindow(QMainWindow):
         layout.setSpacing(12)
         
         # Logo
-        logo = QLabel(config.name)
-        logo.setFont(QFont(config.ui.font_family, 24, QFont.Bold))
+        logo = QLabel(config().name)
+        logo.setFont(QFont(config().ui.font_family, 24, QFont.Bold))
         logo.setStyleSheet(f"color: {COLORS['accent']}; padding-bottom: 8px;")
         layout.addWidget(logo)
         
@@ -335,7 +335,7 @@ class MainWindow(QMainWindow):
         
         # Title
         self.page_title = QLabel("仪表盘")
-        self.page_title.setFont(QFont(config.ui.font_family, 18, QFont.Bold))
+        self.page_title.setFont(QFont(config().ui.font_family, 18, QFont.Bold))
         layout.addWidget(self.page_title)
         
         layout.addStretch()

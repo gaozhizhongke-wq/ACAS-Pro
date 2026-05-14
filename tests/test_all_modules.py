@@ -185,9 +185,9 @@ class TestServicesCoverage:
         assert OAuthService is not None
         assert QQOAuth is not None
     
-    @pytest.mark.skip(reason="Missing dependency")
     def test_user_service_import(self):
-        pass
+        from acas_pro.services.user_service import UserService
+        assert UserService is not None
 
 
 class TestVideoCoverage:

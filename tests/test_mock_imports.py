@@ -18,9 +18,14 @@ class TestMockImports:
             except ImportError:
                 pass
     
-    @pytest.mark.skip(reason="Complex mocking required")
     def test_web_routes_with_mock(self):
-        pass
+        """Import web routes with flask mocked"""
+        with patch.dict('sys.modules', {'flask': MagicMock()}):
+            try:
+                from acas_pro.web.routes import auth
+                assert auth is not None
+            except ImportError:
+                pass
     
     def test_avatar_with_mock(self):
         """Import avatar with dependencies mocked"""
@@ -31,9 +36,14 @@ class TestMockImports:
             except ImportError:
                 pass
     
-    @pytest.mark.skip(reason="Complex mocking required")
     def test_ml_with_mock(self):
-        pass
+        """Import ML with numpy mocked"""
+        with patch.dict('sys.modules', {'numpy': MagicMock()}):
+            try:
+                from acas_pro.ml import inventory_optimizer
+                assert inventory_optimizer is not None
+            except ImportError:
+                pass
     
     def test_collectors_with_mock(self):
         """Import collectors with requests mocked"""
