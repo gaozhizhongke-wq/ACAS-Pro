@@ -79,6 +79,13 @@ class DatabaseManager:
         if self._initialized:
             return
         
+        # Load .env file (if exists) — must run before reading DATABASE_URL
+        try:
+            from dotenv import load_dotenv
+            load_dotenv()
+        except ImportError:
+            pass  # python-dotenv not installed; rely on system env vars
+        
         self._db_url = os.environ.get('DATABASE_URL', '')
         self._is_postgres = 'postgresql' in self._db_url.lower() or 'postgres' in self._db_url.lower()
         
