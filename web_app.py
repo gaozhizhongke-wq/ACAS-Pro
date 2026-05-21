@@ -224,25 +224,38 @@ def check_auth():
 
 
 # ── CORS ───────────────────────────────────────────────────────────────────
-@app.after_request
-def add_cors_headers(response):
-    origins = config().security.cors_allowed_origins
     if origins:
-        # Strip trailing commas/whitespace
         origin = origins.split(',')[0].strip()
-        if not origin or origin == '*':
-            # No specific origin: don't send credentials with wildcard
-            response.headers['Access-Control-Allow-Origin'] = '*'
-            # Do NOT send Credentials: true with wildcard — browser rejects it
+        if not origin:
+            # No origin configured: set safe default for dev only
+            import os as _os
+            _env = _os.environ.get('ENVIRONMENT', _os.environ.get('FLASK_ENV', ''))
+            if _env == 'production':
+                logger.error('CORS: no allowed origins configured in production — blocking cross-origin requests')
+                # In production, refuse to add any CORS header if unconfigured
+            else:
+                response.headers['Access-Control-Allow-Origin'] = '*'
+        elif origin == '*':
+            # Wildcard explicitly set: block it in production
+            import os as _os
+            _env = _os.environ.get('ENVIRONMENT', _os.environ.get('FLASK_ENV', ''))
+            if _env == 'production':
+                logger.error('CORS wildcard (*) is not allowed in production — must specify explicit origins')
+                raise ValueError('CORS wildcard (*) blocked in production. Set specific origin in CORS_ALLOWED_ORIGINS.')
+            else:
+                response.headers['Access-Control-Allow-Origin'] = '*'
         else:
-            # Specific origin + credentials
+            # Specific origin
             response.headers['Access-Control-Allow-Origin'] = origin
             response.headers['Access-Control-Allow-Credentials'] = 'true'
     else:
-        response.headers['Access-Control-Allow-Origin'] = '*'
-        # No Credentials header when using wildcard
-    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
-    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+        # No CORS config at all: be strict in prod, open in dev
+        import os as _os
+        _env = _os.environ.get('ENVIRONMENT', _os.environ.get('FLASK_ENV', ''))
+        if _env == 'production':
+            logger.error('CORS: CORS_ALLOWED_ORIGINS not set in production')
+        else:
+            response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
 
@@ -479,10 +492,10 @@ def dashboard_stats():
             logger.error(f'low_stock query failed: {e}')
             stats['low_stock'] = 0
 
-        # Risk alerts: data_alerts table, unacknowledged
+        # Risk alerts: audit_log, high-severity events
         try:
             result = db.fetchone(
-                "SELECT COUNT(*) AS cnt FROM data_alerts WHERE acknowledged = 0"
+                "SELECT COUNT(*) AS cnt FROM audit_log WHERE severity IN ('critical', 'warning')"
             )
             stats['risk_alerts'] = result['cnt'] if result else 0
         except Exception as e:
@@ -493,8 +506,11 @@ def dashboard_stats():
         stats['llm_provider'] = config().llm.provider if config().llm.enabled else 'disabled'
         return jsonify(stats)
     except Exception as e:
-        logger.error(f'dashboard_stats outer exception: {e}')
+        logger.error(f'dashboard_stats fatal error: {e}', exc_info=True)
         return jsonify({
+            'error': 'Dashboard data unavailable',
+            'detail': str(e),
+            'status': 'degraded',
             'revenue': 0,
             'active_orders': 0,
             'inventory': 0,
@@ -514,9 +530,8 @@ def list_festivals():
     db = DatabaseManager()
     try:
         rows = db.fetchall(
-            "SELECT id, name, festival_type, importance, month, day, "
-            "       duration_days, themes, keywords, is_active "
-            "FROM festivals ORDER BY month, day"
+            "SELECT id, name, festival_type, date, region, description, marketing_tips, created_at "
+            "FROM festival_calendar ORDER BY date"
         )
         return jsonify({'success': True, 'festivals': rows})
     except Exception as e:

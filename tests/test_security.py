@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 ACAS Pro - Security Module Tests
@@ -8,6 +8,7 @@ Tests for password hashing, JWT, encryption, and session management
 import pytest
 import time
 from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
 from acas_pro.core.security import (
     PasswordValidator,
@@ -222,19 +223,69 @@ class TestCryptoManager:
         # Should raise error
         with pytest.raises(ValueError):
             crypto.decrypt(tampered)
+    
+    def test_rotate_key(self):
+        """Test key rotation"""
+        crypto = CryptoManager(key="test_encryption_key_32_characters_")
+        
+        result = crypto.rotate_key("new_key_32_characters_long_")
+        assert result["status"] == "success"
+    
+    def test_key_derivation_with_env(self):
+        """Test key derivation with env var"""
+        import os
+        with patch.dict(os.environ, {'ACAS_ENCRYPTION_KEY': 'env_key_32_characters_long_', 'ACAS_ENCRYPTION_SALT': 'a'*32}):
+            crypto = CryptoManager()
+            assert crypto is not None
+    
+    def test_key_derivation_with_config(self):
+        """Test key derivation with config"""
+        import os
+        # Clear env vars first
+        for key in ['ACAS_ENCRYPTION_KEY', 'ACAS_ENCRYPTION_SALT']:
+            os.environ.pop(key, None)
+        with patch.dict(os.environ, {'ACAS_ENCRYPTION_SALT': 'b'*32}):
+            with patch('acas_pro.core.security._cfg') as mock_cfg:
+                mock_cfg.return_value.security.secret_key = 'config_key_32_chars_long__'
+                mock_cfg.return_value.environment = 'development'
+                crypto = CryptoManager()
+                assert crypto is not None
 
 
 class TestRateLimiter:
     """Rate limiter tests"""
+    def setup_method(self):
+        """Use isolated temp file for each test"""
+        import tempfile
+        import os
+        self._temp_dir = tempfile.mkdtemp()
+        os.environ['ACAS_DATA_DIR'] = self._temp_dir
+    
+    def teardown_method(self):
+        """Clean up temp directory"""
+        import os
+        import shutil
+        os.environ.pop('ACAS_DATA_DIR', None)
+        try:
+            shutil.rmtree(self._temp_dir)
+        except:
+            pass
+    
     
     def test_allows_under_limit(self):
         """Test requests under limit are allowed"""
         limiter = RateLimiter()
         key = "test_key"
         
-        for _ in range(5):
-            assert limiter.is_allowed(key, max_attempts=5) is True
+        # First check should be allowed (no attempts yet)
+        assert limiter.is_allowed(key, max_attempts=5) is True
+        
+        for _ in range(4):
             limiter.record_attempt(key)
+            assert limiter.is_allowed(key, max_attempts=5) is True
+        
+        # 4th attempt should still be allowed
+        assert limiter.is_allowed(key, max_attempts=5) is True
     
     def test_blocks_over_limit(self):
         """Test requests over limit are blocked"""
@@ -280,3 +331,58 @@ class TestRateLimiter:
         
         # Should be allowed
         assert limiter.is_allowed(key, max_attempts=5) is True
+    
+    def test_redis_rate_limiter(self):
+        """Test RedisRateLimiter"""
+        from acas_pro.core.security import RedisRateLimiter
+        
+        # Without Redis, should fall back to file-based
+        rrl = RedisRateLimiter()
+        assert rrl.available is False
+        
+        # Should still work via fallback
+        assert rrl.is_allowed("test", max_attempts=5) is True
+        rrl.record_attempt("test")
+        assert rrl.is_allowed("test", max_attempts=5) is True
+        rrl.reset("test")
+    
+    def test_csrf_functions(self):
+        """Test CSRF functions"""
+        from acas_pro.core.security import generate_csrf_token, validate_csrf_request
+        
+        token = generate_csrf_token()
+        assert len(token) == 64
+        
+        # Mock request
+        class MockRequest:
+            def __init__(self):
+                self.headers = {'X-CSRF-Token': token}
+                self.cookies = {'csrf_token': token}
+        
+        request = MockRequest()
+        ok, msg = validate_csrf_request(request)
+        assert ok is True
+    
+    def test_jwt_cookie_functions(self):
+        """Test JWT cookie functions"""
+        from acas_pro.core.security import set_jwt_cookie, clear_jwt_cookie, get_jwt_from_cookie
+        
+        class MockResponse:
+            def __init__(self):
+                self.cookies = {}
+            def set_cookie(self, name, value, **kwargs):
+                self.cookies[name] = value
+        
+        class MockRequest:
+            def __init__(self):
+                self.cookies = {'acas_jwt': 'test_token'}
+        
+        response = MockResponse()
+        set_jwt_cookie(response, "test_token")
+        assert response.cookies.get('acas_jwt') == 'test_token'
+        
+        clear_jwt_cookie(response)
+        assert response.cookies.get('acas_jwt') == ''
+        
+        request = MockRequest()
+        assert get_jwt_from_cookie(request) == 'test_token'

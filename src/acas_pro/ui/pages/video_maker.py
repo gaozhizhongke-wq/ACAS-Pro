@@ -62,6 +62,7 @@ class RenderThread(QThread):
                 self.error.emit("渲染失败")
                 
         except Exception as e:
+            logger.error(f"Unhandled exception: " + str(e))
             self.error.emit(str(e))
 
 

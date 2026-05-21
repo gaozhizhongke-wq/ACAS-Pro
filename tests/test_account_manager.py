@@ -128,6 +128,7 @@ class TestAccountManager:
     def manager(self, mock_db, mock_security):
         with patch('acas_pro.platforms.account_manager.DatabaseManager', return_value=mock_db):
             with patch('acas_pro.platforms.account_manager.SessionManager', return_value=mock_security):
+                from acas_pro.platforms.account_manager import AccountManager
                 return AccountManager()
     
     def test_init(self, manager, mock_db):

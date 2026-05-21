@@ -154,6 +154,7 @@ class TestProductManager:
     @pytest.fixture
     def manager(self, mock_db):
         with patch('acas_pro.ecommerce.product_manager.DatabaseManager', return_value=mock_db):
+            from acas_pro.ecommerce.product_manager import ProductManager
             return ProductManager()
     
     def test_init(self, manager, mock_db):

@@ -59,7 +59,8 @@ class UpdateChecker:
                 return True, self._update_info
             return False, None
             
-        except Exception:
+        except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             # 网络错误时返回无更新
             return False, None
     
@@ -116,7 +117,8 @@ class UpdateChecker:
             
             return filepath
             
-        except Exception:
+        except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             return None
     
     def get_update_info(self) -> Optional[UpdateInfo]:

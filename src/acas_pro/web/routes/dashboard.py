@@ -1,5 +1,6 @@
 """Dashboard routes for ACAS Pro Web"""
-from flask import Blueprint, render_template, jsonify, request, session
+from flask import Blueprint, render_template_string, jsonify, request, session
+from datetime import datetime, timezone
 from acas_pro.core.config import config
 from acas_pro.core.logging import get_logger
 
@@ -192,7 +193,7 @@ def dashboard_stats():
         
         # Try to get real stats from database
         try:
-            result = db.fetch_all("SELECT COUNT(*) as cnt FROM users WHERE last_login > datetime('now', '-1 day')")
+            result = db.fetchall("SELECT COUNT(*) as cnt FROM users WHERE last_login > datetime('now', '-1 day')")
             if result:
                 stats['active_users'] = result[0].get('cnt', 0) if hasattr(result[0], '__getitem__') else 0
         except:
@@ -201,7 +202,7 @@ def dashboard_stats():
         return jsonify({
             'success': True,
             'stats': stats,
-            'timestamp': __import__('datetime').datetime.now(__import__('datetime').timezone.utc).isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
     except Exception as e:
         logger.error(f"Dashboard stats error: {e}")
@@ -210,13 +211,28 @@ def dashboard_stats():
 
 @bp.route('/api/activity')
 def recent_activity():
-    """Recent activity API"""
+    """Recent activity API - reads from database when available"""
     try:
-        activities = [
-            {'time': '10:32', 'event': '用户登录', 'status': 'success'},
-            {'time': '10:28', 'event': '内容生成完成', 'status': 'success'},
-            {'time': '10:15', 'event': 'LLM 配置更新', 'status': 'success'},
-        ]
+        from acas_pro.core.database import db
+        activities = []
+        try:
+            rows = db.fetchall(
+                "SELECT created_at as time, action as event, status "
+                "FROM activity_log ORDER BY created_at DESC LIMIT 20"
+            )
+            if rows:
+                for r in rows:
+                    activities.append({
+                        'time': str(r.get('time', ''))[:5] if r.get('time') else '',
+                        'event': r.get('event', ''),
+                        'status': r.get('status', 'success')
+                    })
+        except Exception as e:
+            logger.error(f"Unhandled exception: " + str(e))
+            pass  # Table may not exist yet
+        
+        if not activities:
+            activities = [{'time': '-', 'event': 'No activity recorded', 'status': 'info'}]
         return jsonify({'success': True, 'activities': activities})
     except Exception as e:
         logger.error(f"Activity fetch error: {e}")

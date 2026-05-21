@@ -28,6 +28,7 @@ class Translator:
                     self._translations[lang] = json.load(f)
                 return True
             except Exception as e:
+                import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
                 import logging
                 logging.warning(f'Failed to load language file {lang_file}: {e}')
         return False

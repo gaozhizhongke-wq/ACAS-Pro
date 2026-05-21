@@ -1,4 +1,4 @@
-"""
+﻿"""
 ACAS Pro - Security v2
 Dependency injection based, testable security module
 """
@@ -96,7 +96,8 @@ class PasswordHasher:
             )
             
             return key.hex() == key_hex
-        except Exception:
+        except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             return False
 
 

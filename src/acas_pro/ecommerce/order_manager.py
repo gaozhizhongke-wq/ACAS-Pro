@@ -346,6 +346,7 @@ class OrderManager:
     ) -> Dict[str, Any]:
         """从平台同步订单"""
         # TODO: 调用各平台API获取订单
+        raise NotImplementedError("Stub: 调用各平台API获取订单")
         
         return {
             'success': True,

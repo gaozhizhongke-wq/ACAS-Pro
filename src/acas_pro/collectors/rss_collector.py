@@ -7,7 +7,7 @@ Multi-source RSS feed aggregation for market intelligence
 
 import feedparser
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -231,9 +231,9 @@ class RSSCollector:
     def _extract_tags(self, entry) -> List[str]:
         """Extract tags from entry"""
         tags = []
-        if hasattr(entry, 'tags'):
+        if hasattr(entry, 'tags') and entry.tags:
             tags = [tag.term for tag in entry.tags if hasattr(tag, 'term')]
-        if hasattr(entry, 'category'):
+        if hasattr(entry, 'category') and entry.category:
             tags.append(entry.category)
         return tags[:5]
     

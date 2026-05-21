@@ -143,6 +143,7 @@ class LipSyncEngine:
         """初始化模型"""
         try:
             # TODO: 加载实际的深度学习模型
+            raise NotImplementedError("Stub: 加载实际的深度学习模型")
             # 这里使用模拟实现
             
             if not os.path.exists(self.model_path):
@@ -160,6 +161,7 @@ class LipSyncEngine:
     def audio_to_phonemes(self, audio_path: str) -> List[Phoneme]:
         """音频转音素序列"""
         # TODO: 集成实际的语音识别模型（如Montreal Forced Aligner）
+        raise NotImplementedError("Stub: 集成实际的语音识别模型")
         # 目前使用模拟数据
         
         phonemes = []
@@ -327,6 +329,7 @@ class LipSyncEngine:
         """将口型动画应用到数字人模型"""
         try:
             # TODO: 集成实际的3D模型驱动
+            raise NotImplementedError("Stub: 集成实际的3D模型驱动")
             # 1. 加载3D模型（FBX/GLTF）
             # 2. 应用blendshape权重
             # 3. 渲染视频帧

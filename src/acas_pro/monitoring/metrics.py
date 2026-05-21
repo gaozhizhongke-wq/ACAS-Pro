@@ -135,6 +135,7 @@ def monitor_llm(provider: str, model: str):
                 ).inc()
                 return result
             except Exception as e:
+                import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
                 LLM_REQUESTS.labels(
                     provider=provider,
                     model=model,

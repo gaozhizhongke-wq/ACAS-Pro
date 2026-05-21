@@ -181,7 +181,8 @@ class ProductManager:
         # Ensure shop_id column exists (for compatibility with existing tables)
         try:
             self.db.execute("ALTER TABLE products ADD COLUMN shop_id TEXT")
-        except Exception:
+        except Exception as e:
+            logger.error(f"Unhandled exception: " + str(e))
             pass  # Column may already exist
     
     def create_product(
@@ -367,6 +368,7 @@ class ProductManager:
             return {'success': False, 'error': 'Product not found'}
         
         # TODO: 调用各平台API发布商品
+        raise NotImplementedError("Stub: 调用各平台API发布商品")
         # 1. 转换商品数据格式
         # 2. 上传图片
         # 3. 创建商品

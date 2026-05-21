@@ -323,6 +323,7 @@ class LLMChatPage(QWidget):
             self.status_label.setStyleSheet("color: #4CAF50; font-size: 12px;")
             
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             self.status_label.setText(f"初始化失败: {str(e)}")
             self.status_label.setStyleSheet("color: #F44336; font-size: 12px;")
     
@@ -436,6 +437,7 @@ class LLMChatPage(QWidget):
             self.status_label.setStyleSheet("color: #4CAF50; font-size: 12px;")
             
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             error_msg = f"❌ 生成失败: {str(e)}"
             self._add_message(error_msg, is_user=False)
             self.status_label.setText("错误")
@@ -481,6 +483,7 @@ class LLMChatPage(QWidget):
             self.status_label.setStyleSheet("color: #4CAF50; font-size: 12px;")
             
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             self.status_label.setText(f"保存失败: {str(e)}")
             self.status_label.setStyleSheet("color: #F44336; font-size: 12px;")
     

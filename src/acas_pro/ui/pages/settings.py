@@ -554,6 +554,7 @@ class SettingsPage(QWidget):
             config.save()
             QMessageBox.information(self, "成功", "LLM 配置已保存")
         except Exception as e:
+            logger.error(f"Unhandled exception: " + str(e))
             QMessageBox.warning(self, "错误", f"保存失败: {e}")
     
     def _test_llm_connection(self):
@@ -567,6 +568,7 @@ class SettingsPage(QWidget):
             else:
                 QMessageBox.warning(self, "失败", "无法获取响应")
         except Exception as e:
+            logger.error(f"Unhandled exception: " + str(e))
             QMessageBox.warning(self, "连接失败", f"错误: {str(e)}")
     
 
@@ -703,6 +705,7 @@ class SettingsPage(QWidget):
             self.wx_app_id.setText(config.oauth.wx_app_id)
             self.wx_redirect.setText(config.oauth.wx_redirect_uri)
         except Exception as e:
+            logger.error(f"Unhandled exception: " + str(e))
             import logging
             logging.debug(f"{type(e).__name__}: {e}")
 
@@ -718,6 +721,7 @@ class SettingsPage(QWidget):
             config.save()
             QMessageBox.information(self, "成功", "OAuth 配置已保存")
         except Exception as e:
+            logger.error(f"Unhandled exception: " + str(e))
             QMessageBox.warning(self, "错误", f"保存失败: {e}")
 
     def _create_update_tab(self) -> QWidget:

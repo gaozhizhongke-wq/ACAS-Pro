@@ -311,7 +311,7 @@ class SettlementEngine:
     
     def get_settlement(self, settlement_id: str) -> Optional[SettlementRecord]:
         """获取结算记录"""
-        row = self.db.fetch_one(
+        row = self.db.fetchone(
             "SELECT * FROM settlements WHERE id = ?",
             (settlement_id,)
         )
@@ -326,12 +326,12 @@ class SettlementEngine:
     ) -> List[SettlementRecord]:
         """获取来源的结算记录"""
         if source_type:
-            rows = self.db.fetch_all(
+            rows = self.db.fetchall(
                 "SELECT * FROM settlements WHERE source_id = ? AND source_type = ? ORDER BY created_at DESC",
                 (source_id, source_type)
             )
         else:
-            rows = self.db.fetch_all(
+            rows = self.db.fetchall(
                 "SELECT * FROM settlements WHERE source_id = ? ORDER BY created_at DESC",
                 (source_id,)
             )
@@ -454,7 +454,7 @@ class SettlementEngine:
             query += " AND parties LIKE ?"
             params.append(f'%"party_id": "{party_id}"%')
         
-        rows = self.db.fetch_all(query, tuple(params))
+        rows = self.db.fetchall(query, tuple(params))
         settlements = [self._row_to_settlement(row) for row in rows]
         
         total_settlements = len(settlements)

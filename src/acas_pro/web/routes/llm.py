@@ -38,7 +38,10 @@ def create_llm_client():
 
 @bp.route('/config', methods=['POST'])
 def save_llm_config():
-    """Save LLM configuration"""
+    """Save LLM configuration (requires authentication)"""
+    from flask import g
+    if not hasattr(g, 'user') or not g.user:
+        return jsonify({'error': 'Authentication required'}), 401
     data = request.json or {}
     provider = data.get('provider', 'openai')
     api_key = data.get('api_key', '')

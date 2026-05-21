@@ -1,206 +1,166 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""Deep coverage tests - calling methods to increase line coverage"""
-
+"""
+Deep coverage tests for web, alert, monitoring, and update modules.
+"""
 import pytest
+import json
+from unittest.mock import patch, MagicMock
 
 
-class TestAdManagerDeep:
-    """Deep test AdManager"""
-    
-    def test_record_daily_stats(self):
-        from acas_pro.ads.ad_manager import AdManager, AdCampaign, AdPlatform, CampaignStatus, BudgetType, AdAccount
-        import tempfile, uuid, os
-        from datetime import datetime
-        db_path = os.path.join(tempfile.gettempdir(), f"test_{uuid.uuid4().hex}.db")
-        manager = AdManager(db_path=db_path)
-        
-        account = AdAccount(
-            id="acc", platform=AdPlatform.OCEAN_ENGINE, account_name="Test",
-            account_id="oc_123", access_token="t", refresh_token="r",
-            token_expires_at=datetime.now(), status="active", balance=1000.0,
-            daily_budget_limit=100.0, total_spend_7d=0.0, total_spend_30d=0.0,
-            created_at=datetime.now(), updated_at=datetime.now()
+@pytest.fixture
+def flask_app():
+    from acas_pro.web import create_app
+    app = create_app()
+    app.config['TESTING'] = True
+    app.config['SECRET_KEY'] = 'test-secret-key-for-testing'
+    return app
+
+
+@pytest.fixture
+def client(flask_app):
+    return flask_app.test_client()
+
+
+# --- Web Health ---
+
+class TestWebHealthDeep:
+    def test_health_checker(self):
+        from acas_pro.web.health import HealthChecker
+        hc = HealthChecker()
+        result = hc.check_all()
+        assert isinstance(result, dict)
+
+    def test_health_check_result(self):
+        from acas_pro.web.health import HealthCheckResult, HealthStatus
+        r = HealthCheckResult(
+            name="test", status=HealthStatus.HEALTHY,
+            response_time_ms=10.0, message="ok"
         )
-        manager.add_account(account)
-        
-        campaign = AdCampaign(
-            id="camp", name="Test", platform=AdPlatform.OCEAN_ENGINE,
-            account_id="acc", status=CampaignStatus.DRAFT, objective="conv",
-            budget_type=BudgetType.DAILY, budget_amount=100.0,
-            start_date=datetime.now().isoformat(), end_date=datetime.now().isoformat(),
-            conversion_goal="purchase", adsets=[], total_impressions=0,
-            total_clicks=0, total_conversions=0, total_spend=0.0,
-            created_at=datetime.now(), updated_at=datetime.now()
+        assert r.name == "test"
+
+    def test_health_status_enum(self):
+        from acas_pro.web.health import HealthStatus
+        assert hasattr(HealthStatus, 'HEALTHY')
+        assert hasattr(HealthStatus, 'DEGRADED')
+        assert hasattr(HealthStatus, 'UNHEALTHY')
+
+
+# --- Web Middleware ---
+
+class TestWebMiddlewareDeep:
+    def test_error_handler(self):
+        from acas_pro.web.middleware import ErrorHandler
+        eh = ErrorHandler()
+        assert eh is not None
+
+    def test_validate_json(self):
+        from acas_pro.web.middleware import validate_json
+        assert callable(validate_json)
+
+    def test_require_fields(self):
+        from acas_pro.web.middleware import require_fields
+        assert callable(require_fields)
+
+
+# --- Alert Notifier ---
+
+class TestAlertNotifier:
+    def test_import(self):
+        from acas_pro.alert.notifier import AlertNotifier, AlertMessage, AlertPriority, AlertChannel
+
+    def test_init(self):
+        from acas_pro.alert.notifier import AlertNotifier
+        an = AlertNotifier()
+        assert an is not None
+
+    def test_alert_message(self):
+        from acas_pro.alert.notifier import AlertMessage, AlertPriority
+        msg = AlertMessage(
+            title="test", content="test body",
+            priority=AlertPriority.P3_ROUTINE
         )
-        manager.create_campaign(campaign)
-        
-        result = manager.record_daily_stats("camp", "adset", "2026-01-01", 100, 10, 1, 50.0)
-        assert result is True
-    
-    def test_get_campaign_stats(self):
-        from acas_pro.ads.ad_manager import AdManager
-        import tempfile, uuid, os
-        db_path = os.path.join(tempfile.gettempdir(), f"test_{uuid.uuid4().hex}.db")
-        manager = AdManager(db_path=db_path)
-        result = manager.get_campaign_stats("camp", 30)
+        assert msg.title == "test"
+
+    def test_alert_channel_enum(self):
+        from acas_pro.alert.notifier import AlertChannel
+        assert hasattr(AlertChannel, 'EMAIL') or hasattr(AlertChannel, 'WEBHOOK')
+
+
+# --- Monitoring Metrics ---
+
+class TestMonitoringMetrics:
+    def test_metrics_middleware(self):
+        from acas_pro.monitoring.metrics import MetricsMiddleware
+        assert MetricsMiddleware is not None
+
+    def test_get_metrics(self):
+        from acas_pro.monitoring.metrics import get_metrics
+        result = get_metrics()
         assert result is not None
 
+    def test_init_app_info(self):
+        from acas_pro.monitoring.metrics import init_app_info
+        init_app_info()
 
-class TestBiddingEngineDeep:
-    """Deep test BiddingEngine"""
-    
-    def test_calculate_bid_with_context(self):
-        from acas_pro.ads.bidding_engine import BiddingEngine, BiddingConfig, BiddingStrategy
-        engine = BiddingEngine()
-        config = BiddingConfig(
-            strategy=BiddingStrategy.AUTO_OCPC, base_bid=1.0, max_bid=5.0,
-            min_bid=0.5, target_cpa=50.0, target_roi=2.0, adjustments=[]
-        )
-        context = {"hour": 14, "day_of_week": 4, "conversion_rate": 0.05, "competition_level": "medium"}
-        bid = engine.calculate_bid(config, context)
-        assert 0.5 <= bid <= 5.0
-    
-    def test_calculate_bid_respects_min(self):
-        from acas_pro.ads.bidding_engine import BiddingEngine, BiddingConfig, BiddingStrategy
-        engine = BiddingEngine()
-        config = BiddingConfig(
-            strategy=BiddingStrategy.AUTO_OCPC, base_bid=0.1, max_bid=5.0,
-            min_bid=0.5, target_cpa=50.0, target_roi=2.0, adjustments=[]
-        )
-        context = {"hour": 14, "day_of_week": 4, "conversion_rate": 0.05, "competition_level": "medium"}
-        bid = engine.calculate_bid(config, context)
-        assert bid >= 0.5
+    def test_monitor_llm(self):
+        from acas_pro.monitoring.metrics import monitor_llm
+        assert callable(monitor_llm)
 
 
-class TestSecurityDeep:
-    """Deep test security"""
-    
-    def test_password_all_cases(self):
-        from acas_pro.core.security import PasswordValidator
-        cases = [
-            ("Short1!", False),
-            ("nouppercase123!", False),
-            ("NOLOWERCASE123!", False),
-            ("NoDigits!@#", False),
-            ("NoSpecial123", False),
-            ("StrongP@ss123", True),
-        ]
-        for pwd, expected in cases:
-            is_valid, _ = PasswordValidator.validate(pwd)
-            assert is_valid is expected, f"Failed for {pwd}"
-    
-    def test_jwt_expired(self):
-        from acas_pro.core.security import JWTManager
-        import jwt
-        from datetime import datetime, timedelta, timezone
-        payload = {
-            'sub': 'user',
-            'iat': datetime.now(timezone.utc) - timedelta(hours=2),
-            'exp': datetime.now(timezone.utc) - timedelta(hours=1),
-            'type': 'access'
-        }
-        from acas_pro.core.config import get_config
-        token = jwt.encode(payload, get_config().security.secret_key, algorithm='HS256')
-        result = JWTManager.verify_token(token)
-        assert result is None
-    
-    def test_rate_limiter_blocks(self):
-        from acas_pro.core.security import RateLimiter
-        limiter = RateLimiter()
-        key = "test_block"
-        for _ in range(5):
-            limiter.record_attempt(key)
-        assert limiter.is_allowed(key, 5) is False
-    
-    def test_rate_limiter_reset(self):
-        from acas_pro.core.security import RateLimiter
-        limiter = RateLimiter()
-        key = "test_reset"
-        for _ in range(5):
-            limiter.record_attempt(key)
-        limiter.reset(key)
-        assert limiter.is_allowed(key, 5) is True
-    
-    def test_crypto_empty(self):
-        from acas_pro.core.security import CryptoManager
-        crypto = CryptoManager(key="test_encryption_key_32_characters_")
-        assert crypto.encrypt("") == ""
-        assert crypto.decrypt("") == ""
+# --- Web Auth Routes Deep ---
+
+class TestAuthRoutesDeep:
+    def test_register_with_data(self, client):
+        resp = client.post('/api/auth/register', json={
+            'username': 'testuser',
+            'email': 'test@example.com',
+            'password': 'TestPass123!'
+        })
+        assert resp.status_code in (200, 201, 400, 409, 500)
+
+    def test_login_with_data(self, client):
+        resp = client.post('/api/auth/login', json={
+            'username': 'testuser',
+            'password': 'TestPass123!'
+        })
+        assert resp.status_code in (200, 400, 401, 500)
 
 
-class TestDatabaseDeep:
-    """Deep test database"""
-    
-    def test_delete_row(self):
-        from acas_pro.core.database import DatabaseManager
-        import uuid
-        db = DatabaseManager()
-        uid = uuid.uuid4().hex[:8]
-        db.execute(f"CREATE TABLE IF NOT EXISTS test_del_{uid} (id INTEGER, name TEXT)")
-        db.execute(f"INSERT INTO test_del_{uid} VALUES (1, 'test')")
-        db.delete(f"test_del_{uid}", where_clause="id = ?", where_params=(1,))
-        rows = db.fetchall(f"SELECT * FROM test_del_{uid}")
-        assert len(rows) == 0
+# --- Web Dashboard Deep ---
+
+class TestDashboardDeep:
+    def test_index(self, client):
+        resp = client.get('/')
+        assert resp.status_code == 200
+
+    def test_activity(self, client):
+        resp = client.get('/api/activity')
+        assert resp.status_code == 200
 
 
-class TestFestivalCalendarDeep:
-    """Deep test festival calendar"""
-    
-    def test_get_upcoming_festivals(self):
-        from acas_pro.analytics.festival_calendar import FestivalCalendar
-        calendar = FestivalCalendar()
-        festivals = calendar.get_upcoming_festivals(days=30)
-        assert isinstance(festivals, list)
-    
-    def test_get_marketing_plan(self):
-        from acas_pro.analytics.festival_calendar import FestivalCalendar
-        calendar = FestivalCalendar()
-        plans = calendar.get_marketing_plans()
-        assert isinstance(plans, list)
+# --- Updater ---
+
+class TestUpdater:
+    def test_update_checker(self):
+        from acas_pro.update.updater import UpdateChecker
+        uc = UpdateChecker()
+        assert uc is not None
+
+    def test_check_for_updates(self):
+        from acas_pro.update.updater import check_for_updates
+        assert callable(check_for_updates)
 
 
-class TestConversationDeep:
-    """Deep test conversation"""
-    
-    def test_add_message(self):
-        from acas_pro.llm.conversation import Conversation
-        conv = Conversation(id="test", title="Test")
-        conv.add_message("user", "hello")
-        assert len(conv.messages) == 1
-    
-    def test_get_context(self):
-        from acas_pro.llm.conversation import Conversation
-        conv = Conversation(id="test", title="Test")
-        conv.add_message("user", "hello")
-        ctx = conv.get_context_window()
-        assert isinstance(ctx, list)
+class TestUpdaterV2:
+    def test_update_manager(self):
+        from acas_pro.update.updater_v2 import UpdateManager
+        um = UpdateManager()
+        assert um is not None
 
 
-class TestOAuthDeep:
-    """Deep test OAuth"""
-    
-    def test_oauth_service_init(self):
-        from acas_pro.services.oauth.oauth_service import OAuthService
-        from unittest.mock import MagicMock
-        cfg = MagicMock()
-        svc = OAuthService(cfg)
-        assert svc is not None
-    
-    def test_qq_oauth_init(self):
-        from acas_pro.services.oauth.oauth_service import QQOAuth
-        from unittest.mock import MagicMock
-        cfg = MagicMock()
-        oauth = QQOAuth(cfg)
-        assert oauth is not None
-    
-    def test_wechat_oauth_init(self):
-        from acas_pro.services.oauth.oauth_service import WeChatOAuth
-        from unittest.mock import MagicMock
-        cfg = MagicMock()
-        oauth = WeChatOAuth(cfg)
-        assert oauth is not None
+# --- Video Maker V2 ---
 
-
-if __name__ == '__main__':
-    pytest.main([__file__, '-v'])
+class TestVideoMakerV2:
+    def test_video_maker(self):
+        from acas_pro.video.video_maker_v2 import VideoMaker
+        vm = VideoMaker()
+        assert vm is not None

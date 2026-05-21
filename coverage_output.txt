@@ -1,0 +1,12 @@
+STDOUT:
+============================= test session starts =============================
+collected 1937 items / 2 errors
+
+=========================== short test summary info ===========================
+ERROR tests/e2e_playwright/test_dashboard_e2e.py
+ERROR tests/test_inventory_optimizer.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 2 errors during collection !!!!!!!!!!!!!!!!!!!
+============================== 2 errors in 0.98s ==============================
+
+
+STDERR:

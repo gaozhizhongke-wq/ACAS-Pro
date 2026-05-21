@@ -50,7 +50,7 @@ def auth_register():
         return jsonify({'error': 'account and password are required'}), 400
     
     # Enforce strong password policy
-    is_valid, pw_msg = pv.PasswordValidator.validate(password)
+    is_valid, pw_msg = pv.validate(password)
     if not is_valid:
         return jsonify({'error': pw_msg}), 400
     
@@ -102,6 +102,8 @@ def auth_login():
 
 @bp.route('/me', methods=['GET'])
 def auth_me():
-    """Get current user info"""
-    user = g.user
+    """Get current user info (requires authentication)"""
+    user = g.get('user') if hasattr(g, 'user') else None
+    if not user:
+        return jsonify({'error': 'Authentication required'}), 401
     return jsonify({'user_id': user['user_id'], 'account': user['account']})

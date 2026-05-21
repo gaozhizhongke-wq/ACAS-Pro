@@ -138,8 +138,10 @@ class TimesFMEngine:
                     if (datetime.now(timezone.utc) - last_fail).total_seconds() > 86400:
                         return True  # Retry after 24h
                 return data.get("available", True)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"Unhandled exception: " + str(e))
+            import logging
+            logging.getLogger(__name__).debug(f"Failed to read status file: {e}")
         return True
     
     def _save_statsforecast_status(self, available: bool):

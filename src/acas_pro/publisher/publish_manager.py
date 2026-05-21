@@ -443,6 +443,7 @@ class PublishManager:
         发布到指定平台
         
         TODO: 实际实现需要调用各平台API
+        raise NotImplementedError("Stub: 实际实现需要调用各平台API")
         """
         logger.info(f"Publishing to {platform}: {title}")
         

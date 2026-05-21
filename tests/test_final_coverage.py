@@ -146,7 +146,7 @@ class TestMonitoringModules:
     
     def test_metrics(self):
         from acas_pro.monitoring.metrics import Counter
-        counter = Counter("test")
+        counter = Counter("test_metric", "test metric documentation")
         assert counter is not None
 
 

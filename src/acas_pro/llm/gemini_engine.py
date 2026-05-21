@@ -114,6 +114,7 @@ class GeminiEngine(BaseLLMEngine):
                 finish_reason="stop"
             )
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             raise RuntimeError(f"Gemini API error: {e}")
     
     def chat_stream(self, messages: List[LLMMessage]) -> Iterator[LLMStreamChunk]:
@@ -137,6 +138,7 @@ class GeminiEngine(BaseLLMEngine):
                 is_finished=True
             )
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             raise RuntimeError(f"Gemini streaming error: {e}")
     
     def quick_chat(self, message: str, system: str = None) -> str:
@@ -164,6 +166,7 @@ class GeminiEngine(BaseLLMEngine):
                 "response": response[:50]
             }
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             return {
                 "status": "unhealthy",
                 "error": str(e)

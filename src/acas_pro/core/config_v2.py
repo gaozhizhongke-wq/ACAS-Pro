@@ -139,8 +139,10 @@ class AppConfig:
                     config.environment = Environment(data['environment'])
                 
                 return config
-            except Exception:
-                pass
+            except Exception as e:
+                import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
+                import logging
+                logging.getLogger(__name__).warning(f"Failed to load config from {config_path}: {e}")
         
         return config
     

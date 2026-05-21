@@ -318,7 +318,7 @@ class ShopManager:
     
     def get_shops_by_owner(self, owner_id: str) -> List[Shop]:
         """获取用户的所有店铺"""
-        rows = self.db.fetch_all(
+        rows = self.db.fetchall(
             "SELECT * FROM shops WHERE owner_id = ? ORDER BY created_at DESC",
             (owner_id,)
         )
@@ -326,7 +326,7 @@ class ShopManager:
     
     def get_shops_by_platform(self, platform: ShopPlatform) -> List[Shop]:
         """按平台获取店铺"""
-        rows = self.db.fetch_all(
+        rows = self.db.fetchall(
             "SELECT * FROM shops WHERE platform = ?",
             (platform.value,)
         )
@@ -337,7 +337,7 @@ class ShopManager:
         creds_data = json.loads(row['credentials'] or '{}')
         
         # 获取统计
-        stats_row = self.db.fetch_one(
+        stats_row = self.db.fetchone(
             "SELECT * FROM shop_stats WHERE shop_id = ?",
             (row['id'],)
         )
@@ -429,6 +429,7 @@ class ShopManager:
             return False
         
         # TODO: 调用各平台API同步数据
+        raise NotImplementedError("Stub: 调用各平台API同步数据")
         # 1. 同步商品列表
         # 2. 同步订单数据
         # 3. 同步统计数据
@@ -495,6 +496,7 @@ class ShopManager:
                         'status': 'success',
                     })
                 except Exception as e:
+                    logger.error(f"Unhandled exception: " + str(e))
                     results['failed'] += 1
                     results['details'].append({
                         'shop_id': shop.id,

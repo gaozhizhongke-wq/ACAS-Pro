@@ -53,6 +53,19 @@ class LLMConfig:
     max_tokens: int = 4000
     temperature: float = 0.7
 
+    def __post_init__(self):
+        if not self.api_key:
+            from ..core.secrets_manager import get_secrets_manager
+            sm = get_secrets_manager()
+            # Try provider-specific key first, then generic LLM_API_KEY
+            provider_key = sm.get(f'{self.provider}_api_key')
+            if provider_key:
+                self.api_key = provider_key
+            else:
+                generic_key = sm.get('llm_api_key')
+                if generic_key:
+                    self.api_key = generic_key
+
 
 @dataclass
 class OAuthConfig:
@@ -86,14 +99,24 @@ class SecurityConfig:
     
     def __post_init__(self):
         if not self.secret_key:
-            key_file = Path.home() / ".acas-pro" / ".secret"
-            if key_file.exists():
-                self.secret_key = key_file.read_text().strip()
+            # Try environment variable first via SecretsManager
+            from ..core.secrets_manager import get_secrets_manager
+            sm = get_secrets_manager()
+            env_key = sm.get('secret_key')
+            if env_key:
+                self.secret_key = env_key
             else:
-                self.secret_key = secrets.token_hex(32)
-                key_file.parent.mkdir(parents=True, exist_ok=True)
-                key_file.write_text(self.secret_key)
-                os.chmod(key_file, 0o600)
+                key_file = Path.home() / ".acas-pro" / ".secret"
+                if key_file.exists():
+                    self.secret_key = key_file.read_text().strip()
+                else:
+                    self.secret_key = secrets.token_hex(32)
+                    key_file.parent.mkdir(parents=True, exist_ok=True)
+                    key_file.write_text(self.secret_key)
+                    try:
+                        os.chmod(key_file, 0o600)
+                    except OSError:
+                        pass
 
 
 @dataclass
@@ -197,6 +220,13 @@ class AppConfig:
         
         # Production environment validations
         if self.environment == Environment.PRODUCTION:
+            # Use SecretsManager to validate all required secrets
+            from ..core.secrets_manager import get_secrets_manager
+            sm = get_secrets_manager(is_production=True)
+            missing = sm.validate_production()
+            for m in missing:
+                errors.append(f"Required secret not set: {m}")
+            
             # Check secret key is not default/empty
             if not self.security.secret_key:
                 errors.append("SECRET_KEY is not set in production")
@@ -217,6 +247,11 @@ class AppConfig:
                     errors.append("PostgreSQL password must be set in production")
                 if self.database.host == 'localhost':
                     errors.append("PostgreSQL host should not be localhost in production")
+            # SQLite is not allowed in production
+            if self.database.type == 'sqlite':
+                errors.append("SQLite is not supported in production. Migrate to PostgreSQL and set DATABASE_URL environment variable.")
+
+
             
             # Check backup directory
             if not Path(self.backup_dir).exists():

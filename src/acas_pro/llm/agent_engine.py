@@ -174,6 +174,7 @@ Available tools will be provided in the conversation. Use them when appropriate.
                             result = self._execute_tool(tool_name, tool_args)
                             tool_action.result = result
                         except Exception as e:
+                            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
                             tool_action.result = {"error": str(e)}
                             tool_action.type = ActionType.ERROR
                         
@@ -218,6 +219,7 @@ Available tools will be provided in the conversation. Use them when appropriate.
                 final_response = f"[达到最大步骤限制 {task.max_steps}]\n\n{final_response}"
             
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             self.status = AgentStatus.FAILED
             error = f"{type(e).__name__}: {str(e)}\n{traceback.format_exc()}"
             final_response = f"执行失败: {error}"
@@ -240,10 +242,17 @@ Available tools will be provided in the conversation. Use them when appropriate.
     
     def execute_async(self, task: AgentTask, callback: Callable[[AgentResult], None] = None) -> threading.Thread:
         """Execute task asynchronously"""
+        # Defensive: ensure task is an AgentTask object
+        if isinstance(task, str):
+            task = AgentTask(prompt=task)
+        
         def _run():
-            result = self.execute(task)
-            if callback:
-                callback(result)
+            try:
+                result = self.execute(task)
+                if callback:
+                    callback(result)
+            except Exception as e:
+                logger.error(f"Async agent execution failed: {e}")
         
         thread = threading.Thread(target=_run, daemon=True)
         thread.start()

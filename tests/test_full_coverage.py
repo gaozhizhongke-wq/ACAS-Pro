@@ -155,17 +155,17 @@ class TestMonitoringMetrics:
     
     def test_counter(self):
         from acas_pro.monitoring.metrics import Counter
-        counter = Counter("test")
+        counter = Counter("test_counter", "test counter metric")
         assert counter is not None
     
     def test_histogram(self):
         from acas_pro.monitoring.metrics import Histogram
-        hist = Histogram("test")
+        hist = Histogram("test_histogram", "test histogram metric")
         assert hist is not None
     
     def test_gauge(self):
         from acas_pro.monitoring.metrics import Gauge
-        gauge = Gauge("test")
+        gauge = Gauge("test_gauge", "test gauge metric")
         assert gauge is not None
 
 

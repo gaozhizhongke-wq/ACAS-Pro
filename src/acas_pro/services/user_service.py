@@ -16,15 +16,71 @@ from ..core.security import (
     get_session_manager, get_rate_limiter
 )
 
-# Lazy-loaded instances
-db = get_db()
-password_validator = get_password_validator()
-password_hasher = get_password_hasher()
-session_manager = get_session_manager()
-rate_limiter = get_rate_limiter()
+# Lazy-initialized instances — avoids module-reload state pollution
+_lazy: dict = {}
+
+
+def __getattr__(name):
+    """Module-level __getattr__ for lazy attribute access."""
+    _LAZY_MAP = {
+        'db': lambda: get_db(),
+        'password_validator': lambda: get_password_validator(),
+        'password_hasher': lambda: get_password_hasher(),
+        'session_manager': lambda: get_session_manager(),
+        'rate_limiter': lambda: get_rate_limiter(),
+    }
+    if name in _LAZY_MAP:
+        if name not in _lazy:
+            _lazy[name] = _LAZY_MAP[name]()
+        return _lazy[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def _reset_lazy():
+    """Clear lazy singletons — for test fixtures."""
+    _lazy.clear()
+
 from ..core.logging import get_logger, audit_logger
 
 logger = get_logger(__name__)
+
+# Module-level property accessors for lazy instances.
+# __getattr__ only works for external `module.attr` access, NOT bare names
+# inside this module's own functions. These properties bridge the gap.
+
+
+import sys as _sys
+
+
+def _get_lazy(name, factory):
+    """Get or create a lazy singleton, respecting test monkeypatching."""
+    # Check if test has patched the module attribute directly
+    mod = _sys.modules[__name__]
+    if name in mod.__dict__ and name not in ('_lazy', '_reset_lazy', '__getattr__'):
+        return mod.__dict__[name]
+    if name not in _lazy:
+        _lazy[name] = factory()
+    return _lazy[name]
+
+
+def _get_lazy_rate_limiter():
+    return _get_lazy('rate_limiter', get_rate_limiter)
+
+
+def _get_lazy_db():
+    return _get_lazy('db', get_db)
+
+
+def _get_lazy_password_validator():
+    return _get_lazy('password_validator', get_password_validator)
+
+
+def _get_lazy_password_hasher():
+    return _get_lazy('password_hasher', get_password_hasher)
+
+
+def _get_lazy_session_manager():
+    return _get_lazy('session_manager', get_session_manager)
 
 
 @dataclass
@@ -71,18 +127,18 @@ class UserService:
             return False, "Account must be at least 3 characters", None
         
         # Validate password
-        is_valid, error_msg = password_validator.validate(password)
+        is_valid, error_msg = _get_lazy_password_validator().validate(password)
         if not is_valid:
             return False, error_msg, None
         
         # Check if account exists
-        existing = db.fetchone("SELECT id FROM users WHERE account = ?", (account,))
+        existing = _get_lazy_db().fetchone("SELECT id FROM users WHERE account = ?", (account,))
         if existing:
             return False, "Account already exists", None
         
         # Create user
         user_id = f"U{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')[:-3]}"
-        password_hash = password_hasher.hash(password)
+        password_hash = _get_lazy_password_hasher().hash(password)
         now = datetime.now(timezone.utc).isoformat()
         
         # Determine language from region
@@ -95,7 +151,7 @@ class UserService:
             language = "en"
         
         try:
-            db.insert("users", {
+            _get_lazy_db().insert("users", {
                 "id": user_id,
                 "account_type": "email" if "@" in account else "phone",
                 "account": account,
@@ -139,7 +195,7 @@ class UserService:
         """
         # Rate limiting
         rate_key = f"login:{account}"
-        if not rate_limiter.is_allowed(rate_key, max_attempts=5, window_seconds=300):
+        if not _get_lazy_rate_limiter().is_allowed(rate_key, max_attempts=5, window_seconds=300):
             audit_logger.log(
                 "LOGIN_RATE_LIMITED",
                 account,
@@ -150,9 +206,9 @@ class UserService:
             return False, "Too many login attempts. Please try again later.", None
         
         # Find user
-        user = db.fetchone("SELECT * FROM users WHERE account = ?", (account,))
+        user = _get_lazy_db().fetchone("SELECT * FROM users WHERE account = ?", (account,))
         if not user:
-            rate_limiter.record_attempt(rate_key)
+            _get_lazy_rate_limiter().record_attempt(rate_key)
             audit_logger.log(
                 "LOGIN_FAILED",
                 account,
@@ -174,14 +230,14 @@ class UserService:
             return False, "Account is inactive", None
         
         # Verify password
-        if not password_hasher.verify(password, user["password_hash"]):
+        if not _get_lazy_password_hasher().verify(password, user["password_hash"]):
             # Increment failed login count
             failed_count = user.get("failed_login_count", 0) + 1
             
             if failed_count >= 5:
                 # Lock account
                 lock_until = (datetime.now(timezone.utc) + timedelta(minutes=30)).isoformat()
-                db.update("users",
+                _get_lazy_db().update("users",
                     {"failed_login_count": failed_count, "locked_until": lock_until},
                     "id = ?", (user["id"],)
                 )
@@ -194,12 +250,12 @@ class UserService:
                 )
                 return False, "Account locked due to too many failed attempts. Try again in 30 minutes.", None
             else:
-                db.update("users",
+                _get_lazy_db().update("users",
                     {"failed_login_count": failed_count},
                     "id = ?", (user["id"],)
                 )
             
-            rate_limiter.record_attempt(rate_key)
+            _get_lazy_rate_limiter().record_attempt(rate_key)
             audit_logger.log(
                 "LOGIN_FAILED",
                 user["id"],
@@ -211,14 +267,14 @@ class UserService:
         
         # Successful login
         now = datetime.now(timezone.utc).isoformat()
-        db.update("users", {
+        _get_lazy_db().update("users", {
             "last_login": now,
             "login_count": user.get("login_count", 0) + 1,
             "failed_login_count": 0,
             "locked_until": None
         }, "id = ?", (user["id"],))
         
-        rate_limiter.reset(rate_key)
+        _get_lazy_rate_limiter().reset(rate_key)
         
         audit_logger.log(
             "LOGIN_SUCCESS",
@@ -237,7 +293,7 @@ class UserService:
         guest_id = f"G{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')[:-3]}"
         now = datetime.now(timezone.utc).isoformat()
         
-        db.insert("users", {
+        _get_lazy_db().insert("users", {
             "id": guest_id,
             "account_type": "guest",
             "account": guest_id,
@@ -269,7 +325,7 @@ class UserService:
     
     def _get_profile(self, user_id: str) -> Optional[UserProfile]:
         """Get user profile by ID"""
-        user = db.fetchone("SELECT * FROM users WHERE id = ?", (user_id,))
+        user = _get_lazy_db().fetchone("SELECT * FROM users WHERE id = ?", (user_id,))
         if not user:
             return None
         
@@ -308,7 +364,7 @@ class UserService:
             return False, "No valid fields to update"
         
         try:
-            db.update("users", filtered_updates, "id = ?", (user_id,))
+            _get_lazy_db().update("users", filtered_updates, "id = ?", (user_id,))
             audit_logger.log("PROFILE_UPDATED", user_id, {"fields": list(filtered_updates.keys())})
             return True, "Profile updated successfully"
         except Exception as e:
@@ -318,22 +374,22 @@ class UserService:
     def change_password(self, user_id: str, old_password: str, new_password: str) -> Tuple[bool, str]:
         """Change user password"""
         # Validate new password
-        is_valid, error_msg = password_validator.validate(new_password)
+        is_valid, error_msg = _get_lazy_password_validator().validate(new_password)
         if not is_valid:
             return False, error_msg
         
         # Get user
-        user = db.fetchone("SELECT password_hash FROM users WHERE id = ?", (user_id,))
+        user = _get_lazy_db().fetchone("SELECT password_hash FROM users WHERE id = ?", (user_id,))
         if not user:
             return False, "User not found"
         
         # Verify old password
-        if not password_hasher.verify(old_password, user["password_hash"]):
+        if not _get_lazy_password_hasher().verify(old_password, user["password_hash"]):
             return False, "Current password is incorrect"
         
         # Update password
-        new_hash = password_hasher.hash(new_password)
-        db.update("users", {"password_hash": new_hash}, "id = ?", (user_id,))
+        new_hash = _get_lazy_password_hasher().hash(new_password)
+        _get_lazy_db().update("users", {"password_hash": new_hash}, "id = ?", (user_id,))
         
         audit_logger.log("PASSWORD_CHANGED", user_id, {})
         return True, "Password changed successfully"

@@ -80,6 +80,7 @@ class ToolRegistry:
             result = tool.function(**kwargs)
             return result
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             return {"error": str(e)}
     
     def list_tools(self) -> List[Dict]:
@@ -412,6 +413,7 @@ class ACASTools:
                 "summary": f"预测功能暂不可用，产品{product_id}需安装TimesFM引擎"
             }
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             return {"error": str(e), "summary": f"预测失败: {str(e)}"}
     
     def _inventory_optimize(self, product_id: str, current_stock: int,
@@ -445,6 +447,7 @@ class ACASTools:
                 "summary": f"产品{product_id}库存{current_stock}，安全库存{safety_stock}，{'需要补货' if current_stock < safety_stock else '库存充足'}"
             }
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             return {"error": str(e), "summary": f"库存优化失败: {str(e)}"}
     
     def _market_intelligence(self, keyword: str = "", industry: str = "",
@@ -479,6 +482,7 @@ class ACASTools:
                 "summary": f"舆情分析模块未安装，无法分析'{keyword or industry}'"
             }
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             return {"error": str(e), "summary": f"市场情报获取失败: {str(e)}"}
     
     def _content_create(self, topic: str, platform: str, style: str = "professional",
@@ -525,6 +529,7 @@ class ACASTools:
                     "summary": f"已为{platform_names.get(platform, platform)}生成关于「{topic}」的{style_desc}风格内容"
                 }
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             import logging
             logging.debug(f"{type(e).__name__}: {e}")
         
@@ -566,6 +571,7 @@ class ACASTools:
                 "summary": f"趋势监控模块未完整安装，显示模拟数据。类别: {category or '全部'}，平台: {platform}"
             }
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             return {"error": str(e), "summary": f"趋势监控失败: {str(e)}"}
     
     def _account_analyze(self, account_id: str, metric: str = "overview",
@@ -583,6 +589,7 @@ class ACASTools:
                     "summary": f"账号{account_id}的{metric}数据分析完成"
                 }
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             import logging
             logging.debug(f"{type(e).__name__}: {e}")
         
@@ -613,6 +620,7 @@ class ACASTools:
         except ImportError:
             return {"action": action, "summary": f"广告管理模块未安装，{action}操作暂不可用"}
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             return {"error": str(e), "summary": f"广告操作失败: {str(e)}"}
     
     def _ecommerce_manage(self, action: str, shop_id: str = "",
@@ -639,6 +647,7 @@ class ACASTools:
         except ImportError:
             return {"action": action, "summary": f"电商模块未安装，{action_names.get(action, action)}查询暂不可用"}
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             return {"error": str(e), "summary": f"电商操作失败: {str(e)}"}
     
     def _data_query(self, query_type: str, time_range: str = "30d",
@@ -695,6 +704,7 @@ class ACASTools:
                 "summary": f"{current_month}月共{len(events)}个营销节点（模拟数据，安装festival_calendar模块获取完整日历）"
             }
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             return {"error": str(e), "summary": f"节日日历查询失败: {str(e)}"}
     
     def _get_llm_config(self):
@@ -712,6 +722,7 @@ class ACASTools:
                     temperature=config.llm.get('temperature', 0.7)
                 )
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             import logging
             logging.debug(f"{type(e).__name__}: {e}")
         return None

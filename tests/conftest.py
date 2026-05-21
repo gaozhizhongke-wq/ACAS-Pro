@@ -103,22 +103,28 @@ def _make_widget_mock():
     gui.QTextCharFormat = MagicMock
     gui.QAction = MagicMock
 
+    # Attach sub-modules to main module for proper import resolution
+    pyside6.QtWidgets = widgets
+    pyside6.QtCore = core
+    pyside6.QtGui = gui
+    pyside6.QtCharts = charts
+
     sys.modules['PySide6'] = pyside6
     sys.modules['PySide6.QtWidgets'] = widgets
     sys.modules['PySide6.QtCore'] = core
     sys.modules['PySide6.QtGui'] = gui
     sys.modules['PySide6.QtCharts'] = charts
+    # Clear any stale sub-modules
     for key in list(sys.modules.keys()):
         if 'PySide6.Qt' in key and key not in ['PySide6.QtWidgets', 'PySide6.QtCore', 'PySide6.QtGui', 'PySide6.QtCharts']:
             del sys.modules[key]
+    
+    return pyside6
 
 
 _make_widget_mock()
 
-# Mock Flask for web tests
-sys.modules['flask'] = MagicMock()
-sys.modules['flask_cors'] = MagicMock()
-sys.modules['flask_limiter'] = MagicMock()
+# NOTE: Flask, flask_cors, flask_limiter are NOT mocked globally - web route tests need real Flask
 
 # Mock psycopg2 for database_pg tests
 if 'psycopg2' not in sys.modules:
@@ -141,9 +147,11 @@ if 'psutil' not in sys.modules:
     sys.modules['psutil'] = MagicMock()
 
 # Mock ML/data science libraries
+# NOTE: numpy/pandas/scipy are NOT mocked globally - forecast engine needs real np.array()
+#       Tests that can't import these should use local fixtures/mock instead
 # NOTE: Removed 'playwright' from global mock - tests needing real playwright should import it directly
-for _ml_mod in ['numpy', 'torch', 'transformers', 'scikit-learn', 'sklearn',
-                 'pandas', 'scipy', 'matplotlib', 'PIL', 'pillow', 'cv2',
+for _ml_mod in ['torch', 'transformers', 'scikit-learn', 'sklearn',
+                 'matplotlib', 'PIL', 'pillow', 'cv2',
                  'feedparser', 'bs4', 'beautifulsoup4', 'lxml',
                  'openai', 'anthropic', 'google.generativeai',
                  'tqdm', 'aiohttp', 'httpx', 'boto3',
@@ -155,6 +163,9 @@ for _ml_mod in ['numpy', 'torch', 'transformers', 'scikit-learn', 'sklearn',
                  'sqlalchemy', 'alembic']:
     if _ml_mod not in sys.modules:
         sys.modules[_ml_mod] = MagicMock()
+
+# Setup PySide6 mock BEFORE any test runs
+_make_widget_mock()
 
 
 @pytest.fixture
@@ -204,3 +215,33 @@ def sample_config_data():
             "enabled": False
         }
     }
+
+
+# --- Test isolation: clear lazy caches and reload modules between tests ---
+@pytest.fixture(autouse=True, scope="function")
+def _reset_lazy_singletons():
+    """Clear module-level lazy singletons before each test and reload polluted modules.
+    This prevents state leakage between tests when modules use lazy initialization.
+    """
+    
+    # Step 1: Remove ALL acas_pro modules from sys.modules to prevent mock leakage
+    mods_to_clear = [k for k in list(sys.modules.keys()) if k.startswith('acas_pro')]
+    for mod in mods_to_clear:
+        del sys.modules[mod]
+    
+    # Also clear external modules that may be mocked
+    if 'jwt' in sys.modules and hasattr(sys.modules['jwt'], 'mock_calls'):
+        del sys.modules['jwt']
+    
+    # Step 2: Re-import fresh versions of core modules
+    import acas_pro.core.config
+    import acas_pro.core.security
+    import acas_pro.core.logging
+    import acas_pro.services.user_service
+    
+    yield
+    
+    # Teardown: remove again after test to prevent leakage
+    mods_to_clear = [k for k in list(sys.modules.keys()) if k.startswith('acas_pro')]
+    for mod in mods_to_clear:
+        del sys.modules[mod]

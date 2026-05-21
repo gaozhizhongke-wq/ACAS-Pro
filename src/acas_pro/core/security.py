@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 ACAS Pro - Enterprise Security
@@ -561,16 +561,47 @@ class CryptoManager:
 SecurityManager = CryptoManager
 
 
-# Global instances
-password_validator = PasswordValidator()
-password_hasher = PasswordHasher()
-jwt_manager = JWTManager()
-session_manager = SessionManager()
-crypto_manager = CryptoManager()
+# Lazy-initialized global instances — avoids module-reload state pollution
+# All external imports (e.g. `from acas_pro.core.security import password_validator`)
+# continue to work because Python falls through to __getattr__ when the name
+# is not found in the module dict.
 
-# Aliases for backward compatibility
-encrypt_data = crypto_manager.encrypt
-decrypt_data = crypto_manager.decrypt
+_lazy_instances: dict = {}
+
+
+def _get_lazy(name: str, cls: type):
+    """Return a singleton instance of *cls*, created on first access."""
+    if name not in _lazy_instances:
+        _lazy_instances[name] = cls()
+    return _lazy_instances[name]
+
+
+def __getattr__(name):
+    """Module-level __getattr__ for lazy attribute access."""
+    _LAZY_MAP = {
+        'password_validator': PasswordValidator,
+        'password_hasher': PasswordHasher,
+        'jwt_manager': JWTManager,
+        'session_manager': SessionManager,
+        'crypto_manager': CryptoManager,
+        'rate_limiter': None,  # placeholder, handled below
+    }
+    if name == 'rate_limiter':
+        if name not in _lazy_instances:
+            _lazy_instances[name] = _build_rate_limiter()
+        return _lazy_instances[name]
+    if name in _LAZY_MAP:
+        return _get_lazy(name, _LAZY_MAP[name])
+    if name == 'encrypt_data':
+        return _get_lazy('crypto_manager', CryptoManager).encrypt
+    if name == 'decrypt_data':
+        return _get_lazy('crypto_manager', CryptoManager).decrypt
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
+
+def _reset_lazy_instances():
+    """Clear all lazy singletons — used by test fixtures."""
+    _lazy_instances.clear()
 
 
 
@@ -597,7 +628,8 @@ class RedisRateLimiter:
                     socket_timeout=2,
                 )
                 self._client.ping()
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Redis connection failed, rate limiter disabled: {e}")
                 self._client = None
 
     @property
@@ -642,7 +674,12 @@ def _build_rate_limiter():
     return RateLimiter()
 
 
-rate_limiter = _build_rate_limiter()
+def _get_rate_limiter():
+    """Lazy rate_limiter accessor"""
+    return _get_lazy('rate_limiter', None)  # handled specially
+
+# We no longer create rate_limiter at module level.
+# It is available via __getattr__ below.
 
 
 # ── JWT httpOnly Cookie ──────────────────────────────────────────────────────

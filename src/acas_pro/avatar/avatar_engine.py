@@ -474,6 +474,7 @@ class AvatarEngine:
         logger.info(f"Started training for avatar: {avatar.id}")
         
         # TODO: 集成实际的数字人生成模型
+        raise NotImplementedError("Stub: 集成实际的数字人生成模型")
         # 1. 使用Stable Diffusion / Midjourney API生成形象
         # 2. 使用SadTalker / Wav2Lip进行口型同步训练
         # 3. 使用MediaPipe进行姿态估计和手势生成
@@ -510,7 +511,7 @@ class AvatarEngine:
             return self._templates[avatar_id]
         
         # 查数据库
-        row = self.db.fetch_one(
+        row = self.db.fetchone(
             "SELECT * FROM digital_avatars WHERE id = ?",
             (avatar_id,)
         )
@@ -521,7 +522,7 @@ class AvatarEngine:
     
     def get_user_avatars(self, user_id: str) -> List[DigitalAvatar]:
         """获取用户的所有数字人"""
-        rows = self.db.fetch_all(
+        rows = self.db.fetchall(
             "SELECT * FROM digital_avatars WHERE owner_id = ? ORDER BY created_at DESC",
             (user_id,)
         )
@@ -644,6 +645,7 @@ class AvatarEngine:
         
         # 启动异步渲染
         # TODO: 集成实际的渲染引擎
+        raise NotImplementedError("Stub: 集成实际的渲染引擎")
         # 1. 使用SadTalker/Wav2Lip生成口型同步
         # 2. 使用MediaPipe生成手势
         # 3. 使用FFmpeg合成最终视频
@@ -653,7 +655,7 @@ class AvatarEngine:
     
     def get_render_status(self, task_id: str) -> Dict[str, Any]:
         """获取渲染状态"""
-        row = self.db.fetch_one(
+        row = self.db.fetchone(
             "SELECT * FROM avatar_render_tasks WHERE id = ?",
             (task_id,)
         )
@@ -682,6 +684,7 @@ class AvatarEngine:
         
         # 总视频时长
         # TODO: 实际统计视频时长
+        raise NotImplementedError("Stub: 实际统计视频时长")
         
         return {
             'render_count': render_count,

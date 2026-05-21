@@ -85,6 +85,7 @@ class DatabaseManager:
             self.execute("SELECT 1")
             return {'status': 'healthy', 'database': self.config.type}
         except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             return {'status': 'unhealthy', 'error': str(e)}
 
 

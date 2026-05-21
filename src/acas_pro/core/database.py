@@ -325,6 +325,7 @@ class DatabaseManager:
                 yield cursor
                 conn.commit()
             except Exception as e:
+                import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
                 conn.rollback()
                 _get_logger().error(f"Transaction failed: {e}")
                 raise
@@ -338,6 +339,7 @@ class DatabaseManager:
                 yield conn
                 conn.execute("COMMIT")
             except Exception as e:
+                import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
                 conn.execute("ROLLBACK")
                 _get_logger().error(f"Transaction failed: {e}")
                 raise
@@ -463,7 +465,7 @@ class DatabaseManager:
                     'path': str(self._db_path)
                 }
         except Exception as e:
-            logger.error(f"Health check failed: {e}")
+            _get_logger().error(f"Health check failed: {e}")
             return {'status': 'unhealthy', 'error': str(e)}
 
 

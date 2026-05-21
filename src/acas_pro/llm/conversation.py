@@ -157,7 +157,8 @@ class ConversationManager:
                         "updated_at": data.get("updated_at", 0),
                         "message_count": len(data.get("messages", []))
                     })
-            except Exception:
+            except Exception as e:
+                import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
                 continue
         
         # Sort by updated_at descending
@@ -212,7 +213,8 @@ class ConversationManager:
                 if len(results) >= limit:
                     break
                     
-            except Exception:
+            except Exception as e:
+                import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
                 continue
         
         return results
@@ -233,7 +235,8 @@ class ConversationManager:
             with open(conv_file, "r", encoding="utf-8") as f:
                 data = json.load(f)
             return Conversation.from_dict(data)
-        except Exception:
+        except Exception as e:
+            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
             return None
     
     def clear_all(self):
