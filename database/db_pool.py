@@ -13,6 +13,7 @@ from contextlib import contextmanager
 from typing import Optional, List, Dict, Any, Generator
 from dataclasses import dataclass
 from datetime import datetime, timezone
+from urllib.parse import urlparse
 import logging
 
 # Database drivers
@@ -40,9 +41,9 @@ class DBConfig:
     host: str = 'localhost'
     port: int = 5432
     database: str = 'acas_pro'
-    user: str = 'acas_app'
+    user: str = 'acas_user'
     password: str = ''
-    ssl_mode: str = 'require'
+    ssl_mode: str = 'prefer'
     
     # Pool settings
     pool_size: int = 10
@@ -391,18 +392,36 @@ class DatabasePoolManager:
 # 全局实例
 _pool_manager: Optional[DatabasePoolManager] = None
 
+def _parse_database_url(url: str) -> dict:
+    """解析 DATABASE_URL (postgresql://user:pass@host:port/dbname) 为 DBConfig 参数"""
+    parsed = urlparse(url)
+    return {
+        'host': parsed.hostname or 'localhost',
+        'port': parsed.port or 5432,
+        'database': parsed.path.lstrip('/') or 'acas_pro',
+        'user': parsed.username or 'acas_user',
+        'password': parsed.password or '',
+    }
+
+
 def get_db_pool() -> DatabasePoolManager:
     """获取连接池"""
     global _pool_manager
     if _pool_manager is None:
-        config = DBConfig(
-            host=os.environ.get('DB_HOST', 'localhost'),
-            port=int(os.environ.get('DB_PORT', '5432')),
-            database=os.environ.get('DB_NAME', 'acas_pro'),
-            user=os.environ.get('DB_USER', 'acas_app'),
-            password=os.environ.get('DB_PASSWORD', ''),
-            ssl_mode=os.environ.get('DB_SSL_MODE', 'require')
-        )
+        # 优先使用 DATABASE_URL（与 .env / 12-factor 兼容）
+        database_url = os.environ.get('DATABASE_URL', '')
+        if database_url and database_url.startswith('postgresql'):
+            url_params = _parse_database_url(database_url)
+            config = DBConfig(**url_params)
+        else:
+            config = DBConfig(
+                host=os.environ.get('DB_HOST', 'localhost'),
+                port=int(os.environ.get('DB_PORT', '5432')),
+                database=os.environ.get('DB_NAME', 'acas_pro'),
+                user=os.environ.get('DB_USER', 'acas_user'),
+                password=os.environ.get('DB_PASSWORD', ''),
+                ssl_mode=os.environ.get('DB_SSL_MODE', 'prefer')
+            )
         _pool_manager = DatabasePoolManager(config)
     return _pool_manager
 

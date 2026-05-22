@@ -67,3 +67,6 @@ logs/
 # Temp files
 *.tmp
 *.temp
+
+# Encrypted keys (never commit)
+.keys/

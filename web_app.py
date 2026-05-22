@@ -25,6 +25,15 @@ if os.path.exists(env_path):
                 key, value = line.split('=', 1)
                 os.environ[key.strip()] = value.strip().strip('"').strip("'")
 
+# ── Load keys from .keys/ directory (replaces ${KEYS_DIR} references) ────────
+try:
+    from security.key_loader import load_keys_to_env
+    _loaded_keys = load_keys_to_env(os.path.dirname(os.path.abspath(__file__)))
+    if _loaded_keys:
+        print(f'[key_loader] Loaded {len(_loaded_keys)} keys: {_loaded_keys}')
+except ImportError:
+    pass  # key_loader not available, keys must be in env already
+
 src_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src')
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
