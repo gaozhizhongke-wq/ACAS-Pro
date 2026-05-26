@@ -4,10 +4,28 @@ Pytest configuration and shared fixtures for ACAS Pro tests
 import os
 import sys
 import tempfile
-import pytest
+import platform
+import shutil
 from pathlib import Path
+
+import pytest
 from unittest.mock import MagicMock, patch
 from types import ModuleType
+
+# Windows: suppress pytest symlink cleanup PermissionError (WinError 5)
+if platform.system() == 'Windows':
+    try:
+        import _pytest.pathlib as _pl
+        _orig_cleanup = getattr(_pl, 'cleanup_dead_symlinks', None)
+        if _orig_cleanup:
+            def _safe_cleanup(root):
+                try:
+                    _orig_cleanup(root)
+                except PermissionError:
+                    pass
+            _pl.cleanup_dead_symlinks = _safe_cleanup
+    except Exception:
+        pass
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent / "src"))
@@ -247,4 +265,21 @@ def _reset_lazy_singletons():
         del sys.modules[mod]
 
 print(f'[CONFTEST] numpy type={type(sys.modules.get('numpy')).__name__ if sys.modules.get('numpy') else None}')
+
+
+# Windows: clean up pytest-current on exit to prevent stale junction next run
+if platform.system() == 'Windows':
+    @pytest.hookimpl(trylast=True)
+    def pytest_unconfigure(config):
+        """Clean up pytest-current on exit to prevent PermissionError on next run."""
+        pytest_current = Path(tempfile.gettempdir()) / f'pytest-of-{os.getlogin()}' / 'pytest-current'
+        if pytest_current.exists() or pytest_current.is_symlink():
+            try:
+                if pytest_current.is_dir():
+                    shutil.rmtree(str(pytest_current))
+                else:
+                    pytest_current.unlink()
+            except (OSError, PermissionError):
+                pass
+    pytest_unconfigure.hookimpl = pytest.hookimpl(trylast=True)(pytest_unconfigure)
 
