@@ -70,3 +70,9 @@ logs/
 
 # Encrypted keys (never commit)
 .keys/
+
+MagicMock/
+_dbg*.txt
+_full*.txt
+_test_*.txt
+run_tests.py
