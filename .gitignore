@@ -76,3 +76,7 @@ _dbg*.txt
 _full*.txt
 _test_*.txt
 run_tests.py
+
+_skip*.txt
+_debug.txt
+_test_imports.py
