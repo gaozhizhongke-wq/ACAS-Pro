@@ -1,0 +1,7 @@
+﻿python : C:\Users\HUAWEI\AppData\Local\hermes\hermes-agent\venv\Scripts\python.exe: No module named pytest
+所在位置 行:1 字符: 142
++ ... ce-hermes\ACAS-Pro; python -m pytest tests/unit/ --co -q 2>&1 | Out-F ...
++                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\HUAWEI...le named pytest:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 

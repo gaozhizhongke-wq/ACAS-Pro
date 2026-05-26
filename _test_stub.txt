@@ -1,0 +1,320 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.14.3, pytest-9.0.3, pluggy-1.6.0 -- C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: cov-7.1.0
+collecting ... collected 36 items
+
+tests/unit/test_notifier.py::TestAlertMessage::test_default_message PASSED [  2%]
+tests/unit/test_notifier.py::TestAlertMessage::test_custom_message PASSED [  5%]
+tests/unit/test_notifier.py::TestAlertMessage::test_to_markdown_p0 PASSED [  8%]
+tests/unit/test_notifier.py::TestAlertMessage::test_to_markdown_p3 PASSED [ 11%]
+tests/unit/test_notifier.py::TestAlertMessage::test_to_dict PASSED       [ 13%]
+tests/unit/test_notifier.py::TestAlertChannel::test_channels PASSED      [ 16%]
+tests/unit/test_notifier.py::TestAlertPriority::test_priorities PASSED   [ 19%]
+tests/unit/test_notifier.py::TestAlertNotifier::test_send_with_disabled_channel ERROR [ 22%]
+tests/unit/test_notifier.py::TestAlertNotifier::test_send_force_disabled ERROR [ 25%]
+tests/unit/test_notifier.py::TestAlertNotifier::test_send_exception_handling ERROR [ 27%]
+tests/unit/test_notifier.py::TestAlertNotifier::test_select_channels_p0 ERROR [ 30%]
+tests/unit/test_notifier.py::TestAlertNotifier::test_select_channels_p3 ERROR [ 33%]
+tests/unit/test_notifier.py::TestAlertNotifier::test_send_records_history ERROR [ 36%]
+tests/unit/test_smart_decider.py::TestDecision::test_to_dict PASSED      [ 38%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_init PASSED     [ 41%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_init_with_config PASSED [ 44%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_analyze_and_decide_content FAILED [ 47%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_analyze_and_decide_bidding PASSED [ 50%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_analyze_and_decide_budget PASSED [ 52%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_analyze_and_decide_inventory PASSED [ 55%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_analyze_and_decide_channels PASSED [ 58%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_analyze_and_decide_creative PASSED [ 61%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_analyze_and_decide_seasonal PASSED [ 63%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_analyze_and_decide_empty PASSED [ 66%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_approve_decision FAILED [ 69%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_approve_decision_not_found PASSED [ 72%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_execute_decision FAILED [ 75%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_complete_decision FAILED [ 77%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_skip_decision FAILED [ 80%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_get_pending_decisions FAILED [ 83%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_get_pending_decisions_with_priority PASSED [ 86%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_generate_report FAILED [ 88%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_export_decisions FAILED [ 91%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_export_decisions_json PASSED [ 94%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_decision_sorting PASSED [ 97%]
+tests/unit/test_smart_decider.py::TestSmartDecider::test_confidence_filtering PASSED [100%]
+
+=================================== ERRORS ====================================
+_____ ERROR at setup of TestAlertNotifier.test_send_with_disabled_channel _____
+tests\unit\test_notifier.py:83: in notifier
+    with patch('acas_pro.alert.notifier.config'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1503: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1473: in get_original
+    raise AttributeError(
+E   AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'config'
+________ ERROR at setup of TestAlertNotifier.test_send_force_disabled _________
+tests\unit\test_notifier.py:83: in notifier
+    with patch('acas_pro.alert.notifier.config'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1503: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1473: in get_original
+    raise AttributeError(
+E   AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'config'
+______ ERROR at setup of TestAlertNotifier.test_send_exception_handling _______
+tests\unit\test_notifier.py:83: in notifier
+    with patch('acas_pro.alert.notifier.config'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1503: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1473: in get_original
+    raise AttributeError(
+E   AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'config'
+_________ ERROR at setup of TestAlertNotifier.test_select_channels_p0 _________
+tests\unit\test_notifier.py:83: in notifier
+    with patch('acas_pro.alert.notifier.config'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1503: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1473: in get_original
+    raise AttributeError(
+E   AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'config'
+_________ ERROR at setup of TestAlertNotifier.test_select_channels_p3 _________
+tests\unit\test_notifier.py:83: in notifier
+    with patch('acas_pro.alert.notifier.config'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1503: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1473: in get_original
+    raise AttributeError(
+E   AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'config'
+________ ERROR at setup of TestAlertNotifier.test_send_records_history ________
+tests\unit\test_notifier.py:83: in notifier
+    with patch('acas_pro.alert.notifier.config'):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1503: in __enter__
+    original, local = self.get_original()
+                      ^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1473: in get_original
+    raise AttributeError(
+E   AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'config'
+================================== FAILURES ===================================
+______________ TestSmartDecider.test_analyze_and_decide_content _______________
+tests\unit\test_smart_decider.py:63: in test_analyze_and_decide_content
+    assert len(decisions) >= 1
+E   assert 0 >= 1
+E    +  where 0 = len([])
+___________________ TestSmartDecider.test_approve_decision ____________________
+tests\unit\test_smart_decider.py:138: in test_approve_decision
+    decision_id = decisions[0].decision_id
+                  ^^^^^^^^^^^^
+E   IndexError: list index out of range
+___________________ TestSmartDecider.test_execute_decision ____________________
+tests\unit\test_smart_decider.py:150: in test_execute_decision
+    decision_id = decisions[0].decision_id
+                  ^^^^^^^^^^^^
+E   IndexError: list index out of range
+___________________ TestSmartDecider.test_complete_decision ___________________
+tests\unit\test_smart_decider.py:158: in test_complete_decision
+    decision_id = decisions[0].decision_id
+                  ^^^^^^^^^^^^
+E   IndexError: list index out of range
+_____________________ TestSmartDecider.test_skip_decision _____________________
+tests\unit\test_smart_decider.py:168: in test_skip_decision
+    decision_id = decisions[0].decision_id
+                  ^^^^^^^^^^^^
+E   IndexError: list index out of range
+_________________ TestSmartDecider.test_get_pending_decisions _________________
+tests\unit\test_smart_decider.py:178: in test_get_pending_decisions
+    assert len(pending) >= 1
+E   assert 0 >= 1
+E    +  where 0 = len([])
+____________________ TestSmartDecider.test_generate_report ____________________
+tests\unit\test_smart_decider.py:193: in test_generate_report
+    assert report.total_decisions >= 1
+E   assert 0 >= 1
+E    +  where 0 = DecisionReport(total_decisions=0, by_type={}, by_status={}, avg_confidence=0.0, avg_impact=0.0, period_start=datetime.datetime(2026, 5, 19, 16, 34, 51, 371999), period_end=datetime.datetime(2026, 5, 26, 16, 34, 51, 372003)).total_decisions
+___________________ TestSmartDecider.test_export_decisions ____________________
+tests\unit\test_smart_decider.py:200: in test_export_decisions
+    assert "decision_id" in exported
+E   AssertionError: assert 'decision_id' in '[]'
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.14.3-final-0 _______________
+
+Name                                                    Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------------------------
+src\acas_pro\__init__.py                                    0      0   100%
+src\acas_pro\ads\__init__.py                                0      0   100%
+src\acas_pro\ads\ad_manager.py                            266    266     0%   6-642
+src\acas_pro\ads\ad_manager_v2.py                          44     44     0%   2-103
+src\acas_pro\ads\audience_targeting.py                    212    212     0%   6-498
+src\acas_pro\ads\bidding_engine.py                        127    127     0%   6-347
+src\acas_pro\advanced_analytics\__init__.py                 0      0   100%
+src\acas_pro\advanced_analytics\attribution_engine.py     249    249     0%   6-645
+src\acas_pro\advanced_analytics\smart_decider.py          176     27    85%   117, 273-275, 279-283, 286-292, 295-300, 318-321, 337
+src\acas_pro\alert\__init__.py                              0      0   100%
+src\acas_pro\alert\notifier.py                             80     37    54%   67-74, 82-99, 102-107, 110-118, 121, 124, 127, 130, 133, 136
+src\acas_pro\analytics\__init__.py                          0      0   100%
+src\acas_pro\analytics\data_monitor.py                    154    154     0%   8-438
+src\acas_pro\analytics\data_monitor_v2.py                  22     22     0%   2-57
+src\acas_pro\analytics\festival_calendar.py               144    144     0%   8-543
+src\acas_pro\analytics\festival_calendar_v2.py             20     20     0%   2-45
+src\acas_pro\avatar\__init__.py                             5      5     0%   5-10
+src\acas_pro\avatar\avatar_engine.py                      188    188     0%   5-679
+src\acas_pro\avatar\gesture_generator.py                  161    161     0%   5-706
+src\acas_pro\avatar\lip_sync.py                           127    127     0%   5-406
+src\acas_pro\avatar\scene_adapter.py                      201    201     0%   5-590
+src\acas_pro\blockchain\__init__.py                         0      0   100%
+src\acas_pro\blockchain\settlement_engine.py              162    162     0%   5-501
+src\acas_pro\blockchain\settlement_engine_v2.py            27     27     0%   2-60
+src\acas_pro\blockchain\wallet_manager.py                 164    164     0%   5-471
+src\acas_pro\collectors\__init__.py                         0      0   100%
+src\acas_pro\collectors\douyin_collector.py                16     16     0%   2-31
+src\acas_pro\collectors\rss_collector.py                  119    119     0%   8-277
+src\acas_pro\collectors\rss_collector_v2.py                19     19     0%   2-41
+src\acas_pro\collectors\weibo_api.py                      107    107     0%   8-271
+src\acas_pro\collectors\xiaohongshu_collector.py           16     16     0%   2-31
+src\acas_pro\content\__init__.py                            0      0   100%
+src\acas_pro\content\script_generator.py                  158    158     0%   8-546
+src\acas_pro\content\script_generator_v2.py                12     12     0%   2-36
+src\acas_pro\content\trend_monitor.py                     146    146     0%   8-396
+src\acas_pro\core\__init__.py                               0      0   100%
+src\acas_pro\core\config.py                               251     93    63%   42, 63, 67, 103-119, 168-172, 175, 177, 179, 182, 184, 186, 188, 190, 192, 205, 210, 219-280, 299-300, 317-322, 326-337, 351-354, 365-367
+src\acas_pro\core\config_v2.py                            108    108     0%   6-165
+src\acas_pro\core\database.py                             234    151    35%   82, 87, 104-123, 313-316, 321-346, 351-376, 380-431, 435-436, 441, 445, 449-462, 478-500, 504-514, 518-535
+src\acas_pro\core\database_pg.py                          131    131     0%   8-227
+src\acas_pro\core\database_v2.py                           62     62     0%   6-96
+src\acas_pro\core\di_container.py                          51     51     0%   6-112
+src\acas_pro\core\logging.py                               84     55    35%   21, 35-49, 56-79, 95-99, 106-145, 165-196
+src\acas_pro\core\logging_v2.py                            70     70     0%   6-137
+src\acas_pro\core\monitoring.py                           180    180     0%   8-367
+src\acas_pro\core\secrets_manager.py                       49     19    61%   71, 75-80, 84, 91-98, 102, 106-108, 112-116
+src\acas_pro\core\security.py                             374    275    26%   33, 48-75, 84-91, 96-122, 144-149, 154-167, 176-185, 203-221, 234-243, 250-251, 254-257, 262-300, 304-323, 327-333, 337-343, 355-362, 365-369, 372-374, 379-386, 390-394, 398-400, 405-407, 428-442, 454-491, 503-510, 525-535, 548-557, 574-576, 590-592, 594, 596, 598, 619-633, 637, 641-650, 653-659, 662-664, 669-674, 679, 695, 705, 715, 724, 728-734, 739-751, 755-765, 772, 777, 782, 787
+src\acas_pro\core\security_headers.py                      78     78     0%   8-179
+src\acas_pro\core\security_v2.py                          134    134     0%   6-240
+src\acas_pro\ecommerce\__init__.py                          0      0   100%
+src\acas_pro\ecommerce\order_manager.py                   146    146     0%   5-405
+src\acas_pro\ecommerce\order_manager_v2.py                 31     31     0%   2-80
+src\acas_pro\ecommerce\product_manager.py                 170    170     0%   5-412
+src\acas_pro\ecommerce\product_manager_v2.py               29     29     0%   2-68
+src\acas_pro\ecommerce\shop_manager.py                    152    152     0%   5-508
+src\acas_pro\ecommerce\supply_chain.py                    150    150     0%   5-545
+src\acas_pro\i18n\__init__.py                               1      1     0%   2
+src\acas_pro\i18n\translator.py                            49     49     0%   7-80
+src\acas_pro\i18n\translator_v2.py                         14     14     0%   2-27
+src\acas_pro\llm\__init__.py                                5      5     0%   7-12
+src\acas_pro\llm\agent_engine.py                          194    194     0%   8-383
+src\acas_pro\llm\claude_engine.py                          83     83     0%   8-191
+src\acas_pro\llm\conversation.py                          145    145     0%   8-271
+src\acas_pro\llm\gemini_engine.py                          90     90     0%   8-190
+src\acas_pro\llm\llm_client.py                            153    153     0%   8-365
+src\acas_pro\llm\llm_client_v2.py                          29     29     0%   2-55
+src\acas_pro\llm\tools.py                                 205    205     0%   8-728
+src\acas_pro\metrics\__init__.py                            0      0   100%
+src\acas_pro\metrics\brand_reputation.py                  142    142     0%   8-426
+src\acas_pro\metrics\brand_reputation_v2.py                17     17     0%   2-31
+src\acas_pro\ml\__init__.py                                 0      0   100%
+src\acas_pro\ml\inventory_optimizer.py                    138    138     0%   8-317
+src\acas_pro\ml\timesfm.py                                 15     15     0%   2-39
+src\acas_pro\ml\timesfm_engine.py                         173    173     0%   8-390
+src\acas_pro\ml\timesfm_v2.py                               8      8     0%   6-21
+src\acas_pro\platforms\__init__.py                          0      0   100%
+src\acas_pro\platforms\account_manager.py                 173    173     0%   8-544
+src\acas_pro\platforms\account_manager_v2.py               23     23     0%   2-50
+src\acas_pro\platforms\bilibili.py                          9      9     0%   4-20
+src\acas_pro\platforms\douyin.py                            9      9     0%   4-20
+src\acas_pro\platforms\kuaishou.py                          9      9     0%   4-20
+src\acas_pro\platforms\xiaohongshu.py                       9      9     0%   4-20
+src\acas_pro\publisher\__init__.py                          0      0   100%
+src\acas_pro\publisher\blockchain_publisher.py             16     16     0%   2-37
+src\acas_pro\publisher\publish_manager.py                 177    177     0%   8-549
+src\acas_pro\publisher\publish_manager_v2.py               30     30     0%   2-70
+src\acas_pro\publisher\scheduler.py                       105    105     0%   8-251
+src\acas_pro\sentiment\__init__.py                          0      0   100%
+src\acas_pro\sentiment\analyzer.py                        121    121     0%   8-332
+src\acas_pro\sentiment\analyzer_v2.py                      28     28     0%   2-47
+src\acas_pro\sentiment\news_engine.py                     118    118     0%   8-423
+src\acas_pro\services\__init__.py                           0      0   100%
+src\acas_pro\services\oauth\__init__.py                     2      2     0%   4-6
+src\acas_pro\services\oauth\oauth_service.py              188    188     0%   7-361
+src\acas_pro\services\user_service.py                     151    151     0%   8-399
+src\acas_pro\services\user_service_v2.py                   69     69     0%   6-174
+src\acas_pro\ui\__init__.py                                 0      0   100%
+src\acas_pro\ui\auth\__init__.py                            2      2     0%   7-9
+src\acas_pro\ui\auth\login_dialog.py                      296    296     0%   7-641
+src\acas_pro\ui\logic\__init__.py                          13     13     0%   8-25
+src\acas_pro\ui\logic\analytics_logic.py                  105    105     0%   8-197
+src\acas_pro\ui\logic\campaign_logic.py                    99     99     0%   8-191
+src\acas_pro\ui\logic\content_creation_logic.py            19     19     0%   8-44
+src\acas_pro\ui\logic\content_logic.py                     75     75     0%   8-213
+src\acas_pro\ui\logic\customer_logic.py                   106    106     0%   8-209
+src\acas_pro\ui\logic\dashboard_logic.py                   86     86     0%   8-237
+src\acas_pro\ui\logic\inventory_logic.py                   61     61     0%   8-160
+src\acas_pro\ui\logic\order_logic.py                       73     73     0%   8-165
+src\acas_pro\ui\logic\product_logic.py                     65     65     0%   8-144
+src\acas_pro\ui\logic\report_logic.py                      82     82     0%   8-210
+src\acas_pro\ui\logic\settings_logic.py                    24     24     0%   8-52
+src\acas_pro\ui\logic\video_logic.py                       67     67     0%   8-153
+src\acas_pro\ui\main_window.py                            154    154     0%   8-397
+src\acas_pro\ui\pages\__init__.py                           0      0   100%
+src\acas_pro\ui\pages\account_management.py               236    236     0%   8-534
+src\acas_pro\ui\pages\ad_manager.py                       311    311     0%   5-679
+src\acas_pro\ui\pages\advanced_analytics.py               420    420     0%   5-1199
+src\acas_pro\ui\pages\avatar_studio.py                    302    302     0%   5-586
+src\acas_pro\ui\pages\blockchain_settlement.py            253    253     0%   5-547
+src\acas_pro\ui\pages\content_creation.py                 220    220     0%   8-554
+src\acas_pro\ui\pages\dashboard.py                         76     76     0%   7-166
+src\acas_pro\ui\pages\ecommerce_manager.py                225    225     0%   5-503
+src\acas_pro\ui\pages\festival_calendar.py                246    246     0%   8-564
+src\acas_pro\ui\pages\forecast.py                          81     81     0%   8-201
+src\acas_pro\ui\pages\intelligence.py                     293    293     0%   8-580
+src\acas_pro\ui\pages\inventory.py                         69     69     0%   7-169
+src\acas_pro\ui\pages\llm_chat.py                         251    251     0%   8-497
+src\acas_pro\ui\pages\publish_manager.py                  237    237     0%   8-572
+src\acas_pro\ui\pages\settings.py                         479    479     0%   7-985
+src\acas_pro\ui\pages\video_maker.py                      253    253     0%   8-575
+src\acas_pro\update\__init__.py                             2      2     0%   4-6
+src\acas_pro\update\updater.py                             76     76     0%   7-138
+src\acas_pro\update\updater_v2.py                          12     12     0%   2-26
+src\acas_pro\video\__init__.py                              0      0   100%
+src\acas_pro\video\video_maker.py                         176    176     0%   8-567
+src\acas_pro\video\video_maker_v2.py                       16     16     0%   2-34
+src\acas_pro\video\voice_synthesis.py                      99     99     0%   8-324
+src\acas_pro\web\__init__.py                               71     71     0%   2-124
+src\acas_pro\web\api_spec.py                               11     11     0%   5-380
+src\acas_pro\web\health.py                                103    103     0%   5-276
+src\acas_pro\web\middleware.py                             64     64     0%   5-141
+src\acas_pro\web\routes\__init__.py                         4      4     0%   2-6
+src\acas_pro\web\routes\auth.py                            65     65     0%   2-109
+src\acas_pro\web\routes\auth_v2.py                         18     18     0%   2-29
+src\acas_pro\web\routes\dashboard.py                       44     44     0%   2-239
+src\acas_pro\web\routes\dashboard_stats.py                 97     97     0%   2-166
+src\acas_pro\web\routes\llm.py                             50     50     0%   2-90
+-------------------------------------------------------------------------------------
+TOTAL                                                   14491  13900     4%
+Coverage HTML written to dir htmlcov
+=========================== short test summary info ===========================
+FAILED tests/unit/test_smart_decider.py::TestSmartDecider::test_analyze_and_decide_content - assert 0 >= 1
+ +  where 0 = len([])
+FAILED tests/unit/test_smart_decider.py::TestSmartDecider::test_approve_decision - IndexError: list index out of range
+FAILED tests/unit/test_smart_decider.py::TestSmartDecider::test_execute_decision - IndexError: list index out of range
+FAILED tests/unit/test_smart_decider.py::TestSmartDecider::test_complete_decision - IndexError: list index out of range
+FAILED tests/unit/test_smart_decider.py::TestSmartDecider::test_skip_decision - IndexError: list index out of range
+FAILED tests/unit/test_smart_decider.py::TestSmartDecider::test_get_pending_decisions - assert 0 >= 1
+ +  where 0 = len([])
+FAILED tests/unit/test_smart_decider.py::TestSmartDecider::test_generate_report - assert 0 >= 1
+ +  where 0 = DecisionReport(total_decisions=0, by_type={}, by_status={}, avg_confidence=0.0, avg_impact=0.0, period_start=datetime.datetime(2026, 5, 19, 16, 34, 51, 371999), period_end=datetime.datetime(2026, 5, 26, 16, 34, 51, 372003)).total_decisions
+FAILED tests/unit/test_smart_decider.py::TestSmartDecider::test_export_decisions - AssertionError: assert 'decision_id' in '[]'
+ERROR tests/unit/test_notifier.py::TestAlertNotifier::test_send_with_disabled_channel - AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'config'
+ERROR tests/unit/test_notifier.py::TestAlertNotifier::test_send_force_disabled - AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'config'
+ERROR tests/unit/test_notifier.py::TestAlertNotifier::test_send_exception_handling - AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'config'
+ERROR tests/unit/test_notifier.py::TestAlertNotifier::test_select_channels_p0 - AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'config'
+ERROR tests/unit/test_notifier.py::TestAlertNotifier::test_select_channels_p3 - AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'config'
+ERROR tests/unit/test_notifier.py::TestAlertNotifier::test_send_records_history - AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'config'
+=================== 8 failed, 22 passed, 6 errors in 4.84s ====================

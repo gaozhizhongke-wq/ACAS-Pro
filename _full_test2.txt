@@ -1,0 +1,105 @@
+﻿........................................................................ [  4%]
+........................................................................ [  9%]
+........................................................................ [ 13%]
+........................................................................ [ 18%]
+.........FFF.FFF.FFFF.....F..FF......................................... [ 23%]
+........................................................................ [ 27%]
+.sssssssssssssssssss.................................................... [ 32%]
+........................................................................ [ 36%]
+...............................................F........................ [ 41%]
+........................................................................ [ 46%]
+........................................................................ [ 50%]
+........................................................................ [ 55%]
+...............................sssss....s............................... [ 60%]
+........................................................s............... [ 64%]
+........................................................................ [ 69%]
+........................................................................ [ 73%]
+................................................................s.s..... [ 78%]
+.F...FF................................................................. [ 83%]
+........................................................................ [ 87%]
+........................................................................ [ 92%]
+........................................................................ [ 97%]
+.............................................                            [100%]
+================================== FAILURES ===================================
+E   AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'requests'
+C:\Users\HUAWEI\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1473: AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'requests'
+E   AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'requests'
+C:\Users\HUAWEI\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1473: AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'requests'
+E   AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'requests'
+C:\Users\HUAWEI\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1473: AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'requests'
+E   AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'smtplib'
+C:\Users\HUAWEI\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1473: AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'smtplib'
+E   AttributeError: 'AlertNotifier' object has no attribute 'webhook_url'
+C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\src\acas_pro\alert\notifier.py:193: AttributeError: 'AlertNotifier' object has no attribute 'webhook_url'
+E   AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'requests'
+C:\Users\HUAWEI\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\unittest\mock.py:1473: AttributeError: <module 'acas_pro.alert.notifier' from 'C:\\Users\\HUAWEI\\.qclaw\\workspace-hermes\\ACAS-Pro\\src\\acas_pro\\alert\\notifier.py'> does not have the attribute 'requests'
+E   assert 0 >= 1
+     +  where 0 = len([])
+C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\tests\unit\test_coverage_boost2.py:415: assert 0 >= 1
+E   assert 0 >= 1
+     +  where 0 = len([])
+C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\tests\unit\test_coverage_boost2.py:420: assert 0 >= 1
+E   assert 0 >= 1
+     +  where 0 = len([])
+C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\tests\unit\test_coverage_boost2.py:425: assert 0 >= 1
+E   AssertionError: assert 'green' == 'blue'
+      
+      - blue
+      + green
+C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\tests\unit\test_coverage_boost2.py:432: AssertionError: assert 'green' == 'blue'
+E   AssertionError: assert None == 'smtp.test.com'
+     +  where None = <acas_pro.alert.notifier.AlertNotifier object at 0x0000027ED0AC6470>.smtp_host
+     +    where <acas_pro.alert.notifier.AlertNotifier object at 0x0000027ED0AC6470> = <unit.test_coverage_boost2.TestNotifierDeep object at 0x0000027ECF1D0690>.an
+C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\tests\unit\test_coverage_boost2.py:462: AssertionError: assert None == 'smtp.test.com'
+E   ImportError: cannot import name 'send_critical_alert' from 'acas_pro.alert.notifier' (C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\src\acas_pro\alert\notifier.py)
+C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\tests\unit\test_coverage_boost2.py:481: ImportError: cannot import name 'send_critical_alert' from 'acas_pro.alert.notifier' (C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\src\acas_pro\alert\notifier.py)
+E   ImportError: cannot import name 'send_urgent_alert' from 'acas_pro.alert.notifier' (C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\src\acas_pro\alert\notifier.py)
+C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\tests\unit\test_coverage_boost2.py:489: ImportError: cannot import name 'send_urgent_alert' from 'acas_pro.alert.notifier' (C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\src\acas_pro\alert\notifier.py)
+E   TypeError: '>=' not supported between instances of 'float' and 'MagicMock'
+C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\src\acas_pro\advanced_analytics\smart_decider.py:294: TypeError: '>=' not supported between instances of 'float' and 'MagicMock'
+E   assert 0 >= 1
+     +  where 0 = len([])
+C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\tests\unit\test_smart_decider.py:75: assert 0 >= 1
+E   assert 0 >= 1
+     +  where 0 = len([])
+C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\tests\unit\test_smart_decider.py:116: assert 0 >= 1
+E   assert 0 >= 1
+     +  where 0 = len([])
+C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\tests\unit\test_smart_decider.py:128: assert 0 >= 1
+=========================== short test summary info ===========================
+FAILED tests/unit/test_coverage_boost2.py::TestNotifierDeep::test_send_with_wechat_channel
+FAILED tests/unit/test_coverage_boost2.py::TestNotifierDeep::test_send_dingtalk
+FAILED tests/unit/test_coverage_boost2.py::TestNotifierDeep::test_send_feishu
+FAILED tests/unit/test_coverage_boost2.py::TestNotifierDeep::test_send_email_with_smtp
+FAILED tests/unit/test_coverage_boost2.py::TestNotifierDeep::test_send_webhook_no_url
+FAILED tests/unit/test_coverage_boost2.py::TestNotifierDeep::test_send_webhook_with_url
+FAILED tests/unit/test_coverage_boost2.py::TestNotifierDeep::test_select_channels_p1
+FAILED tests/unit/test_coverage_boost2.py::TestNotifierDeep::test_select_channels_p2
+FAILED tests/unit/test_coverage_boost2.py::TestNotifierDeep::test_select_channels_p3
+FAILED tests/unit/test_coverage_boost2.py::TestNotifierDeep::test_get_feishu_color
+FAILED tests/unit/test_coverage_boost2.py::TestNotifierDeep::test_configure_email
+FAILED tests/unit/test_coverage_boost2.py::TestNotifierDeep::test_send_critical_alert_func
+FAILED tests/unit/test_coverage_boost2.py::TestNotifierDeep::test_send_urgent_alert_func
+FAILED tests/unit/test_high_impact_modules.py::TestSmartDecider::test_analyze_and_decide
+FAILED tests/unit/test_smart_decider.py::TestSmartDecider::test_analyze_and_decide_bidding
+FAILED tests/unit/test_smart_decider.py::TestSmartDecider::test_analyze_and_decide_creative
+FAILED tests/unit/test_smart_decider.py::TestSmartDecider::test_analyze_and_decide_seasonal
+17 failed, 1512 passed, 28 skipped in 12.18s
+python.exe : Exception ignored in atexit callback <function cleanup_numbered_dir at 0x0000027EA09122A0>:
+所在位置 行:1 字符: 142
++ ... s\ACAS-Pro; & .venv\Scripts\python.exe -m pytest tests/unit/ -q --tb= ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Exception ignor...0027EA09122A0>::String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+Traceback (most recent call last):
+  File "C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\.venv\Lib\site-packages\_pytest\pathlib.py", line 374, in clea
+nup_numbered_dir
+    cleanup_dead_symlinks(root)
+  File "C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\.venv\Lib\site-packages\_pytest\pathlib.py", line 360, in clea
+nup_dead_symlinks
+    left_dir.unlink()
+  File "C:\Users\HUAWEI\AppData\Roaming\uv\python\cpython-3.14-windows-x86_64-none\Lib\pathlib\__init__.py", line 1042,
+ in unlink
+    os.unlink(self)
+PermissionError: [WinError 5] �ܾ����ʡ�: 'C:\\Users\\HUAWEI\\AppData\\Local\\Temp\\pytest-of-HUAWEI\\pytest-current'

@@ -138,10 +138,10 @@ class TestPublisherModules:
     
     def test_scheduler_import(self):
         try:
-            from acas_pro.publisher.scheduler import ContentScheduler
-            assert ContentScheduler is not None
+            from acas_pro.publisher.scheduler import PublishScheduler
+            assert PublishScheduler is not None
         except ImportError:
-            pytest.skip("Cannot import ContentScheduler")
+            pytest.skip("Cannot import PublishScheduler")
     
     def test_blockchain_import(self):
         try:
