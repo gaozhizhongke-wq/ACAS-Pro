@@ -478,8 +478,8 @@ class ScriptGenerator:
         template = random.choice(templates)
         
         return template.format(
-            benefit=intent.get("benefit", "改善健康"),
-            question=intent.get("product", "这个产品") + "怎么样",
+            benefit=intent.get("benefit") or "改善健康",
+            question=(intent.get("product") or "这个产品") + "怎么样",
             topic="养生知识"
         )
         
