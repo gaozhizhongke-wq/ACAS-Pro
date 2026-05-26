@@ -136,7 +136,7 @@ class TestBiddingEngine:
             base_bid=10.0,
             target_cpa=50.0
         )
-        bid = self.engine.calculate_bid(config, {"current_cpa": 30.0})
+        bid = self.engine.calculate_bid(config, {"current_cpa": 30.0, "hour": 20})
         assert bid > 10.0  # Should increase bid when CPA is low
 
     def test_calculate_bid_target_roi_high(self):
@@ -145,7 +145,7 @@ class TestBiddingEngine:
             base_bid=10.0,
             target_roi=2.0
         )
-        bid = self.engine.calculate_bid(config, {"current_roi": 3.0})
+        bid = self.engine.calculate_bid(config, {"current_roi": 3.0, "hour": 20})
         assert bid > 10.0  # Should increase bid when ROI is high
 
     def test_calculate_bid_target_roi_low(self):
