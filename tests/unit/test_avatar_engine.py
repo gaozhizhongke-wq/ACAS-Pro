@@ -6,9 +6,6 @@ import json
 from unittest.mock import MagicMock, patch
 from pathlib import Path
 
-# Mock numpy before importing avatar modules
-sys.modules['numpy'] = MagicMock()
-
 import pytest
 from acas_pro.avatar.avatar_engine import (
     AvatarType, AvatarStyle, AvatarGender, AvatarAgeGroup,

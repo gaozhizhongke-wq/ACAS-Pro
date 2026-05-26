@@ -127,7 +127,7 @@ class TestBiddingEngine:
             base_bid=10.0,
             target_cpa=50.0
         )
-        bid = self.engine.calculate_bid(config, {"current_cpa": 70.0})
+        bid = self.engine.calculate_bid(config, {"current_cpa": 70.0, "hour": 20})
         assert bid < 10.0  # Should decrease bid when CPA is high
 
     def test_calculate_bid_target_cpa_low(self):
@@ -154,7 +154,7 @@ class TestBiddingEngine:
             base_bid=10.0,
             target_roi=2.0
         )
-        bid = self.engine.calculate_bid(config, {"current_roi": 1.0})
+        bid = self.engine.calculate_bid(config, {"current_roi": 1.0, "hour": 20})
         assert bid < 10.0  # Should decrease bid when ROI is low
 
     def test_calculate_bid_max_conversion_slow(self):
@@ -170,7 +170,7 @@ class TestBiddingEngine:
             strategy=BiddingStrategy.MAX_CONVERSION,
             base_bid=10.0
         )
-        bid = self.engine.calculate_bid(config, {"budget_usage": 0.9})
+        bid = self.engine.calculate_bid(config, {"budget_usage": 0.9, "hour": 20})
         assert bid < 10.0  # Should decrease bid when budget usage is fast
 
     def test_optimize_bidding_empty(self):

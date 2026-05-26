@@ -16,18 +16,29 @@ numpy_mock.log = lambda x: x
 numpy_mock.exp = lambda x: x
 numpy_mock.where = lambda *a, **kw: [True]
 numpy_mock.isnan = lambda x: False
-sys.modules.setdefault('numpy', numpy_mock)
-sys.modules.setdefault('np', numpy_mock)
-
 # Pre-mock statsforecast
 sf_mock = MagicMock()
-sys.modules.setdefault('statsforecast', sf_mock)
-sys.modules.setdefault('statsforecast.models', sf_mock)
-sys.modules.setdefault('statsforecast.core', sf_mock)
 
 # Pre-mock cv2 for avatar
 cv2_mock = MagicMock()
-sys.modules.setdefault('cv2', cv2_mock)
+
+@pytest.fixture(autouse=True, scope='module')
+def _mock_heavy_deps():
+    """Mock heavy/optional deps per-module; save/restore to avoid polluting other files."""
+    _saved = {}
+    _mocks = [('numpy', numpy_mock), ('np', numpy_mock),
+              ('statsforecast', sf_mock), ('statsforecast.models', sf_mock),
+              ('statsforecast.core', sf_mock), ('cv2', cv2_mock)]
+    for k, m in _mocks:
+        _saved[k] = sys.modules.get(k)
+        sys.modules[k] = m
+    yield
+    print(f"\n[DIAG-TEARDOWN] test_high_impact_modules restoring numpy")
+    for k, orig in _saved.items():
+        if orig is not None:
+            sys.modules[k] = orig
+        elif k in sys.modules:
+            del sys.modules[k]
 
 
 # ==================== SmartDecider ====================

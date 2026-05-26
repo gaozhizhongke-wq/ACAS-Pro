@@ -4,15 +4,35 @@ import sys, os, datetime
 from unittest.mock import MagicMock as M, patch
 import pytest
 
-# Only mock dependencies, NOT the target modules themselves
-for mod in ['PySide6', 'numpy', 'psutil', 'acas_pro.i18n']:
-    sys.modules[mod] = M()
-sys.modules['PySide6.QtWidgets'] = M()
-sys.modules['PySide6.QtCore'] = M()
-sys.modules['PySide6.QtGui'] = M()
-sys.modules['feedparser'] = M()
-
+# Module-level mocks removed - moved to class-level autouse fixtures to avoid
+# polluting other test files during collection phase.
+if False:  # placeholder so syntax is preserved
+    for mod in ['PySide6', 'numpy', 'psutil', 'acas_pro.i18n', 'feedparser',
+                'PySide6.QtWidgets', 'PySide6.QtCore', 'PySide6.QtGui']:
+        sys.modules[mod] = M()
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
+
+
+# ── Shared fixture for dependency mocks ──────────────────────────────────
+
+@pytest.fixture(autouse=True)
+def _mock_deps():
+    """Mock heavy dependencies per-test to avoid polluting other files."""
+    # Save real modules so we can restore them after mocking
+    saved = {}
+    for mod in ['PySide6', 'numpy', 'psutil', 'acas_pro.i18n', 'feedparser',
+                'PySide6.QtWidgets', 'PySide6.QtCore', 'PySide6.QtGui']:
+        if mod in sys.modules and not hasattr(sys.modules[mod], 'mock_calls'):
+            saved[mod] = sys.modules.pop(mod)
+        sys.modules[mod] = M()
+    yield
+    # Restore real modules, remove mock stubs
+    for mod in ['PySide6', 'numpy', 'psutil', 'acas_pro.i18n', 'feedparser',
+                'PySide6.QtWidgets', 'PySide6.QtCore', 'PySide6.QtGui']:
+        if mod in saved:
+            sys.modules[mod] = saved[mod]
+        elif mod in sys.modules:
+            del sys.modules[mod]
 
 
 # ── llm/tools.py ────────────────────────────────────────────────────────

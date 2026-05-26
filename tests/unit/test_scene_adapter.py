@@ -6,14 +6,20 @@ import json
 from unittest.mock import MagicMock, patch
 from pathlib import Path
 
-# Mock numpy before importing avatar modules
-sys.modules['numpy'] = MagicMock()
-
 import pytest
 from acas_pro.avatar.scene_adapter import (
     SceneType, BackgroundType, LightingPreset, CameraAngle,
     LightingConfig, CameraConfig, SceneConfig, SceneAdapter
 )
+def _mock_numpy_for_tests():
+    """Re-mock numpy during this file's tests; restore after."""
+    _saved = sys.modules.get('numpy')
+    sys.modules['numpy'] = MagicMock()
+    yield
+    if _saved is not None:
+        sys.modules['numpy'] = _saved
+    elif 'numpy' in sys.modules:
+        del sys.modules['numpy']
 
 
 class TestEnums:

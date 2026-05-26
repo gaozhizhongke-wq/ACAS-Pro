@@ -7,16 +7,32 @@ import pytest
 from unittest.mock import MagicMock, patch
 
 
+def _save_acas_modules():
+    """Save real acas_pro modules, return dict for later restore."""
+    saved = {}
+    for m in list(sys.modules.keys()):
+        if m.startswith('acas_pro') and not hasattr(sys.modules[m], 'mock_calls'):
+            saved[m] = sys.modules.pop(m)
+    return saved
+
+
+def _restore_saved_modules(saved):
+    """Restore saved real modules. Never delete anything."""
+    for m, real in saved.items():
+        sys.modules[m] = real
+    # Remove only mocked modules that weren't originally present
+    for m in list(sys.modules.keys()):
+        if m.startswith('acas_pro') and m not in saved and hasattr(sys.modules[m], 'mock_calls'):
+            del sys.modules[m]
+
+
 class TestGenerateToken:
     """Test generate_token function."""
 
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup mocks before each test."""
-        # Clear cached modules
-        for m in list(sys.modules.keys()):
-            if m.startswith('acas_pro'):
-                del sys.modules[m]
+        saved = _save_acas_modules()
 
         # Mock acas_pro.core.security
         mock_jwt_mgr = MagicMock()
@@ -51,10 +67,7 @@ class TestGenerateToken:
 
         yield
 
-        # Cleanup
-        for m in list(sys.modules.keys()):
-            if m.startswith('acas_pro'):
-                del sys.modules[m]
+        _restore_saved_modules(saved)
 
     def test_generate_token(self):
         """Test generate_token returns a token."""
@@ -78,9 +91,7 @@ class TestVerifyToken:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup mocks before each test."""
-        for m in list(sys.modules.keys()):
-            if m.startswith('acas_pro'):
-                del sys.modules[m]
+        saved = _save_acas_modules()
 
         # Mock JWTManager
         mock_jwt_mgr = MagicMock()
@@ -104,9 +115,7 @@ class TestVerifyToken:
 
         yield
 
-        for m in list(sys.modules.keys()):
-            if m.startswith('acas_pro'):
-                del sys.modules[m]
+        _restore_saved_modules(saved)
 
     def test_verify_token_valid(self):
         """Test verify_token with valid token."""
@@ -156,9 +165,7 @@ class TestAuthRoutes:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup mocks."""
-        for m in list(sys.modules.keys()):
-            if m.startswith('acas_pro'):
-                del sys.modules[m]
+        saved = _save_acas_modules()
 
         # Mock dependencies
         mock_jwt_mgr = MagicMock()
@@ -190,9 +197,7 @@ class TestAuthRoutes:
 
         yield
 
-        for m in list(sys.modules.keys()):
-            if m.startswith('acas_pro'):
-                del sys.modules[m]
+        _restore_saved_modules(saved)
 
     def test_register_success(self, app):
         """Test successful registration."""

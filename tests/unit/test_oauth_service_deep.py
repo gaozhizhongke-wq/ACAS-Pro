@@ -3,6 +3,11 @@ import sys, os, types, json, urllib, secrets
 from unittest.mock import MagicMock as M, patch
 import pytest
 
+# Save real modules before mocking (module-level mock required for import below)
+_saved_modules = {mod: sys.modules.get(mod) for mod in [
+    'PySide6', 'numpy', 'acas_pro.core.config', 'acas_pro.core.logging',
+    'acas_pro.core.security', 'acas_pro.services.user_service', 'acas_pro.i18n',
+    'PySide6.QtWidgets', 'PySide6.QtCore', 'PySide6.QtGui']}
 for mod in ['PySide6','numpy','acas_pro.core.config','acas_pro.core.logging',
     'acas_pro.core.security','acas_pro.services.user_service','acas_pro.i18n']:
     m = M(); m.get_config = M(); m.get_logger = M()
@@ -14,6 +19,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 from acas_pro.services.oauth.oauth_service import (
     OAuthUserInfo, TokenResponse, QQOAuth, WeChatOAuth, OAuthService
 )
+
+# Restore real modules after import so other test files aren't polluted
+for mod, orig in _saved_modules.items():
+    if orig is not None:
+        sys.modules[mod] = orig
+    elif mod in sys.modules:
+        del sys.modules[mod]
 
 def _make_urlopen_cm(body_bytes):
     """Return a mock context manager for urllib.request.urlopen."""

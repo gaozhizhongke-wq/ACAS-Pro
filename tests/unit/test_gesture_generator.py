@@ -4,15 +4,11 @@
 import sys
 from unittest.mock import MagicMock
 
-# Mock numpy before importing gesture_generator
-sys.modules['numpy'] = MagicMock()
-
 import pytest
 from acas_pro.avatar.gesture_generator import (
     GestureType, BodyPart, JointRotation, PoseFrame,
     Gesture, GestureGenerator
 )
-
 
 class TestGestureType:
     def test_enum_values(self):

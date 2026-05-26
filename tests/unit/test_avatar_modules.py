@@ -12,14 +12,18 @@ class TestLipSync:
 
     @pytest.fixture(autouse=True)
     def setup(self):
-        self._saved = dict(sys.modules)
+        self._orig = {}
+        for mod in ['acas_pro.core.config', 'acas_pro.core.logging', 'numpy']:
+            self._orig[mod] = sys.modules.get(mod)
         sys.modules['acas_pro.core.config'] = MagicMock(config=MagicMock())
         sys.modules['acas_pro.core.logging'] = MagicMock(get_logger=MagicMock())
         sys.modules['numpy'] = MagicMock()
         yield
-        for m in list(sys.modules.keys()):
-            if m not in self._saved:
-                del sys.modules[m]
+        for mod, orig in self._orig.items():
+            if orig is None:
+                sys.modules.pop(mod, None)
+            else:
+                sys.modules[mod] = orig
 
     def test_lipsync_enum(self):
         from acas_pro.avatar.lip_sync import LipSyncModel
@@ -59,14 +63,18 @@ class TestGestureGenerator:
 
     @pytest.fixture(autouse=True)
     def setup(self):
-        self._saved = dict(sys.modules)
+        self._orig = {}
+        for mod in ['acas_pro.core.config', 'acas_pro.core.logging', 'numpy']:
+            self._orig[mod] = sys.modules.get(mod)
         sys.modules['acas_pro.core.config'] = MagicMock(config=MagicMock())
         sys.modules['acas_pro.core.logging'] = MagicMock(get_logger=MagicMock())
         sys.modules['numpy'] = MagicMock()
         yield
-        for m in list(sys.modules.keys()):
-            if m not in self._saved:
-                del sys.modules[m]
+        for mod, orig in self._orig.items():
+            if orig is None:
+                sys.modules.pop(mod, None)
+            else:
+                sys.modules[mod] = orig
 
     def test_gesture_type_enum(self):
         from acas_pro.avatar.gesture_generator import GestureType
@@ -120,14 +128,18 @@ class TestSceneAdapter:
 
     @pytest.fixture(autouse=True)
     def setup(self):
-        self._saved = dict(sys.modules)
+        self._orig = {}
+        for mod in ['acas_pro.core.config', 'acas_pro.core.logging', 'numpy']:
+            self._orig[mod] = sys.modules.get(mod)
         sys.modules['acas_pro.core.config'] = MagicMock(config=MagicMock())
         sys.modules['acas_pro.core.logging'] = MagicMock(get_logger=MagicMock())
         sys.modules['numpy'] = MagicMock()
         yield
-        for m in list(sys.modules.keys()):
-            if m not in self._saved:
-                del sys.modules[m]
+        for mod, orig in self._orig.items():
+            if orig is None:
+                sys.modules.pop(mod, None)
+            else:
+                sys.modules[mod] = orig
 
     def test_scene_type_enum(self):
         from acas_pro.avatar.scene_adapter import SceneType
@@ -178,14 +190,18 @@ class TestAvatarEngine:
 
     @pytest.fixture(autouse=True)
     def setup(self):
-        self._saved = dict(sys.modules)
+        self._orig = {}
+        for mod in ['acas_pro.core.config', 'acas_pro.core.logging', 'numpy']:
+            self._orig[mod] = sys.modules.get(mod)
         sys.modules['acas_pro.core.config'] = MagicMock(config=MagicMock())
         sys.modules['acas_pro.core.logging'] = MagicMock(get_logger=MagicMock())
         sys.modules['numpy'] = MagicMock()
         yield
-        for m in list(sys.modules.keys()):
-            if m not in self._saved:
-                del sys.modules[m]
+        for mod, orig in self._orig.items():
+            if orig is None:
+                sys.modules.pop(mod, None)
+            else:
+                sys.modules[mod] = orig
 
     def test_avatar_type_enum(self):
         from acas_pro.avatar.avatar_engine import AvatarType

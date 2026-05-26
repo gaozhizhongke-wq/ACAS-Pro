@@ -76,16 +76,10 @@ class DatabaseManager:
         return cls._instance
     
     def __init__(self):
-        if self._initialized:
+        # Check the global _db_instance, NOT self._initialized.
+        global _db_instance
+        if _db_instance is not None and self is _db_instance and self._initialized:
             return
-        
-        # Load .env file (if exists) — must run before reading DATABASE_URL
-        try:
-            from dotenv import load_dotenv
-            load_dotenv()
-        except ImportError:
-            pass  # python-dotenv not installed; rely on system env vars
-        
         self._db_url = os.environ.get('DATABASE_URL', '')
         self._is_postgres = 'postgresql' in self._db_url.lower() or 'postgres' in self._db_url.lower()
         
@@ -351,16 +345,81 @@ class DatabaseManager:
                 _get_logger().error(f"Transaction failed: {e}")
                 raise
     
+    @staticmethod
+    def _translate_insert_or_replace(query: str) -> str:
+        """Translate SQLite INSERT OR REPLACE to PostgreSQL INSERT ... ON CONFLICT DO UPDATE SET ..."""
+        import re
+        # Match INSERT OR REPLACE INTO table (cols) VALUES (...)
+        # Use balanced-parenthesis parsing for VALUES to handle datetime strings
+        m = re.match(
+            r'(\s*)INSERT\s+OR\s+REPLACE\s+INTO\s+(\w+)\s*\(([^)]+)\)\s*VALUES\s*\(',
+            query, re.IGNORECASE | re.DOTALL
+        )
+        if not m:
+            return query  # fallback
+        indent, table, cols_str = m.group(1), m.group(2), m.group(3)
+        vals_start = m.end()
+        # Count parentheses to find the closing ) of VALUES(...)
+        depth = 1
+        i = vals_start
+        while i < len(query) and depth > 0:
+            if query[i] == '(':
+                depth += 1
+            elif query[i] == ')':
+                depth -= 1
+            i += 1
+        vals_str = query[vals_start:i-1]
+        cols = [c.strip() for c in cols_str.split(',')]
+        pk_col = cols[0]
+        update_cols = cols[1:]
+        set_clause = ', '.join(f'{c} = EXCLUDED.{c}' for c in update_cols)
+        return f'{indent}INSERT INTO {table} ({cols_str}) VALUES ({vals_str}) ON CONFLICT ({pk_col}) DO UPDATE SET {set_clause}'
+
     def execute(self, query: str, params: tuple = None) -> List[Dict]:
-        """Execute query and return results"""
+        """Execute query and return results. Auto-commits write operations on PostgreSQL."""
         if self._is_postgres:
+            # Auto-translate SQLite ? placeholders to PostgreSQL %s
+            if '?' in query:
+                query = query.replace('?', '%s')
+            # SQLite AUTOINCREMENT is invalid in PostgreSQL
+            if 'AUTOINCREMENT' in query:
+                query = query.replace('AUTOINCREMENT', '')
+            # SQLite datetime('now') → PostgreSQL NOW()
+            if "datetime('now')" in query:
+                query = query.replace("datetime('now')", 'NOW()')
+            # SQLite INSERT OR REPLACE → PostgreSQL INSERT ... ON CONFLICT DO UPDATE
+            if 'INSERT OR REPLACE' in query.upper():
+                import re
+                query = self._translate_insert_or_replace(query)
             conn = self._pool.getconn()
             cursor = conn.cursor()
             try:
                 cursor.execute(query, params)
+                # Auto-commit for write operations (INSERT/UPDATE/DELETE)
+                is_write = query.strip().upper().startswith(('INSERT', 'UPDATE', 'DELETE', 'CREATE', 'ALTER', 'DROP'))
+                if is_write:
+                    conn.commit()
                 if cursor.description:
-                    return [dict(row) for row in cursor.fetchall()]
+                    import datetime as _dt
+                    rows = []
+                    for row in cursor.fetchall():
+                        d = dict(row)
+                        # Normalize datetime values to ISO strings (SQLite compat)
+                        for k, v in d.items():
+                            if isinstance(v, _dt.datetime):
+                                d[k] = v.isoformat()
+                            elif isinstance(v, _dt.date):
+                                d[k] = v.isoformat()
+                            elif isinstance(v, _dt.time):
+                                d[k] = v.isoformat()
+                            elif isinstance(v, (bytes, bytearray)):
+                                d[k] = v.decode('utf-8', errors='replace')
+                        rows.append(d)
+                    return rows
                 return []
+            except Exception:
+                conn.rollback()
+                raise
             finally:
                 cursor.close()
                 self._pool.putconn(conn)
@@ -483,9 +542,24 @@ _db_instance: Optional['DatabaseManager'] = None
 def get_db() -> 'DatabaseManager':
     """Get database manager singleton (lazy-loaded)"""
     global _db_instance
+    # Always check the global variable — even if self._initialized is True
+    # on a stale module-level instance, we must create a new one after reset_db()
     if _db_instance is None:
         _db_instance = DatabaseManager()
     return _db_instance
+
+
+def reset_db():
+    """Reset the global database singleton (for testing)"""
+    global _db_instance
+    old = _db_instance
+    _db_instance = None
+    # Dispose old pool to release connections
+    if old is not None:
+        try:
+            old._pool.dispose()
+        except Exception:
+            pass
 
 
 # Backward compatibility - deprecated, use get_db()

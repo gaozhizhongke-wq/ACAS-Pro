@@ -48,7 +48,7 @@ from acas_pro.core.security import (
 
 class TestPasswordValidator:
     def test_valid_password(self):
-        ok, msg = PasswordValidator.validate("Valid1@Password")
+        ok, msg = PasswordValidator.validate('Valid1@Password')
         assert ok is True
         assert msg == ""
 

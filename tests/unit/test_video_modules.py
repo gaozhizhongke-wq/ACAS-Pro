@@ -18,17 +18,21 @@ class TestVoiceSynthesis:
 
     @pytest.fixture(autouse=True)
     def setup(self):
+        self._orig = {}
+        for mod in ['acas_pro.core.config', 'acas_pro.core.logging', 'numpy']:
+            self._orig[mod] = sys.modules.get(mod)
         _clear("acas_pro.video")
         _clear("acas_pro.core")
         _clear("numpy")
-        # Mock core deps
         sys.modules['acas_pro.core.config'] = MagicMock(config=MagicMock())
         sys.modules['acas_pro.core.logging'] = MagicMock(get_logger=MagicMock())
         sys.modules['numpy'] = MagicMock()
         yield
-        for m in list(sys.modules.keys()):
-            if m.startswith('acas_pro'):
-                del sys.modules[m]
+        for mod, orig in self._orig.items():
+            if orig is None:
+                sys.modules.pop(mod, None)
+            else:
+                sys.modules[mod] = orig
 
     def test_voice_style_enum(self):
         from acas_pro.video.voice_synthesis import VoiceStyle
@@ -67,6 +71,9 @@ class TestVideoMaker:
 
     @pytest.fixture(autouse=True)
     def setup(self):
+        self._orig = {}
+        for mod in ['acas_pro.core.config', 'acas_pro.core.logging', 'numpy', 'cv2', 'moviepy']:
+            self._orig[mod] = sys.modules.get(mod)
         _clear("acas_pro.video")
         _clear("acas_pro.core")
         _clear("numpy")
@@ -78,9 +85,11 @@ class TestVideoMaker:
         sys.modules['cv2'] = MagicMock()
         sys.modules['moviepy'] = MagicMock()
         yield
-        for m in list(sys.modules.keys()):
-            if m.startswith('acas_pro'):
-                del sys.modules[m]
+        for mod, orig in self._orig.items():
+            if orig is None:
+                sys.modules.pop(mod, None)
+            else:
+                sys.modules[mod] = orig
 
     def test_video_maker_v2_import(self):
         _clear("acas_pro")

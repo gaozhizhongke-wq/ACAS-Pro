@@ -4,11 +4,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
 import sys
-
-if 'numpy' not in sys.modules:
-    sys.modules['numpy'] = MagicMock()
-
-
 class TestAdsManager:
     """Tests for ads manager modules."""
     

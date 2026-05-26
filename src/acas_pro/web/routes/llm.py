@@ -29,7 +29,7 @@ def create_llm_client():
         provider=provider_enum,
         api_key=llm.api_key,
         model=llm.model,
-        base_url=llm.api_base,
+        api_base=llm.api_base,
         temperature=llm.temperature,
         max_tokens=llm.max_tokens,
     )

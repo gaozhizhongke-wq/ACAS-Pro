@@ -38,7 +38,7 @@ def __getattr__(name):
 
 def _reset_lazy():
     """Clear lazy singletons — for test fixtures."""
-    _lazy.clear()
+    _sys.modules[__name__].__dict__['_lazy'].clear()
 
 from ..core.logging import get_logger, audit_logger
 
@@ -54,13 +54,13 @@ import sys as _sys
 
 def _get_lazy(name, factory):
     """Get or create a lazy singleton, respecting test monkeypatching."""
-    # Check if test has patched the module attribute directly
     mod = _sys.modules[__name__]
+    lazy_store = mod.__dict__['_lazy']
     if name in mod.__dict__ and name not in ('_lazy', '_reset_lazy', '__getattr__'):
         return mod.__dict__[name]
-    if name not in _lazy:
-        _lazy[name] = factory()
-    return _lazy[name]
+    if name not in lazy_store:
+        lazy_store[name] = factory()
+    return lazy_store[name]
 
 
 def _get_lazy_rate_limiter():

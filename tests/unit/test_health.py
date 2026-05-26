@@ -7,14 +7,39 @@ import pytest
 from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch, PropertyMock
 
-# Mock dependencies before importing
-sys.modules['acas_pro.core.config'] = MagicMock()
-sys.modules['acas_pro.core.logging'] = MagicMock(get_logger=MagicMock(return_value=MagicMock()))
-sys.modules['acas_pro.core.database'] = MagicMock()
-sys.modules['acas_pro.llm.llm_client'] = MagicMock()
+# Module-level mock removed (was causing sys.modules pollution across all test files
+# during collection phase). Tests now use class-level autouse fixtures instead.
+# sys.modules['acas_pro.core.config'] = MagicMock()
+# sys.modules['acas_pro.core.logging'] = MagicMock(...)
+# sys.modules['acas_pro.core.database'] = MagicMock()
+# sys.modules['acas_pro.llm.llm_client'] = MagicMock()
 
 
 class TestHealthStatus:
+    @pytest.fixture(autouse=True)
+    def _mock_deps(self):
+        # Save real modules before mocking
+        _saved = {}
+        for mod in ['acas_pro.core.config', 'acas_pro.core.logging',
+                     'acas_pro.core.database', 'acas_pro.llm.llm_client']:
+            existing = sys.modules.get(mod)
+            if existing is not None and not hasattr(existing, 'mock_calls'):
+                _saved[mod] = existing
+        sys.modules['acas_pro.core.config'] = MagicMock()
+        sys.modules['acas_pro.core.logging'] = MagicMock(
+            get_logger=MagicMock(return_value=MagicMock())
+        )
+        sys.modules['acas_pro.core.database'] = MagicMock()
+        sys.modules['acas_pro.llm.llm_client'] = MagicMock()
+        yield
+        # Restore real modules, never delete
+        for mod, real in _saved.items():
+            sys.modules[mod] = real
+        for mod in ['acas_pro.core.config', 'acas_pro.core.logging',
+                     'acas_pro.core.database', 'acas_pro.llm.llm_client']:
+            if mod not in _saved and mod in sys.modules:
+                del sys.modules[mod]
+
     def test_healthy_value(self):
         from acas_pro.web.health import HealthStatus
         assert HealthStatus.HEALTHY.value == "healthy"
@@ -62,10 +87,11 @@ class TestHealthChecker:
     @pytest.fixture(autouse=True)
     def setup(self):
         """Setup mocks before each test."""
-        # Clear cached modules
+        # Save real acas_pro modules before mocking
+        _saved = {}
         for m in list(sys.modules.keys()):
-            if m.startswith('acas_pro'):
-                del sys.modules[m]
+            if m.startswith('acas_pro') and not hasattr(sys.modules[m], 'mock_calls'):
+                _saved[m] = sys.modules.pop(m)
 
         # Mock config
         mock_config = MagicMock()
@@ -98,10 +124,13 @@ class TestHealthChecker:
 
         yield
 
-        # Cleanup
-        for m in list(sys.modules.keys()):
-            if m.startswith('acas_pro'):
-                del sys.modules[m]
+        # Restore all saved real modules
+        for m, real in _saved.items():
+            sys.modules[m] = real
+        # Remove only the 3 modules we explicitly mocked
+        for mod in ['acas_pro.core.config', 'acas_pro.core.logging', 'acas_pro.core.database']:
+            if mod not in _saved and mod in sys.modules:
+                del sys.modules[mod]
 
     def test_init(self):
         from acas_pro.web.health import HealthChecker

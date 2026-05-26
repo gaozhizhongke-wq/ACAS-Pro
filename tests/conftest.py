@@ -245,3 +245,6 @@ def _reset_lazy_singletons():
     mods_to_clear = [k for k in list(sys.modules.keys()) if k.startswith('acas_pro')]
     for mod in mods_to_clear:
         del sys.modules[mod]
+
+print(f'[CONFTEST] numpy type={type(sys.modules.get('numpy')).__name__ if sys.modules.get('numpy') else None}')
+
