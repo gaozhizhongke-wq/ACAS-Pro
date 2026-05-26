@@ -60,7 +60,6 @@ class TestRSSCollector:
         result = rc.collect(sources=[])
         assert isinstance(result, list)
 
-    @pytest.mark.skip(reason="sys.modules isolation issue - passes when run alone")
     def test_fetch_feed(self):
         rc = RSSCollector()
         

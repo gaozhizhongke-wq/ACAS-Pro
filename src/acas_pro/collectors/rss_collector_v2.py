@@ -39,3 +39,7 @@ class RSSCollector:
     def clear(self) -> None:
         """Clear articles"""
         self._articles.clear()
+
+
+# Alias for backward compatibility
+RSSCollectorV2 = RSSCollector

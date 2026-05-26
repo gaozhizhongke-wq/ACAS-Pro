@@ -197,11 +197,13 @@ class TestSettlementEngine:
         result = self.engine.execute_settlement(created.id)
         assert result is not None
 
-    @pytest.mark.skip(reason="API returns different type than expected")
     def test_execute_settlement_not_found(self):
         result = self.engine.execute_settlement("nonexistent")
-        # May return False or None depending on implementation
-        assert result is False or result is None
+        # Returns dict with success=False
+        if isinstance(result, dict):
+            assert result.get("success") is False or "error" in result
+        else:
+            assert result is False or result is None
 
     def test_verify_settlement(self):
         created = self.engine.create_settlement(
@@ -213,12 +215,12 @@ class TestSettlementEngine:
         result = self.engine.verify_settlement(created.id)
         assert result is not None
 
-    @pytest.mark.skip(reason="API returns different type than expected")
     def test_get_settlement_statistics(self):
-        result = self.engine.get_settlement_statistics()
+        from datetime import datetime, timedelta
+        end = datetime.now().strftime("%Y-%m-%d")
+        start = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
+        result = self.engine.get_settlement_statistics(start, end)
         assert isinstance(result, dict)
-        # Check expected keys exist
-        assert "total" in result or "total_count" in result or True
 
     def test_get_templates(self):
         templates = self.engine.get_templates()

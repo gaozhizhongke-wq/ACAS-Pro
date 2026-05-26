@@ -75,7 +75,7 @@ class TestMetricsModule:
     
     def test_secrets_import(self):
         try:
-            from acas_pro.metrics.secrets import SecretsMetrics
+            from acas_pro.blockchain.secrets_metrics import SecretsMetrics
             assert SecretsMetrics is not None
         except ImportError:
             pytest.skip("Cannot import SecretsMetrics")
