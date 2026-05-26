@@ -119,7 +119,7 @@ class DatabaseManager:
             )
             self._local = None  # Not used for PostgreSQL
         except ImportError:
-            logger.error("psycopg2 not installed. Run: pip install psycopg2-binary")
+            _get_logger().error("psycopg2 not installed. Run: pip install psycopg2-binary")
             raise
     
     def _init_sqlite_db(self):
