@@ -198,12 +198,16 @@ class TestTokenFunctions:
         assert len(tok) > 0
 
     def test_verify_token_success(self):
-        # Generate a real token, then verify it
-        tok = generate_token('u1', 'test')
-        payload = verify_token(tok)
-        assert payload is not None
-        assert payload['sub'] == 'u1'
-        assert payload['account'] == 'test'
+        # Ensure config has a valid secret key for token generation/verification
+        with patch('acas_pro.core.security._cfg') as m_cfg:
+            m_cfg.return_value.security.secret_key = 'test-secret-key-for-jwt-1234567890'
+            m_cfg.return_value.security.jwt_algorithm = 'HS256'
+            # Generate a real token, then verify it
+            tok = generate_token('u1', 'test')
+            payload = verify_token(tok)
+            assert payload is not None
+            assert payload['sub'] == 'u1'
+            assert payload['account'] == 'test'
 
     def test_verify_token_legacy(self):
         """JWTManager returns None → fallback to jwt.decode (local import)."""
