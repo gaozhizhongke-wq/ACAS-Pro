@@ -52,6 +52,8 @@ class LLMConfig:
     base_url: str = "https://api.deepseek.com"
     max_tokens: int = 4000
     temperature: float = 0.7
+    agent_mode: bool = True
+    max_agent_steps: int = 10
 
     def __post_init__(self):
         if not self.api_key:

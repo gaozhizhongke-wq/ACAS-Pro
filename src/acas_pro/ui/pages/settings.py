@@ -863,7 +863,7 @@ class SettingsPage(QWidget):
             self.lang_combo.setCurrentIndex(lang_index)
         
         # LLM设置
-        if hasattr(config, 'llm') and _cfg.llm:
+        if hasattr(_cfg, 'llm') and _cfg.llm:
             provider_map = {
                 "openai": 0, "anthropic": 1, "kimi": 2, "deepseek": 3,
                 "qwen": 4, "lmstudio": 5, "ollama": 6, "custom": 7
@@ -875,8 +875,8 @@ class SettingsPage(QWidget):
             self.llm_model.setText(_cfg.llm.model or "")
             self.llm_temp.setValue(_cfg.llm.temperature or 0.7)
             self.llm_max_tokens.setValue(_cfg.llm.max_tokens or 4096)
-            self.llm_agent_mode.setChecked(_cfg.llm.agent_mode if _cfg.llm.agent_mode is not None else True)
-            self.llm_max_steps.setValue(_cfg.llm.max_agent_steps or 10)
+            self.llm_agent_mode.setChecked(getattr(_cfg.llm, 'agent_mode', True))
+            self.llm_max_steps.setValue(getattr(_cfg.llm, 'max_agent_steps', 10))
     
     def _on_language_changed(self, index):
         """语言切换"""

@@ -182,9 +182,8 @@ class ProductManager:
         # Ensure shop_id column exists (for compatibility with existing tables)
         try:
             self.db.execute("ALTER TABLE products ADD COLUMN shop_id TEXT")
-        except Exception as e:
-            logger.exception("Unhandled exception")
-            pass  # Column may already exist
+        except Exception:
+            logger.debug("shop_id column already exists or other alter error")
     
     def create_product(
         self,

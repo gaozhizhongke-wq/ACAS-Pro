@@ -354,7 +354,7 @@ class LoginPage(QWidget):
         """QQ登录"""
         # 使用OAuth服务
         from ...services.oauth import OAuthService
-        from ....core.config import config
+        from ...core.config import config
         
         # Get config object (config is a function)
         _cfg = config()
@@ -384,7 +384,7 @@ class LoginPage(QWidget):
     def _on_wechat_login(self):
         """微信登录"""
         from ...services.oauth import OAuthService
-        from ....core.config import config
+        from ...core.config import config
         
         # Get config object (config is a function)
         _cfg = config()
