@@ -60,6 +60,11 @@ def _mock_user_service(mock_service=True, mock_rl=True, mock_pv=True):
         m = p.start()
         m.return_value = MagicMock(security=MagicMock(secret_key='x'*32))
         patches.append(p)
+        # Also mock _cfg in security module for JWTManager
+        p = patch('acas_pro.core.security._cfg')
+        m = p.start()
+        m.return_value = MagicMock(security=MagicMock(secret_key='x'*32, jwt_algorithm='HS256'))
+        patches.append(p)
         yield {}
     finally:
         for p in patches:
@@ -199,7 +204,7 @@ class TestTokenFunctions:
 
     def test_verify_token_success(self):
         # Ensure config has a valid secret key for token generation/verification
-        with patch('acas_pro.core.security._cfg') as m_cfg:
+        with patch('acas_pro.core.security.get_config') as m_cfg:
             cfg = MagicMock()
             cfg.security.secret_key = 'test-secret-key-for-jwt-1234567890'
             cfg.security.jwt_algorithm = 'HS256'
