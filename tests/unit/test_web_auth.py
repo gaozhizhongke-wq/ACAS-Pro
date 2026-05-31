@@ -78,24 +78,21 @@ def _mock_user_service(mock_service=True, mock_rl=True, mock_pv=True):
 class TestAuthRegister:
     def test_register_success(self, client):
         from types import SimpleNamespace
-        with patch('acas_pro.web.routes.auth.user_service') as m_us, \
-             patch('acas_pro.web.routes.auth.rate_limiter') as m_rl, \
-             patch('acas_pro.web.routes.auth.pv') as m_pv, \
-             patch('acas_pro.web.routes.auth.JWTManager.generate_token', return_value='tok_abc'), \
-             patch('acas_pro.web.routes.auth.config') as m_cfg, \
-             patch('acas_pro.core.security._cfg') as m_sec_cfg:
-            profile = SimpleNamespace(id='u1', account='test', nickname='Test')
-            m_us.register.return_value = (True, 'registered', profile)
+        # Mock all dependencies inline - order matters for rate limiting
+        with patch('acas_pro.web.routes.auth.rate_limiter') as m_rl:
             m_rl.is_allowed.return_value = True
-            m_pv.validate.return_value = (True, '')
-            m_cfg.return_value = MagicMock(security=MagicMock(secret_key='x'*32))
-            m_sec_cfg.return_value = MagicMock(security=MagicMock(secret_key='x'*32, jwt_algorithm='HS256'))
-            resp = client.post('/api/auth/register', json={
-                'account': 'test', 'password': 'Test123!', 'nickname': 'Test'
-            })
-            assert resp.status_code == 200
-            data = json.loads(resp.data)
-            assert data['success'] is True
+            with patch('acas_pro.web.routes.auth.pv') as m_pv:
+                m_pv.validate.return_value = (True, '')
+                with patch('acas_pro.web.routes.auth.user_service') as m_us:
+                    profile = SimpleNamespace(id='u1', account='test', nickname='Test')
+                    m_us.register.return_value = (True, 'registered', profile)
+                    with patch('acas_pro.web.routes.auth.JWTManager.generate_token', return_value='tok_abc'):
+                        resp = client.post('/api/auth/register', json={
+                            'account': 'test', 'password': 'Test123!', 'nickname': 'Test'
+                        })
+                        assert resp.status_code == 200
+                        data = json.loads(resp.data)
+                        assert data['success'] is True
 
     def test_register_missing_account(self, client):
         resp = client.post('/api/auth/register', json={'password': 'Test123!'})
@@ -114,10 +111,9 @@ class TestAuthRegister:
             assert resp.status_code == 400
 
     def test_register_rate_limited(self, client):
-        with patch('acas_pro.web.routes.auth.rate_limiter') as m_rl, \
-             patch('acas_pro.web.routes.auth.pv') as m_pv:
+        # Rate limit check happens BEFORE user_service.register
+        with patch('acas_pro.web.routes.auth.rate_limiter') as m_rl:
             m_rl.is_allowed.return_value = False
-            m_pv.validate.return_value = (True, '')
             resp = client.post('/api/auth/register', json={
                 'account': 'test', 'password': 'Test123!'
             })
@@ -163,10 +159,9 @@ class TestAuthLogin:
         assert resp.status_code == 400
 
     def test_login_rate_limited(self, client):
-        with patch('acas_pro.web.routes.auth.rate_limiter') as m_rl, \
-             patch('acas_pro.web.routes.auth.user_service') as m_us:
+        # Rate limit check happens BEFORE user_service.login
+        with patch('acas_pro.web.routes.auth.rate_limiter') as m_rl:
             m_rl.is_allowed.return_value = False
-            m_us.login.return_value = (True, 'OK', None)
             resp = client.post('/api/auth/login', json={
                 'account': 'test', 'password': 'Test123!'
             })
