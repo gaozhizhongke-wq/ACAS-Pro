@@ -1,3 +1,4 @@
+import pytest
 """Enhanced UI page tests - call all parameterless methods to maximize coverage.
 
 UI pages have many setup/load methods that take no args and set up widgets.

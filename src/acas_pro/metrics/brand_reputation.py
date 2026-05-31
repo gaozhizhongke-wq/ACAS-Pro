@@ -467,4 +467,4 @@ if __name__ == "__main__":
     ]
     
     score = reputation_calculator.calculate(sample_articles)
-    print(reputation_calculator.get_summary(score))
+    logger.info(f"[BrandReputation] {reputation_calculator.get_summary(score)}")

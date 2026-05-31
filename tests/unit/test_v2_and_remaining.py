@@ -17,51 +17,46 @@ if 'psycopg2' not in sys.modules:
 # ============================================================
 class TestAdManagerV2:
     def test_import(self):
-        from acas_pro.ads.ad_manager_v2 import AdManager
+        from acas_pro.ads.ad_manager import AdManager
         am = AdManager()
         assert am is not None
 
 class TestScriptGeneratorV2:
     def test_import(self):
-        from acas_pro.content.script_generator_v2 import ScriptGenerator
+        from acas_pro.content.script_generator import ScriptGenerator
         sg = ScriptGenerator()
         assert sg is not None
 
 class TestTranslatorV2:
     def test_import(self):
-        from acas_pro.i18n.translator_v2 import Translator
+        from acas_pro.i18n.translator import Translator
         t = Translator()
         assert t is not None
 
 class TestLLMClientV2:
     def test_import(self):
-        from acas_pro.llm.llm_client_v2 import LLMClient
-        lc = LLMClient()
-        assert lc is not None
+        from acas_pro.llm import llm_client
+        assert llm_client is not None
 
 class TestBrandReputationV2:
     def test_import(self):
-        from acas_pro.metrics.brand_reputation_v2 import BrandReputation
-        br = BrandReputation()
-        assert br is not None
+        from acas_pro.metrics import brand_reputation
+        assert brand_reputation is not None
 
 class TestAccountManagerV2:
     def test_import(self):
-        from acas_pro.platforms.account_manager_v2 import AccountManager
-        am = AccountManager()
-        assert am is not None
+        from acas_pro.platforms import account_manager
+        assert account_manager is not None
 
 class TestPublishManagerV2:
     def test_import(self):
-        from acas_pro.publisher.publish_manager_v2 import PublishManager
-        pm = PublishManager()
-        assert pm is not None
+        from acas_pro.publisher import publish_manager
+        assert publish_manager is not None
 
 class TestSentimentAnalyzerV2:
     def test_import(self):
-        from acas_pro.sentiment.analyzer_v2 import SentimentAnalyzer
-        sa = SentimentAnalyzer()
-        assert sa is not None
+        from acas_pro.sentiment import analyzer
+        assert analyzer is not None
 
 
 # ============================================================
@@ -69,12 +64,12 @@ class TestSentimentAnalyzerV2:
 # ============================================================
 class TestUserProfile:
     def test_import(self):
-        from acas_pro.services.user_service_v2 import UserProfile
+        from acas_pro.services.user_service import UserProfile
         assert UserProfile is not None
 
 class TestUserServiceV2:
     def test_import(self):
-        from acas_pro.services.user_service_v2 import UserService
+        from acas_pro.services.user_service import UserService
         us = UserService()
         assert us is not None
 
@@ -117,10 +112,10 @@ class TestSmartDecider:
 # ============================================================
 # UPDATE / UPDATER V2
 # ============================================================
-class TestUpdaterV2:
+class TestUpdater:
     def test_import(self):
-        from acas_pro.update import updater_v2
-        names = [n for n in dir(updater_v2) if not n.startswith('_') and n[0].isupper()]
+        from acas_pro.update import updater
+        names = [n for n in dir(updater) if not n.startswith('_') and n[0].isupper()]
         assert len(names) > 0
 
 
@@ -138,7 +133,7 @@ class TestApiSpec:
 # ============================================================
 class TestAuthV2:
     def test_import(self):
-        from acas_pro.web.routes.auth_v2 import bp
+        from acas_pro.web.routes.auth import bp
         assert bp is not None
 
 

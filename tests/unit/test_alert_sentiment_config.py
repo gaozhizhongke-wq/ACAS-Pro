@@ -155,11 +155,24 @@ class TestUpdateChecker:
         assert uc is not None
 
     def test_check(self):
+        from unittest.mock import patch, MagicMock
+        import json as json_mod
         from acas_pro.update.updater import UpdateChecker
         uc = UpdateChecker()
-        # May fail due to network, just ensure it doesn't crash badly
-        result = uc.check()
-        assert result is None or isinstance(result, object)
+        # Mock urllib to avoid network call
+        mock_response = MagicMock()
+        mock_response.read.return_value = json_mod.dumps({
+            "latest_version": "5.2.0",
+            "release_date": "2026-01-01",
+            "download_url": "http://example.com/update.exe",
+            "sha256": "abc123",
+            "changelog": "Test update",
+            "mandatory": False
+        }).encode('utf-8')
+        with patch('urllib.request.urlopen', return_value=mock_response):
+            result = uc.check()
+        assert isinstance(result, tuple)
+        assert len(result) == 2
 
 
 # ============================================================

@@ -55,9 +55,9 @@ class TestWebRoutesImport:
         from acas_pro.web.routes import auth
         assert auth is not None
     
-    def test_auth_v2_import(self):
-        from acas_pro.web.routes import auth_v2
-        assert auth_v2 is not None
+    def test_auth_import(self):
+        from acas_pro.web.routes import auth
+        assert auth is not None
     
     def test_dashboard_import(self):
         from acas_pro.web.routes import dashboard

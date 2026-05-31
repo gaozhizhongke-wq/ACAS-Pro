@@ -12,6 +12,7 @@ from typing import List, Dict, Optional
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from ..core.logging import get_logger
+from ..core.database import DatabaseManager
 
 logger = get_logger(__name__)
 
@@ -280,6 +281,9 @@ rss_collector = RSSCollector()
 if __name__ == "__main__":
     # Test collection
     articles = rss_collector.collect(hours_back=48, max_per_source=10)
-    print(f"Collected {len(articles)} articles")
+    logger.info(f"[RSSCollector] Collected {len(articles)} articles")
     for article in articles[:5]:
-        print(f"  [{article.source}] {article.title}")
+        logger.info(f"[RSSCollector]   [{article.source}] {article.title}")
+
+# Alias for backward compatibility
+RSSCollectorV2 = RSSCollector

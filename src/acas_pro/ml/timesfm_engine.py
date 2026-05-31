@@ -139,7 +139,7 @@ class TimesFMEngine:
                         return True  # Retry after 24h
                 return data.get("available", True)
         except Exception as e:
-            logger.error(f"Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception")
             import logging
             logging.getLogger(__name__).debug(f"Failed to read status file: {e}")
         return True

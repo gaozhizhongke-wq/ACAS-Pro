@@ -33,10 +33,10 @@ class DatabaseManager:
     Unified database manager supporting SQLite and PostgreSQL
     Auto-detects database type from DATABASE_URL environment variable
     """
-    
+
     _instance = None
     _lock = threading.Lock()
-    
+
     # SQL injection whitelist for identifiers
     _VALID_IDENTIFIERS = {
         'users', 'products', 'transactions', 'orders', 'inventory',
@@ -66,7 +66,7 @@ class DatabaseManager:
         'targeting', 'budget', 'spent', 'avatar_url', 'balance',
         'last_sync', 'content_count', 'total_views'
     }
-    
+
     def __new__(cls):
         if cls._instance is None:
             with cls._lock:
@@ -74,7 +74,7 @@ class DatabaseManager:
                     cls._instance = super().__new__(cls)
                     cls._instance._initialized = False
         return cls._instance
-    
+
     def __init__(self):
         # Check the global _db_instance, NOT self._initialized.
         global _db_instance
@@ -82,15 +82,17 @@ class DatabaseManager:
             return
         self._db_url = os.environ.get('DATABASE_URL', '')
         self._is_postgres = 'postgresql' in self._db_url.lower() or 'postgres' in self._db_url.lower()
-        
+
         if self._is_postgres:
             self._init_postgres()
+            self._init_postgres_db()
         else:
             self._init_sqlite()
-        
+            self._init_sqlite_db()
+
         self._initialized = True
         _get_logger().info(f"DatabaseManager initialized ({'PostgreSQL' if self._is_postgres else 'SQLite'})")
-    
+
     def _init_sqlite(self):
         """Initialize SQLite backend"""
         cfg = _get_config()
@@ -98,36 +100,74 @@ class DatabaseManager:
         self._local = threading.local()
         self._pool = None
         self._init_sqlite_db()
-    
+
     def _init_postgres(self):
-        """Initialize PostgreSQL backend"""
+        """Initialize PostgreSQL backend with connection pooling"""
         try:
             import psycopg2
             from psycopg2.pool import ThreadedConnectionPool
             from psycopg2.extras import RealDictCursor
-            
+
             conn_info = urlparse(self._db_url)
+            db_name = conn_info.path[1:] if conn_info.path else 'acas'
+
             self._pool = ThreadedConnectionPool(
                 minconn=5,
                 maxconn=50,
                 host=conn_info.hostname,
                 port=conn_info.port or 5432,
-                database=conn_info.path[1:],
+                database=db_name,
                 user=conn_info.username,
                 password=conn_info.password,
-                cursor_factory=RealDictCursor
+                cursor_factory=RealDictCursor,
+                # Connection settings for production
+                connect_timeout=10,
+                options='-c statement_timeout=30000'  # 30s query timeout
             )
             self._local = None  # Not used for PostgreSQL
+
+            # Verify connection works
+            conn = self._pool.getconn()
+            try:
+                cursor = conn.cursor()
+                cursor.execute("SELECT version()")
+                version = cursor.fetchone()['version']
+                _get_logger().info(f"PostgreSQL connected: {version}")
+                cursor.close()
+            finally:
+                self._pool.putconn(conn)
+
         except ImportError:
             _get_logger().error("psycopg2 not installed. Run: pip install psycopg2-binary")
             raise
-    
+        except Exception as e:
+            _get_logger().error(f"PostgreSQL connection failed: {e}")
+            raise
+
     def _init_sqlite_db(self):
         """Initialize SQLite schema"""
         Path(self._db_path).parent.mkdir(parents=True, exist_ok=True)
         with self._get_sqlite_connection() as conn:
             conn.executescript(self._get_sqlite_schema())
-    
+
+    def _init_postgres_db(self):
+        """Initialize PostgreSQL schema"""
+        if self._is_postgres and self._pool:
+            conn = self._pool.getconn()
+            try:
+                cursor = conn.cursor()
+                try:
+                    cursor.execute(self._get_postgres_schema())
+                    conn.commit()
+                    _get_logger().info("PostgreSQL schema initialized")
+                except Exception as e:
+                    _get_logger().warning(f"PostgreSQL schema init (may already exist): {e}")
+                    conn.rollback()
+                finally:
+                    cursor.close()
+            finally:
+                self._pool.putconn(conn)
+
     def _get_sqlite_connection(self):
         """Get SQLite connection"""
         if not hasattr(self._local, 'connection') or self._local.connection is None:
@@ -140,7 +180,7 @@ class DatabaseManager:
             self._local.connection.execute("PRAGMA journal_mode=WAL")
             self._local.connection.execute("PRAGMA synchronous=NORMAL")
         return self._local.connection
-    
+
     def _get_sqlite_schema(self) -> str:
         """SQLite schema definition"""
         return '''
@@ -159,7 +199,7 @@ class DatabaseManager:
                 timezone TEXT DEFAULT 'Asia/Shanghai',
                 created_at TEXT NOT NULL
             );
-            
+
             CREATE TABLE IF NOT EXISTS products (
                 id TEXT PRIMARY KEY,
                 user_id TEXT REFERENCES users(id),
@@ -178,7 +218,7 @@ class DatabaseManager:
                 updated_at TEXT,
                 metadata TEXT
             );
-            
+
             CREATE TABLE IF NOT EXISTS transactions (
                 id TEXT PRIMARY KEY,
                 user_id TEXT REFERENCES users(id),
@@ -191,7 +231,7 @@ class DatabaseManager:
                 metadata TEXT,
                 created_at TEXT
             );
-            
+
             CREATE TABLE IF NOT EXISTS orders (
                 id TEXT PRIMARY KEY,
                 user_id TEXT REFERENCES users(id),
@@ -203,7 +243,7 @@ class DatabaseManager:
                 created_at TEXT,
                 updated_at TEXT
             );
-            
+
             CREATE TABLE IF NOT EXISTS inventory (
                 id TEXT PRIMARY KEY,
                 product_id TEXT REFERENCES products(id),
@@ -214,7 +254,7 @@ class DatabaseManager:
                 warehouse_location TEXT,
                 last_updated TEXT
             );
-            
+
             CREATE TABLE IF NOT EXISTS accounts (
                 id TEXT PRIMARY KEY,
                 user_id TEXT REFERENCES users(id),
@@ -229,7 +269,7 @@ class DatabaseManager:
                 updated_at TEXT,
                 UNIQUE(user_id, platform, account_id)
             );
-            
+
             CREATE TABLE IF NOT EXISTS campaigns (
                 id TEXT PRIMARY KEY,
                 user_id TEXT REFERENCES users(id),
@@ -244,7 +284,7 @@ class DatabaseManager:
                 created_at TEXT,
                 updated_at TEXT
             );
-            
+
             CREATE TABLE IF NOT EXISTS audience_segments (
                 id TEXT PRIMARY KEY,
                 user_id TEXT REFERENCES users(id),
@@ -255,7 +295,7 @@ class DatabaseManager:
                 created_at TEXT,
                 updated_at TEXT
             );
-            
+
             CREATE TABLE IF NOT EXISTS festival_calendar (
                 id TEXT PRIMARY KEY,
                 name TEXT NOT NULL,
@@ -266,7 +306,7 @@ class DatabaseManager:
                 marketing_tips TEXT,
                 created_at TEXT
             );
-            
+
             CREATE TABLE IF NOT EXISTS content_templates (
                 id TEXT PRIMARY KEY,
                 user_id TEXT REFERENCES users(id),
@@ -279,7 +319,7 @@ class DatabaseManager:
                 created_at TEXT,
                 updated_at TEXT
             );
-            
+
             CREATE TABLE IF NOT EXISTS chat_history (
                 id TEXT PRIMARY KEY,
                 user_id TEXT REFERENCES users(id),
@@ -307,14 +347,179 @@ class DatabaseManager:
             CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
             CREATE INDEX IF NOT EXISTS idx_chat_history_session ON chat_history(session_id);
         '''
-    
+        """PostgreSQL schema definition (SQLite schema with PostgreSQL-specific types)"""
+        return '''
+            CREATE TABLE IF NOT EXISTS users (
+                id TEXT PRIMARY KEY,
+                account_type TEXT NOT NULL,
+                account TEXT UNIQUE NOT NULL,
+                password_hash TEXT NOT NULL,
+                nickname TEXT,
+                email TEXT,
+                phone TEXT,
+                role TEXT DEFAULT 'user',
+                status TEXT DEFAULT 'active',
+                region TEXT DEFAULT 'global',
+                language TEXT DEFAULT 'zh',
+                timezone TEXT DEFAULT 'Asia/Shanghai',
+                created_at TIMESTAMP NOT NULL DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS products (
+                id TEXT PRIMARY KEY,
+                user_id TEXT REFERENCES users(id),
+                name TEXT NOT NULL,
+                description TEXT,
+                price REAL,
+                cost REAL,
+                currency TEXT DEFAULT 'CNY',
+                stock_quantity INTEGER DEFAULT 0,
+                category TEXT,
+                tags TEXT,
+                reorder_point INTEGER DEFAULT 10,
+                reorder_quantity INTEGER DEFAULT 100,
+                status TEXT DEFAULT 'active',
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW(),
+                metadata TEXT
+            );
+
+            CREATE TABLE IF NOT EXISTS transactions (
+                id TEXT PRIMARY KEY,
+                user_id TEXT REFERENCES users(id),
+                product_id TEXT REFERENCES products(id),
+                type TEXT NOT NULL,
+                amount REAL NOT NULL,
+                currency TEXT DEFAULT 'CNY',
+                status TEXT DEFAULT 'pending',
+                platform TEXT,
+                metadata TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS orders (
+                id TEXT PRIMARY KEY,
+                user_id TEXT REFERENCES users(id),
+                product_id TEXT REFERENCES products(id),
+                quantity INTEGER NOT NULL,
+                total_amount REAL NOT NULL,
+                status TEXT DEFAULT 'pending',
+                shipping_address TEXT,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS inventory (
+                id TEXT PRIMARY KEY,
+                product_id TEXT REFERENCES products(id),
+                quantity INTEGER DEFAULT 0,
+                reserved_quantity INTEGER DEFAULT 0,
+                reorder_point INTEGER DEFAULT 10,
+                reorder_quantity INTEGER DEFAULT 100,
+                warehouse_location TEXT,
+                last_updated TIMESTAMP DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS accounts (
+                id TEXT PRIMARY KEY,
+                user_id TEXT REFERENCES users(id),
+                platform TEXT NOT NULL,
+                account_id TEXT NOT NULL,
+                account_name TEXT,
+                followers INTEGER DEFAULT 0,
+                engagement_rate REAL DEFAULT 0,
+                status TEXT DEFAULT 'active',
+                credentials TEXT,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE(user_id, platform, account_id)
+            );
+
+            CREATE TABLE IF NOT EXISTS campaigns (
+                id TEXT PRIMARY KEY,
+                user_id TEXT REFERENCES users(id),
+                name TEXT NOT NULL,
+                platform TEXT,
+                budget REAL,
+                spent REAL DEFAULT 0,
+                status TEXT DEFAULT 'draft',
+                start_date TIMESTAMP,
+                end_date TIMESTAMP,
+                targeting TEXT,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS audience_segments (
+                id TEXT PRIMARY KEY,
+                user_id TEXT REFERENCES users(id),
+                name TEXT NOT NULL,
+                segment_type TEXT,
+                size INTEGER DEFAULT 0,
+                criteria TEXT,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS festival_calendar (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                festival_type TEXT,
+                date TEXT NOT NULL,
+                region TEXT,
+                description TEXT,
+                marketing_tips TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS content_templates (
+                id TEXT PRIMARY KEY,
+                user_id TEXT REFERENCES users(id),
+                name TEXT NOT NULL,
+                content_type TEXT,
+                platform TEXT,
+                template_content TEXT NOT NULL,
+                variables TEXT,
+                usage_count INTEGER DEFAULT 0,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS chat_history (
+                id TEXT PRIMARY KEY,
+                user_id TEXT REFERENCES users(id),
+                session_id TEXT NOT NULL,
+                role TEXT NOT NULL,
+                content TEXT NOT NULL,
+                model TEXT,
+                tokens_used INTEGER,
+                created_at TIMESTAMP DEFAULT NOW()
+            );
+
+            CREATE TABLE IF NOT EXISTS audit_logs (
+                id TEXT PRIMARY KEY,
+                user_id TEXT REFERENCES users(id),
+                action TEXT NOT NULL,
+                resource_type TEXT,
+                resource_id TEXT,
+                details TEXT,
+                ip_address TEXT,
+                user_agent TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            );
+
+            CREATE INDEX IF NOT EXISTS idx_users_account ON users(account);
+            CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
+            CREATE INDEX IF NOT EXISTS idx_chat_history_session ON chat_history(session_id);
+        '''
+
     def _validate_identifier(self, identifier: str) -> str:
         """Validate SQL identifier to prevent injection"""
         if identifier not in self._VALID_IDENTIFIERS:
             if not identifier.replace('_', '').isalnum():
                 raise ValueError(f"Invalid SQL identifier: {identifier}")
         return identifier
-    
+
     @contextmanager
     def transaction(self):
         """Transaction context manager"""
@@ -326,7 +531,7 @@ class DatabaseManager:
                 yield cursor
                 conn.commit()
             except Exception as e:
-                import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
+                logger.exception("Unhandled exception")
                 conn.rollback()
                 _get_logger().error(f"Transaction failed: {e}")
                 raise
@@ -340,11 +545,11 @@ class DatabaseManager:
                 yield conn
                 conn.execute("COMMIT")
             except Exception as e:
-                import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
+                logger.exception("Unhandled exception")
                 conn.execute("ROLLBACK")
                 _get_logger().error(f"Transaction failed: {e}")
                 raise
-    
+
     @staticmethod
     def _translate_insert_or_replace(query: str) -> str:
         """Translate SQLite INSERT OR REPLACE to PostgreSQL INSERT ... ON CONFLICT DO UPDATE SET ..."""
@@ -429,15 +634,19 @@ class DatabaseManager:
             if cursor.description:
                 return [dict(row) for row in cursor.fetchall()]
             return []
-    
+
     def execute_one(self, query: str, params: tuple = None) -> Optional[Dict]:
         """Execute query and return single result"""
         results = self.execute(query, params)
         return results[0] if results else None
 
-    # Compatibility aliases �?web_app.py and user_service.py call fetchone/fetchall
+    # Compatibility aliases - web_app.py and user_service.py call fetchone/fetchall
     def fetchone(self, query: str, params: tuple = None) -> Optional[Dict]:
         """Alias for execute_one()"""
+        return self.execute_one(query, params)
+
+    def fetch_one(self, query: str, params: tuple = None) -> Optional[Dict]:
+        """Alias for execute_one() - underscore variant for consistency"""
         return self.execute_one(query, params)
 
     def fetchall(self, query: str, params: tuple = None) -> List[Dict]:
@@ -449,7 +658,7 @@ class DatabaseManager:
         table = self._validate_identifier(table)
         columns = [self._validate_identifier(c) for c in data.keys()]
         values = list(data.values())
-        
+
         if self._is_postgres:
             query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(['%s'] * len(values))}) RETURNING id"
             result = self.execute_one(query, tuple(values))
@@ -460,27 +669,27 @@ class DatabaseManager:
             conn = self._get_sqlite_connection()
             cursor = conn.execute(query, values)
             return str(cursor.lastrowid)
-    
+
     def update(self, table: str, data: Dict[str, Any],
                  where_clause: str = None, where_params: tuple = None) -> bool:
         """
         Update record with flexible WHERE clause.
-        
+
         Args:
             table: Table name (validated against whitelist)
             data: Dict of column -> value to update
             where_clause: SQL WHERE clause (e.g. "id = ?")
             where_params: Tuple of parameters for WHERE clause
-            
+
         Returns:
             True if execution succeeded
         """
         table = self._validate_identifier(table)
         columns = [self._validate_identifier(c) for c in data.keys()]
         values = list(data.values())
-        
+
         set_clause = ', '.join([f"{c} = ?" if not self._is_postgres else f"{c} = %s" for c in columns])
-        
+
         if where_clause and where_params:
             # New flexible form: db.update("users", data, "id = ?", (uid,))
             if self._is_postgres:
@@ -490,15 +699,15 @@ class DatabaseManager:
             query = f"UPDATE {table} SET {', '.join([f'{c} = {p}' for c, p in zip(columns, placeholders)])} WHERE {where_clause}"
         else:
             # Fallback: UPDATE ... WHERE id = ? (legacy single-id form)
-            # This path is no longer used by callers �?kept for potential migrations
+            # This path is no longer used by callers; kept for potential migrations
             raise ValueError(
                 "db.update() requires explicit where_clause and where_params. "
                 "Use: db.update('table', data, 'id = ?', (id_value,))"
             )
-        
+
         self.execute(query, tuple(values) + (where_params or ()))
         return True
-    
+
     def delete(self, table: str, id_value: str = None, where_clause: str = None, where_params: tuple = None) -> bool:
         """Delete record by id or custom WHERE clause"""
         table = self._validate_identifier(table)
@@ -512,7 +721,7 @@ class DatabaseManager:
         else:
             raise ValueError("delete() requires either id_value or where_clause+where_params")
         return True
-    
+
     def health_check(self) -> Dict[str, Any]:
         """Database health check"""
         try:
@@ -542,7 +751,7 @@ _db_instance: Optional['DatabaseManager'] = None
 def get_db() -> 'DatabaseManager':
     """Get database manager singleton (lazy-loaded)"""
     global _db_instance
-    # Always check the global variable — even if self._initialized is True
+    # Always check the global variable - even if self._initialized is True
     # on a stale module-level instance, we must create a new one after reset_db()
     if _db_instance is None:
         _db_instance = DatabaseManager()

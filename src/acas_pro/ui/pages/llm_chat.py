@@ -8,13 +8,17 @@ AI Chat interface with LLM integration
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QTextEdit, QLineEdit,
     QPushButton, QScrollArea, QLabel, QFrame, QSplitter,
-    QComboBox, QSpinBox, QCheckBox, QGroupBox, QFormLayout
+    QComboBox, QSpinBox, QCheckBox, QGroupBox, QFormLayout,
+    QDoubleSpinBox
 )
-from PySide6.QtCore import Qt, Signal, Slot, QThread, QTimer
-from PySide6.QtGui import QFont, QColor, QPalette, QTextCursor
+from PySide6.QtCore import Qt, Signal, Slot, QTimer
+from PySide6.QtGui import QTextCursor
 import json
 import time
 from datetime import datetime
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 class MessageBubble(QFrame):
@@ -116,7 +120,16 @@ class LLMChatPage(QWidget):
         self.messages_layout.setSpacing(8)
         
         # Welcome message
-        welcome = QLabel("🤖 欢迎使用 ACAS AI 助手！\n\n我可以帮助你：\n• 销售预测和库存优化\n• 市场情报和舆情分析\n• 内容创作和趋势监控\n• 广告投放和电商运营\n• 数据查询和分析\n\n请输入你的问题...")
+        welcome = QLabel(
+            "🤖 欢迎使用 ACAS AI 助手！\n\n"
+            "我可以帮助你：\n"
+            "📊 销售预测和库存优化\n"
+            "🔍 市场情报和舆情分析\n"
+            "✍️ 内容创作和趋势监控\n"
+            "📢 广告投放和电商运营\n"
+            "🔎 数据查询和分析\n\n"
+            "请输入你的问题..."
+        )
         welcome.setStyleSheet("padding: 20px; color: #666; font-size: 13px;")
         self.messages_layout.addWidget(welcome)
         self.messages_layout.addStretch()
@@ -240,7 +253,10 @@ class LLMChatPage(QWidget):
         model_layout = QFormLayout(model_group)
         
         self.provider_combo = QComboBox()
-        self.provider_combo.addItems(["OpenAI", "Anthropic", "Kimi", "DeepSeek", "通义千问", "LM Studio", "Ollama", "自定义"])
+        self.provider_combo.addItems([
+            "OpenAI", "Anthropic", "Kimi", "DeepSeek", 
+            "通义千问", "LM Studio", "Ollama", "自定义"
+        ])
         self.provider_combo.currentIndexChanged.connect(self._on_provider_changed)
         model_layout.addRow("Provider:", self.provider_combo)
         
@@ -282,7 +298,18 @@ class LLMChatPage(QWidget):
         tools_group = QGroupBox("可用工具")
         tools_layout = QVBoxLayout(tools_group)
         
-        tools_label = QLabel("• 销售预测\n• 库存优化\n• 市场情报\n• 内容创作\n• 趋势监控\n• 账号分析\n• 广告管理\n• 电商运营\n• 数据查询\n• 节日营销")
+        tools_label = QLabel(
+            "📊 销售预测\n"
+            "📦 库存优化\n"
+            "🔍 市场情报\n"
+            "✍️ 内容创作\n"
+            "📈 趋势监控\n"
+            "👤 账号分析\n"
+            "📢 广告管理\n"
+            "🛒 电商运营\n"
+            "🔎 数据查询\n"
+            "🎉 节日营销"
+        )
         tools_label.setStyleSheet("font-size: 11px; color: #666;")
         tools_layout.addWidget(tools_label)
         
@@ -318,12 +345,15 @@ class LLMChatPage(QWidget):
             from ...llm.tools import ACASTools
             from ...core.config import config
             
-            self._acastools = ACASTools(config=config)
+            # Get config object (config is a function)
+            _cfg = config()
+            
+            self._acastools = ACASTools(config=_cfg)
             self.status_label.setText("已就绪")
             self.status_label.setStyleSheet("color: #4CAF50; font-size: 12px;")
             
         except Exception as e:
-            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception initializing LLM")
             self.status_label.setText(f"初始化失败: {str(e)}")
             self.status_label.setStyleSheet("color: #F44336; font-size: 12px;")
     
@@ -395,34 +425,51 @@ class LLMChatPage(QWidget):
             from ...llm.llm_client import LLMClient, LLMConfig, LLMProvider
             from ...llm.agent_engine import AgentEngine, AgentTask
             from ...core.config import config
+            
+            # Get config object (config is a function)
+            _cfg = config()
             import secrets
             
             # Check if LLM is configured
-            if not config.llm or not config.llm.api_key:
-                response = "⚠️ 请先在设置中配置大模型 API Key。\n\n支持的服务商：\n• OpenAI (需要 API Key)\n• Anthropic Claude (需要 API Key)\n• Kimi 月之暗面 (需要 API Key)\n• DeepSeek (需要 API Key)\n• 通义千问 (需要 API Key)\n• LM Studio (本地运行，免费)\n• Ollama (本地运行，免费)\n\n请前往「系统设置」→「LLM配置」进行设置。"
+            if not _cfg.llm or not _cfg.llm.api_key:
+                response = (
+                    "⚠️ 请先在设置中配置大模型 API Key。\n\n"
+                    "支持的服务商：\n"
+                    "• OpenAI (需要 API Key)\n"
+                    "• Anthropic Claude (需要 API Key)\n"
+                    "• Kimi 月之暗面 (需要 API Key)\n"
+                    "• DeepSeek (需要 API Key)\n"
+                    "• 通义千问 (需要 API Key)\n"
+                    "• LM Studio (本地运行，免费)\n"
+                    "• Ollama (本地运行，免费)\n\n"
+                    "请前往「系统设置」→「LLM配置」进行设置。"
+                )
                 self._add_message(response, is_user=False)
             else:
                 # Create LLM client
                 llm_config = LLMConfig(
-                    provider=LLMProvider(config.llm.provider),
-                    api_key=config.llm.api_key,
-                    api_base=config.llm.api_base,
-                    model=config.llm.model or config.llm.get_default_model(),
-                    max_tokens=config.llm.max_tokens,
-                    temperature=config.llm.temperature
+                    provider=LLMProvider(_cfg.llm.provider),
+                    api_key=_cfg.llm.api_key,
+                    api_base=_cfg.llm.api_base,
+                    model=_cfg.llm.model or _cfg.llm.get_default_model(),
+                    max_tokens=_cfg.llm.max_tokens,
+                    temperature=_cfg.llm.temperature
                 )
                 
                 llm_client = LLMClient(llm_config)
                 
                 # Use Agent mode if enabled
-                if config.llm.agent_mode:
+                if _cfg.llm.agent_mode:
                     task = AgentTask(
                         id=f"task_{secrets.token_hex(4)}",
                         prompt=user_text,
-                        max_steps=config.llm.max_agent_steps
+                        max_steps=_cfg.llm.max_agent_steps
                     )
                     
-                    engine = AgentEngine(llm_client, self._acastools.registry if hasattr(self, '_acastools') else None)
+                    engine = AgentEngine(
+                        llm_client, 
+                        self._acastools.registry if hasattr(self, '_acastools') else None
+                    )
                     result = engine.execute(task)
                     response = result.final_response
                 else:
@@ -437,8 +484,8 @@ class LLMChatPage(QWidget):
             self.status_label.setStyleSheet("color: #4CAF50; font-size: 12px;")
             
         except Exception as e:
-            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
-            error_msg = f"❌ 生成失败: {str(e)}"
+            logger.exception("Unhandled exception generating response")
+            error_msg = f"⚠️ 生成失败: {str(e)}"
             self._add_message(error_msg, is_user=False)
             self.status_label.setText("错误")
             self.status_label.setStyleSheet("color: #F44336; font-size: 12px;")
@@ -467,23 +514,29 @@ class LLMChatPage(QWidget):
         try:
             from ...core.config import config
             
-            provider_map = ["openai", "anthropic", "kimi", "deepseek", "qwen", "lmstudio", "ollama", "custom"]
+            # Get config object (config is a function)
+            _cfg = config()
             
-            config.llm.provider = provider_map[self.provider_combo.currentIndex()]
-            config.llm.model = self.model_combo.currentText()
-            config.llm.temperature = self.temp_spin.value()
-            config.llm.max_tokens = self.max_tokens_spin.value()
-            config.llm.agent_mode = self.agent_check.isChecked()
-            config.llm.max_agent_steps = self.max_steps_spin.value()
-            config.llm.enabled = True
+            provider_map = [
+                "openai", "anthropic", "kimi", "deepseek", 
+                "qwen", "lmstudio", "ollama", "custom"
+            ]
             
-            config.save()
+            _cfg.llm.provider = provider_map[self.provider_combo.currentIndex()]
+            _cfg.llm.model = self.model_combo.currentText()
+            _cfg.llm.temperature = self.temp_spin.value()
+            _cfg.llm.max_tokens = self.max_tokens_spin.value()
+            _cfg.llm.agent_mode = self.agent_check.isChecked()
+            _cfg.llm.max_agent_steps = self.max_steps_spin.value()
+            _cfg.llm.enabled = True
+            
+            _cfg.save()
             
             self.status_label.setText("设置已保存")
             self.status_label.setStyleSheet("color: #4CAF50; font-size: 12px;")
             
         except Exception as e:
-            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception applying settings")
             self.status_label.setText(f"保存失败: {str(e)}")
             self.status_label.setStyleSheet("color: #F44336; font-size: 12px;")
     
@@ -491,7 +544,3 @@ class LLMChatPage(QWidget):
         """Scroll to bottom of messages"""
         scrollbar = self.scroll_area.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
-
-
-# Fix import
-from PySide6.QtWidgets import QDoubleSpinBox

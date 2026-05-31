@@ -1,4 +1,5 @@
-﻿"""Comprehensive UI page method-call tests.
+import pytest
+"""Comprehensive UI page method-call tests.
 
 Strategy: For each UI page, instantiate it and call ALL public methods.
 Since PySide6 widgets are MagicMock objects, calling widget methods won't crash.

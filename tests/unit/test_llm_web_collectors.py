@@ -107,11 +107,11 @@ class TestMonitoringDeep:
 # ============================================================
 # UPDATE V2
 # ============================================================
-class TestUpdaterV2Deep:
+class TestUpdater:
     def test_check(self):
-        from acas_pro.update.updater_v2 import UpdateManager
-        with patch.object(UpdateManager, '__init__', lambda self: None):
-            um = UpdateManager()
+        from acas_pro.update.updater import UpdateChecker
+        with patch.object(UpdateChecker, '__init__', lambda self: None):
+            um = UpdateChecker()
             um.check = MagicMock(return_value={"has_update": False})
             result = um.check()
             assert "has_update" in result

@@ -230,9 +230,9 @@ class TestSupplyChainManager:
 
     # ===== 物流追踪测试 =====
     def test_track_logistics(self, manager):
-        """Test tracking logistics (stub)"""
-        with pytest.raises(NotImplementedError):
-            manager.track_logistics('顺丰速运', 'SF1234567890')
+        """Test tracking logistics"""
+        result = manager.track_logistics('顺丰速运', 'SF1234567890')
+        assert isinstance(result, dict)
 
     # ===== 低库存预警测试 =====
     def test_get_low_stock_alerts(self, manager):

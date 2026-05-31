@@ -10,6 +10,9 @@ from enum import Enum
 import json
 import hashlib
 
+# For test compatibility
+from ..core.database import DatabaseManager
+
 
 class AttributionModel(Enum):
     """归因模型类型"""

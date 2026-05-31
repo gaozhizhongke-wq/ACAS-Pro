@@ -274,6 +274,6 @@ weibo_collector = WeiboCollector()
 if __name__ == "__main__":
     # Test hot topics
     topics = weibo_collector.get_hot_topics()
-    print(f"Hot topics: {len(topics)}")
+    logger.info(f"[WeiboCollector] Hot topics: {len(topics)}")
     for topic in topics[:5]:
-        print(f"  #{topic['rank']} {topic['topic']} (热度: {topic['heat']})")
+        logger.info(f"[WeiboCollector]   #{topic['rank']} {topic['topic']} (热度: {topic['heat']})")

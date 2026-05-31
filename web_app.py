@@ -101,3 +101,47 @@ def index():
         llm_enabled=config().llm.enabled,
     )
 
+
+# ── CORS ───────────────────────────────────────────────────────────────────
+@app.after_request
+def add_cors_headers(response):
+    """Production-grade CORS with security controls"""
+    origins = config().security.cors_allowed_origins
+    
+    if config().environment == 'production':
+        # Production: strict origin validation
+        if not origins or origins == '*':
+            logger.error("[SECURITY] CORS allowed origins not configured in production. "
+                        "Set CORS_ALLOWED_ORIGINS in .env (e.g., https://yourdomain.com)")
+            # Do NOT send CORS headers when not configured
+            return response
+        
+        # Validate origin against whitelist
+        request_origin = request.headers.get('Origin', '')
+        allowed_list = [o.strip() for o in origins.split(',') if o.strip()]
+        
+        if request_origin and request_origin in allowed_list:
+            response.headers['Access-Control-Allow-Origin'] = request_origin
+            response.headers['Access-Control-Allow-Credentials'] = 'true'
+        else:
+            # Origin not in whitelist - don't expose CORS headers
+            logger.warning(f"[SECURITY] Blocked CORS request from origin: {request_origin}")
+    else:
+        # Development: allow localhost with credentials
+        request_origin = request.headers.get('Origin', '')
+        if request_origin and request_origin.startswith('http://localhost'):
+            response.headers['Access-Control-Allow-Origin'] = request_origin
+            response.headers['Access-Control-Allow-Credentials'] = 'true'
+        elif origins:
+            origin = origins.split(',')[0].strip()
+            if origin and origin != '*':
+                response.headers['Access-Control-Allow-Origin'] = origin
+                response.headers['Access-Control-Allow-Credentials'] = 'true'
+            else:
+                response.headers['Access-Control-Allow-Origin'] = '*'
+        else:
+            response.headers['Access-Control-Allow-Origin'] = '*'
+    
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization'
+    return response

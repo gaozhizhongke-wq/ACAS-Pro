@@ -218,8 +218,10 @@ class TestDataMonitorDeep:
 class TestWebInit:
     def test_create_app(self):
         from acas_pro.web import create_app
-        with patch('acas_pro.web.Flask') as mock_flask:
+        with patch('flask.Flask') as mock_flask:
             mock_app = MagicMock()
             mock_flask.return_value = mock_app
-            result = create_app()
-            assert result is not None
+            with patch('acas_pro.web.config') as mock_config:
+                mock_config.return_value.validate.return_value = (True, [])
+                result = create_app()
+                assert result is not None

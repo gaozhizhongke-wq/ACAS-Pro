@@ -160,22 +160,22 @@ class TestDIContainer:
 # ============================================================
 class TestConsoleFormatter:
     def test_import(self):
-        from acas_pro.core.logging_v2 import ConsoleFormatter
+        from acas_pro.core.logging import ConsoleFormatter
         assert ConsoleFormatter is not None
 
 class TestStructuredFormatter:
     def test_import(self):
-        from acas_pro.core.logging_v2 import StructuredFormatter
+        from acas_pro.core.logging import StructuredFormatter
         assert StructuredFormatter is not None
 
 class TestPIIRedactor:
     def test_import(self):
-        from acas_pro.core.logging_v2 import PIIRedactor
+        from acas_pro.core.logging import PIIRedactor
         assert PIIRedactor is not None
 
 class TestLoggerFactory:
     def test_import(self):
-        from acas_pro.core.logging_v2 import LoggerFactory
+        from acas_pro.core.logging import LoggerFactory
         assert LoggerFactory is not None
 
 
@@ -184,12 +184,12 @@ class TestLoggerFactory:
 # ============================================================
 class TestCryptoManager:
     def test_import(self):
-        from acas_pro.core.security_v2 import CryptoManager
+        from acas_pro.core.security import CryptoManager
         assert CryptoManager is not None
 
 class TestSessionManager:
     def test_import(self):
-        from acas_pro.core.security_v2 import SessionManager
+        from acas_pro.core.security import SessionManager
         assert SessionManager is not None
 
 

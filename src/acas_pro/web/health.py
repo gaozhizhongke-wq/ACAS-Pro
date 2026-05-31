@@ -111,7 +111,7 @@ class HealthChecker:
                     message='Database query returned unexpected result'
                 )
         except Exception as e:
-            logger.error(f"Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception")
             return HealthCheckResult(
                 name='database',
                 status=HealthStatus.UNHEALTHY,
@@ -186,7 +186,7 @@ class HealthChecker:
                 }
             )
         except Exception as e:
-            logger.error(f"Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception")
             return HealthCheckResult(
                 name='disk_space',
                 status=HealthStatus.DEGRADED,
@@ -196,7 +196,7 @@ class HealthChecker:
 
 
     def _check_llm(self) -> HealthCheckResult:
-        """Check LLM service availability and configuration"""
+        """Check LLM service availability with actual API connectivity test"""
         start = time.time()
         try:
             if not config().llm.enabled:
@@ -211,7 +211,7 @@ class HealthChecker:
             if not config().llm.api_key:
                 return HealthCheckResult(
                     name='llm',
-                    status=HealthStatus.DEGRADED,  # Changed from UNHEALTHY - missing API key is config issue, not outage
+                    status=HealthStatus.DEGRADED,
                     response_time_ms=(time.time() - start) * 1000,
                     message='LLM API key not configured',
                     details={'enabled': True, 'api_key_set': False}
@@ -219,56 +219,93 @@ class HealthChecker:
             
             # Try to import and test LLM client
             try:
-                from acas_pro.llm.llm_client import LLMClient, LLMProvider, LLMConfig as ClientConfig
+                from acas_pro.llm.llm_client import LLMClient, LLMProvider, LLMConfig as ClientConfig, LLMMessage
                 
                 llm_config = ClientConfig(
                     provider=LLMProvider(config().llm.provider),
                     api_key=config().llm.api_key,
                     model=config().llm.model,
-                    base_url=config().llm.base_url
+                    api_base=config().llm.base_url
                 )
                 
                 client = LLMClient(llm_config)
                 
-                # Simple test - just verify client can be instantiated
-                # Don't make actual API call in health check to avoid rate limits
-                return HealthCheckResult(
-                    name='llm',
-                    status=HealthStatus.HEALTHY,
-                    response_time_ms=(time.time() - start) * 1000,
-                    message=f'LLM configured: {config().llm.provider}/{config().llm.model}',
-                    details={
-                        'enabled': True,
-                        'api_key_set': True,
-                        'provider': config().llm.provider,
-                        'model': config().llm.model
-                    }
-                )
+                # Make actual API call to verify connectivity
+                try:
+                    messages = [LLMMessage(role='user', content='Hi')]
+                    response = client.chat(messages, max_tokens=5)
+                    
+                    if response and response.content:
+                        return HealthCheckResult(
+                            name='llm',
+                            status=HealthStatus.HEALTHY,
+                            response_time_ms=(time.time() - start) * 1000,
+                            message=f'LLM API connected: {config().llm.provider}/{config().llm.model}',
+                            details={
+                                'enabled': True,
+                                'api_key_set': True,
+                                'provider': config().llm.provider,
+                                'model': config().llm.model,
+                                'api_connected': True,
+                                'latency_ms': round((time.time() - start) * 1000, 2)
+                            }
+                        )
+                    else:
+                        return HealthCheckResult(
+                            name='llm',
+                            status=HealthStatus.DEGRADED,
+                            response_time_ms=(time.time() - start) * 1000,
+                            message='LLM API returned empty response',
+                            details={
+                                'enabled': True,
+                                'api_key_set': True,
+                                'provider': config().llm.provider,
+                                'api_connected': False
+                            }
+                        )
+                except Exception as api_e:
+                    error_msg = str(api_e)
+                    if '401' in error_msg or 'Unauthorized' in error_msg:
+                        status = HealthStatus.UNHEALTHY
+                        message = 'LLM API key invalid or expired'
+                    elif '429' in error_msg or 'Too Many Requests' in error_msg:
+                        status = HealthStatus.DEGRADED
+                        message = 'LLM API rate limited'
+                    else:
+                        status = HealthStatus.DEGRADED
+                        message = f'LLM API connectivity issue: {error_msg[:100]}'
+                    
+                    return HealthCheckResult(
+                        name='llm',
+                        status=status,
+                        response_time_ms=(time.time() - start) * 1000,
+                        message=message,
+                        details={
+                            'enabled': True,
+                            'api_key_set': True,
+                            'provider': config().llm.provider,
+                            'api_connected': False,
+                            'error': error_msg[:200]
+                        }
+                    )
+                    
             except ImportError as e:
                 return HealthCheckResult(
                     name='llm',
                     status=HealthStatus.DEGRADED,
                     response_time_ms=(time.time() - start) * 1000,
-                    message=f'LLM module not available: {str(e)}',
-                    details={'enabled': True, 'module_error': True}
-                )
-            except Exception as e:
-                logger.error(f"Unhandled exception: " + str(e))
-                return HealthCheckResult(
-                    name='llm',
-                    status=HealthStatus.DEGRADED,
-                    response_time_ms=(time.time() - start) * 1000,
-                    message=f'LLM configuration error: {str(e)}',
-                    details={'enabled': True, 'config_error': str(e)}
+                    message=f'LLM client import failed: {str(e)}',
+                    details={'enabled': True, 'api_key_set': True}
                 )
                 
         except Exception as e:
-            logger.error(f"Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception")
             return HealthCheckResult(
                 name='llm',
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=(time.time() - start) * 1000,
-                message=f'LLM check failed: {str(e)}'
+                message=f'LLM check failed: {str(e)}',
+                details={'enabled': True, 'module_error': True}
             )
 
 

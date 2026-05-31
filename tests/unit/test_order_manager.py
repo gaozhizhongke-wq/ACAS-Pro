@@ -317,14 +317,14 @@ class TestOrderManager:
 
     # ===== 同步订单测试 =====
     def test_sync_orders_from_platform(self, manager):
-        """Test syncing orders from platform (stub)"""
-        with pytest.raises(NotImplementedError):
-            manager.sync_orders_from_platform(
-                shop_id='shop_001',
-                platform='douyin',
-                start_time='2026-01-01',
-                end_time='2026-12-31',
-            )
+        """Test syncing orders from platform"""
+        result = manager.sync_orders_from_platform(
+            shop_id='shop_001',
+            platform='douyin',
+            start_time='2026-01-01',
+            end_time='2026-12-31',
+        )
+        assert isinstance(result, dict)
 
 
 class TestOrder:

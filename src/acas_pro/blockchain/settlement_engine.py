@@ -499,3 +499,14 @@ class SettlementEngine:
     def get_templates(self) -> Dict[str, Any]:
         """获取结算模板"""
         return self.SETTLEMENT_TEMPLATES
+    
+    def complete_settlement(self, settlement_id: str) -> bool:
+        """完成结算"""
+        try:
+            self.db.execute(
+                "UPDATE settlements SET status = ?, settled_at = ? WHERE id = ?",
+                (SettlementStatus.COMPLETED.value, datetime.now().isoformat(), settlement_id)
+            )
+            return True
+        except Exception:
+            return False

@@ -101,7 +101,7 @@ class TestLLMMessage:
 # ============================================================
 class TestSentimentAnalyzerV2:
     def _make_sa(self):
-        from acas_pro.sentiment.analyzer_v2 import SentimentAnalyzer
+        from acas_pro.sentiment.analyzer import SentimentAnalyzer
         sa = SentimentAnalyzer.__new__(SentimentAnalyzer)
         sa._positive_words = ["good", "great", "love"]
         sa._negative_words = ["bad", "hate", "terrible"]
@@ -131,31 +131,23 @@ class TestSentimentAnalyzerV2:
 # ============================================================
 class TestLoggingV2:
     def test_pii_redactor(self):
-        from acas_pro.core.logging_v2 import PIIRedactor
+        from acas_pro.core.logging import PIIRedactor
         redactor = PIIRedactor()
         result = redactor.redact("no pii here")
         assert result == "no pii here"
 
     def test_pii_redactor_email(self):
-        from acas_pro.core.logging_v2 import PIIRedactor
+        from acas_pro.core.logging import PIIRedactor
         redactor = PIIRedactor()
         result = redactor.redact("My email is test@example.com")
         # May or may not redact depending on patterns
         assert isinstance(result, str)
 
     def test_logger_factory_get_logger(self):
-        from acas_pro.core.logging_v2 import LoggerFactory
-        try:
-            logger = LoggerFactory.get_logger("test_logger")
-            assert logger is not None
-        except TypeError:
-            # May need config init
-            pass
+        from acas_pro.core.logging import get_logger
+        logger = get_logger("test_logger")
+        assert logger is not None
 
-
-# ============================================================
-# WEIBO COLLECTOR
-# ============================================================
 class TestWeiboCollector:
     def _make_wc(self):
         from acas_pro.collectors.weibo_api import WeiboCollector

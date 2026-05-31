@@ -6,12 +6,15 @@ Production-grade Anthropic API integration
 """
 
 import os
+import logging
 from typing import List, Dict, Optional, Iterator
 from dataclasses import dataclass
 from datetime import datetime
 import json
 
 from .base_engine import BaseLLMEngine, LLMMessage, LLMResponse, LLMStreamChunk
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -109,7 +112,7 @@ class ClaudeEngine(BaseLLMEngine):
                 finish_reason=response.stop_reason
             )
         except Exception as e:
-            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception")
             raise RuntimeError(f"Claude API error: {e}")
     
     def chat_stream(self, messages: List[LLMMessage]) -> Iterator[LLMStreamChunk]:
@@ -138,7 +141,7 @@ class ClaudeEngine(BaseLLMEngine):
                     is_finished=True
                 )
         except Exception as e:
-            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception")
             raise RuntimeError(f"Claude streaming error: {e}")
     
     def quick_chat(self, message: str, system: str = None) -> str:
@@ -167,7 +170,7 @@ class ClaudeEngine(BaseLLMEngine):
                 "response": response[:50]
             }
         except Exception as e:
-            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception")
             return {
                 "status": "unhealthy",
                 "error": str(e)

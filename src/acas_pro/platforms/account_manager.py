@@ -320,7 +320,7 @@ class AccountManager:
             nickname=row['nickname'],
             access_token=row['access_token'],
             refresh_token=row['refresh_token'],
-            token_expires_at=datetime.fromisoformat(row['token_expires_at']),
+            token_expires_at=datetime.fromisoformat(row['token_expires_at']) if row['token_expires_at'] else None,
             avatar_url=row['avatar_url'],
             followers=row['followers'],
             following=row['following'],
@@ -335,8 +335,8 @@ class AccountManager:
             risk_score=row['risk_score'],
             last_violation_at=datetime.fromisoformat(row['last_violation_at']) if row['last_violation_at'] else None,
             violation_count=row['violation_count'],
-            created_at=datetime.fromisoformat(row['created_at']),
-            updated_at=datetime.fromisoformat(row['updated_at']),
+            created_at=datetime.fromisoformat(row['created_at']) if row['created_at'] else None,
+            updated_at=datetime.fromisoformat(row['updated_at']) if row['updated_at'] else None,
             last_login_at=datetime.fromisoformat(row['last_login_at']) if row['last_login_at'] else None,
         )
         
@@ -373,7 +373,12 @@ class AccountManager:
         
         rows = self.db.fetchall(query, params)
         
-        accounts = [self._row_to_account(row) for row in rows]
+        accounts = []
+        for row in rows:
+            try:
+                accounts.append(self._row_to_account(row))
+            except (ValueError, KeyError, TypeError):
+                continue  # Skip rows with invalid enum values
         
         # 标签筛选（在内存中处理）
         if tags:

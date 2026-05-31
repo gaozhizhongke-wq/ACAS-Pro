@@ -319,12 +319,12 @@ class TestRSSCollector:
 # ==================== LoggingV2 ====================
 class TestLoggingV2:
     def test_pii_redactor(self):
-        from acas_pro.core.logging_v2 import PIIRedactor
+        from acas_pro.core.logging import PIIRedactor
         result = PIIRedactor.redact("My email is test@example.com")
         assert isinstance(result, str)
 
     def test_structured_formatter(self):
-        from acas_pro.core.logging_v2 import StructuredFormatter
+        from acas_pro.core.logging import StructuredFormatter
         import logging
         fmt = StructuredFormatter()
         record = logging.LogRecord("test", logging.INFO, "", 0, "test message", (), None)
@@ -332,7 +332,7 @@ class TestLoggingV2:
         assert "test message" in result
 
     def test_console_formatter(self):
-        from acas_pro.core.logging_v2 import ConsoleFormatter
+        from acas_pro.core.logging import ConsoleFormatter
         import logging
         fmt = ConsoleFormatter()
         record = logging.LogRecord("test", logging.INFO, "", 0, "hello", (), None)
@@ -340,13 +340,10 @@ class TestLoggingV2:
         assert "hello" in result
 
     def test_logger_factory(self):
-        from acas_pro.core.logging_v2 import LoggerFactory
-        lf = LoggerFactory(config=MagicMock())
-        logger = lf.get_logger("test")
+        from acas_pro.core.logging import get_logger
+        logger = get_logger("test_factory")
         assert logger is not None
 
-
-# ==================== LipSyncEngine ====================
 class TestLipSyncEngine:
     def test_init(self):
         from acas_pro.avatar.lip_sync import LipSyncEngine, LipSyncModel

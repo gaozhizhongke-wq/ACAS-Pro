@@ -201,3 +201,11 @@ audit_logger = AuditLogger()
 
 # Default logger (setup later by setup_logging, available for import)
 logger = logging.getLogger("acas_pro")
+
+
+class LoggerFactory:
+    """Logger factory for creating named loggers"""
+    @staticmethod
+    def get_logger(name: str) -> logging.Logger:
+        """Get a logger by name"""
+        return logging.getLogger(name)

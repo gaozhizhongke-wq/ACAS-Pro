@@ -14,6 +14,9 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QPixmap
 
 from ...core.config import config
+
+# Get config object (config is a function)
+_cfg = config()
 from ...core.security import JWTManager, SessionManager, PasswordHasher
 from ...services.user_service import user_service
 
@@ -131,7 +134,7 @@ class LoginPage(QWidget):
         
         # === 标题区域 ===
         title = QLabel("欢迎回来")
-        title.setFont(QFont(config.ui.font_family, 32, QFont.Bold))
+        title.setFont(QFont(_cfg.ui.font_family, 32, QFont.Bold))
         title.setStyleSheet(f"color: {COLORS['text']};")
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)
@@ -353,7 +356,10 @@ class LoginPage(QWidget):
         from ...services.oauth import OAuthService
         from ....core.config import config
         
-        oauth = OAuthService(config.oauth)
+        # Get config object (config is a function)
+        _cfg = config()
+        
+        oauth = OAuthService(_cfg.oauth)
         url, state = oauth.get_authorization_url("qq")
         
         # 打开浏览器进行授权
@@ -380,7 +386,10 @@ class LoginPage(QWidget):
         from ...services.oauth import OAuthService
         from ....core.config import config
         
-        oauth = OAuthService(config.oauth)
+        # Get config object (config is a function)
+        _cfg = config()
+        
+        oauth = OAuthService(_cfg.oauth)
         url, state = oauth.get_authorization_url("wechat")
         
         import webbrowser
@@ -415,7 +424,7 @@ class RegisterPage(QWidget):
         
         # === 标题区域 ===
         title = QLabel("创建账户")
-        title.setFont(QFont(config.ui.font_family, 32, QFont.Bold))
+        title.setFont(QFont(_cfg.ui.font_family, 32, QFont.Bold))
         title.setStyleSheet(f"color: {COLORS['text']};")
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)

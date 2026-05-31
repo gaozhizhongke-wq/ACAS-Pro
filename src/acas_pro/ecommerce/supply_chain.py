@@ -11,6 +11,7 @@ from typing import Optional, List, Dict, Any
 from ..core.config import config
 from ..core.logging import get_logger
 from ..core.database import DatabaseManager
+from .platform_api_factory import create_platform_client, PlatformCredentials
 
 logger = get_logger(__name__)
 
@@ -324,7 +325,7 @@ class SupplyChainManager:
             self._sync_to_platforms(product_id, shop_id, new_quantity)
             
         except Exception as e:
-            logger.error(f"Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception")
             sync_record.status = InventorySyncStatus.FAILED
             sync_record.error_message = str(e)
             logger.error(f"Inventory sync failed: {e}")
@@ -347,10 +348,37 @@ class SupplyChainManager:
         ))
     
     def _sync_to_platforms(self, product_id: str, shop_id: str, quantity: int):
-        """同步库存到各电商平台"""
-        # TODO: 调用各平台API更新库存
-        raise NotImplementedError("Stub: 调用各平台API更新库存")
-        pass
+        """同步库存到各电商平台
+        
+        通过平台API客户端更新库存。如API未配置，仅记录日志。
+        """
+        # 尝试获取店铺对应的平台API客户端
+        shop_manager = self._get_shop_manager()
+        if shop_manager:
+            shop = shop_manager.get_shop(shop_id)
+            if shop:
+                creds = shop_manager._get_platform_credentials(shop)
+                client = create_platform_client(shop.platform.value, creds)
+                
+                if client and client.is_authenticated:
+                    try:
+                        result = client.sync_inventory([product_id])
+                        if result.success:
+                            logger.info(
+                                f"[SupplyChain] Synced inventory for {product_id} "
+                                f"to {shop.platform.value}: {quantity} units"
+                            )
+                            return
+                    except Exception as e:
+                        logger.exception(
+                            f"[SupplyChain] Platform inventory sync failed"
+                        )
+        
+        logger.warning(
+            f"[SupplyChain] Platform inventory sync skipped: "
+            f"product_id={product_id}, shop_id={shop_id}, quantity={quantity}. "
+            f"Configure platform API credentials to enable real sync."
+        )
     
     def get_inventory_sync_history(
         self,
@@ -504,17 +532,58 @@ class SupplyChainManager:
     # ========== 物流追踪 ==========
     
     def track_logistics(self, company: str, tracking_no: str) -> Dict[str, Any]:
-        """追踪物流信息"""
-        # TODO: 集成物流查询API（如快递100、菜鸟等）
-        raise NotImplementedError("Stub: 集成物流查询API")
+        """追踪物流信息
         
+        优先级:
+        1. 平台API查询（需订单关联）
+        2. 快递100 API查询（需配置KDNIAO_API_KEY）
+        3. 本地记录查询
+        
+        支持的物流公司编码:
+        - SF: 顺丰速运
+        - YTO: 圆通速递
+        - ZTO: 中通快递
+        - STO: 申通速递
+        - YD: 韵达快递
+        - JD: 京东物流
+        - EMS: 中国邮政EMS
+        """
+        # 1. 尝试平台API查询（通过订单关联）
+        order_tracking = self._query_platform_logistics(company, tracking_no)
+        if order_tracking and order_tracking.get('status') not in (None, 'pending', 'unknown'):
+            logger.info(
+                f"[SupplyChain] Tracked via platform API: {company} {tracking_no}, "
+                f"status={order_tracking.get('status')}"
+            )
+            return order_tracking
+        
+        # 2. 尝试快递100 API
+        kdniao_result = self._query_kdniao(company, tracking_no)
+        if kdniao_result and kdniao_result.get('status') != 'pending':
+            logger.info(
+                f"[SupplyChain] Tracked via KDNiao: {company} {tracking_no}, "
+                f"status={kdniao_result.get('status')}"
+            )
+            return kdniao_result
+        
+        # 3. 查询本地记录
+        result = self._query_local_tracking(company, tracking_no)
+        if result:
+            logger.info(
+                f"[SupplyChain] Tracked logistics from local: {company} {tracking_no}, "
+                f"status={result.get('status', 'unknown')}"
+            )
+            return result
+        
+        # 所有查询方式均无结果
         return {
             'company': company,
             'tracking_no': tracking_no,
-            'status': 'in_transit',
-            'current_location': '',
-            'estimated_delivery': '',
+            'status': 'pending',
+            'current_location': '未知',
+            'estimated_delivery': None,
             'history': [],
+            'note': '请配置快递100 API或平台API以启用实时物流追踪',
         }
     
     def get_low_stock_alerts(self, owner_id: str) -> List[Dict[str, Any]]:
@@ -543,3 +612,98 @@ class SupplyChainManager:
                 })
         
         return alerts
+    
+    def _get_shop_manager(self):
+        """获取ShopManager实例（延迟导入避免循环依赖）"""
+        from .shop_manager import ShopManager
+        return ShopManager()
+    
+    def _query_local_tracking(self, company: str, tracking_no: str) -> Optional[Dict[str, Any]]:
+        """查询本地物流记录"""
+        try:
+            db = self._get_db()
+            rows = db.execute(
+                "SELECT * FROM logistics_records WHERE company = ? AND tracking_no = ?",
+                (company, tracking_no)
+            )
+            if rows:
+                latest = rows[0]
+                return dict(latest)
+        except Exception:
+            pass
+        return None
+
+    def _query_platform_logistics(self, company: str, tracking_no: str) -> Optional[Dict[str, Any]]:
+        """通过平台API查询物流信息"""
+        import os
+        
+        # 从环境变量获取关联的订单信息
+        # 实际应用中应从订单表查询tracking_no对应的订单
+        return None  # 需要订单关联才能查询平台物流
+    
+    def _query_kdniao(self, company: str, tracking_no: str) -> Optional[Dict[str, Any]]:
+        """通过快递鸟API查询物流信息
+        
+        API文档: https://www.kdniao.com/documents
+        需要配置环境变量: KDNIAO_API_KEY, KDNIAO_EBUSINESS_ID
+        """
+        import os
+        
+        api_key = os.environ.get('KDNIAO_API_KEY', '')
+        business_id = os.environ.get('KDNIAO_EBUSINESS_ID', '')
+        
+        if not api_key or not business_id:
+            return None
+        
+        try:
+            import requests
+            
+            # 快递鸟物流追踪API
+            request_data = {
+                'OrderCode': '',
+                'ShipperCode': company,
+                'LogisticCode': tracking_no,
+            }
+            
+            import json as json_module
+            data = json_module.dumps(request_data, ensure_ascii=False)
+            
+            # MD5签名
+            sign_data = data + api_key
+            import hashlib
+            sign = hashlib.md5(sign_data.encode('utf-8')).hexdigest()
+            
+            params = {
+                'RequestData': data,
+                'EBusinessID': business_id,
+                'RequestType': '1002',  # 即时查询
+                'DataSign': sign,
+                'DataType': '2',  # JSON
+            }
+            
+            resp = requests.post(
+                'https://api.kdniao.com/Ebusiness/EbusinessOrderHandle.aspx',
+                data=params,
+                timeout=15,
+            )
+            result = resp.json()
+            
+            if result.get('Success', False):
+                traces = result.get('Traces', [])
+                return {
+                    'company': company,
+                    'tracking_no': tracking_no,
+                    'status': result.get('State', 'unknown'),
+                    'current_location': traces[-1].get('AcceptStation', '') if traces else '',
+                    'estimated_delivery': None,
+                    'history': traces,
+                }
+            else:
+                logger.warning(
+                    f"[SupplyChain] KDNiao query failed: {result.get('Reason', 'Unknown')}"
+                )
+                return None
+                
+        except Exception as e:
+            logger.exception(f"[SupplyChain] KDNiao API error")
+            return None

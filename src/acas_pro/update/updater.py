@@ -11,6 +11,9 @@ import urllib.error
 from pathlib import Path
 from typing import Optional, Tuple, Callable
 from dataclasses import dataclass
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -26,26 +29,25 @@ class UpdateInfo:
 
 class UpdateChecker:
     """更新检查器"""
-    
+
     # 更新检查URL（可替换为实际服务器）
     UPDATE_URL = "https://api.acas-pro.com/update/check"
     VERSION_FILE = "https://acas-pro.com/releases/version.json"
-    
+
     def __init__(self, current_version: str = "5.1.0"):
         self.current_version = current_version
         self._update_info: Optional[UpdateInfo] = None
-    
+
     def check(self) -> Tuple[bool, Optional[UpdateInfo]]:
         """检查是否有更新"""
         try:
-            # 尝试从服务器获取版本信息
             req = urllib.request.Request(
                 self.VERSION_FILE,
                 headers={"User-Agent": f"ACAS-Pro/{self.current_version}"}
             )
             with urllib.request.urlopen(req, timeout=10) as response:
                 data = json.loads(response.read().decode("utf-8"))
-            
+
             latest = data.get("latest_version", self.current_version)
             if self._compare_versions(latest, self.current_version) > 0:
                 self._update_info = UpdateInfo(
@@ -58,46 +60,45 @@ class UpdateChecker:
                 )
                 return True, self._update_info
             return False, None
-            
+
         except Exception as e:
-            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
-            # 网络错误时返回无更新
+            logger.exception("Unhandled exception")
             return False, None
-    
+
     def _compare_versions(self, v1: str, v2: str) -> int:
         """比较版本号，返回 >0 表示 v1>v2"""
         def parse(v):
             parts = v.replace("v", "").split(".")
             return [int(p) for p in parts if p.isdigit()]
-        
+
         p1, p2 = parse(v1), parse(v2)
         for a, b in zip(p1, p2):
             if a != b:
                 return a - b
         return len(p1) - len(p2)
-    
+
     def download(self, progress_callback: Optional[Callable[[int], None]] = None) -> Optional[Path]:
         """下载更新"""
         if not self._update_info:
             return None
-        
+
         try:
             download_dir = Path.home() / ".acas-pro" / "updates"
             download_dir.mkdir(parents=True, exist_ok=True)
-            
+
             filename = f"ACAS-Pro-{self._update_info.version}-setup.exe"
             filepath = download_dir / filename
-            
+
             req = urllib.request.Request(
                 self._update_info.download_url,
                 headers={"User-Agent": f"ACAS-Pro/{self.current_version}"}
             )
-            
+
             with urllib.request.urlopen(req, timeout=30) as response:
                 total = int(response.headers.get("Content-Length", 0))
                 downloaded = 0
                 chunk_size = 8192
-                
+
                 with open(filepath, "wb") as f:
                     while True:
                         chunk = response.read(chunk_size)
@@ -107,20 +108,20 @@ class UpdateChecker:
                         downloaded += len(chunk)
                         if progress_callback and total:
                             progress_callback(int(downloaded * 100 / total))
-            
+
             # 验证哈希
             if self._update_info.sha256:
                 sha256 = hashlib.sha256(filepath.read_bytes()).hexdigest()
                 if sha256 != self._update_info.sha256.lower():
                     filepath.unlink()
                     return None
-            
+
             return filepath
-            
+
         except Exception as e:
-            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception")
             return None
-    
+
     def get_update_info(self) -> Optional[UpdateInfo]:
         """获取更新信息"""
         return self._update_info

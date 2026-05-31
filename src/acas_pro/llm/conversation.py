@@ -158,7 +158,7 @@ class ConversationManager:
                         "message_count": len(data.get("messages", []))
                     })
             except Exception as e:
-                import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
+                logger.exception("Unhandled exception")
                 continue
         
         # Sort by updated_at descending
@@ -214,7 +214,7 @@ class ConversationManager:
                     break
                     
             except Exception as e:
-                import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
+                logger.exception("Unhandled exception")
                 continue
         
         return results
@@ -236,7 +236,7 @@ class ConversationManager:
                 data = json.load(f)
             return Conversation.from_dict(data)
         except Exception as e:
-            import logging; logging.getLogger(__name__).error("Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception")
             return None
     
     def clear_all(self):

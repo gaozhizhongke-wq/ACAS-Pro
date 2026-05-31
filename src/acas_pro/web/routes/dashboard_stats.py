@@ -5,7 +5,7 @@ from acas_pro.core.database import DatabaseManager
 from acas_pro.core.logging import get_logger
 
 logger = get_logger(__name__)
-bp = Blueprint('dashboard', __name__, url_prefix='')
+bp = Blueprint('dashboard_stats', __name__, url_prefix='')
 
 
 @bp.route('/api/dashboard/stats')

@@ -29,8 +29,9 @@ def main():
     """Application entry point"""
     # Setup logging
     setup_logging()
+    cfg = config()  # Get config object
     logger.info("=" * 50)
-    logger.info(f"{config.name} v{config.version} starting...")
+    logger.info(f"{cfg.name} v{cfg.version} starting...")
     logger.info("=" * 50)
     
     # Initialize database
@@ -43,12 +44,12 @@ def main():
     
     # Create Qt application
     app = QApplication(sys.argv)
-    app.setApplicationName(config.name)
-    app.setApplicationVersion(config.version)
-    app.setOrganizationName(config.company)
+    app.setApplicationName(cfg.name)
+    app.setApplicationVersion(cfg.version)
+    app.setOrganizationName(cfg.company)
     
     # Set application font
-    font = QFont(config.ui.font_family, config.ui.font_size)
+    font = QFont(cfg.ui.font_family, cfg.ui.font_size)
     app.setFont(font)
     
     # Enable high DPI support

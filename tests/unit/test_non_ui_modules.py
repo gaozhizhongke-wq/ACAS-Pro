@@ -159,7 +159,7 @@ class TestCollectorsMore:
     
     def test_rss_v2_import(self):
         try:
-            from acas_pro.collectors.rss_collector_v2 import RSSCollectorV2
+            from acas_pro.collectors.rss_collector import RSSCollectorV2
             assert RSSCollectorV2 is not None
         except ImportError:
             pytest.skip("Cannot import RSSCollectorV2")

@@ -12,7 +12,7 @@ class TestRSSCollectorV2:
     def test_import(self):
         """Test RSSCollectorV2 can be imported"""
         try:
-            from acas_pro.collectors.rss_collector_v2 import RSSCollectorV2, RSSCollector
+            from acas_pro.collectors.rss_collector import RSSCollectorV2, RSSCollector
             assert RSSCollectorV2 is not None
             assert RSSCollector is not None
         except ImportError as e:
@@ -21,7 +21,7 @@ class TestRSSCollectorV2:
     def test_rss_collector_alias(self):
         """Test RSSCollector alias exists"""
         try:
-            from acas_pro.collectors.rss_collector_v2 import RSSCollector
+            from acas_pro.collectors.rss_collector import RSSCollector
             assert RSSCollector is not None
         except ImportError:
             pytest.skip('RSSCollector not available')
@@ -29,7 +29,7 @@ class TestRSSCollectorV2:
     def test_create_collector(self):
         """Test creating RSS collector"""
         try:
-            from acas_pro.collectors.rss_collector_v2 import RSSCollectorV2
+            from acas_pro.collectors.rss_collector import RSSCollectorV2
             
             # Try to create without DB (might fail, that's ok)
             try:
@@ -44,9 +44,9 @@ class TestRSSCollectorV2:
     def test_collect_method(self):
         """Test collect method exists"""
         try:
-            from acas_pro.collectors.rss_collector_v2 import RSSCollectorV2
+            from acas_pro.collectors.rss_collector import RSSCollectorV2
             
-            with patch('acas_pro.collectors.rss_collector_v2.DatabaseManager'):
+            with patch('acas_pro.collectors.rss_collector.DatabaseManager'):
                 collector = RSSCollectorV2()
                 assert hasattr(collector, 'collect') or hasattr(collector, 'fetch')
         except (ImportError, AttributeError):

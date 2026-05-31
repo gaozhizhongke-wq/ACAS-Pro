@@ -7,6 +7,9 @@ from typing import Any, Dict, List, Optional
 import json
 import uuid
 
+# For test compatibility
+from ..core.database import DatabaseManager
+
 
 class DecisionType(Enum):
     CONTENT_OPTIMIZATION = "content_optimization"

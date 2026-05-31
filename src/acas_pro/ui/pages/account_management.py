@@ -16,6 +16,9 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
 
 from ...core.config import config
+
+# Get config object (config is a function)
+_cfg = config()
 from ...core.logging import get_logger
 from ...platforms.account_manager import (
     AccountManager, PlatformAccount, Platform, AccountStatus, AccountPhase
@@ -170,7 +173,7 @@ class AccountCard(QFrame):
         name_layout = QVBoxLayout()
         
         name = QLabel(self.account.nickname)
-        name.setFont(QFont(config.ui.font_family, 14, QFont.Bold))
+        name.setFont(QFont(_cfg.ui.font_family, 14, QFont.Bold))
         name.setStyleSheet(f"color: {COLORS['text']};")
         name_layout.addWidget(name)
         
@@ -221,7 +224,7 @@ class AccountCard(QFrame):
             metric_layout.setSpacing(4)
             
             val_label = QLabel(value)
-            val_label.setFont(QFont(config.ui.font_family, 16, QFont.Bold))
+            val_label.setFont(QFont(_cfg.ui.font_family, 16, QFont.Bold))
             val_label.setStyleSheet(f"color: {COLORS['accent']};")
             metric_layout.addWidget(val_label)
             
@@ -326,7 +329,7 @@ class AccountManagementPage(QWidget):
         
         # 标题
         title = QLabel("账号矩阵管理")
-        title.setFont(QFont(config.ui.font_family, 24, QFont.Bold))
+        title.setFont(QFont(_cfg.ui.font_family, 24, QFont.Bold))
         title.setStyleSheet(f"color: {COLORS['text']};")
         layout.addWidget(title)
         
@@ -360,7 +363,7 @@ class AccountManagementPage(QWidget):
             card_layout = QVBoxLayout(card)
             
             val_label = QLabel(value)
-            val_label.setFont(QFont(config.ui.font_family, 28, QFont.Bold))
+            val_label.setFont(QFont(_cfg.ui.font_family, 28, QFont.Bold))
             val_label.setStyleSheet(f"color: {color};")
             val_label.setAlignment(Qt.AlignCenter)
             card_layout.addWidget(val_label)

@@ -5,6 +5,7 @@
 import os
 import json
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import List, Dict, Any, Optional, Tuple
 from enum import Enum
 from pathlib import Path
@@ -134,7 +135,7 @@ class SceneConfig:
     effects: List[str] = field(default_factory=list)
     
     # 元数据
-    created_at: str = field(default_factory=lambda: __import__('datetime').datetime.now().isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     owner_id: Optional[str] = None
 
 
@@ -305,7 +306,7 @@ class SceneAdapter:
         """从模板创建场景"""
         template = self.SCENE_TEMPLATES.get(scene_type, self.SCENE_TEMPLATES[SceneType.PRODUCT_SHOWCASE])
         
-        scene_id = f"scene_{__import__('datetime').datetime.now().strftime('%Y%m%d%H%M%S')}"
+        scene_id = f"scene_{datetime.now().strftime('%Y%m%d%H%M%S')}"
         
         scene = SceneConfig(
             id=scene_id,
@@ -556,7 +557,7 @@ class SceneAdapter:
             avatar_scale=data.get('avatar_scale', 0.75),
             props=data.get('props', []),
             effects=data.get('effects', []),
-            created_at=data.get('created_at', __import__('datetime').datetime.now().isoformat()),
+            created_at=data.get('created_at', datetime.now().isoformat()),
             owner_id=data.get('owner_id'),
         )
     

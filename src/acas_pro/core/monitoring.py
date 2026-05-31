@@ -98,7 +98,7 @@ class HealthChecker:
             
             return status
         except Exception as e:
-            logger.error(f"Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception")
             latency = (time.time() - start) * 1000
             status = HealthStatus(name=name, healthy=False, message=str(e), latency_ms=latency)
             with self._lock:
@@ -339,7 +339,7 @@ def _check_database() -> Dict[str, Any]:
         db.execute("SELECT 1")
         return {"healthy": True, "message": "Database connected"}
     except Exception as e:
-        logger.error(f"Unhandled exception: " + str(e))
+        logger.exception("Unhandled exception")
         return {"healthy": False, "message": str(e)}
 
 
@@ -357,7 +357,7 @@ def _check_disk_space() -> Dict[str, Any]:
             return {"healthy": False, "message": f"Disk usage {disk.percent}%"}
         return {"healthy": True, "message": f"Disk usage {disk.percent}%", "details": {"percent": disk.percent}}
     except Exception as e:
-        logger.error(f"Unhandled exception: " + str(e))
+        logger.exception("Unhandled exception")
         return {"healthy": False, "message": str(e)}
 
 

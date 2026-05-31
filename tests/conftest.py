@@ -264,7 +264,7 @@ def _reset_lazy_singletons():
     for mod in mods_to_clear:
         del sys.modules[mod]
 
-print(f'[CONFTEST] numpy type={type(sys.modules.get('numpy')).__name__ if sys.modules.get('numpy') else None}')
+print(f'[CONFTEST] numpy type={type(sys.modules.get("numpy")).__name__ if sys.modules.get("numpy") else None}')
 
 
 # Windows: clean up pytest-current on exit to prevent stale junction next run
@@ -272,14 +272,18 @@ if platform.system() == 'Windows':
     @pytest.hookimpl(trylast=True)
     def pytest_unconfigure(config):
         """Clean up pytest-current on exit to prevent PermissionError on next run."""
-        pytest_current = Path(tempfile.gettempdir()) / f'pytest-of-{os.getlogin()}' / 'pytest-current'
-        if pytest_current.exists() or pytest_current.is_symlink():
-            try:
-                if pytest_current.is_dir():
-                    shutil.rmtree(str(pytest_current))
-                else:
-                    pytest_current.unlink()
-            except (OSError, PermissionError):
-                pass
+        try:
+            pytest_current = Path(tempfile.gettempdir()) / f'pytest-of-{os.getlogin()}' / 'pytest-current'
+            # Use os.path.exists which doesn't raise PermissionError on Windows
+            if os.path.exists(str(pytest_current)) or os.path.islink(str(pytest_current)):
+                try:
+                    if os.path.isdir(str(pytest_current)):
+                        shutil.rmtree(str(pytest_current), ignore_errors=True)
+                    else:
+                        os.unlink(str(pytest_current))
+                except (OSError, PermissionError):
+                    pass
+        except (OSError, PermissionError):
+            pass
     pytest_unconfigure.hookimpl = pytest.hookimpl(trylast=True)(pytest_unconfigure)
 

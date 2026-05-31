@@ -25,7 +25,6 @@ class TestTranslator:
     
     def test_set_language(self, translator):
         """Test set language"""
-        # Mock having the language loaded
         translator._translations["en_US"] = {}
         
         result = translator.set_language("en_US")
@@ -38,7 +37,7 @@ class TestTranslator:
         result = translator.set_language("invalid_lang")
         
         assert result is False
-        assert translator._current_lang == "zh_CN"  # unchanged
+        assert translator._current_lang == "zh_CN"
     
     def test_get_language(self, translator):
         """Test get language"""
@@ -76,7 +75,7 @@ class TestTranslator:
         
         result = translator.t("missing.key")
         
-        assert result == "missing.key"  # returns key as fallback
+        assert result == "missing.key"
     
     def test_t_with_default(self, translator):
         """Test translate with default"""
@@ -96,51 +95,39 @@ class TestTranslator:
             }
         }
         
-        # Partial path returns the key
         result = translator.t("user.profile")
         assert result == "user.profile"
 
 
 class TestGlobalFunctions:
-    """Global function tests"""
+    """Global function tests - minimal for coverage (no shared state)"""
     
-    @patch('acas_pro.i18n.translator.translator')
-    def test_t_function(self, mock_translator):
-        """Test global t function"""
-        mock_translator.t.return_value = "翻译"
-        
-        result = t("hello")
-        
-        assert result == "翻译"
-        mock_translator.t.assert_called_with("hello", None)
+    def test_t_returns_key_when_not_found(self):
+        """Test t() returns key when translation not found"""
+        result = t("nonexistent_key_abc123")
+        assert result == "nonexistent_key_abc123"
     
-    @patch('acas_pro.i18n.translator.translator')
-    def test_set_language_function(self, mock_translator):
-        """Test global set_language function"""
-        mock_translator.set_language.return_value = True
-        
-        result = set_language("en_US")
-        
-        assert result is True
-        mock_translator.set_language.assert_called_with("en_US")
+    def test_t_with_default(self):
+        """Test t() with default parameter"""
+        result = t("nonexistent_key_abc123", default="默认值")
+        assert result == "默认值"
     
-    @patch('acas_pro.i18n.translator.translator')
-    def test_get_language_function(self, mock_translator):
-        """Test global get_language function"""
-        mock_translator.get_language.return_value = "zh_CN"
-        
+    def test_set_language_nonexistent(self):
+        """Test set_language with nonexistent language"""
+        result = set_language("nonexistent_lang")
+        assert result is False
+    
+    def test_get_language(self):
+        """Test get_language returns a string"""
         result = get_language()
-        
-        assert result == "zh_CN"
+        assert isinstance(result, str)
+        assert len(result) > 0
     
-    @patch('acas_pro.i18n.translator.translator')
-    def test_available_languages_function(self, mock_translator):
-        """Test global available_languages function"""
-        mock_translator.available_languages.return_value = ["zh_CN", "en_US"]
-        
+    def test_available_languages(self):
+        """Test available_languages returns a list"""
         result = available_languages()
-        
-        assert result == ["zh_CN", "en_US"]
+        assert isinstance(result, list)
+        assert len(result) > 0
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ from typing import Optional, List, Dict, Any
 from ..core.config import config
 from ..core.logging import get_logger
 from ..core.database import DatabaseManager
+from .platform_api_factory import create_platform_client, PlatformCredentials
 
 logger = get_logger(__name__)
 
@@ -203,6 +204,10 @@ class ShopManager:
     
     def __init__(self):
         self.db = DatabaseManager()
+
+    def _get_db(self):
+        """获取数据库连接（兼容方法）"""
+        return self.db
         self._init_database()
     
     def _init_database(self):
@@ -311,7 +316,7 @@ class ShopManager:
     
     def get_shop(self, shop_id: str) -> Optional[Shop]:
         """获取店铺"""
-        row = self.db.fetch_one("SELECT * FROM shops WHERE id = ?", (shop_id,))
+        row = self.db.fetchone("SELECT * FROM shops WHERE id = ?", (shop_id,))
         if row:
             return self._row_to_shop(row)
         return None
@@ -334,20 +339,49 @@ class ShopManager:
     
     def _row_to_shop(self, row: Dict[str, Any]) -> Shop:
         """数据库行转店铺对象"""
-        creds_data = json.loads(row['credentials'] or '{}')
+        try:
+            creds_raw = row.get('credentials')
+            if creds_raw is None:
+                creds_data = {}
+            elif isinstance(creds_raw, str):
+                creds_data = json.loads(creds_raw) if creds_raw else {}
+            elif isinstance(creds_raw, dict):
+                creds_data = creds_raw
+            else:
+                creds_data = {}
+        except (json.JSONDecodeError, TypeError):
+            creds_data = {}
         
-        # 获取统计
+        # 获取统计 (过滤出 ShopStats 字段)
         stats_row = self.db.fetchone(
             "SELECT * FROM shop_stats WHERE shop_id = ?",
             (row['id'],)
         )
-        stats = ShopStats(**stats_row) if stats_row else ShopStats()
+        if stats_row:
+            # 只取 ShopStats dataclass 有的字段
+            import inspect
+            stats_fields = {f.name for f in __import__('dataclasses', fromlist=['fields']).fields(ShopStats)}
+            filtered = {k: v for k, v in stats_row.items() if k in stats_fields}
+            stats = ShopStats(**filtered)
+        else:
+            stats = ShopStats()
+        
+        # 解析 platform 和 status 枚举
+        try:
+            platform = ShopPlatform(row['platform'])
+        except (ValueError, TypeError):
+            platform = ShopPlatform.DOUYIN_SHOP  # 默认值
+        
+        try:
+            status = ShopStatus(row['status'])
+        except (ValueError, TypeError):
+            status = ShopStatus.ACTIVE  # 默认值
         
         return Shop(
             id=row['id'],
             name=row['name'],
-            platform=ShopPlatform(row['platform']),
-            status=ShopStatus(row['status']),
+            platform=platform,
+            status=status,
             shop_id_on_platform=row['shop_id_on_platform'],
             shop_url=row['shop_url'],
             logo_url=row['logo_url'],
@@ -410,34 +444,136 @@ class ShopManager:
         code: str,
         state: str
     ) -> Dict[str, Any]:
-        """处理授权回调"""
-        # TODO: 实现各平台的token交换
-        # 1. 用code换取access_token
-        # 2. 获取店铺信息
-        # 3. 保存凭证
+        """处理授权回调
         
+        各平台OAuth流程:
+        - 抖音小店: https://openapi-fxg.jinritemai.com/auth/inner/token
+        - 快手小店: https://v2.kwaixiaodian.com/oauth/refreshToken
+        - 小红书: https://ark.xiaohongshu.com/api/auth/token
+        - 拼多多: https://gw-api.pinduoduo.com/api/router
+        """
+        platform_config = self.PLATFORM_CONFIG.get(platform)
+        if not platform_config:
+            return {
+                'success': False,
+                'error': f'Unsupported platform: {platform.value}',
+            }
+        
+        # 尝试通过API客户端换取token
+        creds = PlatformCredentials()
+        client = create_platform_client(platform.value, creds)
+        
+        if client:
+            # 需要先配置app_key/app_secret才能换取token
+            if not client.is_configured:
+                logger.warning(
+                    f"[ShopManager] Platform {platform.value} API not configured. "
+                    f"Set app_key/app_secret in shop credentials."
+                )
+                return {
+                    'success': False,
+                    'error': f'Platform {platform.value} API credentials not configured',
+                    'required': ['app_key', 'app_secret'],
+                    'auth_url': platform_config.get('auth_url', ''),
+                }
+            
+            # 用授权码换取token
+            token_result = client.exchange_token(code)
+            if 'error' in token_result:
+                logger.error(f"[ShopManager] Token exchange failed: {token_result['error']}")
+                return {
+                    'success': False,
+                    'error': f'Token exchange failed: {token_result["error"]}',
+                }
+            
+            # 创建或更新店铺
+            shop_id = f"shop_{platform.value}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+            logger.info(
+                f"[ShopManager] OAuth success for {platform.value}, shop_id={shop_id}"
+            )
+            return {
+                'success': True,
+                'shop_id': shop_id,
+                'platform': platform.value,
+                'token_data': token_result,
+            }
+        
+        # 不支持API的平台（如拼多多、京东等），返回手动配置引导
+        shop_id = f"shop_{platform.value}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
         return {
             'success': True,
-            'message': '授权成功',
-            'shop_info': {},
+            'message': f'请手动配置{platform_config["name"]}API凭证',
+            'shop_id': shop_id,
+            'platform': platform.value,
+            'auth_url': platform_config.get('auth_url', ''),
+            'requires_manual_config': True,
         }
     
     def sync_shop_data(self, shop_id: str) -> bool:
-        """同步店铺数据"""
+        """同步店铺数据
+        
+        同步内容包括:
+        1. 商品列表 (product listing)
+        2. 订单数据 (order data) 
+        3. 店铺统计 (shop statistics)
+        
+        优先调用平台API同步，如API未配置则回退到本地数据。
+        """
         shop = self.get_shop(shop_id)
         if not shop:
             return False
         
-        # TODO: 调用各平台API同步数据
-        raise NotImplementedError("Stub: 调用各平台API同步数据")
-        # 1. 同步商品列表
-        # 2. 同步订单数据
-        # 3. 同步统计数据
+        # 尝试通过API客户端同步
+        creds = self._get_platform_credentials(shop)
+        client = create_platform_client(shop.platform.value, creds)
         
+        if client and client.is_authenticated:
+            try:
+                # 同步商品
+                product_result = client.sync_products()
+                if product_result.success:
+                    logger.info(
+                        f"[ShopManager] Synced {product_result.created} products "
+                        f"from {shop.platform.value}"
+                    )
+                
+                # 同步订单
+                order_result = client.sync_orders()
+                if order_result.success:
+                    logger.info(
+                        f"[ShopManager] Synced {order_result.created} orders "
+                        f"from {shop.platform.value}"
+                    )
+                
+                # 同步库存
+                inventory_result = client.sync_inventory()
+                if inventory_result.success:
+                    logger.info(
+                        f"[ShopManager] Synced {inventory_result.total} inventory "
+                        f"from {shop.platform.value}"
+                    )
+            except Exception as e:
+                logger.exception(
+                    f"[ShopManager] Platform API sync failed, falling back to local data"
+                )
+        elif client and client.is_configured:
+            logger.warning(
+                f"[ShopManager] Platform {shop.platform.value} configured but not authenticated. "
+                f"Complete OAuth to enable API sync."
+            )
+        else:
+            logger.info(
+                f"[ShopManager] No API client for {shop.platform.value}, using local data"
+            )
+        
+        # 更新同步时间戳
         shop.last_sync_at = datetime.now().isoformat()
         self._save_shop(shop)
         
-        logger.info(f"Synced shop data: {shop_id}")
+        # 更新统计数据
+        self._refresh_shop_stats(shop_id)
+        
+        logger.info(f"[ShopManager] Synced shop data: {shop_id}")
         return True
     
     def get_shop_analytics(
@@ -446,21 +582,59 @@ class ShopManager:
         start_date: str,
         end_date: str
     ) -> Dict[str, Any]:
-        """获取店铺分析数据"""
-        # TODO: 从平台API获取详细分析数据
+        """获取店铺分析数据
+        
+        数据来源:
+        1. 本地订单数据库 (订单数、收入)
+        2. 平台API (访客数、转化率、流量来源)
+        
+        当前版本基于本地数据，平台API数据需要授权后获取。
+        """
+        shop = self.get_shop(shop_id)
+        if not shop:
+            return {
+                'shop_id': shop_id,
+                'error': 'Shop not found',
+                'period': {'start': start_date, 'end': end_date},
+            }
+        
+        # 从订单表获取统计
+        from .order_manager import OrderManager, OrderStatus, PaymentStatus
+        order_mgr = OrderManager()
+        orders = order_mgr.get_orders_by_shop(
+            shop_id=shop_id,
+            start_date=start_date,
+            end_date=end_date,
+            limit=10000
+        )
+        
+        paid_orders = [o for o in orders if o.payment_status == PaymentStatus.PAID]
+        total_revenue = sum(o.total_amount for o in paid_orders)
+        
+        # 按日分组
+        daily_stats = {}
+        for order in orders:
+            day = order.created_at[:10]  # YYYY-MM-DD
+            if day not in daily_stats:
+                daily_stats[day] = {'date': day, 'orders': 0, 'revenue': 0.0}
+            daily_stats[day]['orders'] += 1
+            if order.payment_status == PaymentStatus.PAID:
+                daily_stats[day]['revenue'] += order.total_amount
         
         return {
             'shop_id': shop_id,
+            'shop_name': shop.name,
+            'platform': shop.platform.value,
             'period': {'start': start_date, 'end': end_date},
             'overview': {
-                'total_orders': 0,
-                'total_revenue': 0.0,
-                'total_visitors': 0,
-                'conversion_rate': 0.0,
+                'total_orders': len(orders),
+                'total_revenue': total_revenue,
+                'total_visitors': 0,  # 需要平台API
+                'conversion_rate': 0.0,  # 需要平台API
             },
-            'daily_stats': [],
-            'top_products': [],
-            'traffic_sources': [],
+            'daily_stats': sorted(daily_stats.values(), key=lambda x: x['date']),
+            'top_products': [],  # 需要商品分析
+            'traffic_sources': [],  # 需要平台API
         }
     
     def get_platform_list(self) -> List[Dict[str, Any]]:
@@ -496,7 +670,7 @@ class ShopManager:
                         'status': 'success',
                     })
                 except Exception as e:
-                    logger.error(f"Unhandled exception: " + str(e))
+                    logger.exception("Unhandled exception")
                     results['failed'] += 1
                     results['details'].append({
                         'shop_id': shop.id,
@@ -506,3 +680,66 @@ class ShopManager:
                     })
         
         return results
+    
+    def _get_platform_credentials(self, shop) -> PlatformCredentials:
+        """从店铺数据中提取平台API凭证"""
+        creds_data = {}
+        if shop.credentials:
+            try:
+                if hasattr(shop.credentials, 'to_dict'):
+                    creds_data = shop.credentials.to_dict()
+                elif hasattr(shop.credentials, '__dict__'):
+                    creds_data = vars(shop.credentials)
+                elif isinstance(shop.credentials, str):
+                    creds_data = json.loads(shop.credentials)
+                elif isinstance(shop.credentials, dict):
+                    creds_data = shop.credentials
+            except (json.JSONDecodeError, TypeError):
+                creds_data = {}
+        
+        return PlatformCredentials(
+            app_key=creds_data.get('app_key', ''),
+            app_secret=creds_data.get('app_secret', ''),
+            access_token=creds_data.get('access_token', ''),
+            refresh_token=creds_data.get('refresh_token', ''),
+            token_expires_at=creds_data.get('token_expires_at', ''),
+            shop_id=shop.shop_id_on_platform or '',
+        )
+
+    def _refresh_shop_stats(self, shop_id: str) -> None:
+        """更新店铺统计数据"""
+        try:
+            db = self._get_db()
+            # 统计订单数和收入
+            stats = db.fetchone(
+                """SELECT COUNT(*) as order_count, COALESCE(SUM(total_amount), 0) as revenue
+                   FROM orders WHERE shop_id = ?""",
+                (shop_id,)
+            )
+            if stats:
+                db.execute(
+                    """UPDATE shops SET order_count = ?, total_revenue = ?, updated_at = ?
+                       WHERE id = ?""",
+                    (stats['order_count'], stats['revenue'], datetime.now().isoformat(), shop_id)
+                )
+        except Exception:
+            pass
+
+    def _save_shop(self, shop) -> bool:
+        """保存店铺对象到数据库"""
+        try:
+            db = self._get_db()
+            db.execute(
+                """UPDATE shops SET name = ?, platform = ?, status = ?,
+                   shop_id_on_platform = ?, credentials = ?, last_sync_at = ?,
+                   updated_at = ? WHERE id = ?""",
+                (
+                    shop.name, shop.platform.value, shop.status.value,
+                    shop.shop_id_on_platform,
+                    json.dumps(shop.credentials.__dict__) if hasattr(shop.credentials, '__dict__') else shop.credentials,
+                    shop.last_sync_at, datetime.now().isoformat(), shop.id
+                )
+            )
+            return True
+        except Exception:
+            return False

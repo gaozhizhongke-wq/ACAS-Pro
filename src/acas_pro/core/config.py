@@ -11,7 +11,7 @@ import secrets
 import logging
 from pathlib import Path
 from dataclasses import dataclass, field, asdict
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 from enum import Enum
 
 logger = logging.getLogger(__name__)
@@ -193,6 +193,41 @@ class AppConfig:
         
         for d in [self.data_dir, self.log_dir, self.backup_dir]:
             Path(d).mkdir(parents=True, exist_ok=True)
+        
+        # Validate production secrets
+        if self.environment == Environment.PRODUCTION:
+            self._validate_production_secrets()
+    
+    def _validate_production_secrets(self):
+        """Production secrets validation - prevents startup with missing secrets"""
+        missing = []
+        
+        # Check SECRET_KEY
+        if not self.security.secret_key or len(self.security.secret_key) < 32:
+            missing.append("SECRET_KEY (must be >= 32 chars)")
+        
+        # Check JWT_SECRET
+        jwt_secret = os.environ.get('ACAS_JWT_SECRET')
+        if not jwt_secret:
+            missing.append("ACAS_JWT_SECRET environment variable")
+        
+        # Check ENCRYPTION_SALT
+        salt = os.environ.get('ACAS_ENCRYPTION_SALT')
+        if not salt:
+            missing.append("ACAS_ENCRYPTION_SALT environment variable")
+        
+        # Check LLM API key
+        if self.llm.enabled and not self.llm.api_key:
+            missing.append(f"{self.llm.provider.upper()}_API_KEY (LLM enabled but no key)")
+        
+        if missing:
+            logger.error(f"[PRODUCTION BLOCKED] Missing required secrets: {missing}")
+            raise ValueError(
+                f"Production startup blocked: missing {len(missing)} required secrets. "
+                f"Set these environment variables: {', '.join(missing)}"
+            )
+        else:
+            logger.info("[PRODUCTION] All required secrets validated successfully")
     
     @property
     def is_production(self) -> bool:
@@ -335,6 +370,12 @@ class AppConfig:
         
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert config to dictionary"""
+        data = asdict(self)
+        data['environment'] = self.environment.value
+        return data
 
 
 # Lazy-loaded global config instance

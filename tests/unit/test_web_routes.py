@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """Tests for web routes to boost coverage."""
 
 import pytest
@@ -16,9 +16,9 @@ class TestAuthRoutes:
         from acas_pro.web.routes import auth
         assert auth is not None
     
-    def test_auth_v2_route_import(self):
-        from acas_pro.web.routes import auth_v2
-        assert auth_v2 is not None
+    def test_auth_route_import(self):
+        from acas_pro.web.routes import auth
+        assert auth is not None
 
 
 class TestDashboardRoutes:
@@ -72,3 +72,4 @@ class TestServicesOAuth:
     def test_oauth_service_import(self):
         from acas_pro.services.oauth.oauth_service import OAuthService
         assert OAuthService is not None
+

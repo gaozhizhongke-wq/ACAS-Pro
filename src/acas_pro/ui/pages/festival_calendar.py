@@ -16,6 +16,9 @@ from PySide6.QtCore import Qt, QDate
 from PySide6.QtGui import QFont
 
 from ...core.config import config
+
+# Get config object (config is a function)
+_cfg = config()
 from ...core.logging import get_logger
 from ...analytics.festival_calendar import (
     FestivalCalendar, Festival, FestivalType, MarketType
@@ -77,7 +80,7 @@ class FestivalCard(QFrame):
         name_layout = QVBoxLayout()
         
         name = QLabel(self.festival.name)
-        name.setFont(QFont(config.ui.font_family, 16, QFont.Bold))
+        name.setFont(QFont(_cfg.ui.font_family, 16, QFont.Bold))
         name.setStyleSheet(f"color: {COLORS['text']};")
         name_layout.addWidget(name)
         
@@ -92,7 +95,7 @@ class FestivalCard(QFrame):
         # 倒计时
         if self.days_until is not None:
             countdown = QLabel(f"还有 {self.days_until} 天")
-            countdown.setFont(QFont(config.ui.font_family, 14, QFont.Bold))
+            countdown.setFont(QFont(_cfg.ui.font_family, 14, QFont.Bold))
             countdown.setStyleSheet(f"color: {accent_color};")
             header.addWidget(countdown)
             
@@ -191,7 +194,7 @@ class FestivalCalendarPage(QWidget):
         
         # 标题
         title = QLabel("节日营销日历")
-        title.setFont(QFont(config.ui.font_family, 24, QFont.Bold))
+        title.setFont(QFont(_cfg.ui.font_family, 24, QFont.Bold))
         title.setStyleSheet(f"color: {COLORS['text']};")
         layout.addWidget(title)
         

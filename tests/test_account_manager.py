@@ -6,7 +6,7 @@ ACAS Pro - Account Manager Tests
 
 import pytest
 from datetime import datetime, timedelta
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, MagicMock
 
 from acas_pro.platforms.account_manager import (
     AccountManager, PlatformAccount, Platform, AccountStatus, AccountPhase, AccountStats
@@ -111,10 +111,10 @@ class TestAccountManager:
     
     @pytest.fixture
     def mock_db(self):
-        mock = Mock()
-        mock.execute = Mock()
-        mock.fetchone = Mock(return_value=None)
-        mock.fetchall = Mock(return_value=[])
+        mock = MagicMock()
+        mock.execute = MagicMock()
+        mock.fetchone = MagicMock(return_value=None)
+        mock.fetchall = MagicMock(return_value=[])
         return mock
     
     @pytest.fixture

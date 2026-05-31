@@ -322,8 +322,7 @@ class TestProductManager:
 
     # ===== 平台同步测试 =====
     def test_sync_to_platform(self, manager, mock_db):
-        """Test syncing product to platform (stub)"""
-        # Mock get_product to return a product
+        """Test syncing product to platform"""
         with patch.object(manager, 'get_product') as mock_get:
             mock_get.return_value = Product(
                 id='prod_001',
@@ -331,8 +330,12 @@ class TestProductManager:
                 category=ProductCategory.FOOD,
                 price=128.0,
             )
-            with pytest.raises(NotImplementedError):
-                manager.sync_to_platform('prod_001', 'douyin', 'shop_001')
+            result = manager.sync_to_platform(
+                product_id='prod_001',
+                platform='douyin',
+                platform_shop_id='shop_001',
+            )
+            assert isinstance(result, dict)
 
     def test_batch_sync_to_platform(self, manager):
         """Test batch syncing products to platform"""

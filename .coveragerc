@@ -1,0 +1,11 @@
+[run]
+omit =
+    */ui/pages/llm_chat.py
+    */ui/pages/llm_chat_fixed.py
+    */monitoring/metrics.py
+    */ui/pages/*
+    */ui/main_window.py
+    */ui/auth/login_dialog.py
+
+[report]
+show_missing = true

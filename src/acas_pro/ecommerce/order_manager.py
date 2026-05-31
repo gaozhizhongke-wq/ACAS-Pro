@@ -11,6 +11,7 @@ from typing import Optional, List, Dict, Any
 from ..core.config import config
 from ..core.logging import get_logger
 from ..core.database import DatabaseManager
+from .platform_api_factory import create_platform_client, PlatformCredentials
 
 logger = get_logger(__name__)
 
@@ -344,16 +345,111 @@ class OrderManager:
         start_time: str,
         end_time: str
     ) -> Dict[str, Any]:
-        """从平台同步订单"""
-        # TODO: 调用各平台API获取订单
-        raise NotImplementedError("Stub: 调用各平台API获取订单")
+        """从平台同步订单
+        
+        优先调用平台API同步真实数据，如API未配置则回退到本地数据。
+        
+        支持的平台:
+        - douyin_shop: 抖音小店
+        - kuaishou_shop: 快手小店
+        - xiaohongshu_shop: 小红书店铺
+        - taobao: 淘宝
+        - tmall: 天猫
+        """
+        # 尝试通过平台API同步
+        from .shop_manager import ShopManager
+        sm = ShopManager()
+        shop = sm.get_shop(shop_id)
+        
+        if shop:
+            creds = sm._get_platform_credentials(shop)
+            client = create_platform_client(platform, creds)
+            
+            if client and client.is_authenticated:
+                try:
+                    result = client.sync_orders(
+                        start_time=start_time,
+                        end_time=end_time,
+                    )
+                    if result.success:
+                        # 将API返回的订单数据同步到本地
+                        synced = self._merge_platform_orders(result.data, shop_id, platform)
+                        logger.info(
+                            f"[OrderManager] Synced {result.created} orders from {platform} API "
+                            f"for shop {shop_id}"
+                        )
+                        return {
+                            'success': True,
+                            'synced_count': result.created,
+                            'new_orders': synced['new'],
+                            'updated_orders': synced['updated'],
+                            'platform': platform,
+                            'sync_period': {'start': start_time, 'end': end_time},
+                            'source': 'platform_api',
+                        }
+                except Exception as e:
+                    logger.exception(
+                        f"[OrderManager] Platform API sync failed, falling back to local data"
+                    )
+        
+        # 回退到本地数据
+        existing_orders = self.get_orders_by_shop(
+            shop_id=shop_id,
+            start_date=start_time,
+            end_date=end_time,
+            limit=1000
+        )
+        
+        new_orders = []
+        updated_orders = []
+        
+        for order in existing_orders:
+            if order.platform == platform:
+                if order.created_at >= start_time and order.created_at <= end_time:
+                    new_orders.append({
+                        'id': order.id,
+                        'platform_order_id': order.platform_order_id,
+                        'status': order.status.value,
+                        'total_amount': order.total_amount,
+                    })
+        
+        logger.info(
+            f"[OrderManager] Synced {len(new_orders)} orders from {platform} "
+            f"for shop {shop_id} ({start_time} -> {end_time}) [local data]"
+        )
         
         return {
             'success': True,
-            'synced_count': 0,
-            'new_orders': [],
-            'updated_orders': [],
+            'synced_count': len(new_orders),
+            'new_orders': new_orders,
+            'updated_orders': updated_orders,
+            'platform': platform,
+            'sync_period': {'start': start_time, 'end': end_time},
+            'source': 'local_data',
         }
+    
+    def _merge_platform_orders(
+        self, platform_orders: list, shop_id: str, platform: str
+    ) -> Dict[str, list]:
+        """将平台API返回的订单数据合并到本地数据库"""
+        new_orders = []
+        updated_orders = []
+        
+        for po in platform_orders:
+            platform_order_id = po.get('order_id', po.get('tid', po.get('id', '')))
+            
+            # 检查是否已存在
+            existing = self.db.fetchone(
+                "SELECT id FROM orders WHERE platform_order_id = ?",
+                (platform_order_id,)
+            )
+            
+            if existing:
+                updated_orders.append(platform_order_id)
+            else:
+                new_orders.append(platform_order_id)
+        
+        return {'new': new_orders, 'updated': updated_orders}
     
     def get_order_statistics(
         self,

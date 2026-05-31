@@ -15,6 +15,9 @@ from PySide6.QtCore import Qt, Signal, QThread
 from PySide6.QtGui import QFont
 
 from ...core.config import config
+
+# Get config object (config is a function)
+_cfg = config()
 from ...core.logging import get_logger
 from ...services.user_service import user_service
 from ...i18n import t, set_language, get_language, available_languages
@@ -59,7 +62,7 @@ class SettingsPage(QWidget):
         
         # 标题
         title = QLabel(t("settings.title", "系统设置"))
-        title.setFont(QFont(config.ui.font_family, 24, QFont.Bold))
+        title.setFont(QFont(_cfg.ui.font_family, 24, QFont.Bold))
         title.setStyleSheet(f"color: {COLORS['text']};")
         layout.addWidget(title)
         
@@ -274,7 +277,7 @@ class SettingsPage(QWidget):
         
         self.session_timeout = QSpinBox()
         self.session_timeout.setRange(5, 120)
-        self.session_timeout.setValue(config.security.session_timeout_minutes)
+        self.session_timeout.setValue(_cfg.security.session_timeout_minutes)
         self.session_timeout.setStyleSheet(f"""
             QSpinBox {{
                 background-color: {COLORS['surface']};
@@ -288,7 +291,7 @@ class SettingsPage(QWidget):
         
         self.max_attempts = QSpinBox()
         self.max_attempts.setRange(1, 10)
-        self.max_attempts.setValue(config.security.max_login_attempts)
+        self.max_attempts.setValue(_cfg.security.max_login_attempts)
         self.max_attempts.setStyleSheet(self.session_timeout.styleSheet())
         session_layout.addRow(t("settings.max_login_attempts", "最大登录尝试次数"), self.max_attempts)
         
@@ -388,10 +391,10 @@ class SettingsPage(QWidget):
         """)
         provider_layout.addRow("API Key:", self.llm_api_key)
         
-        self.llm_api_base = QLineEdit()
-        self.llm_api_base.setPlaceholderText("https://api.example.com/v1 (可选)")
-        self.llm_api_base.setStyleSheet(self.llm_api_key.styleSheet())
-        provider_layout.addRow("API Base:", self.llm_api_base)
+        self.llm_base_url = QLineEdit()
+        self.llm_base_url.setPlaceholderText("https://api.example.com/v1 (可选)")
+        self.llm_base_url.setStyleSheet(self.llm_api_key.styleSheet())
+        provider_layout.addRow("API Base:", self.llm_base_url)
         
         self.llm_model = QLineEdit()
         self.llm_model.setPlaceholderText("模型名称，如 gpt-4o, claude-sonnet-4")
@@ -524,16 +527,16 @@ class SettingsPage(QWidget):
                 "lmstudio": 5,
                 "ollama": 6,
             }
-            idx = provider_map.get(config.llm.provider, 0)
+            idx = provider_map.get(_cfg.llm.provider, 0)
             self.llm_provider_combo.setCurrentIndex(idx)
             
-            self.llm_api_key.setText(config.llm.api_key or "")
-            self.llm_api_base.setText(config.llm.api_base or "")
-            self.llm_model.setText(config.llm.model or "")
-            self.llm_temp.setValue(config.llm.temperature or 0.7)
-            self.llm_max_tokens.setValue(config.llm.max_tokens or 4096)
-            self.llm_agent_mode.setChecked(config.llm.agent_mode if hasattr(config.llm, 'agent_mode') else True)
-            self.llm_max_steps.setValue(config.llm.max_agent_steps if hasattr(config.llm, 'max_agent_steps') else 10)
+            self.llm_api_key.setText(_cfg.llm.api_key or "")
+            self.llm_base_url.setText(_cfg.llm.base_url or "")
+            self.llm_model.setText(_cfg.llm.model or "")
+            self.llm_temp.setValue(_cfg.llm.temperature or 0.7)
+            self.llm_max_tokens.setValue(_cfg.llm.max_tokens or 4096)
+            self.llm_agent_mode.setChecked(_cfg.llm.agent_mode if hasattr(_cfg.llm, 'agent_mode') else True)
+            self.llm_max_steps.setValue(_cfg.llm.max_agent_steps if hasattr(_cfg.llm, 'max_agent_steps') else 10)
         except Exception as e:
             logger.warning(f"加载 LLM 配置失败: {e}")
     
@@ -542,19 +545,19 @@ class SettingsPage(QWidget):
         try:
             # Provider 映射
             providers = ["openai", "anthropic", "kimi", "deepseek", "qwen", "lmstudio", "ollama", "custom"]
-            config.llm.provider = providers[self.llm_provider_combo.currentIndex()]
-            config.llm.api_key = self.llm_api_key.text().strip()
-            config.llm.api_base = self.llm_api_base.text().strip() or None
-            config.llm.model = self.llm_model.text().strip() or None
-            config.llm.temperature = self.llm_temp.value()
-            config.llm.max_tokens = self.llm_max_tokens.value()
-            config.llm.agent_mode = self.llm_agent_mode.isChecked()
-            config.llm.max_agent_steps = self.llm_max_steps.value()
-            config.llm.enabled = True
-            config.save()
+            _cfg.llm.provider = providers[self.llm_provider_combo.currentIndex()]
+            _cfg.llm.api_key = self.llm_api_key.text().strip()
+            _cfg.llm.base_url = self.llm_base_url.text().strip() or None
+            _cfg.llm.model = self.llm_model.text().strip() or None
+            _cfg.llm.temperature = self.llm_temp.value()
+            _cfg.llm.max_tokens = self.llm_max_tokens.value()
+            _cfg.llm.agent_mode = self.llm_agent_mode.isChecked()
+            _cfg.llm.max_agent_steps = self.llm_max_steps.value()
+            _cfg.llm.enabled = True
+            _cfg.save()
             QMessageBox.information(self, "成功", "LLM 配置已保存")
         except Exception as e:
-            logger.error(f"Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception")
             QMessageBox.warning(self, "错误", f"保存失败: {e}")
     
     def _test_llm_connection(self):
@@ -568,7 +571,7 @@ class SettingsPage(QWidget):
             else:
                 QMessageBox.warning(self, "失败", "无法获取响应")
         except Exception as e:
-            logger.error(f"Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception")
             QMessageBox.warning(self, "连接失败", f"错误: {str(e)}")
     
 
@@ -696,32 +699,32 @@ class SettingsPage(QWidget):
     def _load_oauth_settings(self):
         """加载 OAuth 设置"""
         try:
-            qq_enabled = config.oauth.qq_app_id != ""
+            qq_enabled = _cfg.oauth.qq_app_id != ""
             self.qq_enabled_cb.setChecked(qq_enabled)
-            self.qq_app_id.setText(config.oauth.qq_app_id)
-            self.qq_redirect.setText(config.oauth.qq_redirect_uri)
-            wx_enabled = config.oauth.wx_app_id != ""
+            self.qq_app_id.setText(_cfg.oauth.qq_app_id)
+            self.qq_redirect.setText(_cfg.oauth.qq_redirect_uri)
+            wx_enabled = _cfg.oauth.wx_app_id != ""
             self.wx_enabled_cb.setChecked(wx_enabled)
-            self.wx_app_id.setText(config.oauth.wx_app_id)
-            self.wx_redirect.setText(config.oauth.wx_redirect_uri)
+            self.wx_app_id.setText(_cfg.oauth.wx_app_id)
+            self.wx_redirect.setText(_cfg.oauth.wx_redirect_uri)
         except Exception as e:
-            logger.error(f"Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception")
             import logging
             logging.debug(f"{type(e).__name__}: {e}")
 
     def _save_oauth_settings(self):
         """保存 OAuth 设置"""
         try:
-            config.oauth.qq_app_id = self.qq_app_id.text().strip()
-            config.oauth.qq_app_key = self.qq_app_key.text().strip()
-            config.oauth.qq_redirect_uri = self.qq_redirect.text().strip()
-            config.oauth.wx_app_id = self.wx_app_id.text().strip()
-            config.oauth.wx_app_secret = self.wx_app_secret.text().strip()
-            config.oauth.wx_redirect_uri = self.wx_redirect.text().strip()
-            config.save()
+            _cfg.oauth.qq_app_id = self.qq_app_id.text().strip()
+            _cfg.oauth.qq_app_key = self.qq_app_key.text().strip()
+            _cfg.oauth.qq_redirect_uri = self.qq_redirect.text().strip()
+            _cfg.oauth.wx_app_id = self.wx_app_id.text().strip()
+            _cfg.oauth.wx_app_secret = self.wx_app_secret.text().strip()
+            _cfg.oauth.wx_redirect_uri = self.wx_redirect.text().strip()
+            _cfg.save()
             QMessageBox.information(self, "成功", "OAuth 配置已保存")
         except Exception as e:
-            logger.error(f"Unhandled exception: " + str(e))
+            logger.exception("Unhandled exception")
             QMessageBox.warning(self, "错误", f"保存失败: {e}")
 
     def _create_update_tab(self) -> QWidget:
@@ -742,7 +745,7 @@ class SettingsPage(QWidget):
         """)
         version_layout = QVBoxLayout(version_group)
         
-        version_label = QLabel(f"ACAS Pro {config.version}")
+        version_label = QLabel(f"ACAS Pro {_cfg.version}")
         version_label.setStyleSheet(f"color: {COLORS['accent']}; font-size: 18px; font-weight: bold;")
         version_layout.addWidget(version_label)
         
@@ -819,7 +822,7 @@ class SettingsPage(QWidget):
         layout.addLayout(logo_layout)
         
         name_label = QLabel("ACAS Pro")
-        name_label.setFont(QFont(config.ui.font_family, 32, QFont.Bold))
+        name_label.setFont(QFont(_cfg.ui.font_family, 32, QFont.Bold))
         name_label.setStyleSheet(f"color: {COLORS['accent']};")
         name_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(name_label)
@@ -829,7 +832,7 @@ class SettingsPage(QWidget):
         tagline.setAlignment(Qt.AlignCenter)
         layout.addWidget(tagline)
         
-        version_label = QLabel(f"Version {config.version}")
+        version_label = QLabel(f"Version {_cfg.version}")
         version_label.setStyleSheet(f"color: {COLORS['text2']};")
         version_label.setAlignment(Qt.AlignCenter)
         layout.addWidget(version_label)
@@ -860,20 +863,20 @@ class SettingsPage(QWidget):
             self.lang_combo.setCurrentIndex(lang_index)
         
         # LLM设置
-        if hasattr(config, 'llm') and config.llm:
+        if hasattr(config, 'llm') and _cfg.llm:
             provider_map = {
                 "openai": 0, "anthropic": 1, "kimi": 2, "deepseek": 3,
                 "qwen": 4, "lmstudio": 5, "ollama": 6, "custom": 7
             }
-            idx = provider_map.get(config.llm.provider, 0)
+            idx = provider_map.get(_cfg.llm.provider, 0)
             self.llm_provider_combo.setCurrentIndex(idx)
-            self.llm_api_key.setText(config.llm.api_key or "")
-            self.llm_api_base.setText(config.llm.api_base or "")
-            self.llm_model.setText(config.llm.model or "")
-            self.llm_temp.setValue(config.llm.temperature or 0.7)
-            self.llm_max_tokens.setValue(config.llm.max_tokens or 4096)
-            self.llm_agent_mode.setChecked(config.llm.agent_mode if config.llm.agent_mode is not None else True)
-            self.llm_max_steps.setValue(config.llm.max_agent_steps or 10)
+            self.llm_api_key.setText(_cfg.llm.api_key or "")
+            self.llm_base_url.setText(_cfg.llm.base_url or "")
+            self.llm_model.setText(_cfg.llm.model or "")
+            self.llm_temp.setValue(_cfg.llm.temperature or 0.7)
+            self.llm_max_tokens.setValue(_cfg.llm.max_tokens or 4096)
+            self.llm_agent_mode.setChecked(_cfg.llm.agent_mode if _cfg.llm.agent_mode is not None else True)
+            self.llm_max_steps.setValue(_cfg.llm.max_agent_steps or 10)
     
     def _on_language_changed(self, index):
         """语言切换"""
@@ -886,22 +889,22 @@ class SettingsPage(QWidget):
         """保存通用设置"""
         # 保存主题
         theme = "dark" if self.theme_combo.currentIndex() == 0 else "light"
-        config.ui.theme = theme
+        _cfg.ui.theme = theme
         
         # 保存LLM设置
         provider_map = ["openai", "anthropic", "kimi", "deepseek", "qwen", "lmstudio", "ollama", "custom"]
-        config.llm.provider = provider_map[self.llm_provider_combo.currentIndex()]
-        config.llm.api_key = self.llm_api_key.text().strip()
-        config.llm.api_base = self.llm_api_base.text().strip()
-        config.llm.model = self.llm_model.text().strip()
-        config.llm.temperature = self.llm_temp.value()
-        config.llm.max_tokens = self.llm_max_tokens.value()
-        config.llm.agent_mode = self.llm_agent_mode.isChecked()
-        config.llm.max_agent_steps = self.llm_max_steps.value()
-        config.llm.enabled = bool(config.llm.api_key)
+        _cfg.llm.provider = provider_map[self.llm_provider_combo.currentIndex()]
+        _cfg.llm.api_key = self.llm_api_key.text().strip()
+        _cfg.llm.base_url = self.llm_base_url.text().strip()
+        _cfg.llm.model = self.llm_model.text().strip()
+        _cfg.llm.temperature = self.llm_temp.value()
+        _cfg.llm.max_tokens = self.llm_max_tokens.value()
+        _cfg.llm.agent_mode = self.llm_agent_mode.isChecked()
+        _cfg.llm.max_agent_steps = self.llm_max_steps.value()
+        _cfg.llm.enabled = bool(_cfg.llm.api_key)
         
         # 保存启动设置
-        config.save()
+        _cfg.save()
         
         QMessageBox.information(self, "保存成功", "设置已保存（含大模型配置）")
         self.settings_changed.emit()
