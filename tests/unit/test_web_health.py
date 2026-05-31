@@ -51,16 +51,27 @@ def _make_config(secret_key='a' * 32, environment='production',
 
 class TestHealthCheckResult:
     def test_result_creation(self):
-        r = HealthCheckResult(name='db', status=HealthStatus.HEALTHY,
-                             response_time_ms=1.0, message='OK')
-        assert r.name == 'db'
-        assert r.status == HealthStatus.HEALTHY
+        result = HealthCheckResult(
+            name='database',
+            status=HealthStatus.HEALTHY,
+            response_time_ms=10.5,
+            message='OK',
+            details={'type': 'postgresql'}
+        )
+        assert result.name == 'database'
+        assert result.status == HealthStatus.HEALTHY
+        assert result.response_time_ms == 10.5
+        assert result.message == 'OK'
+        assert result.details == {'type': 'postgresql'}
 
     def test_result_defaults(self):
-        r = HealthCheckResult(name='x', status=HealthStatus.DEGRADED,
-                             response_time_ms=0)
-        assert r.message == ''
-        assert r.details == {}
+        result = HealthCheckResult(
+            name='test',
+            status=HealthStatus.HEALTHY,
+            response_time_ms=0
+        )
+        assert result.message == ""
+        assert result.details == {}
 
 
 # ---------------------------------------------------------------
@@ -69,9 +80,23 @@ class TestHealthCheckResult:
 
 class TestHealthStatus:
     def test_status_values(self):
-        assert HealthStatus.HEALTHY.value == 'healthy'
-        assert HealthStatus.DEGRADED.value == 'degraded'
-        assert HealthStatus.UNHEALTHY.value == 'unhealthy'
+        assert HealthStatus.HEALTHY.value == "healthy"
+        assert HealthStatus.DEGRADED.value == "degraded"
+        assert HealthStatus.UNHEALTHY.value == "unhealthy"
+
+
+# ---------------------------------------------------------------
+# HealthChecker init
+# ---------------------------------------------------------------
+
+class TestHealthCheckerInit:
+    def test_init(self):
+        checker = HealthChecker()
+        assert len(checker.checks) == 4
+        assert checker._check_database in checker.checks
+        assert checker._check_config in checker.checks
+        assert checker._check_disk_space in checker.checks
+        assert checker._check_llm in checker.checks
 
 
 # ---------------------------------------------------------------
@@ -80,22 +105,23 @@ class TestHealthStatus:
 
 class TestCheckDatabase:
     def test_db_healthy(self, health_checker):
-        mock_db = MagicMock()
-        mock_db.execute_one.return_value = {'health_check': 1}
-
-        with patch('acas_pro.web.health.DatabaseManager', return_value=mock_db):
-            with patch('acas_pro.web.health.config') as mock_config:
-                mock_config.return_value = _make_config()
-                result = health_checker._check_database()
-                assert result.status == HealthStatus.HEALTHY
-                assert 'OK' in result.message
+        with patch('acas_pro.web.health.DatabaseManager') as mock_db:
+            mock_instance = MagicMock()
+            mock_instance.execute_one.return_value = {'health_check': 1}
+            mock_db.return_value = mock_instance
+            result = health_checker._check_database()
+            assert result.status == HealthStatus.HEALTHY
+            assert result.name == 'database'
+            assert 'OK' in result.message
 
     def test_db_unhealthy(self, health_checker):
-        with patch('acas_pro.web.health.DatabaseManager', side_effect=Exception('boom')):
-            with patch('acas_pro.web.health.config') as mock_config:
-                mock_config.return_value = _make_config()
-                result = health_checker._check_database()
-                assert result.status == HealthStatus.UNHEALTHY
+        with patch('acas_pro.web.health.DatabaseManager') as mock_db:
+            mock_instance = MagicMock()
+            mock_instance.execute_one.return_value = {'health_check': 0}
+            mock_db.return_value = mock_instance
+            result = health_checker._check_database()
+            assert result.status == HealthStatus.UNHEALTHY
+            assert 'unexpected result' in result.message
 
 
 # ---------------------------------------------------------------
@@ -104,16 +130,14 @@ class TestCheckDatabase:
 
 class TestCheckConfig:
     def test_config_healthy(self, health_checker):
-        with patch('acas_pro.web.health.config') as mock_config:
-            mock_config.return_value = _make_config(secret_key='a' * 32,
-                                                   environment='production')
+        with patch('acas_pro.web.health.config', _make_config(secret_key='a' * 32,
+                                                              environment='development')):
             result = health_checker._check_config()
             assert result.status == HealthStatus.HEALTHY
 
     def test_config_missing_secret(self, health_checker):
-        with patch('acas_pro.web.health.config') as mock_config:
-            mock_config.return_value = _make_config(secret_key='short',
-                                                   environment='production')
+        with patch('acas_pro.web.health.config', _make_config(secret_key='short',
+                                                              environment='production')):
             result = health_checker._check_config()
             assert result.status == HealthStatus.DEGRADED
 
@@ -131,8 +155,7 @@ class TestCheckDisk:
         mock_stat.used = mock_stat.total - mock_stat.free
 
         with patch('shutil.disk_usage', return_value=mock_stat):
-            with patch('acas_pro.web.health.config') as mock_config:
-                mock_config.return_value = _make_config()
+            with patch('acas_pro.web.health.config', _make_config()):
                 result = health_checker._check_disk_space()
                 assert result.status == HealthStatus.HEALTHY
 
@@ -143,8 +166,7 @@ class TestCheckDisk:
         mock_stat.used = mock_stat.total - mock_stat.free
 
         with patch('shutil.disk_usage', return_value=mock_stat):
-            with patch('acas_pro.web.health.config') as mock_config:
-                mock_config.return_value = _make_config()
+            with patch('acas_pro.web.health.config', _make_config()):
                 result = health_checker._check_disk_space()
                 assert result.status == HealthStatus.UNHEALTHY
 
@@ -155,18 +177,16 @@ class TestCheckDisk:
 
 class TestCheckLLM:
     def test_llm_disabled(self, health_checker):
-        with patch('acas_pro.web.health.config') as mock_config:
-            mock_config.return_value = _make_config(llm_enabled=False)
+        with patch('acas_pro.web.health.config', _make_config(llm_enabled=False)):
             result = health_checker._check_llm()
             assert result.status == HealthStatus.DEGRADED
             assert 'disabled' in result.message.lower()
 
     def test_llm_no_api_key(self, health_checker):
-        with patch('acas_pro.web.health.config') as mock_config:
-            mock_config.return_value = _make_config(llm_enabled=True, llm_api_key='')
+        with patch('acas_pro.web.health.config', _make_config(llm_enabled=True, llm_api_key='')):
             result = health_checker._check_llm()
             assert result.status == HealthStatus.DEGRADED
-            assert 'key' in result.message.lower()
+            assert 'API key' in result.message
 
 
 # ---------------------------------------------------------------
@@ -174,34 +194,73 @@ class TestCheckLLM:
 # ---------------------------------------------------------------
 
 class TestCheckAll:
-    def _patch_all(self, health_checker, db=None, cfg=None, disk=None, llm=None):
-        if db is None:
-            db = HealthCheckResult('database', HealthStatus.HEALTHY, 1.0, 'OK')
-        if cfg is None:
-            cfg = HealthCheckResult('config', HealthStatus.HEALTHY, 1.0, 'OK')
-        if disk is None:
-            disk = HealthCheckResult('disk', HealthStatus.HEALTHY, 1.0, 'OK')
-        if llm is None:
-            llm = HealthCheckResult('llm', HealthStatus.HEALTHY, 1.0, 'OK')
-
-        mock_config = _make_config()
-        with patch.object(health_checker, '_check_database', return_value=db), \
-             patch.object(health_checker, '_check_config', return_value=cfg), \
-             patch.object(health_checker, '_check_disk_space', return_value=disk), \
-             patch.object(health_checker, '_check_llm', return_value=llm), \
-             patch('acas_pro.web.health.config', return_value=mock_config):
-            return health_checker.check_all()
-
     def test_all_healthy(self, health_checker):
-        result = self._patch_all(health_checker)
-        assert result['status'] == 'healthy'
+        with patch('shutil.disk_usage') as mock_disk:
+            mock_stat = MagicMock()
+            mock_stat.free = 10 * (1024 ** 3)
+            mock_stat.total = 100 * (1024 ** 3)
+            mock_stat.used = mock_stat.total - mock_stat.free
+            mock_disk.return_value = mock_stat
+
+            with patch('acas_pro.web.health.DatabaseManager') as mock_db:
+                mock_instance = MagicMock()
+                mock_instance.execute_one.return_value = {'health_check': 1}
+                mock_db.return_value = mock_instance
+
+                with patch('acas_pro.web.health.config', _make_config(secret_key='a' * 32,
+                                                                      environment='development',
+                                                                      llm_enabled=True,
+                                                                      llm_api_key='test-key')):
+                    # Replace _check_llm in checks list with a mock returning healthy
+                    original_checks = health_checker.checks[:]
+                    health_checker.checks = [
+                        c for c in health_checker.checks if c.__name__ != '_check_llm'
+                    ] + [lambda: HealthCheckResult(
+                        name='llm',
+                        status=HealthStatus.HEALTHY,
+                        response_time_ms=0,
+                        message='Mock healthy'
+                    )]
+                    try:
+                        result = health_checker.check_all()
+                        assert result['status'] == 'healthy'
+                    finally:
+                        health_checker.checks = original_checks
 
     def test_one_degraded(self, health_checker):
-        degraded = HealthCheckResult('config', HealthStatus.DEGRADED, 1.0, 'issue')
-        result = self._patch_all(health_checker, cfg=degraded)
-        assert result['status'] == 'degraded'
+        with patch('shutil.disk_usage') as mock_disk:
+            mock_stat = MagicMock()
+            mock_stat.free = 10 * (1024 ** 3)
+            mock_stat.total = 100 * (1024 ** 3)
+            mock_stat.used = mock_stat.total - mock_stat.free
+            mock_disk.return_value = mock_stat
+
+            with patch('acas_pro.web.health.DatabaseManager') as mock_db:
+                mock_instance = MagicMock()
+                mock_instance.execute_one.return_value = {'health_check': 1}
+                mock_db.return_value = mock_instance
+
+                with patch('acas_pro.web.health.config', _make_config(secret_key='short',
+                                                                      environment='production',
+                                                                      llm_enabled=False)):
+                    result = health_checker.check_all()
+                    assert result['status'] == 'degraded'
 
     def test_one_unhealthy(self, health_checker):
-        unhealthy = HealthCheckResult('database', HealthStatus.UNHEALTHY, 1.0, 'down')
-        result = self._patch_all(health_checker, db=unhealthy)
-        assert result['status'] == 'unhealthy'
+        with patch('shutil.disk_usage') as mock_disk:
+            mock_stat = MagicMock()
+            mock_stat.free = 10 * (1024 ** 3)
+            mock_stat.total = 100 * (1024 ** 3)
+            mock_stat.used = mock_stat.total - mock_stat.free
+            mock_disk.return_value = mock_stat
+
+            with patch('acas_pro.web.health.DatabaseManager') as mock_db:
+                mock_instance = MagicMock()
+                mock_instance.execute_one.return_value = {'health_check': 0}
+                mock_db.return_value = mock_instance
+
+                with patch('acas_pro.web.health.config', _make_config(secret_key='a' * 32,
+                                                                      environment='development',
+                                                                      llm_enabled=False)):
+                    result = health_checker.check_all()
+                    assert result['status'] == 'unhealthy'
