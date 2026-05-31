@@ -39,12 +39,12 @@ def verify_token(token: str) -> dict | None:
 
 
 @bp.route('/register', methods=['POST'])
-def auth_register():
+def auth_register() -> tuple:
     """Register a new user account"""
-    data = request.json or {}
-    account = data.get('account', '').strip()
-    password = data.get('password', '').strip()
-    nickname = data.get('nickname', '').strip()
+    data: dict = request.json or {}
+    account: str = data.get('account', '').strip()
+    password: str = data.get('password', '').strip()
+    nickname: str = data.get('nickname', '').strip()
 
     if not account or not password:
         return jsonify({'error': 'account and password are required'}), 400
@@ -73,11 +73,11 @@ def auth_register():
 
 
 @bp.route('/login', methods=['POST'])
-def auth_login():
+def auth_login() -> tuple:
     """Login with account and password"""
-    data = request.json or {}
-    account = data.get('account', '').strip()
-    password = data.get('password', '').strip()
+    data: dict = request.json or {}
+    account: str = data.get('account', '').strip()
+    password: str = data.get('password', '').strip()
 
     if not account or not password:
         return jsonify({'error': 'account and password are required'}), 400
@@ -101,9 +101,9 @@ def auth_login():
 
 
 @bp.route('/me', methods=['GET'])
-def auth_me():
+def auth_me() -> tuple:
     """Get current user info (requires authentication)"""
-    user = g.get('user') if hasattr(g, 'user') else None
+    user: dict | None = g.get('user') if hasattr(g, 'user') else None
     if not user:
         return jsonify({'error': 'Authentication required'}), 401
     return jsonify({'user_id': user['user_id'], 'account': user['account']})

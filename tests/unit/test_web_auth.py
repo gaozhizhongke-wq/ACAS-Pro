@@ -200,8 +200,10 @@ class TestTokenFunctions:
     def test_verify_token_success(self):
         # Ensure config has a valid secret key for token generation/verification
         with patch('acas_pro.core.security._cfg') as m_cfg:
-            m_cfg.return_value.security.secret_key = 'test-secret-key-for-jwt-1234567890'
-            m_cfg.return_value.security.jwt_algorithm = 'HS256'
+            cfg = MagicMock()
+            cfg.security.secret_key = 'test-secret-key-for-jwt-1234567890'
+            cfg.security.jwt_algorithm = 'HS256'
+            m_cfg.return_value = cfg
             # Generate a real token, then verify it
             tok = generate_token('u1', 'test')
             payload = verify_token(tok)
