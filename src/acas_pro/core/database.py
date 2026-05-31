@@ -20,10 +20,10 @@ from urllib.parse import urlparse
 from .logging import get_logger
 
 # Lazy-loaded logger and config
-def _get_logger():
+def _get_logger() -> Any:
     return get_logger(__name__)
 
-def _get_config():
+def _get_config() -> Any:
     from .config import get_config
     return get_config()
 
@@ -67,7 +67,7 @@ class DatabaseManager:
         'last_sync', 'content_count', 'total_views'
     }
 
-    def __new__(cls):
+    def __new__(cls) -> Any:
         if cls._instance is None:
             with cls._lock:
                 if cls._instance is None:
@@ -75,7 +75,7 @@ class DatabaseManager:
                     cls._instance._initialized = False
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> Any:
         # Check the global _db_instance, NOT self._initialized.
         global _db_instance
         if _db_instance is not None and self is _db_instance and self._initialized:
@@ -93,7 +93,7 @@ class DatabaseManager:
         self._initialized = True
         _get_logger().info(f"DatabaseManager initialized ({'PostgreSQL' if self._is_postgres else 'SQLite'})")
 
-    def _init_sqlite(self):
+    def _init_sqlite(self) -> Any:
         """Initialize SQLite backend"""
         cfg = _get_config()
         self._db_path = cfg.database.path if hasattr(cfg, 'database') else 'data/acas.db'
@@ -101,7 +101,7 @@ class DatabaseManager:
         self._pool = None
         self._init_sqlite_db()
 
-    def _init_postgres(self):
+    def _init_postgres(self) -> Any:
         """Initialize PostgreSQL backend with connection pooling"""
         try:
             import psycopg2
@@ -144,13 +144,13 @@ class DatabaseManager:
             _get_logger().error(f"PostgreSQL connection failed: {e}")
             raise
 
-    def _init_sqlite_db(self):
+    def _init_sqlite_db(self) -> Any:
         """Initialize SQLite schema"""
         Path(self._db_path).parent.mkdir(parents=True, exist_ok=True)
         with self._get_sqlite_connection() as conn:
             conn.executescript(self._get_sqlite_schema())
 
-    def _init_postgres_db(self):
+    def _init_postgres_db(self) -> Any:
         """Initialize PostgreSQL schema"""
         if self._is_postgres and self._pool:
             conn = self._pool.getconn()
@@ -168,7 +168,7 @@ class DatabaseManager:
             finally:
                 self._pool.putconn(conn)
 
-    def _get_sqlite_connection(self):
+    def _get_sqlite_connection(self) -> Any:
         """Get SQLite connection"""
         if not hasattr(self._local, 'connection') or self._local.connection is None:
             self._local.connection = sqlite3.connect(
@@ -521,7 +521,7 @@ class DatabaseManager:
         return identifier
 
     @contextmanager
-    def transaction(self):
+    def transaction(self) -> Any:
         """Transaction context manager"""
         if self._is_postgres:
             conn = self._pool.getconn()
@@ -758,7 +758,7 @@ def get_db() -> 'DatabaseManager':
     return _db_instance
 
 
-def reset_db():
+def reset_db() -> Any:
     """Reset the global database singleton (for testing)"""
     global _db_instance
     old = _db_instance

@@ -51,12 +51,40 @@ def add_type_annotations(filepath):
         return True
     return False
 
-# Process key modules
+# Process all core modules
 modules = [
-    'src/acas_pro/web/health.py',
-    'src/acas_pro/web/routes/dashboard.py',
-    'src/acas_pro/web/routes/llm.py',
-    'src/acas_pro/web/middleware.py',
+    # Web modules (already done)
+    # 'src/acas_pro/web/health.py',
+    # 'src/acas_pro/web/routes/dashboard.py',
+    # 'src/acas_pro/web/routes/llm.py',
+    # 'src/acas_pro/web/middleware.py',
+    
+    # UI logic modules
+    'src/acas_pro/ui/logic/analytics_logic.py',
+    'src/acas_pro/ui/logic/campaign_logic.py',
+    'src/acas_pro/ui/logic/content_creation_logic.py',
+    'src/acas_pro/ui/logic/content_logic.py',
+    'src/acas_pro/ui/logic/customer_logic.py',
+    'src/acas_pro/ui/logic/dashboard_logic.py',
+    'src/acas_pro/ui/logic/inventory_logic.py',
+    'src/acas_pro/ui/logic/order_logic.py',
+    'src/acas_pro/ui/logic/product_logic.py',
+    'src/acas_pro/ui/logic/report_logic.py',
+    'src/acas_pro/ui/logic/settings_logic.py',
+    'src/acas_pro/ui/logic/video_logic.py',
+    
+    # Core modules
+    'src/acas_pro/core/config.py',
+    'src/acas_pro/core/database.py',
+    'src/acas_pro/core/logging.py',
+    'src/acas_pro/core/security.py',
+    
+    # Services
+    'src/acas_pro/services/user_service.py',
+    
+    # Video/Voice
+    'src/acas_pro/video/video_maker.py',
+    'src/acas_pro/video/voice_synthesis.py',
 ]
 
 modified = 0

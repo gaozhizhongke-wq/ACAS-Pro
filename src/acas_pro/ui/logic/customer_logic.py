@@ -60,7 +60,7 @@ class CustomerSegment:
 class CustomerLogic:
     """Customer management business logic"""
     
-    def __init__(self):
+    def __init__(self) -> Any:
         self._customers: Dict[str, Customer] = {}
         self._segments: Dict[str, CustomerSegment] = {}
     

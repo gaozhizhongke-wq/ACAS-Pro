@@ -20,7 +20,7 @@ from ..core.security import (
 _lazy: dict = {}
 
 
-def __getattr__(name):
+def __getattr__(name) -> Any:
     """Module-level __getattr__ for lazy attribute access."""
     _LAZY_MAP = {
         'db': lambda: get_db(),
@@ -36,7 +36,7 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-def _reset_lazy():
+def _reset_lazy() -> Any:
     """Clear lazy singletons — for test fixtures."""
     _sys.modules[__name__].__dict__['_lazy'].clear()
 
@@ -52,7 +52,7 @@ logger = get_logger(__name__)
 import sys as _sys
 
 
-def _get_lazy(name, factory):
+def _get_lazy(name, factory) -> Any:
     """Get or create a lazy singleton, respecting test monkeypatching."""
     mod = _sys.modules[__name__]
     lazy_store = mod.__dict__['_lazy']
@@ -63,23 +63,23 @@ def _get_lazy(name, factory):
     return lazy_store[name]
 
 
-def _get_lazy_rate_limiter():
+def _get_lazy_rate_limiter() -> Any:
     return _get_lazy('rate_limiter', get_rate_limiter)
 
 
-def _get_lazy_db():
+def _get_lazy_db() -> Any:
     return _get_lazy('db', get_db)
 
 
-def _get_lazy_password_validator():
+def _get_lazy_password_validator() -> Any:
     return _get_lazy('password_validator', get_password_validator)
 
 
-def _get_lazy_password_hasher():
+def _get_lazy_password_hasher() -> Any:
     return _get_lazy('password_hasher', get_password_hasher)
 
 
-def _get_lazy_session_manager():
+def _get_lazy_session_manager() -> Any:
     return _get_lazy('session_manager', get_session_manager)
 
 
@@ -112,7 +112,7 @@ class UserService:
     - Audit logging
     """
     
-    def __init__(self):
+    def __init__(self) -> Any:
         self._current_user: Optional[UserProfile] = None
     
     def register(self, account: str, password: str, nickname: str = "",

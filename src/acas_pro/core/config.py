@@ -42,7 +42,7 @@ class DatabaseConfig:
     pool_recycle: int = 3600
     echo: bool = False
     
-    def __post_init__(self):
+    def __post_init__(self) -> Any:
         if not self.path:
             self.path = str(Path.home() / ".acas-pro" / "data" / "acas_pro.db")
         # Ensure username and user are synced
@@ -71,7 +71,7 @@ class SecurityConfig:
     # CORS configuration
     cors_allowed_origins: str = ""  # comma-separated
     
-    def __post_init__(self):
+    def __post_init__(self) -> Any:
         if not self.secret_key:
             # Try environment variable first via SecretsManager
             from ..core.secrets_manager import get_secrets_manager
@@ -106,7 +106,7 @@ class LLMConfig:
     agent_mode: bool = True
     max_agent_steps: int = 10
     
-    def __post_init__(self):
+    def __post_init__(self) -> Any:
         if not self.api_key:
             from ..core.secrets_manager import get_secrets_manager
             sm = get_secrets_manager()
@@ -173,7 +173,7 @@ class AppConfig:
     llm: LLMConfig = None
     oauth: OAuthConfig = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> Any:
         # ACAS_ENV always takes precedence over any other configuration
         env = os.environ.get('ACAS_ENV', '').lower()
         if env:
@@ -210,7 +210,7 @@ class AppConfig:
         if self.environment == Environment.PRODUCTION:
             self._validate_production_secrets()
     
-    def _validate_production_secrets(self):
+    def _validate_production_secrets(self) -> Any:
         """Production secrets validation - prevents startup with missing secrets"""
         missing = []
         

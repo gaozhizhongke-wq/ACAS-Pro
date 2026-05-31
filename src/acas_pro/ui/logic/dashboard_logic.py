@@ -59,7 +59,7 @@ class DashboardLogic:
         "text2": "#8b949e",
     }
     
-    def __init__(self, user_service=None, analytics_service=None):
+    def __init__(self, user_service=None, analytics_service=None) -> Any:
         self.user_service = user_service
         self.analytics_service = analytics_service
         self._user = None

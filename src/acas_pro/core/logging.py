@@ -17,7 +17,7 @@ from functools import wraps
 from .config import get_config
 
 # Lazy-loaded config
-def _get_config():
+def _get_config() -> Any:
     return get_config()
 
 
@@ -99,7 +99,7 @@ class ConsoleFormatter(logging.Formatter):
         return f"{color}[{timestamp}] [{record.levelname}] {record.name}: {record.getMessage()}{reset}"
 
 
-def setup_logging():
+def setup_logging() -> None:
     """Setup application logging"""
     
     # Create logger
@@ -153,12 +153,12 @@ def get_logger(name: str) -> logging.Logger:
 class AuditLogger:
     """Security audit logger"""
     
-    def __init__(self):
+    def __init__(self) -> Any:
         self.logger = get_logger("audit")
         self.db = None  # Will be set after import
     
     def log(self, event_type: str, user_id: str, details: Dict[str, Any], 
-            ip_address: str = None, severity: str = "info"):
+            ip_address: str = None, severity: str = "info") -> Any:
         """Log audit event"""
         
         # Log to file

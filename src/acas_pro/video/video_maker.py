@@ -167,13 +167,13 @@ class VideoMaker:
         "dissolve",       # 溶解
     ]
     
-    def __init__(self, db: 'DatabaseManager' = None, output_dir: str = None):
+    def __init__(self, db: 'DatabaseManager' = None, output_dir: str = None) -> Any:
         self.db = db or DatabaseManager()
         self.output_dir = output_dir or os.path.expanduser("~/ACAS-Videos")
         self._init_database()
         self._ensure_output_dir()
         
-    def _init_database(self):
+    def _init_database(self) -> Any:
         """初始化数据库表"""
         self.db.execute("""
             CREATE TABLE IF NOT EXISTS video_projects (
@@ -212,7 +212,7 @@ class VideoMaker:
             )
         """)
         
-    def _ensure_output_dir(self):
+    def _ensure_output_dir(self) -> Any:
         """确保输出目录存在"""
         Path(self.output_dir).mkdir(parents=True, exist_ok=True)
         
@@ -241,7 +241,7 @@ class VideoMaker:
         logger.info(f"Created video project: {project.id}")
         return project
         
-    def _save_project(self, project: VideoProject):
+    def _save_project(self, project: VideoProject) -> Any:
         """保存项目到数据库"""
         self.db.execute("""
             INSERT OR REPLACE INTO video_projects (
@@ -425,7 +425,7 @@ class VideoMaker:
         self,
         project_id: str,
         subtitles: List[Dict[str, any]]
-    ):
+    ) -> Any:
         """
         添加字幕
         

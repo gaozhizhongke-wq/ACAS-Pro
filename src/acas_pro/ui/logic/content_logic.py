@@ -70,7 +70,7 @@ class GeneratedScript:
 class ContentCreationLogic:
     """Content creation business logic"""
     
-    def __init__(self, trend_service=None, script_service=None):
+    def __init__(self, trend_service=None, script_service=None) -> Any:
         self.trend_service = trend_service
         self.script_service = script_service
         self._trends: List[TrendItem] = []

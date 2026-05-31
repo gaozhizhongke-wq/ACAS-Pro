@@ -77,13 +77,13 @@ class VoiceSynthesizer:
         VoiceProfile("ar_female_01", "Aisha", "female", Language.AR, VoiceStyle.GENTLE, "阿拉伯语女声"),
     ]
     
-    def __init__(self, db: 'DatabaseManager' = None, output_dir: str = None):
+    def __init__(self, db: 'DatabaseManager' = None, output_dir: str = None) -> Any:
         self.db = db or DatabaseManager()
         self.output_dir = output_dir or os.path.expanduser("~/ACAS-Audio")
         self._init_database()
         self._ensure_output_dir()
         
-    def _init_database(self):
+    def _init_database(self) -> Any:
         """初始化数据库表"""
         self.db.execute("""
             CREATE TABLE IF NOT EXISTS voice_tasks (
@@ -113,7 +113,7 @@ class VoiceSynthesizer:
             )
         """)
         
-    def _ensure_output_dir(self):
+    def _ensure_output_dir(self) -> Any:
         """确保输出目录存在"""
         Path(self.output_dir).mkdir(parents=True, exist_ok=True)
         
@@ -193,7 +193,7 @@ class VoiceSynthesizer:
             """, (task_id,))
             return None
             
-    def _mock_synthesize(self, text: str, output_path: str):
+    def _mock_synthesize(self, text: str, output_path: str) -> Any:
         """模拟语音合成（实际项目中替换为真实TTS调用）"""
         # 创建一个空的mp3文件作为占位
         # 实际实现应该调用TTS API

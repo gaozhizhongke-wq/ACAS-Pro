@@ -29,7 +29,7 @@ from functools import wraps
 logger = get_logger(__name__)
 
 # Lazy config accessor for module-level usage
-def _cfg():
+def _cfg() -> Any:
     return get_config()
 
 
@@ -246,11 +246,11 @@ class JWTManager:
 class SessionManager:
     """User session management"""
     
-    def __init__(self):
+    def __init__(self) -> Any:
         self._sessions: Dict[str, Dict[str, Any]] = {}
         self.db = None
     
-    def _get_db(self):
+    def _get_db(self) -> Any:
         if self.db is None:
             from .database import db
             self.db = db
@@ -351,7 +351,7 @@ class RateLimiter:
     so that rate limits persist across worker processes and restarts.
     """
 
-    def __init__(self, storage_path: str = None):
+    def __init__(self, storage_path: str = None) -> Any:
         if storage_path is None:
             storage_path = os.path.join(
                 os.environ.get('ACAS_DATA_DIR',
@@ -368,7 +368,7 @@ class RateLimiter:
         except (FileNotFoundError, json.JSONDecodeError):
             return {}
 
-    def _save(self, data: Dict[str, list]):
+    def _save(self, data: Dict[str, list]) -> Any:
         with open(self._path + '.tmp', 'w', encoding='utf-8') as f:
             json.dump(data, f, default=str)
         os.replace(self._path + '.tmp', self._path)
@@ -385,7 +385,7 @@ class RateLimiter:
         self._save(data)
         return len(data[key]) < max_attempts
 
-    def record_attempt(self, key: str):
+    def record_attempt(self, key: str) -> Any:
         """Record an attempt"""
         data = self._load()
         if key not in data:
@@ -393,7 +393,7 @@ class RateLimiter:
         data[key].append(datetime.now(timezone.utc).isoformat())
         self._save(data)
 
-    def reset(self, key: str):
+    def reset(self, key: str) -> Any:
         """Reset attempts for key"""
         data = self._load()
         data.pop(key, None)
@@ -418,7 +418,7 @@ class CryptoManager:
     - Key derived from PBKDF2 with 600k iterations
     """
     
-    def __init__(self, key: str = None):
+    def __init__(self, key: str = None) -> Any:
         """
         Initialize Fernet encryption
         
@@ -569,14 +569,14 @@ SecurityManager = CryptoManager
 _lazy_instances: dict = {}
 
 
-def _get_lazy(name: str, cls: type):
+def _get_lazy(name: str, cls: type) -> Any:
     """Return a singleton instance of *cls*, created on first access."""
     if name not in _lazy_instances:
         _lazy_instances[name] = cls()
     return _lazy_instances[name]
 
 
-def __getattr__(name):
+def __getattr__(name) -> Any:
     """Module-level __getattr__ for lazy attribute access."""
     _LAZY_MAP = {
         'password_validator': PasswordValidator,
@@ -599,7 +599,7 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-def _reset_lazy_instances():
+def _reset_lazy_instances() -> Any:
     """Clear all lazy singletons — used by test fixtures."""
     _lazy_instances.clear()
 
@@ -615,7 +615,7 @@ class RedisRateLimiter:
     Falls back to file-based RateLimiter if Redis unavailable.
     """
 
-    def __init__(self, redis_url: str = None):
+    def __init__(self, redis_url: str = None) -> Any:
         self.redis_url = redis_url or os.environ.get('REDIS_URL')
         self._client = None
         if self.redis_url:
@@ -649,7 +649,7 @@ class RedisRateLimiter:
         count = self._client.zcard(key)
         return count < max_attempts
 
-    def record_attempt(self, key: str):
+    def record_attempt(self, key: str) -> Any:
         if not self.available:
             return RateLimiter().record_attempt(key)
         now = time.time()
@@ -658,14 +658,14 @@ class RedisRateLimiter:
         pipe.expire(key, 86400)
         pipe.execute()
 
-    def reset(self, key: str):
+    def reset(self, key: str) -> Any:
         if not self.available:
             return RateLimiter().reset(key)
         self._client.delete(key)
 
 
 # Convenience: unified rate_limiter with auto-detection
-def _build_rate_limiter():
+def _build_rate_limiter() -> Any:
     redis_url = os.environ.get('REDIS_URL')
     if redis_url:
         rl = RedisRateLimiter(redis_url)
@@ -674,7 +674,7 @@ def _build_rate_limiter():
     return RateLimiter()
 
 
-def _get_rate_limiter():
+def _get_rate_limiter() -> Any:
     """Lazy rate_limiter accessor"""
     return _get_lazy('rate_limiter', None)  # handled specially
 
@@ -751,9 +751,9 @@ def validate_csrf_request(request) -> Tuple[bool, str]:
     return True, ''
 
 
-def require_csrf(f):
+def require_csrf(f) -> Any:
     @wraps(f)
-    def wrapped(*args, **kwargs):
+    def wrapped(*args, **kwargs) -> Any:
         from flask import request
         if request.method not in ('POST', 'PUT', 'DELETE', 'PATCH'):
             return f(*args, **kwargs)

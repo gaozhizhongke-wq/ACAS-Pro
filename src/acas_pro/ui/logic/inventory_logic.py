@@ -42,7 +42,7 @@ class InventoryLogic:
         "low": "#3fb950",
     }
     
-    def __init__(self, optimizer_service=None):
+    def __init__(self, optimizer_service=None) -> Any:
         self.optimizer = optimizer_service
         self._items: List[InventoryItem] = []
         self._alerts: List[InventoryAlert] = []
@@ -142,7 +142,7 @@ class InventoryLogic:
             confidence=product.get("confidence", 0.85),
         )
     
-    def _generate_alerts(self):
+    def _generate_alerts(self) -> Any:
         """Generate alerts from items"""
         self._alerts = []
         

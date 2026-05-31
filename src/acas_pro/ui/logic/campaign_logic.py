@@ -52,7 +52,7 @@ class Campaign:
 class CampaignLogic:
     """Campaign management business logic"""
     
-    def __init__(self):
+    def __init__(self) -> Any:
         self._campaigns: Dict[str, Campaign] = {}
     
     def create_campaign(self, name: str, campaign_type: CampaignType,
