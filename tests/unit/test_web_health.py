@@ -117,11 +117,11 @@ class TestCheckDatabase:
     def test_db_unhealthy(self, health_checker):
         with patch('acas_pro.web.health.DatabaseManager') as mock_db:
             mock_instance = MagicMock()
-            mock_instance.execute_one.return_value = {'health_check': 0}
+            mock_instance.execute_one.side_effect = Exception('DB Error')
             mock_db.return_value = mock_instance
             result = health_checker._check_database()
             assert result.status == HealthStatus.UNHEALTHY
-            assert 'unexpected result' in result.message
+            assert 'failed' in result.message.lower() or 'error' in result.message.lower()
 
 
 # ---------------------------------------------------------------

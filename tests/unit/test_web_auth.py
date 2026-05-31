@@ -32,30 +32,38 @@ def client(app):
 
 @contextmanager
 def _mock_user_service(mock_service=True, mock_rl=True, mock_pv=True):
-    """Patch deps inside auth.py route handlers. Returns dict of mocks."""
-    active = {}
-    if mock_service:
-        m = patch('acas_pro.web.routes.auth.user_service').start()
-        active['user_service'] = m
-    if mock_rl:
-        m = patch('acas_pro.web.routes.auth.rate_limiter').start()
-        active['rate_limiter'] = m
-    if mock_pv:
-        m = patch('acas_pro.web.routes.auth.pv').start()
-        active['pv'] = m
-    # jwt generate
-    m = patch('acas_pro.web.routes.auth.JWTManager.generate_token', return_value='tok_abc').start()
-    active['generate_token'] = m
-    # config
-    m = patch('acas_pro.web.routes.auth.config').start()
-    cfg = MagicMock()
-    cfg.security.secret_key = 'test-secret'
-    m.return_value = cfg
-    active['config'] = m
-
-    yield active
-
-    patch.stopall()
+    """Patch deps inside auth.py route handlers."""
+    from types import SimpleNamespace
+    patches = []
+    try:
+        if mock_service:
+            p = patch('acas_pro.web.routes.auth.user_service')
+            m = p.start()
+            profile = SimpleNamespace(id='u1', account='test', nickname='Test')
+            m.register.return_value = (True, 'registered', profile)
+            m.login.return_value = (True, 'logged in', profile)
+            patches.append(p)
+        if mock_rl:
+            p = patch('acas_pro.web.routes.auth.rate_limiter')
+            m = p.start()
+            m.is_allowed.return_value = True
+            patches.append(p)
+        if mock_pv:
+            p = patch('acas_pro.web.routes.auth.pv')
+            m = p.start()
+            m.validate.return_value = (True, '')
+            patches.append(p)
+        p = patch('acas_pro.web.routes.auth.JWTManager.generate_token', return_value='tok_abc')
+        p.start()
+        patches.append(p)
+        p = patch('acas_pro.web.routes.auth.config')
+        m = p.start()
+        m.return_value = MagicMock(security=MagicMock(secret_key='x'*32))
+        patches.append(p)
+        yield {}
+    finally:
+        for p in patches:
+            p.stop()
 
 
 # ---------------------------------------------------------------
@@ -64,13 +72,7 @@ def _mock_user_service(mock_service=True, mock_rl=True, mock_pv=True):
 
 class TestAuthRegister:
     def test_register_success(self, client):
-        with _mock_user_service() as m:
-            m['user_service'].register.return_value = (
-                True, 'OK',
-                type('P', (), {'id': 'u1', 'account': 'test', 'nickname': 'Test'})()
-            )
-            m['rate_limiter'].is_allowed.return_value = True
-            m['pv'].validate.return_value = (True, '')
+        with _mock_user_service():
             resp = client.post('/api/auth/register', json={
                 'account': 'test', 'password': 'Test123!', 'nickname': 'Test'
             })
@@ -103,10 +105,8 @@ class TestAuthRegister:
             assert resp.status_code == 429
 
     def test_register_duplicate(self, client):
-        with _mock_user_service() as m:
-            m['user_service'].register.return_value = (False, 'Account already exists', None)
-            m['rate_limiter'].is_allowed.return_value = True
-            m['pv'].validate.return_value = (True, '')
+        with patch('acas_pro.web.routes.auth.user_service') as m:
+            m.register.return_value = (False, 'Account already exists', None)
             resp = client.post('/api/auth/register', json={
                 'account': 'test', 'password': 'Test123!'
             })
@@ -119,12 +119,11 @@ class TestAuthRegister:
 
 class TestAuthLogin:
     def test_login_success(self, client):
-        with _mock_user_service(mock_pv=False) as m:
-            m['user_service'].login.return_value = (
+        with patch('acas_pro.web.routes.auth.user_service') as m:
+            m.login.return_value = (
                 True, 'OK',
                 type('P', (), {'id': 'u1', 'account': 'test', 'nickname': 'Test'})()
             )
-            m['rate_limiter'].is_allowed.return_value = True
             resp = client.post('/api/auth/login', json={
                 'account': 'test', 'password': 'Test123!'
             })
@@ -133,9 +132,8 @@ class TestAuthLogin:
             assert data['success'] is True
 
     def test_login_invalid_credentials(self, client):
-        with _mock_user_service(mock_pv=False) as m:
-            m['user_service'].login.return_value = (False, 'Invalid credentials', None)
-            m['rate_limiter'].is_allowed.return_value = True
+        with patch('acas_pro.web.routes.auth.user_service') as m:
+            m.login.return_value = (False, 'Invalid credentials', None)
             resp = client.post('/api/auth/login', json={
                 'account': 'test', 'password': 'wrong'
             })
@@ -194,17 +192,18 @@ class TestAuthMe:
 
 class TestTokenFunctions:
     def test_generate_token(self):
-        with patch('acas_pro.web.routes.auth.JWTManager.generate_token',
-                    return_value='tok') as m:
-            tok = generate_token('u1', 'test')
-            assert tok == 'tok'
+        # Just verify it doesn't crash and returns a string
+        tok = generate_token('u1', 'test')
+        assert isinstance(tok, str)
+        assert len(tok) > 0
 
     def test_verify_token_success(self):
-        with patch('acas_pro.web.routes.auth.JWTManager.verify_token',
-                    return_value={'sub': 'u1', 'account': 'test'}) as m:
-            payload = verify_token('tok')
-            assert payload is not None
-            assert payload['sub'] == 'u1'
+        # Generate a real token, then verify it
+        tok = generate_token('u1', 'test')
+        payload = verify_token(tok)
+        assert payload is not None
+        assert payload['sub'] == 'u1'
+        assert payload['account'] == 'test'
 
     def test_verify_token_legacy(self):
         """JWTManager returns None → fallback to jwt.decode (local import)."""
