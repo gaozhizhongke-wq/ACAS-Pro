@@ -146,7 +146,8 @@ class TestCheckLLM:
             result = health_checker._check_llm()
             assert result.status == HealthStatus.DEGRADED
             # Message may be 'disabled' or 'not configured'
-            assert 'disabled' in result.message.lower() or 'not configured' in result.message.lower() or 'api key' in result.message.lower()
+            msg = result.message.lower()
+            assert 'disabled' in msg or 'not configured' in msg or 'api key' in msg
 
     def test_llm_no_api_key(self, health_checker):
         with patch('acas_pro.web.health.config', _make_config(llm_enabled=True, llm_api_key='')):
