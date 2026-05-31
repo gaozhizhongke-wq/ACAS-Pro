@@ -15,11 +15,11 @@ class RequestContext:
     """Request context manager for tracking and logging"""
     
     @staticmethod
-    def init_app(app):
+    def init_app(app) -> None:
         """Initialize request context middleware"""
         
         @app.before_request
-        def before_request():
+        def before_request() -> Any:
             # Generate request ID
             g.request_id = request.headers.get('X-Request-ID', str(uuid.uuid4())[:16])
             g.start_time = time.time()
@@ -29,7 +29,7 @@ class RequestContext:
             g.user_agent = request.headers.get('User-Agent', 'Unknown')[:200]
         
         @app.after_request
-        def after_request(response):
+        def after_request(response) -> Any:
             # Add request ID to response headers
             response.headers['X-Request-ID'] = g.get('request_id', 'unknown')
             
@@ -60,11 +60,11 @@ class ErrorHandler:
     """Centralized error handling"""
     
     @staticmethod
-    def init_app(app):
+    def init_app(app) -> None:
         """Initialize error handlers"""
         
         @app.errorhandler(400)
-        def bad_request(error):
+        def bad_request(error) -> Any:
             return jsonify({
                 'error': 'Bad Request',
                 'message': str(error.description) if hasattr(error, 'description') else 'Invalid request',
@@ -72,7 +72,7 @@ class ErrorHandler:
             }), 400
         
         @app.errorhandler(401)
-        def unauthorized(error):
+        def unauthorized(error) -> Any:
             return jsonify({
                 'error': 'Unauthorized',
                 'message': 'Authentication required',
@@ -80,7 +80,7 @@ class ErrorHandler:
             }), 401
         
         @app.errorhandler(403)
-        def forbidden(error):
+        def forbidden(error) -> Any:
             return jsonify({
                 'error': 'Forbidden',
                 'message': 'Access denied',
@@ -88,7 +88,7 @@ class ErrorHandler:
             }), 403
         
         @app.errorhandler(404)
-        def not_found(error):
+        def not_found(error) -> Any:
             return jsonify({
                 'error': 'Not Found',
                 'message': f"Endpoint {request.path} not found",
@@ -96,7 +96,7 @@ class ErrorHandler:
             }), 404
         
         @app.errorhandler(429)
-        def rate_limit_exceeded(error):
+        def rate_limit_exceeded(error) -> Any:
             return jsonify({
                 'error': 'Too Many Requests',
                 'message': 'Rate limit exceeded. Please try again later.',
@@ -104,7 +104,7 @@ class ErrorHandler:
             }), 429
         
         @app.errorhandler(500)
-        def internal_error(error):
+        def internal_error(error) -> Any:
             logger.exception(f"Internal server error: {error}")
             return jsonify({
                 'error': 'Internal Server Error',
@@ -113,11 +113,11 @@ class ErrorHandler:
             }), 500
 
 
-def validate_json(*required_fields):
+def validate_json(*required_fields) -> bool:
     """Decorator to validate JSON request body"""
-    def decorator(f):
+    def decorator(f) -> Any:
         @wraps(f)
-        def decorated_function(*args, **kwargs):
+        def decorated_function(*args, **kwargs) -> Any:
             if not request.is_json:
                 return jsonify({'error': 'Content-Type must be application/json'}), 400
             
@@ -136,6 +136,6 @@ def validate_json(*required_fields):
     return decorator
 
 
-def require_fields(*fields):
+def require_fields(*fields) -> Any:
     """Decorator to require specific fields in JSON body"""
     return validate_json(*fields)

@@ -18,7 +18,7 @@ _PROVIDER_MAP = {
 }
 
 
-def create_llm_client():
+def create_llm_client() -> Any:
     """Bridge: config.py LLMConfig → llm_client.LLMConfig → LLMClient"""
     llm = config.llm
     if not llm.enabled or not llm.api_key:
@@ -37,7 +37,7 @@ def create_llm_client():
 
 
 @bp.route('/config', methods=['POST'])
-def save_llm_config():
+def save_llm_config() -> Any:
     """Save LLM configuration (requires authentication)"""
     from flask import g
     if not hasattr(g, 'user') or not g.user:
@@ -67,7 +67,7 @@ def save_llm_config():
 
 
 @bp.route('/chat', methods=['POST'])
-def llm_chat():
+def llm_chat() -> Any:
     """Chat with LLM"""
     data = request.json or {}
     messages = data.get('messages', [])

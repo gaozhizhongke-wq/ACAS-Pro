@@ -192,13 +192,13 @@ DASHBOARD_HTML = '''
 
 
 @bp.route('/')
-def index():
+def index() -> Any:
     """Main dashboard page - returns real HTML"""
     return render_template_string(DASHBOARD_HTML)
 
 
 @bp.route('/api/stats')
-def dashboard_stats():
+def dashboard_stats() -> Any:
     """Dashboard statistics API - production-grade with explicit error handling"""
     from acas_pro.core.database import db
     
@@ -318,7 +318,7 @@ def dashboard_stats():
 
 
 @bp.route('/api/activity')
-def recent_activity():
+def recent_activity() -> Any:
     """Recent activity API - reads from audit_log with explicit error handling"""
     from acas_pro.core.database import db
     

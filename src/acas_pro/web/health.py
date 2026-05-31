@@ -33,7 +33,7 @@ class HealthCheckResult:
 class HealthChecker:
     """Comprehensive health checker for ACAS Pro"""
     
-    def __init__(self):
+    def __init__(self) -> Any:
         self.checks: List[callable] = [
             self._check_database,
             self._check_config,
