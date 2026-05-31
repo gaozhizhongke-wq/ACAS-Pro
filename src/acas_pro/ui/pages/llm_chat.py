@@ -343,7 +343,7 @@ class LLMChatPage(QWidget):
             from ...llm.tools import ACASTools
             from ...core.config import config
             
-            self._acastools = ACASTools(config=_cfg)
+            self._acastools = ACASTools(config=config)
             self.status_label.setText("已就绪")
             self.status_label.setStyleSheet("color: #4CAF50; font-size: 12px;")
             
