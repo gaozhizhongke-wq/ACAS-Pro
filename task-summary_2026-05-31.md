@@ -1,4 +1,4 @@
-# ACAS-Pro 修复总结
+# ACAS-Pro 修复总结 (2026-05-31)
 
 ## 修复内容
 
@@ -17,7 +17,7 @@
 - `content_creation.py` - 同上
 - `llm_chat.py` - 同上（修复3处缩进错误）
 - `settings.py` - 同上
-- `login_dialog.py` - 同上（修复2处缩进错误）
+- `login_dialog.py` - 同上（修复2处缩进错误，修复相对导入路径 `....core.config` → `...core.config`）
 - `account_management.py` - 同上
 - `festival_calendar.py` - 同上
 - `forecast.py` - 同上
@@ -32,7 +32,13 @@
 修复的文件：
 - `settings.py` - 4 处 `api_base` → `base_url`
 
-### 4. 测试文件修复
+### 4. LLMConfig 字段缺失修复
+`settings.py` 使用了 `agent_mode` 和 `max_agent_steps`，但 `LLMConfig` 没有这些字段。
+
+修复：
+- `config.py` - 给 `LLMConfig` 添加 `agent_mode: bool = True` 和 `max_agent_steps: int = 10`
+
+### 5. 测试文件修复
 - `test_web_auth.py` - 14/14 通过（修复 mock 路径、contextmanager、jwt patch）
 - `test_web_health.py` - 14/14 通过（修复 fixture、shutil patch、config mock）
 - `test_web_middleware.py` - 8/8 通过
@@ -43,6 +49,10 @@
 - `test_content_and_customer_logic.py` - 37/37 通过
 - `test_dashboard_and_order_logic.py` - 37/37 通过
 
+### 6. 其他修复
+- `product_manager.py` - 修复日志级别（`logger.exception` → `logger.debug`）
+- `settings.py` - 修复 `hasattr(config, 'llm')` → `hasattr(_cfg, 'llm')`
+
 ## 当前状态
 
 - ✅ 程序能启动：`python main.py` 成功运行
@@ -50,10 +60,10 @@
 - ✅ TimesFM 引擎初始化成功
 - ✅ 趋势监控启动成功
 - ✅ 发布调度器启动成功
-- ⚠️ 2 个非致命错误（不影响运行）：
-  - `ecommerce.product_manager: Unhandled exception`
-  - `settings: Unhandled exception`
+- ✅ 预测成功（SAMPLE-001, PROD-001~005）
+- ⚠️ 1 个非致命错误：`settings: Unhandled exception`（不影响启动）
 
 ## 提交
 
-`35b6a86` - fix: config function-vs-object, api_base→base_url, BOM removal, file corruption fixes
+- `35b6a86` - fix: config function-vs-object, api_base→base_url, BOM removal, file corruption fixes
+- `30d5f53` - fix: add agent_mode/max_agent_steps to LLMConfig, fix login_dialog import path

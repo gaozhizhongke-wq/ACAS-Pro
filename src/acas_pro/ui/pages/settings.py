@@ -703,10 +703,10 @@ class SettingsPage(QWidget):
             self.qq_enabled_cb.setChecked(qq_enabled)
             self.qq_app_id.setText(_cfg.oauth.qq_app_id)
             self.qq_redirect.setText(_cfg.oauth.qq_redirect_uri)
-            wx_enabled = _cfg.oauth.wx_app_id != ""
+            wx_enabled = _cfg.oauth.wechat_app_id != ""
             self.wx_enabled_cb.setChecked(wx_enabled)
-            self.wx_app_id.setText(_cfg.oauth.wx_app_id)
-            self.wx_redirect.setText(_cfg.oauth.wx_redirect_uri)
+            self.wx_app_id.setText(_cfg.oauth.wechat_app_id)
+            self.wx_redirect.setText(_cfg.oauth.wechat_redirect_uri)
         except Exception as e:
             logger.exception("Unhandled exception")
             import logging
@@ -718,9 +718,9 @@ class SettingsPage(QWidget):
             _cfg.oauth.qq_app_id = self.qq_app_id.text().strip()
             _cfg.oauth.qq_app_key = self.qq_app_key.text().strip()
             _cfg.oauth.qq_redirect_uri = self.qq_redirect.text().strip()
-            _cfg.oauth.wx_app_id = self.wx_app_id.text().strip()
-            _cfg.oauth.wx_app_secret = self.wx_app_secret.text().strip()
-            _cfg.oauth.wx_redirect_uri = self.wx_redirect.text().strip()
+            _cfg.oauth.wechat_app_id = self.wx_app_id.text().strip()
+            _cfg.oauth.wechat_app_key = self.wx_app_secret.text().strip()
+            _cfg.oauth.wechat_redirect_uri = self.wx_redirect.text().strip()
             _cfg.save()
             QMessageBox.information(self, "成功", "OAuth 配置已保存")
         except Exception as e:
