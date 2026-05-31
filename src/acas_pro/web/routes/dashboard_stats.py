@@ -75,16 +75,16 @@ def dashboard_stats():
             lg.error(f'risk_alerts query failed: {e}')
             stats['risk_alerts'] = 0
 
-        stats['llm_enabled'] = config().llm.enabled
-        stats['llm_provider'] = config().llm.provider if config().llm.enabled else 'disabled'
+        stats['llm_enabled'] = config.llm.enabled
+        stats['llm_provider'] = config.llm.provider if config.llm.enabled else 'disabled'
         return jsonify(stats)
     except Exception as e:
         lg.error(f'dashboard_stats fatal error: {e}', exc_info=True)
         return jsonify({
             'error': 'Dashboard data unavailable', 'detail': str(e), 'status': 'degraded',
             'revenue': 0, 'active_orders': 0, 'inventory': 0, 'low_stock': 0, 'risk_alerts': 0,
-            'llm_enabled': config().llm.enabled,
-            'llm_provider': config().llm.provider if config().llm.enabled else 'disabled',
+            'llm_enabled': config.llm.enabled,
+            'llm_provider': config.llm.provider if config.llm.enabled else 'disabled',
         })
 
 

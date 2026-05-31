@@ -13,11 +13,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
 from ...core.config import config
-
-# Get config object (config is a function)
-_cfg = config()
 from ...ml.inventory_optimizer import inventory_optimizer
-
 
 COLORS = {
     "bg": "#0d1117",
@@ -31,7 +27,6 @@ COLORS = {
     "warning": "#d29922",
     "danger": "#f85149",
 }
-
 
 class InventoryPage(QWidget):
     """Inventory optimization page"""
@@ -48,7 +43,7 @@ class InventoryPage(QWidget):
         
         # Header
         header = QLabel("📦 Inventory Optimization")
-        header.setFont(QFont(_cfg.ui.font_family, 24, QFont.Bold))
+        header.setFont(QFont(config.ui.font_family, 24, QFont.Bold))
         layout.addWidget(header)
         
         desc = QLabel("AI-powered inventory management and reorder recommendations")

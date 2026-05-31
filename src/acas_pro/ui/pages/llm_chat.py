@@ -20,7 +20,6 @@ from datetime import datetime
 import logging
 logger = logging.getLogger(__name__)
 
-
 class MessageBubble(QFrame):
     """Chat message bubble"""
     
@@ -75,7 +74,6 @@ class MessageBubble(QFrame):
         cursor = self.text_edit.textCursor()
         cursor.movePosition(QTextCursor.End)
         cursor.insertText(text)
-
 
 class LLMChatPage(QWidget):
     """LLM Chat interface page"""
@@ -345,9 +343,6 @@ class LLMChatPage(QWidget):
             from ...llm.tools import ACASTools
             from ...core.config import config
             
-            # Get config object (config is a function)
-            _cfg = config()
-            
             self._acastools = ACASTools(config=_cfg)
             self.status_label.setText("已就绪")
             self.status_label.setStyleSheet("color: #4CAF50; font-size: 12px;")
@@ -425,13 +420,10 @@ class LLMChatPage(QWidget):
             from ...llm.llm_client import LLMClient, LLMConfig, LLMProvider
             from ...llm.agent_engine import AgentEngine, AgentTask
             from ...core.config import config
-            
-            # Get config object (config is a function)
-            _cfg = config()
             import secrets
             
             # Check if LLM is configured
-            if not _cfg.llm or not _cfg.llm.api_key:
+            if not config.llm or not config.llm.api_key:
                 response = (
                     "⚠️ 请先在设置中配置大模型 API Key。\n\n"
                     "支持的服务商：\n"
@@ -448,22 +440,22 @@ class LLMChatPage(QWidget):
             else:
                 # Create LLM client
                 llm_config = LLMConfig(
-                    provider=LLMProvider(_cfg.llm.provider),
-                    api_key=_cfg.llm.api_key,
-                    api_base=_cfg.llm.api_base,
-                    model=_cfg.llm.model or _cfg.llm.get_default_model(),
-                    max_tokens=_cfg.llm.max_tokens,
-                    temperature=_cfg.llm.temperature
+                    provider=LLMProvider(config.llm.provider),
+                    api_key=config.llm.api_key,
+                    api_base=config.llm.api_base,
+                    model=config.llm.model or config.llm.get_default_model(),
+                    max_tokens=config.llm.max_tokens,
+                    temperature=config.llm.temperature
                 )
                 
                 llm_client = LLMClient(llm_config)
                 
                 # Use Agent mode if enabled
-                if _cfg.llm.agent_mode:
+                if config.llm.agent_mode:
                     task = AgentTask(
                         id=f"task_{secrets.token_hex(4)}",
                         prompt=user_text,
-                        max_steps=_cfg.llm.max_agent_steps
+                        max_steps=config.llm.max_agent_steps
                     )
                     
                     engine = AgentEngine(
@@ -514,23 +506,20 @@ class LLMChatPage(QWidget):
         try:
             from ...core.config import config
             
-            # Get config object (config is a function)
-            _cfg = config()
-            
             provider_map = [
                 "openai", "anthropic", "kimi", "deepseek", 
                 "qwen", "lmstudio", "ollama", "custom"
             ]
             
-            _cfg.llm.provider = provider_map[self.provider_combo.currentIndex()]
-            _cfg.llm.model = self.model_combo.currentText()
-            _cfg.llm.temperature = self.temp_spin.value()
-            _cfg.llm.max_tokens = self.max_tokens_spin.value()
-            _cfg.llm.agent_mode = self.agent_check.isChecked()
-            _cfg.llm.max_agent_steps = self.max_steps_spin.value()
-            _cfg.llm.enabled = True
+            config.llm.provider = provider_map[self.provider_combo.currentIndex()]
+            config.llm.model = self.model_combo.currentText()
+            config.llm.temperature = self.temp_spin.value()
+            config.llm.max_tokens = self.max_tokens_spin.value()
+            config.llm.agent_mode = self.agent_check.isChecked()
+            config.llm.max_agent_steps = self.max_steps_spin.value()
+            config.llm.enabled = True
             
-            _cfg.save()
+            config.save()
             
             self.status_label.setText("设置已保存")
             self.status_label.setStyleSheet("color: #4CAF50; font-size: 12px;")

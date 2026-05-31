@@ -16,15 +16,11 @@ from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtGui import QFont
 
 from ...core.config import config
-
-# Get config object (config is a function)
-_cfg = config()
 from ...core.logging import get_logger
 from ...video.video_maker import VideoMaker, VideoProject, VideoStatus
 from ...video.voice_synthesis import VoiceSynthesizer
 
 logger = get_logger(__name__)
-
 
 COLORS = {
     "bg": "#0d1117",
@@ -38,7 +34,6 @@ COLORS = {
     "warning": "#d29922",
     "danger": "#f85149",
 }
-
 
 class RenderThread(QThread):
     """渲染线程"""
@@ -68,7 +63,6 @@ class RenderThread(QThread):
             logger.exception("Unhandled exception")
             self.error.emit(str(e))
 
-
 class VideoMakerPage(QWidget):
     """视频制作页面"""
     
@@ -88,7 +82,7 @@ class VideoMakerPage(QWidget):
         
         # 标题
         title = QLabel("智能视频制作")
-        title.setFont(QFont(_cfg.ui.font_family, 24, QFont.Bold))
+        title.setFont(QFont(config.ui.font_family, 24, QFont.Bold))
         title.setStyleSheet(f"color: {COLORS['text']};")
         layout.addWidget(title)
         
@@ -267,7 +261,7 @@ class VideoMakerPage(QWidget):
         info_layout = QVBoxLayout(info_card)
         
         self.project_name_label = QLabel("未选择项目")
-        self.project_name_label.setFont(QFont(_cfg.ui.font_family, 16, QFont.Bold))
+        self.project_name_label.setFont(QFont(config.ui.font_family, 16, QFont.Bold))
         self.project_name_label.setStyleSheet(f"color: {COLORS['text']};")
         info_layout.addWidget(self.project_name_label)
         

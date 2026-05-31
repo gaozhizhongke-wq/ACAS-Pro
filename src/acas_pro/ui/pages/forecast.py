@@ -17,11 +17,7 @@ from datetime import datetime, timedelta
 import random
 
 from ...core.config import config
-
-# Get config object (config is a function)
-_cfg = config()
 from ...ml.timesfm_engine import timesfm_engine, ForecastResult
-
 
 COLORS = {
     "bg": "#0d1117",
@@ -34,7 +30,6 @@ COLORS = {
     "success": "#3fb950",
     "warning": "#d29922",
 }
-
 
 class ForecastPage(QWidget):
     """Sales forecast page with TimesFM"""
@@ -51,7 +46,7 @@ class ForecastPage(QWidget):
         
         # Header
         header = QLabel("📈 Sales Forecast")
-        header.setFont(QFont(_cfg.ui.font_family, 24, QFont.Bold))
+        header.setFont(QFont(config.ui.font_family, 24, QFont.Bold))
         layout.addWidget(header)
         
         desc = QLabel("AI-powered sales forecasting using TimesFM engine")

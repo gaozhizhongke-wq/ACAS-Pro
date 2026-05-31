@@ -16,15 +16,11 @@ from PySide6.QtCore import Qt, QDateTime
 from PySide6.QtGui import QFont
 
 from ...core.config import config
-
-# Get config object (config is a function)
-_cfg = config()
 from ...core.logging import get_logger
 from ...publisher.publish_manager import PublishManager, PublishStatus, ContentType
 from ...publisher.scheduler import PublishScheduler
 
 logger = get_logger(__name__)
-
 
 COLORS = {
     "bg": "#0d1117",
@@ -38,7 +34,6 @@ COLORS = {
     "warning": "#d29922",
     "danger": "#f85149",
 }
-
 
 class PublishManagerPage(QWidget):
     """发布管理页面"""
@@ -61,7 +56,7 @@ class PublishManagerPage(QWidget):
         
         # 标题
         title = QLabel("多平台发布管理")
-        title.setFont(QFont(_cfg.ui.font_family, 24, QFont.Bold))
+        title.setFont(QFont(config.ui.font_family, 24, QFont.Bold))
         title.setStyleSheet(f"color: {COLORS['text']};")
         layout.addWidget(title)
         

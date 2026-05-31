@@ -17,9 +17,6 @@ from PySide6.QtCore import Qt, QTimer, Signal
 from PySide6.QtGui import QFont, QColor
 
 from ...core.config import config
-
-# Get config object (config is a function)
-_cfg = config()
 from ...core.logging import get_logger
 from ...sentiment.news_engine import market_intelligence
 
@@ -34,7 +31,6 @@ except ImportError:
 
 logger = get_logger(__name__)
 
-
 COLORS = {
     "bg": "#0d1117",
     "card": "#161b22",
@@ -47,7 +43,6 @@ COLORS = {
     "warning": "#d29922",
     "danger": "#f85149",
 }
-
 
 class IntelligencePage(QWidget):
     """Market intelligence page with WorldMonitor integration"""
@@ -75,14 +70,14 @@ class IntelligencePage(QWidget):
         # Header
         header_layout = QHBoxLayout()
         header = QLabel("🌍 Market Intelligence")
-        header.setFont(QFont(_cfg.ui.font_family, 24, QFont.Bold))
+        header.setFont(QFont(config.ui.font_family, 24, QFont.Bold))
         header_layout.addWidget(header)
         
         header_layout.addStretch()
         
         # Reputation score badge
         self.score_label = QLabel("--")
-        self.score_label.setFont(QFont(_cfg.ui.font_family, 16, QFont.Bold))
+        self.score_label.setFont(QFont(config.ui.font_family, 16, QFont.Bold))
         self.score_label.setStyleSheet(f"""
             QLabel {{
                 background-color: {COLORS['surface']};
@@ -247,12 +242,12 @@ class IntelligencePage(QWidget):
         
         # Main score
         self.main_score = QLabel("50")
-        self.main_score.setFont(QFont(_cfg.ui.font_family, 48, QFont.Bold))
+        self.main_score.setFont(QFont(config.ui.font_family, 48, QFont.Bold))
         self.main_score.setAlignment(Qt.AlignCenter)
         score_layout.addWidget(self.main_score, 0, 0, 2, 1)
         
         self.grade_label = QLabel("Grade: C")
-        self.grade_label.setFont(QFont(_cfg.ui.font_family, 16))
+        self.grade_label.setFont(QFont(config.ui.font_family, 16))
         self.grade_label.setAlignment(Qt.AlignCenter)
         score_layout.addWidget(self.grade_label, 2, 0)
         
@@ -266,7 +261,7 @@ class IntelligencePage(QWidget):
         self.trend_label = QLabel("→ Stable")
         
         for label in [self.positive_count, self.neutral_count, self.negative_count, self.trend_label]:
-            label.setFont(QFont(_cfg.ui.font_family, 14))
+            label.setFont(QFont(config.ui.font_family, 14))
         
         stats_layout.addWidget(QLabel("📈 Positive:"), 0, 0)
         stats_layout.addWidget(self.positive_count, 0, 1)

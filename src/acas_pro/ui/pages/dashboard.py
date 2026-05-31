@@ -14,10 +14,6 @@ from PySide6.QtGui import QFont
 from ...core.config import config
 from ...services.user_service import user_service
 
-# Get config object (config is a function)
-_cfg = config()
-
-
 COLORS = {
     "bg": "#0d1117",
     "card": "#161b22",
@@ -30,7 +26,6 @@ COLORS = {
     "warning": "#d29922",
     "danger": "#f85149",
 }
-
 
 class KPICard(QFrame):
     """KPI metric card"""
@@ -55,7 +50,7 @@ class KPICard(QFrame):
         layout.addWidget(title_label)
         
         value_label = QLabel(value)
-        value_label.setFont(QFont(_cfg.ui.font_family, 32, QFont.Bold))
+        value_label.setFont(QFont(config.ui.font_family, 32, QFont.Bold))
         value_label.setStyleSheet(f"color: {COLORS['text']};")
         layout.addWidget(value_label)
         
@@ -65,7 +60,6 @@ class KPICard(QFrame):
             layout.addWidget(sub_label)
         
         layout.addStretch()
-
 
 class DashboardPage(QWidget):
     """Main dashboard page"""
@@ -88,7 +82,7 @@ class DashboardPage(QWidget):
         # Welcome section
         user = user_service.get_current()
         self.welcome_label = QLabel(f"欢迎回来, {user.nickname if user else '用户'}! 👋")
-        self.welcome_label.setFont(QFont(_cfg.ui.font_family, 24, QFont.Bold))
+        self.welcome_label.setFont(QFont(config.ui.font_family, 24, QFont.Bold))
         self.welcome_label.setStyleSheet(f"color: {COLORS['text']};")
         layout.addWidget(self.welcome_label)
         
@@ -118,7 +112,7 @@ class DashboardPage(QWidget):
         # Quick actions
         layout.addSpacing(24)
         actions_title = QLabel("快速操作")
-        actions_title.setFont(QFont(_cfg.ui.font_family, 16, QFont.Bold))
+        actions_title.setFont(QFont(config.ui.font_family, 16, QFont.Bold))
         layout.addWidget(actions_title)
         
         actions_layout = QHBoxLayout()

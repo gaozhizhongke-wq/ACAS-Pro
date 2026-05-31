@@ -29,7 +29,7 @@ def verify_token(token: str) -> dict | None:
         return payload
     # Fallback: try legacy format
     try:
-        JWT_SECRET = config().security.secret_key
+        JWT_SECRET = config.security.secret_key
         payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
         if payload.get('user_id'):
             return payload

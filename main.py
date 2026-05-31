@@ -29,7 +29,7 @@ def main():
     """Application entry point"""
     # Setup logging
     setup_logging()
-    cfg = config()  # Get config object
+    cfg = config  # config is now a global singleton object
     logger.info("=" * 50)
     logger.info(f"{cfg.name} v{cfg.version} starting...")
     logger.info("=" * 50)

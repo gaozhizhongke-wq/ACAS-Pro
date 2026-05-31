@@ -301,12 +301,12 @@ class AvatarEngine:
     def _ensure_directories(self):
         """确保目录存在"""
         dirs = [
-            Path(config().data_dir) / "avatars",
-            Path(config().data_dir) / "avatars" / "models",
-            Path(config().data_dir) / "avatars" / "textures",
-            Path(config().data_dir) / "avatars" / "scenes",
-            Path(config().data_dir) / "avatars" / "renders",
-            Path(config().data_dir) / "avatars" / "training",
+            Path(config.data_dir) / "avatars",
+            Path(config.data_dir) / "avatars" / "models",
+            Path(config.data_dir) / "avatars" / "textures",
+            Path(config.data_dir) / "avatars" / "scenes",
+            Path(config.data_dir) / "avatars" / "renders",
+            Path(config.data_dir) / "avatars" / "training",
         ]
         for d in dirs:
             d.mkdir(parents=True, exist_ok=True)
@@ -631,7 +631,7 @@ class AvatarEngine:
         task_id = f"render_{datetime.now().strftime('%Y%m%d%H%M%S')}"
         
         # 创建渲染任务
-        output_path = str(Path(config().data_dir) / "avatars" / "renders" / f"{task_id}.{output_format}")
+        output_path = str(Path(config.data_dir) / "avatars" / "renders" / f"{task_id}.{output_format}")
         
         self.db.execute("""
             INSERT INTO avatar_render_tasks (

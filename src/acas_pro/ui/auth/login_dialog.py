@@ -14,12 +14,8 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont, QPixmap
 
 from ...core.config import config
-
-# Get config object (config is a function)
-_cfg = config()
 from ...core.security import JWTManager, SessionManager, PasswordHasher
 from ...services.user_service import user_service
-
 
 COLORS = {
     "bg": "#0d1117",
@@ -33,7 +29,6 @@ COLORS = {
     "warning": "#d29922",
     "danger": "#f85149",
 }
-
 
 class StyledInput(QLineEdit):
     """统一风格的输入框"""
@@ -62,7 +57,6 @@ class StyledInput(QLineEdit):
             }}
         """)
         self.setMinimumHeight(50)
-
 
 class StyledButton(QPushButton):
     """统一风格的按钮"""
@@ -116,7 +110,6 @@ class StyledButton(QPushButton):
                 }}
             """)
 
-
 class LoginPage(QWidget):
     """登录页面"""
     
@@ -134,7 +127,7 @@ class LoginPage(QWidget):
         
         # === 标题区域 ===
         title = QLabel("欢迎回来")
-        title.setFont(QFont(_cfg.ui.font_family, 32, QFont.Bold))
+        title.setFont(QFont(config.ui.font_family, 32, QFont.Bold))
         title.setStyleSheet(f"color: {COLORS['text']};")
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)
@@ -356,10 +349,7 @@ class LoginPage(QWidget):
         from ...services.oauth import OAuthService
         from ...core.config import config
         
-        # Get config object (config is a function)
-        _cfg = config()
-        
-        oauth = OAuthService(_cfg.oauth)
+        oauth = OAuthService(config.oauth)
         url, state = oauth.get_authorization_url("qq")
         
         # 打开浏览器进行授权
@@ -386,10 +376,7 @@ class LoginPage(QWidget):
         from ...services.oauth import OAuthService
         from ...core.config import config
         
-        # Get config object (config is a function)
-        _cfg = config()
-        
-        oauth = OAuthService(_cfg.oauth)
+        oauth = OAuthService(config.oauth)
         url, state = oauth.get_authorization_url("wechat")
         
         import webbrowser
@@ -405,7 +392,6 @@ class LoginPage(QWidget):
         if reply == QMessageBox.Yes:
             QMessageBox.information(self, "开发者提示", "微信 OAuth功能需要配置有效的AppID和回调地址\n请联系管理员完成配置")
             # self.login_success.emit({"username": "wechat_user", "nickname": "微信用户"})
-
 
 class RegisterPage(QWidget):
     """注册页面"""
@@ -424,7 +410,7 @@ class RegisterPage(QWidget):
         
         # === 标题区域 ===
         title = QLabel("创建账户")
-        title.setFont(QFont(_cfg.ui.font_family, 32, QFont.Bold))
+        title.setFont(QFont(config.ui.font_family, 32, QFont.Bold))
         title.setStyleSheet(f"color: {COLORS['text']};")
         title.setAlignment(Qt.AlignCenter)
         layout.addWidget(title)
@@ -591,7 +577,6 @@ class RegisterPage(QWidget):
             self.register_success.emit(user.to_dict())
         else:
             QMessageBox.warning(self, "注册失败", "用户名或邮箱已存在")
-
 
 class LoginDialog(QDialog):
     """登录/注册对话框"""

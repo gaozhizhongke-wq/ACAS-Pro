@@ -19,8 +19,8 @@ _PROVIDER_MAP = {
 
 
 def create_llm_client():
-    """Bridge: config().py LLMConfig → llm_client.LLMConfig → LLMClient"""
-    llm = config().llm
+    """Bridge: config.py LLMConfig → llm_client.LLMConfig → LLMClient"""
+    llm = config.llm
     if not llm.enabled or not llm.api_key:
         raise RuntimeError("LLM not configured. Set DEEPSEEK_API_KEY in .env or configure via Settings page.")
     
@@ -49,14 +49,14 @@ def save_llm_config():
     model = data.get('model') or None
 
     # Update config
-    config().llm.provider = provider
+    config.llm.provider = provider
     if api_key:
-        config().llm.api_key = api_key
+        config.llm.api_key = api_key
     if api_base:
-        config().llm.api_base = api_base
+        config.llm.api_base = api_base
     if model:
-        config().llm.model = model
-    config().llm.enabled = True
+        config.llm.model = model
+    config.llm.enabled = True
 
     # Also update environment variable for runtime
     env_key = f"{provider.upper()}_API_KEY"
@@ -82,8 +82,8 @@ def llm_chat():
         return jsonify({
             'success': True,
             'response': response.content,
-            'model': config().llm.model,
-            'provider': config().llm.provider
+            'model': config.llm.model,
+            'provider': config.llm.provider
         })
     except Exception as e:
         logger.error(f"LLM chat error: {e}")

@@ -16,14 +16,10 @@ from PySide6.QtGui import QFont
 
 from ...core.config import config
 from ...core.logging import get_logger
-
-# Get config object (config is a function)
-_cfg = config()
 from ...content.trend_monitor import TrendMonitor, Platform as TrendPlatform
 from ...content.script_generator import ScriptGenerator, ContentStyle, Platform
 
 logger = get_logger(__name__)
-
 
 COLORS = {
     "bg": "#0d1117",
@@ -37,7 +33,6 @@ COLORS = {
     "warning": "#d29922",
     "danger": "#f85149",
 }
-
 
 class TrendItemCard(QFrame):
     """热点内容卡片"""
@@ -66,7 +61,7 @@ class TrendItemCard(QFrame):
         
         # 标题
         title = QLabel(self.item.title[:50] + "..." if len(self.item.title) > 50 else self.item.title)
-        title.setFont(QFont(_cfg.ui.font_family, 13, QFont.Bold))
+        title.setFont(QFont(config.ui.font_family, 13, QFont.Bold))
         title.setStyleSheet(f"color: {COLORS['text']};")
         title.setWordWrap(True)
         layout.addWidget(title)
@@ -125,7 +120,6 @@ class TrendItemCard(QFrame):
         btn_row.addStretch()
         layout.addLayout(btn_row)
 
-
 class ContentCreationPage(QWidget):
     """内容创作页面"""
     
@@ -145,7 +139,7 @@ class ContentCreationPage(QWidget):
         
         # 标题
         title = QLabel("内容创作中心")
-        title.setFont(QFont(_cfg.ui.font_family, 24, QFont.Bold))
+        title.setFont(QFont(config.ui.font_family, 24, QFont.Bold))
         title.setStyleSheet(f"color: {COLORS['text']};")
         layout.addWidget(title)
         
