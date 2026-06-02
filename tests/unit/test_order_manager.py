@@ -318,13 +318,23 @@ class TestOrderManager:
     # ===== 同步订单测试 =====
     def test_sync_orders_from_platform(self, manager):
         """Test syncing orders from platform"""
-        result = manager.sync_orders_from_platform(
-            shop_id='shop_001',
-            platform='douyin',
-            start_time='2026-01-01',
-            end_time='2026-12-31',
-        )
-        assert isinstance(result, dict)
+        from unittest.mock import patch, MagicMock
+        with patch('acas_pro.ecommerce.shop_manager.ShopManager') as MockShopManager:
+            mock_sm = MagicMock()
+            mock_sm.get_shop.return_value = {
+                'id': 'shop_001',
+                'platform': 'douyin',
+                'credentials': {'access_token': 'fake'},
+            }
+            MockShopManager.return_value = mock_sm
+            with patch('acas_pro.ecommerce.order_manager.create_platform_client', return_value=None):
+                result = manager.sync_orders_from_platform(
+                    shop_id='shop_001',
+                    platform='douyin',
+                    start_time='2026-01-01',
+                    end_time='2026-12-31',
+                )
+                assert isinstance(result, dict)
 
 
 class TestOrder:

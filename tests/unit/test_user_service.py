@@ -52,32 +52,33 @@ class MockDB:
 
 
 class TestUserService:
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def _mock_deps(self, monkeypatch):
+        """Auto-use fixture: mock _get_lazy to return fresh mocks per test."""
+        import acas_pro.services.user_service as _us_mod
         self.mock_db = MockDB()
         self.mock_hasher = MagicMock()
         self.mock_hasher.hash = MagicMock(return_value="mocked_hash")
         self.mock_hasher.verify = MagicMock(side_effect=lambda pwd, h: h == "mocked_hash")
         self.mock_validator = MagicMock()
         self.mock_validator.validate = MagicMock(side_effect=lambda pwd: (True, ""))
-        # CRITICAL: test_auth_routes.py deletes user_service from sys.modules.
-        # After that, conftest re-imports, creating a NEW module object.
-        # But the top-level `from ... import UserService` bound to the OLD module.
-        # The old module's functions reference old _lazy dict via __globals__.
-        # Fix: re-import UserService from the CURRENT module in sys.modules.
-        import acas_pro.services.user_service as _us_mod
-        _UserService = _us_mod.UserService
-        self._lazy_backup = dict(_us_mod._lazy)  # save for teardown
-        _us_mod._lazy['db'] = self.mock_db
-        _us_mod._lazy['password_hasher'] = self.mock_hasher
-        _us_mod._lazy['password_validator'] = self.mock_validator
-        self.service = _UserService()
+        fresh_lazy = {
+            'db': self.mock_db,
+            'password_hasher': self.mock_hasher,
+            'password_validator': self.mock_validator,
+            'session_manager': MagicMock(),
+            'rate_limiter': MagicMock(),
+        }
+        # KEY FIX: mock _get_lazy so it returns from fresh_lazy,
+        # bypassing mod.__dict__ cache that other tests may have polluted.
+        monkeypatch.setattr(
+            _us_mod, '_get_lazy',
+            lambda name, factory: fresh_lazy.get(name, factory())
+        )
+        self.service = _us_mod.UserService()
         self.service._current_user = None
         self.service._db = self.mock_db
-
-    def teardown_method(self):
-        import acas_pro.services.user_service as _us_mod
-        _us_mod._lazy.clear()
-        _us_mod._lazy.update(self._lazy_backup)
+        yield
 
     def test_init(self):
         assert self.service is not None

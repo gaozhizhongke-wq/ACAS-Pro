@@ -323,19 +323,24 @@ class TestProductManager:
     # ===== 平台同步测试 =====
     def test_sync_to_platform(self, manager, mock_db):
         """Test syncing product to platform"""
-        with patch.object(manager, 'get_product') as mock_get:
-            mock_get.return_value = Product(
-                id='prod_001',
-                name='黑茶',
-                category=ProductCategory.FOOD,
-                price=128.0,
-            )
-            result = manager.sync_to_platform(
-                product_id='prod_001',
-                platform='douyin',
-                platform_shop_id='shop_001',
-            )
-            assert isinstance(result, dict)
+        from unittest.mock import MagicMock
+        with patch('acas_pro.ecommerce.shop_manager.ShopManager') as MockShopManager:
+            mock_sm = MagicMock()
+            mock_sm.get_shop.return_value = {'id': 'shop_001', 'platform': 'douyin'}
+            MockShopManager.return_value = mock_sm
+            with patch.object(manager, 'get_product') as mock_get:
+                mock_get.return_value = Product(
+                    id='prod_001',
+                    name='黑茶',
+                    category=ProductCategory.FOOD,
+                    price=128.0,
+                )
+                result = manager.sync_to_platform(
+                    product_id='prod_001',
+                    platform='douyin',
+                    platform_shop_id='shop_001',
+                )
+                assert isinstance(result, dict)
 
     def test_batch_sync_to_platform(self, manager):
         """Test batch syncing products to platform"""

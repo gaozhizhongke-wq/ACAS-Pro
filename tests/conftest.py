@@ -250,6 +250,10 @@ def _reset_lazy_singletons():
     import acas_pro.core.security as _sec
     _sec._reset_lazy_instances()
 
+    # Also reset user_service.py lazy singletons
+    import acas_pro.services.user_service as _us
+    _us._reset_lazy()
+
     # If jwt was fully replaced by a MagicMock, restore the real module
     if 'jwt' in sys.modules:
         import jwt as _jwt_check

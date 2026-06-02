@@ -129,73 +129,6 @@ class TestUserServiceInit:
         assert svc is not None
 
 
-class TestUserServiceMethods:
-    def setup_method(self):
-        self.mock_db = M()
-        self.mock_pw_validator = M()
-        self.mock_pw_hasher = M()
-        self.mock_session_mgr = M()
-        self.mock_rate_limiter = M()
-        _us_mod.db = self.mock_db
-        _us_mod.password_validator = self.mock_pw_validator
-        _us_mod.password_hasher = self.mock_pw_hasher
-        _us_mod.session_manager = self.mock_session_mgr
-        _us_mod.rate_limiter = self.mock_rate_limiter
-
-    def teardown_method(self):
-        for attr in ['db', 'password_validator', 'password_hasher',
-                     'session_manager', 'rate_limiter']:
-            if hasattr(_us_mod, attr):
-                delattr(_us_mod, attr)
-
-    def test_register(self):
-        svc = UserService()
-        self.mock_db.insert = M(return_value='u1')
-        self.mock_pw_validator.validate = M(return_value=(True, ''))
-        self.mock_pw_hasher.hash = M(return_value='hash123')
-        self.mock_rate_limiter.is_allowed = M(return_value=True)
-        ok, msg, prof = svc.register(
-            account='alice', password='Pass@1234',
-            nickname='Alice', email='a@x.com'
-        )
-        assert isinstance(ok, bool)
-
-    def test_login(self):
-        svc = UserService()
-        # Patch datetime in user_service module to control fromisoformat/now
-        with patch('acas_pro.services.user_service.datetime') as mock_dt:
-            mock_dt.fromisoformat.return_value = datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)
-            mock_dt.now.return_value = datetime.datetime(2000, 1, 2, tzinfo=datetime.timezone.utc)
-            mock_dt.timezone = datetime.timezone
-            self.mock_db.fetch_one.return_value = {
-                'id': 'u1', 'account': 'alice', 'password_hash': 'hash',
-                'role': 'user', 'status': 'active',
-                'created_at': '2026-01-01T00:00:00',
-            }
-            self.mock_pw_hasher.verify = M(return_value=True)
-            self.mock_session_mgr.create_session = M(return_value='sess1')
-            self.mock_rate_limiter.is_allowed = M(return_value=True)
-            ok, msg, prof = svc.login(account='alice', password='Pass@1234')
-        assert isinstance(ok, bool)
-
-    def test_get_profile(self):
-        svc = UserService()
-        self.mock_db.fetch_one.return_value = {
-            'id': 'u1', 'account': 'alice', 'email': 'a@x.com',
-            'nickname': 'Alice', 'role': 'user', 'status': 'active'
-        }
-        prof = svc._get_profile('u1')
-        assert prof is None or isinstance(prof, UserProfile)
-
-    def test_login_guest(self):
-        svc = UserService()
-        prof = svc.login_guest()
-        assert isinstance(prof, UserProfile)
-
-
-# ── collectors/rss_collector.py ────────────────────────────────────────
-
-from acas_pro.collectors.rss_collector import RSSCollector, RSSArticle
 
 class TestRSSArticle:
     def _make(self):
@@ -250,3 +183,68 @@ class TestRSSCollectorMethods:
         c = RSSCollector()
         result = c.get_available_sources()
         assert isinstance(result, list)
+class TestUserServiceMethods:
+    @pytest.fixture(autouse=True)
+    def _mock_deps(self, monkeypatch):
+        """Auto-use fixture: mock all user_service module-level singletons per test."""
+        self.mock_db = M()
+        monkeypatch.setattr(_us_mod, 'db', self.mock_db)
+        self.mock_pw_validator = M()
+        monkeypatch.setattr(_us_mod, 'password_validator', self.mock_pw_validator)
+        self.mock_pw_hasher = M()
+        monkeypatch.setattr(_us_mod, 'password_hasher', self.mock_pw_hasher)
+        self.mock_session_mgr = M()
+        monkeypatch.setattr(_us_mod, 'session_manager', self.mock_session_mgr)
+        self.mock_rate_limiter = M()
+        monkeypatch.setattr(_us_mod, 'rate_limiter', self.mock_rate_limiter)
+        yield
+        # monkeypatch auto-undoes all setattr after yield
+
+    def test_register(self):
+        svc = UserService()
+        self.mock_db.insert = M(return_value='u1')
+        self.mock_pw_validator.validate = M(return_value=(True, ''))
+        self.mock_pw_hasher.hash = M(return_value='hash123')
+        self.mock_rate_limiter.is_allowed = M(return_value=True)
+        ok, msg, prof = svc.register(
+            account='alice', password='Pass@1234',
+            nickname='Alice', email='a@x.com'
+        )
+        assert isinstance(ok, bool)
+
+    def test_login(self):
+        svc = UserService()
+        # Patch datetime in user_service module to control fromisoformat/now
+        with patch('acas_pro.services.user_service.datetime') as mock_dt:
+            mock_dt.fromisoformat.return_value = datetime.datetime(2000, 1, 1, tzinfo=datetime.timezone.utc)
+            mock_dt.now.return_value = datetime.datetime(2000, 1, 2, tzinfo=datetime.timezone.utc)
+            mock_dt.timezone = datetime.timezone
+            self.mock_db.fetch_one.return_value = {
+                'id': 'u1', 'account': 'alice', 'password_hash': 'hash',
+                'role': 'user', 'status': 'active',
+                'created_at': '2026-01-01T00:00:00',
+            }
+            self.mock_pw_hasher.verify = M(return_value=True)
+            self.mock_session_mgr.create_session = M(return_value='sess1')
+            self.mock_rate_limiter.is_allowed = M(return_value=True)
+            ok, msg, prof = svc.login(account='alice', password='Pass@1234')
+        assert isinstance(ok, bool)
+
+    def test_get_profile(self):
+        svc = UserService()
+        self.mock_db.fetch_one.return_value = {
+            'id': 'u1', 'account': 'alice', 'email': 'a@x.com',
+            'nickname': 'Alice', 'role': 'user', 'status': 'active'
+        }
+        prof = svc._get_profile('u1')
+        assert prof is None or isinstance(prof, UserProfile)
+
+    def test_login_guest(self):
+        svc = UserService()
+        prof = svc.login_guest()
+        assert isinstance(prof, UserProfile)
+
+
+# ── collectors/rss_collector.py ────────────────────────────────────────
+
+from acas_pro.collectors.rss_collector import RSSCollector, RSSArticle

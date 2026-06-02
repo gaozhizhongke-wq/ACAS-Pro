@@ -99,8 +99,6 @@ class TestBiddingEngine:
         bid_low = self.engine.calculate_bid(config, {"competition_level": "low"})
         assert bid_high > bid_low
 
-    @pytest.mark.skip(reason="pre-existing: assertion mismatch")
-
     def test_calculate_bid_with_adjustments(self):
         config = BiddingConfig(
             strategy=BiddingStrategy.MANUAL,
@@ -109,7 +107,9 @@ class TestBiddingEngine:
                 BidAdjustment(BidAdjustmentRule.PERFORMANCE, "good", 1.5)
             ]
         )
-        bid = self.engine.calculate_bid(config, {})
+        # Fix: pin hour=12 (TIME_MULTIPLIER=1.0) to make test deterministic
+        bid = self.engine.calculate_bid(config, {"hour": 12})
+        # base 10.0 * 1.0 * 1.0 * 1.1 * 1.0 * 1.0 * 1.5 = 16.5
         assert bid > 10.0  # Should be increased by adjustment
 
     def test_calculate_bid_min_max(self):
@@ -159,14 +159,14 @@ class TestBiddingEngine:
         bid = self.engine.calculate_bid(config, {"current_roi": 1.0, "hour": 20})
         assert bid < 10.0  # Should decrease bid when ROI is low
 
-    @pytest.mark.skip(reason="pre-existing: assertion mismatch")
-
     def test_calculate_bid_max_conversion_slow(self):
         config = BiddingConfig(
             strategy=BiddingStrategy.MAX_CONVERSION,
             base_bid=10.0
         )
-        bid = self.engine.calculate_bid(config, {"budget_usage": 0.1})
+        # Fix: pin hour=12 (TIME_MULTIPLIER=1.0) to make test deterministic
+        bid = self.engine.calculate_bid(config, {"budget_usage": 0.1, "hour": 12})
+        # base 10.0 * 1.0 * 1.0 * 1.1 * 1.0 * 1.0 = 11.0, then * 1.15 = 12.65
         assert bid > 10.0  # Should increase bid when budget usage is slow
 
     def test_calculate_bid_max_conversion_fast(self):
