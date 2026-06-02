@@ -1,8 +1,15 @@
 """LLM routes for ACAS Pro Web"""
 from flask import Blueprint, request, jsonify, g
+from typing import Any
+
 from acas_pro.core.config import config
 from acas_pro.core.logging import get_logger
 from acas_pro.llm.llm_client import LLMClient, LLMConfig as ClientLLMConfig, LLMProvider, LLMMessage
+from acas_pro.web.schemas import (
+    LLMChatRequest, LLMChatResponse,
+    LLMConfigRequest, LLMConfigResponse,
+    AuthErrorResponse,
+)
 
 logger = get_logger(__name__)
 bp = Blueprint('llm', __name__, url_prefix='/api/llm')
@@ -38,53 +45,52 @@ def create_llm_client() -> Any:
 
 @bp.route('/config', methods=['POST'])
 def save_llm_config() -> Any:
-    """Save LLM configuration (requires authentication)"""
+    """Save LLM configuration with Pydantic validation (requires authentication)"""
     from flask import g
     if not hasattr(g, 'user') or not g.user:
-        return jsonify({'error': 'Authentication required'}), 401
-    data = request.json or {}
-    provider = data.get('provider', 'openai')
-    api_key = data.get('api_key', '')
-    api_base = data.get('api_base') or None
-    model = data.get('model') or None
+        return jsonify(AuthErrorResponse(error='Authentication required').model_dump(mode='json')), 401
+
+    try:
+        req = LLMConfigRequest.model_validate(request.json or {})
+    except Exception as e:
+        logger.warning(f"LLM config validation failed: {e}")
+        return jsonify(AuthErrorResponse(error=f"Validation error: {e}").model_dump(mode='json')), 400
 
     # Update config
-    config.llm.provider = provider
-    if api_key:
-        config.llm.api_key = api_key
-    if api_base:
-        config.llm.api_base = api_base
-    if model:
-        config.llm.model = model
+    config.llm.provider = req.provider
+    config.llm.api_key = req.api_key
+    if req.api_base:
+        config.llm.api_base = req.api_base
+    if req.model:
+        config.llm.model = req.model
     config.llm.enabled = True
 
     # Also update environment variable for runtime
-    env_key = f"{provider.upper()}_API_KEY"
+    env_key = f"{req.provider.upper()}_API_KEY"
     import os
-    os.environ[env_key] = api_key
+    os.environ[env_key] = req.api_key
 
-    return jsonify({'success': True, 'message': 'Configuration saved'})
+    return jsonify(LLMConfigResponse(success=True, message='Configuration saved').model_dump(mode='json')), 200
 
 
 @bp.route('/chat', methods=['POST'])
 def llm_chat() -> Any:
-    """Chat with LLM"""
-    data = request.json or {}
-    messages = data.get('messages', [])
-    
-    if not messages:
-        return jsonify({'error': 'messages required'}), 400
-    
+    """Chat with LLM with Pydantic validation"""
+    try:
+        req = LLMChatRequest.model_validate(request.json or {})
+    except Exception as e:
+        logger.warning(f"LLM chat validation failed: {e}")
+        return jsonify(AuthErrorResponse(error=f"Validation error: {e}").model_dump(mode='json')), 400
+
     try:
         client = create_llm_client()
-        llm_messages = [LLMMessage(role=m['role'], content=m['content']) for m in messages]
+        llm_messages = [LLMMessage(role=m.role, content=m.content) for m in req.messages]
         response = client.chat(llm_messages)
-        return jsonify({
-            'success': True,
-            'response': response.content,
-            'model': config.llm.model,
-            'provider': config.llm.provider
-        })
+        return jsonify(LLMChatResponse(
+            success=True,
+            content=response.content,
+            usage=getattr(response, 'usage', None)
+        ).model_dump(mode='json')), 200
     except Exception as e:
         logger.error(f"LLM chat error: {e}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify(AuthErrorResponse(error=str(e)).model_dump(mode='json')), 500

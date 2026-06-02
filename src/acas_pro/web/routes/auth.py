@@ -7,6 +7,7 @@ import acas_pro.core.security as _sec
 import acas_pro.core.config as _cfg_mod
 import acas_pro.services.user_service as _us_mod
 from acas_pro.core.logging import get_logger
+from acas_pro.web.schemas import RegisterRequest, LoginRequest, AuthResponse, AuthErrorResponse
 
 logger = get_logger(__name__)
 
@@ -45,65 +46,62 @@ def verify_token(token: str) -> dict | None:
 
 @bp.route('/register', methods=['POST'])
 def auth_register() -> tuple:
-    """Register a new user account"""
-    data: dict = request.json or {}
-    account: str = data.get('account', '').strip()
-    password: str = data.get('password', '').strip()
-    nickname: str = data.get('nickname', '').strip()
-
-    if not account or not password:
-        return jsonify({'error': 'account and password are required'}), 400
+    """Register a new user account with Pydantic validation"""
+    try:
+        req = RegisterRequest.model_validate(request.json or {})
+    except Exception as e:
+        logger.warning(f"Registration validation failed: {e}")
+        return jsonify(AuthErrorResponse(error=f"Validation error: {e}").model_dump(mode='json')), 400
 
     # Enforce strong password policy
-    is_valid, pw_msg = _sec.password_validator.validate(password)
+    is_valid, pw_msg = _sec.password_validator.validate(req.password)
     if not is_valid:
-        return jsonify({'error': pw_msg}), 400
+        return jsonify(AuthErrorResponse(error=pw_msg).model_dump(mode='json')), 400
 
     # Rate limit registration (10 per 10 minutes per account)
-    rate_key = f"register:{account}"
+    rate_key = f"register:{req.account}"
     if not _sec.rate_limiter.is_allowed(rate_key, max_attempts=10, window_seconds=600):
-        return jsonify({'error': 'Too many registration attempts. Please try again later.'}), 429
+        return jsonify(AuthErrorResponse(error='Too many registration attempts. Please try again later.').model_dump(mode='json')), 429
     _sec.rate_limiter.record_attempt(rate_key)
 
     ok, msg, profile = _us_mod.user_service.register(
-        account=account, password=password, nickname=nickname or account)
+        account=req.account, password=req.password, nickname=req.nickname or req.account)
     if not ok:
-        return jsonify({'error': msg}), 409
+        return jsonify(AuthErrorResponse(error=msg).model_dump(mode='json')), 409
 
-    token = generate_token(profile.id, account)
-    return jsonify({
-        'success': True,
-        'token': token,
-        'user': {'user_id': profile.id, 'account': profile.account, 'nickname': profile.nickname}
-    })
+    token = generate_token(profile.id, req.account)
+    return jsonify(AuthResponse(
+        success=True,
+        token=token,
+        user={'user_id': profile.id, 'account': profile.account, 'nickname': profile.nickname}
+    ).model_dump(mode='json')), 200
 
 
 @bp.route('/login', methods=['POST'])
 def auth_login() -> tuple:
-    """Login with account and password"""
-    data: dict = request.json or {}
-    account: str = data.get('account', '').strip()
-    password: str = data.get('password', '').strip()
-
-    if not account or not password:
-        return jsonify({'error': 'account and password are required'}), 400
+    """Login with account and password with Pydantic validation"""
+    try:
+        req = LoginRequest.model_validate(request.json or {})
+    except Exception as e:
+        logger.warning(f"Login validation failed: {e}")
+        return jsonify(AuthErrorResponse(error=f"Validation error: {e}").model_dump(mode='json')), 400
 
     # Rate limit login attempts: 20 per 10 minutes per account
-    rate_key = f"login:{account}"
+    rate_key = f"login:{req.account}"
     if not _sec.rate_limiter.is_allowed(rate_key, max_attempts=20, window_seconds=600):
-        return jsonify({'error': 'Too many login attempts. Please try again later.'}), 429
+        return jsonify(AuthErrorResponse(error='Too many login attempts. Please try again later.').model_dump(mode='json')), 429
     _sec.rate_limiter.record_attempt(rate_key)
 
-    ok, msg, profile = _us_mod.user_service.login(account=account, password=password)
+    ok, msg, profile = _us_mod.user_service.login(account=req.account, password=req.password)
     if not ok:
-        return jsonify({'error': msg}), 401
+        return jsonify(AuthErrorResponse(error=msg).model_dump(mode='json')), 401
 
-    token = generate_token(profile.id, account)
-    return jsonify({
-        'success': True,
-        'token': token,
-        'user': {'user_id': profile.id, 'account': profile.account, 'nickname': profile.nickname}
-    })
+    token = generate_token(profile.id, req.account)
+    return jsonify(AuthResponse(
+        success=True,
+        token=token,
+        user={'user_id': profile.id, 'account': profile.account, 'nickname': profile.nickname}
+    ).model_dump(mode='json')), 200
 
 
 @bp.route('/me', methods=['GET'])

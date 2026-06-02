@@ -42,7 +42,7 @@ class TestLLMChat:
             assert response.status_code == 200
             data = json.loads(response.data)
             assert data['success'] is True
-            assert data['response'] == 'Hello!'
+            assert data['content'] == 'Hello!'
 
     def test_chat_missing_messages(self, client):
         response = client.post(
