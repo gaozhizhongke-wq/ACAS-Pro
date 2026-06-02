@@ -17,11 +17,12 @@ class TestConfig:
         assert config is not None
 
     def test_config_has_attributes(self):
-        """Test config has required attributes"""
+        """Test config has required attributes (AppConfig dataclass)"""
         from acas_pro.core.config import config
-        # config might be a function or an object
-        # Just check it's callable or has some attributes
-        assert callable(config) or hasattr(config, 'get') or hasattr(config, 'FLASK_ENV')
+        # AppConfig dataclass instance with known fields
+        assert hasattr(config, 'name')
+        assert hasattr(config, 'version')
+        assert hasattr(config, 'environment')
 
     def test_config_get(self):
         """Test config get method"""

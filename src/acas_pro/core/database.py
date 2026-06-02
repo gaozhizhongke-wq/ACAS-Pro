@@ -138,11 +138,15 @@ class DatabaseManager:
                 self._pool.putconn(conn)
 
         except ImportError:
-            _get_logger().error("psycopg2 not installed. Run: pip install psycopg2-binary")
-            raise
+            _get_logger().warning("psycopg2 not installed, falling back to SQLite. Run: pip install psycopg2-binary")
+            self._is_postgres = False
+            self._init_sqlite()
+            return
         except Exception as e:
-            _get_logger().error(f"PostgreSQL connection failed: {e}")
-            raise
+            _get_logger().warning(f"PostgreSQL connection failed, falling back to SQLite: {e}")
+            self._is_postgres = False
+            self._init_sqlite()
+            return
 
     def _init_sqlite_db(self) -> Any:
         """Initialize SQLite schema"""

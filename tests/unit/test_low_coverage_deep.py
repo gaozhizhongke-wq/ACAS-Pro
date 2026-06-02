@@ -217,11 +217,14 @@ class TestDataMonitorDeep:
 # ============================================================
 class TestWebInit:
     def test_create_app(self):
+        """Test create_app returns a Flask app"""
+        from acas_pro.core.config import config
         from acas_pro.web import create_app
-        with patch('flask.Flask') as mock_flask:
-            mock_app = MagicMock()
-            mock_flask.return_value = mock_app
-            with patch('acas_pro.web.config') as mock_config:
-                mock_config.return_value.validate.return_value = (True, [])
-                result = create_app()
-                assert result is not None
+        # Patch validate on the config instance so create_app sees it
+        with patch.object(type(config), 'validate', return_value=(True, [])):
+            try:
+                app = create_app()
+                assert app is not None
+                assert hasattr(app, 'config')
+            except Exception as e:
+                pytest.fail(f"create_app() failed: {e}")

@@ -4,16 +4,38 @@
 
 import sys
 import pytest
-from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 
-# Module-level mock removed (was causing sys.modules pollution across all test files
-# during collection phase). Tests now use class-level autouse fixtures instead.
-# sys.modules['acas_pro.core.config'] = MagicMock()
-# sys.modules['acas_pro.core.logging'] = MagicMock(...)
-# sys.modules['acas_pro.core.database'] = MagicMock()
-# sys.modules['acas_pro.llm.llm_client'] = MagicMock()
 
+# ---------------------------------------------------------------------------
+# Helpers: make a proper config mock (attributes, not .return_value)
+# ---------------------------------------------------------------------------
+
+def _make_config(environment="test", secret_key_length=32,
+                 llm_enabled=False, llm_api_key=None, llm_provider="openai"):
+    cfg = MagicMock()
+    cfg.version = "1.0.0"
+    cfg.environment = environment
+    cfg.data_dir = "data"
+    # security
+    cfg.security = MagicMock()
+    cfg.security.secret_key = "x" * secret_key_length
+    # database
+    cfg.database = MagicMock()
+    cfg.database.type = "sqlite"
+    # llm — provider MUST be a real string (health.py validates against enum)
+    cfg.llm = MagicMock()
+    cfg.llm.enabled = llm_enabled
+    cfg.llm.api_key = llm_api_key
+    cfg.llm.provider = llm_provider
+    cfg.llm.model = "gpt-4"
+    cfg.llm.base_url = ""
+    return cfg
+
+
+# ---------------------------------------------------------------------------
+# TestHealthStatus
+# ---------------------------------------------------------------------------
 
 class TestHealthStatus:
     @pytest.fixture(autouse=True)
@@ -32,7 +54,6 @@ class TestHealthStatus:
         sys.modules['acas_pro.core.database'] = MagicMock()
         sys.modules['acas_pro.llm.llm_client'] = MagicMock()
         yield
-        # Restore real modules, never delete
         for mod, real in _saved.items():
             sys.modules[mod] = real
         for mod in ['acas_pro.core.config', 'acas_pro.core.logging',
@@ -52,6 +73,10 @@ class TestHealthStatus:
         from acas_pro.web.health import HealthStatus
         assert HealthStatus.UNHEALTHY.value == "unhealthy"
 
+
+# ---------------------------------------------------------------------------
+# TestHealthCheckResult
+# ---------------------------------------------------------------------------
 
 class TestHealthCheckResult:
     def test_create_result(self):
@@ -81,56 +106,46 @@ class TestHealthCheckResult:
         assert result.details == {}
 
 
+# ---------------------------------------------------------------------------
+# TestHealthChecker
+# ---------------------------------------------------------------------------
+
 class TestHealthChecker:
-    """Test HealthChecker class."""
+    """Test HealthChecker class.
+
+    Strategy:
+      - autouse fixture patches acas_pro.web.health's module-level names
+        (config, DatabaseManager, logger) via monkeypatch.
+      - NEVER delete or pop acas_pro.* from sys.modules (breaks cross-test mocks).
+      - Tests that need to tweak config values do so via self.mock_config.xxx
+        (the same object that health.py reads).
+    """
 
     @pytest.fixture(autouse=True)
-    def setup(self):
-        """Setup mocks before each test."""
-        # Save real acas_pro modules before mocking
-        _saved = {}
-        for m in list(sys.modules.keys()):
-            if m.startswith('acas_pro') and not hasattr(sys.modules[m], 'mock_calls'):
-                _saved[m] = sys.modules.pop(m)
+    def setup(self, monkeypatch):
+        """Patch health.py's module-level refs.  Runs before every test."""
+        import acas_pro.web.health as _health_mod
 
-        # Mock config
-        mock_config = MagicMock()
-        mock_config.return_value.version = "1.0.0"
-        mock_config.return_value.environment = "test"
-        mock_config.return_value.database.type = "sqlite"
-        mock_config.return_value.security.secret_key = "x" * 32
-        mock_config.return_value.llm.enabled = False
-        mock_config.return_value.llm.api_key = None
+        # --- config ---
+        self.mock_config = _make_config()
+        monkeypatch.setattr(_health_mod, 'config', self.mock_config, raising=False)
 
-        mock_config_pkg = MagicMock()
-        mock_config_pkg.config = mock_config
-        sys.modules['acas_pro.core.config'] = mock_config_pkg
+        # --- DatabaseManager ---
+        self.mock_db = MagicMock()
+        self.mock_db.execute_one.return_value = {"health_check": 1}
+        self.mock_dm = MagicMock()
+        self.mock_dm.return_value = self.mock_db
+        monkeypatch.setattr(_health_mod, 'DatabaseManager', self.mock_dm, raising=False)
 
-        # Mock logging
-        mock_logger = MagicMock()
-        mock_get_logger = MagicMock(return_value=mock_logger)
-        mock_logging_pkg = MagicMock()
-        mock_logging_pkg.get_logger = mock_get_logger
-        sys.modules['acas_pro.core.logging'] = mock_logging_pkg
-
-        # Mock database
-        mock_db = MagicMock()
-        mock_db.execute_one.return_value = {"health_check": 1}
-        mock_dm = MagicMock()
-        mock_dm.return_value = mock_db
-        mock_db_pkg = MagicMock()
-        mock_db_pkg.DatabaseManager = mock_dm
-        sys.modules['acas_pro.core.database'] = mock_db_pkg
+        # --- logger ---
+        self.mock_logger = MagicMock()
+        monkeypatch.setattr(_health_mod, 'logger', self.mock_logger, raising=False)
 
         yield
 
-        # Restore all saved real modules
-        for m, real in _saved.items():
-            sys.modules[m] = real
-        # Remove only the 3 modules we explicitly mocked
-        for mod in ['acas_pro.core.config', 'acas_pro.core.logging', 'acas_pro.core.database']:
-            if mod not in _saved and mod in sys.modules:
-                del sys.modules[mod]
+    # ------------------------------------------------------------------
+    # init / check_all
+    # ------------------------------------------------------------------
 
     def test_init(self):
         from acas_pro.web.health import HealthChecker
@@ -153,13 +168,16 @@ class TestHealthChecker:
         from acas_pro.web.health import HealthChecker, HealthStatus
         checker = HealthChecker()
 
-        # Make one check raise an exception
         def bad_check():
             raise Exception("test error")
 
         checker.checks = [bad_check]
         result = checker.check_all()
         assert result['status'] == HealthStatus.UNHEALTHY.value
+
+    # ------------------------------------------------------------------
+    # _check_database
+    # ------------------------------------------------------------------
 
     def test_check_database_healthy(self):
         from acas_pro.web.health import HealthChecker, HealthStatus
@@ -171,26 +189,20 @@ class TestHealthChecker:
     def test_check_database_unhealthy(self):
         from acas_pro.web.health import HealthChecker, HealthStatus
         checker = HealthChecker()
-
-        # Mock db.execute_one to return unexpected result
-        mock_db_pkg = sys.modules['acas_pro.core.database']
-        mock_db = mock_db_pkg.DatabaseManager.return_value
-        mock_db.execute_one.return_value = None
-
+        self.mock_db.execute_one.return_value = None
         result = checker._check_database()
         assert result.status == HealthStatus.UNHEALTHY
 
     def test_check_database_exception(self):
         from acas_pro.web.health import HealthChecker, HealthStatus
         checker = HealthChecker()
-
-        # Mock db.execute_one to raise exception
-        mock_db_pkg = sys.modules['acas_pro.core.database']
-        mock_db = mock_db_pkg.DatabaseManager.return_value
-        mock_db.execute_one.side_effect = Exception("db error")
-
+        self.mock_db.execute_one.side_effect = Exception("db error")
         result = checker._check_database()
         assert result.status == HealthStatus.UNHEALTHY
+
+    # ------------------------------------------------------------------
+    # _check_config
+    # ------------------------------------------------------------------
 
     def test_check_config_healthy(self):
         from acas_pro.web.health import HealthChecker, HealthStatus
@@ -202,13 +214,8 @@ class TestHealthChecker:
     def test_check_config_short_secret_key(self):
         from acas_pro.web.health import HealthChecker, HealthStatus
         checker = HealthChecker()
-
-        # Mock config with short secret key
-        mock_config_pkg = sys.modules['acas_pro.core.config']
-        mock_config = mock_config_pkg.config
-        mock_config.return_value.security.secret_key = "short"
-        mock_config.return_value.environment = "production"
-
+        self.mock_config.security.secret_key = "short"
+        self.mock_config.environment = "production"
         result = checker._check_config()
         assert result.status == HealthStatus.DEGRADED
         assert "issues" in result.details
@@ -216,21 +223,21 @@ class TestHealthChecker:
     def test_check_config_default_secret_in_production(self):
         from acas_pro.web.health import HealthChecker, HealthStatus
         checker = HealthChecker()
-
-        # Mock config with default secret key in production
-        mock_config_pkg = sys.modules['acas_pro.core.config']
-        mock_config = mock_config_pkg.config
-        mock_config.return_value.security.secret_key = "acas-pro-secret-key-change-me"
-        mock_config.return_value.environment = "production"
-
+        self.mock_config.security.secret_key = "acas-pro-secret-key-change-me"
+        self.mock_config.environment = "production"
         result = checker._check_config()
         assert result.status == HealthStatus.DEGRADED
 
+    # ------------------------------------------------------------------
+    # _check_disk_space  (uses shutil.disk_usage → patch at shutil level)
+    # ------------------------------------------------------------------
+
     def test_check_disk_space_healthy(self):
         from acas_pro.web.health import HealthChecker, HealthStatus
-        
-        # Patch shutil and os BEFORE calling the method
-        with patch('shutil.disk_usage', return_value=MagicMock(free=10*(1024**3), total=100*(1024**3), used=90*(1024**3))), \
+        with patch('shutil.disk_usage',
+                   return_value=MagicMock(free=10*(1024**3),
+                                          total=100*(1024**3),
+                                          used=90*(1024**3))), \
              patch('os.makedirs'):
             checker = HealthChecker()
             result = checker._check_disk_space()
@@ -238,8 +245,10 @@ class TestHealthChecker:
 
     def test_check_disk_space_critical(self):
         from acas_pro.web.health import HealthChecker, HealthStatus
-        
-        with patch('shutil.disk_usage', return_value=MagicMock(free=0.5*(1024**3), total=100*(1024**3), used=99.5*(1024**3))), \
+        with patch('shutil.disk_usage',
+                   return_value=MagicMock(free=0.5*(1024**3),
+                                          total=100*(1024**3),
+                                          used=99.5*(1024**3))), \
              patch('os.makedirs'):
             checker = HealthChecker()
             result = checker._check_disk_space()
@@ -247,8 +256,10 @@ class TestHealthChecker:
 
     def test_check_disk_space_warning(self):
         from acas_pro.web.health import HealthChecker, HealthStatus
-        
-        with patch('shutil.disk_usage', return_value=MagicMock(free=3*(1024**3), total=100*(1024**3), used=97*(1024**3))), \
+        with patch('shutil.disk_usage',
+                   return_value=MagicMock(free=3*(1024**3),
+                                          total=100*(1024**3),
+                                          used=97*(1024**3))), \
              patch('os.makedirs'):
             checker = HealthChecker()
             result = checker._check_disk_space()
@@ -256,34 +267,30 @@ class TestHealthChecker:
 
     def test_check_disk_space_exception(self):
         from acas_pro.web.health import HealthChecker, HealthStatus
-        
         with patch('shutil.disk_usage', side_effect=Exception("disk error")), \
              patch('os.makedirs'):
             checker = HealthChecker()
             result = checker._check_disk_space()
             assert result.status == HealthStatus.DEGRADED
 
+    # ------------------------------------------------------------------
+    # _check_llm
+    # ------------------------------------------------------------------
+
     def test_check_llm_disabled(self):
         from acas_pro.web.health import HealthChecker, HealthStatus
         checker = HealthChecker()
-
-        mock_config_pkg = sys.modules['acas_pro.core.config']
-        mock_config = mock_config_pkg.config
-        mock_config.return_value.llm.enabled = False
-
+        self.mock_config.llm.enabled = False
         result = checker._check_llm()
         assert result.status == HealthStatus.DEGRADED
-        assert "disabled" in result.message.lower() or "disabled" in str(result.details).lower()
+        assert "disabled" in result.message.lower() or \
+               "disabled" in str(result.details).lower()
 
     def test_check_llm_no_api_key(self):
         from acas_pro.web.health import HealthChecker, HealthStatus
         checker = HealthChecker()
-
-        mock_config_pkg = sys.modules['acas_pro.core.config']
-        mock_config = mock_config_pkg.config
-        mock_config.return_value.llm.enabled = True
-        mock_config.return_value.llm.api_key = None
-
+        self.mock_config.llm.enabled = True
+        self.mock_config.llm.api_key = None
         result = checker._check_llm()
         assert result.status == HealthStatus.DEGRADED
 
@@ -291,18 +298,25 @@ class TestHealthChecker:
         from acas_pro.web.health import HealthChecker, HealthStatus
         checker = HealthChecker()
 
-        mock_config_pkg = sys.modules['acas_pro.core.config']
-        mock_config = mock_config_pkg.config
-        mock_config.return_value.llm.enabled = True
-        mock_config.return_value.llm.api_key = "test-key"
-        mock_config.return_value.llm.provider = "openai"
-        mock_config.return_value.llm.model = "gpt-4"
+        self.mock_config.llm.enabled = True
+        self.mock_config.llm.api_key = "test-key"
+        self.mock_config.llm.provider = "openai"
+        self.mock_config.llm.model = "gpt-4"
+        self.mock_config.llm.base_url = ""
 
-        # Mock LLM client import
+        # Mock LLM client module so the import inside _check_llm succeeds
         mock_llm_client = MagicMock()
         mock_llm_client.LLMClient = MagicMock()
-        mock_llm_client.LLMProvider = MagicMock()
         mock_llm_client.LLMConfig = MagicMock()
+        # LLMProvider("openai") must succeed → make constructor return a truthy obj
+        mock_provider_enum = MagicMock()
+        mock_provider_enum.__str__ = lambda self: "LLMProvider.OPENAI"
+        mock_llm_client.LLMProvider = type(
+            "FakeLLMProvider", (),
+            {"__init__": lambda self, v: None,
+             "__repr__": lambda self: "OPENAI",
+             "value": "openai"}
+        )
         sys.modules['acas_pro.llm.llm_client'] = mock_llm_client
 
         result = checker._check_llm()

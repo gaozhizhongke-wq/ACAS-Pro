@@ -235,36 +235,38 @@ def sample_config_data():
     }
 
 
-# --- Test isolation: clear lazy caches and reload modules between tests ---
+# --- Test isolation: reset singletons WITHOUT deleting modules ---
+# Deleting acas_pro modules from sys.modules breaks monkeypatch.setattr:
+#   auth.py does `import acas_pro.core.security as _sec` at import time.
+#   After module deletion + re-import, `_sec` still points to the OLD module
+#   object, so patches on the new module have no effect.
+# Fix: use the official _reset_lazy_instances() from security.py.
+
+
 @pytest.fixture(autouse=True, scope="function")
 def _reset_lazy_singletons():
-    """Clear module-level lazy singletons before each test and reload polluted modules.
-    This prevents state leakage between tests when modules use lazy initialization.
-    """
-    
-    # Step 1: Remove ALL acas_pro modules from sys.modules to prevent mock leakage
-    mods_to_clear = [k for k in list(sys.modules.keys()) if k.startswith('acas_pro')]
-    for mod in mods_to_clear:
-        del sys.modules[mod]
-    
-    # Also clear external modules that may be mocked
-    if 'jwt' in sys.modules and hasattr(sys.modules['jwt'], 'mock_calls'):
-        del sys.modules['jwt']
-    
-    # Step 2: Re-import fresh versions of core modules
-    import acas_pro.core.config
-    import acas_pro.core.security
-    import acas_pro.core.logging
-    import acas_pro.services.user_service
-    
-    yield
-    
-    # Teardown: remove again after test to prevent leakage
-    mods_to_clear = [k for k in list(sys.modules.keys()) if k.startswith('acas_pro')]
-    for mod in mods_to_clear:
-        del sys.modules[mod]
+    """Reset lazy singletons between tests without deleting module objects."""
+    # Use the official reset function provided by security.py
+    import acas_pro.core.security as _sec
+    _sec._reset_lazy_instances()
 
-print(f'[CONFTEST] numpy type={type(sys.modules.get("numpy")).__name__ if sys.modules.get("numpy") else None}')
+    # If jwt was fully replaced by a MagicMock, restore the real module
+    if 'jwt' in sys.modules:
+        import jwt as _jwt_check
+        if not hasattr(_jwt_check, 'decode'):
+            del sys.modules['jwt']
+
+    yield
+
+    # After test: only clean up jwt if it's still a non-real mock
+    if 'jwt' in sys.modules:
+        import jwt as _jwt_check2
+        if not hasattr(_jwt_check2, 'decode'):
+            del sys.modules['jwt']
+
+    # Do NOT delete acas_pro.* — see comment above.
+
+
 
 
 # Windows: clean up pytest-current on exit to prevent stale junction next run
