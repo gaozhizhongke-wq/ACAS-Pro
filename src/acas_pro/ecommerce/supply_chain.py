@@ -325,7 +325,7 @@ class SupplyChainManager:
             self._sync_to_platforms(product_id, shop_id, new_quantity)
             
         except Exception as e:
-            logger.exception("Unhandled exception")
+            logger.exception(f"Error in unknown_function: {e}")
             sync_record.status = InventorySyncStatus.FAILED
             sync_record.error_message = str(e)
             logger.error(f"Inventory sync failed: {e}")

@@ -112,7 +112,7 @@ class ClaudeEngine(BaseLLMEngine):
                 finish_reason=response.stop_reason
             )
         except Exception as e:
-            logger.exception("Unhandled exception")
+            logger.exception(f"Error in unknown_function: {e}")
             raise RuntimeError(f"Claude API error: {e}")
     
     def chat_stream(self, messages: List[LLMMessage]) -> Iterator[LLMStreamChunk]:
@@ -141,7 +141,7 @@ class ClaudeEngine(BaseLLMEngine):
                     is_finished=True
                 )
         except Exception as e:
-            logger.exception("Unhandled exception")
+            logger.exception(f"Error in unknown_function: {e}")
             raise RuntimeError(f"Claude streaming error: {e}")
     
     def quick_chat(self, message: str, system: str = None) -> str:
@@ -170,7 +170,7 @@ class ClaudeEngine(BaseLLMEngine):
                 "response": response[:50]
             }
         except Exception as e:
-            logger.exception("Unhandled exception")
+            logger.exception(f"Error in health_check: {e}")
             return {
                 "status": "unhealthy",
                 "error": str(e)

@@ -670,7 +670,7 @@ class ShopManager:
                         'status': 'success',
                     })
                 except Exception as e:
-                    logger.exception("Unhandled exception")
+                    logger.exception(f"Error in unknown_function: {e}")
                     results['failed'] += 1
                     results['details'].append({
                         'shop_id': shop.id,

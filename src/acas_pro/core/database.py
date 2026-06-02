@@ -535,7 +535,7 @@ class DatabaseManager:
                 yield cursor
                 conn.commit()
             except Exception as e:
-                logger.exception("Unhandled exception")
+                logger.exception(f"Error in transaction: {e}")
                 conn.rollback()
                 _get_logger().error(f"Transaction failed: {e}")
                 raise
@@ -549,7 +549,7 @@ class DatabaseManager:
                 yield conn
                 conn.execute("COMMIT")
             except Exception as e:
-                logger.exception("Unhandled exception")
+                logger.exception(f"Error in unknown_function: {e}")
                 conn.execute("ROLLBACK")
                 _get_logger().error(f"Transaction failed: {e}")
                 raise

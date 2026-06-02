@@ -60,7 +60,7 @@ class RenderThread(QThread):
                 self.error.emit("渲染失败")
                 
         except Exception as e:
-            logger.exception("Unhandled exception")
+            logger.exception(f"Error in run: {e}")
             self.error.emit(str(e))
 
 class VideoMakerPage(QWidget):

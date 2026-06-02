@@ -135,7 +135,7 @@ def monitor_llm(provider: str, model: str):
                 ).inc()
                 return result
             except Exception as e:
-                logger.exception("Unhandled exception")
+                logger.exception(f"Error in wrapper: {e}")
                 LLM_REQUESTS.labels(
                     provider=provider,
                     model=model,

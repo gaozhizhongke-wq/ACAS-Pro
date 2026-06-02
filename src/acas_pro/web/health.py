@@ -111,7 +111,7 @@ class HealthChecker:
                     message='Database query returned unexpected result'
                 )
         except Exception as e:
-            logger.exception("Unhandled exception")
+            logger.exception(f"Error in unknown_function: {e}")
             return HealthCheckResult(
                 name='database',
                 status=HealthStatus.UNHEALTHY,
@@ -186,7 +186,7 @@ class HealthChecker:
                 }
             )
         except Exception as e:
-            logger.exception("Unhandled exception")
+            logger.exception(f"Error in unknown_function: {e}")
             return HealthCheckResult(
                 name='disk_space',
                 status=HealthStatus.DEGRADED,
@@ -299,7 +299,7 @@ class HealthChecker:
                 )
                 
         except Exception as e:
-            logger.exception("Unhandled exception")
+            logger.exception(f"Error in unknown_function: {e}")
             return HealthCheckResult(
                 name='llm',
                 status=HealthStatus.UNHEALTHY,

@@ -62,7 +62,7 @@ class UpdateChecker:
             return False, None
 
         except Exception as e:
-            logger.exception("Unhandled exception")
+            logger.exception(f"Error in unknown_function: {e}")
             return False, None
 
     def _compare_versions(self, v1: str, v2: str) -> int:
@@ -119,7 +119,7 @@ class UpdateChecker:
             return filepath
 
         except Exception as e:
-            logger.exception("Unhandled exception")
+            logger.exception(f"Error in unknown_function: {e}")
             return None
 
     def get_update_info(self) -> Optional[UpdateInfo]:

@@ -119,7 +119,7 @@ class PostgreSQLDatabaseManager:
                 yield cursor
                 conn.commit()
             except Exception as e:
-                logger.exception("Unhandled exception")
+                logger.exception(f"Error in transaction: {e}")
                 conn.rollback()
                 logger.error(f"Transaction failed: {e}")
                 raise
