@@ -9,9 +9,7 @@ import json
 @pytest.fixture
 def app():
     from acas_pro.web import create_app
-    app = create_app()
-    app.config['TESTING'] = True
-    app.config['SECRET_KEY'] = 'test-secret-key-for-testing'
+    app = create_app({'TESTING': True, 'SECRET_KEY': 'test-secret-key-for-testing'})
     return app
 
 

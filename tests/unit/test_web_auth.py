@@ -103,7 +103,6 @@ def _mock_login(monkeypatch, *, login_ok=True):
 # ---------------------------------------------------------------
 
 class TestAuthRegister:
-    @pytest.mark.skip(reason="test pollution - passes in isolation, fails in full suite due to shared state")
     def test_register_success(self, client, monkeypatch):
         _mock_register(monkeypatch, register_ok=True)
         resp = client.post('/api/auth/register', json={
@@ -131,8 +130,6 @@ class TestAuthRegister:
         })
         assert resp.status_code == 400
 
-    @pytest.mark.skip(reason="test pollution - passes in isolation, fails in full suite due to shared state")
-
     def test_register_rate_limited(self, client, monkeypatch):
         import acas_pro.core.security as _sec_mod
         mock_rl = MagicMock()
@@ -142,8 +139,6 @@ class TestAuthRegister:
             'account': 'test', 'password': 'Test123!'
         })
         assert resp.status_code == 429
-
-    @pytest.mark.skip(reason="test pollution - passes in isolation, fails in full suite due to shared state")
 
     def test_register_duplicate(self, client, monkeypatch):
         _mock_register(monkeypatch, register_ok=False)
@@ -158,7 +153,6 @@ class TestAuthRegister:
 # ---------------------------------------------------------------
 
 class TestAuthLogin:
-    @pytest.mark.skip(reason="test pollution - passes in isolation, fails in full suite due to shared state")
     def test_login_success(self, client, monkeypatch):
         _mock_login(monkeypatch, login_ok=True)
         resp = client.post('/api/auth/login', json={
@@ -168,7 +162,6 @@ class TestAuthLogin:
         data = json.loads(resp.data)
         assert data['success'] is True
 
-    @pytest.mark.skip(reason="test pollution - passes in isolation, fails in full suite due to shared state")
     def test_login_invalid_credentials(self, client, monkeypatch):
         _mock_login(monkeypatch, login_ok=False)
         resp = client.post('/api/auth/login', json={
@@ -179,8 +172,6 @@ class TestAuthLogin:
     def test_login_missing_account(self, client):
         resp = client.post('/api/auth/login', json={'password': 'Test123!'})
         assert resp.status_code == 400
-
-    @pytest.mark.skip(reason="test pollution - passes in isolation, fails in full suite due to shared state")
 
     def test_login_rate_limited(self, client, monkeypatch):
         import acas_pro.core.security as _sec_mod
@@ -249,8 +240,6 @@ class TestTokenFunctions:
                 payload = verify_token('tok')
         assert payload is not None
         assert payload['user_id'] == 'u1'
-
-    @pytest.mark.skip(reason="test pollution - passes in isolation, fails in full suite due to shared state")
 
     def test_verify_token_invalid(self):
         """Both JWTManager and jwt.decode fail -> returns None"""
