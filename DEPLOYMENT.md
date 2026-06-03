@@ -1,217 +1,107 @@
-# ACAS Pro - Deployment Guide
+# ACAS Pro - Production Deployment Guide
 
-## Quick Start (Production)
+## 🔒 SSL/HTTPS Configuration
 
-### 1. Prerequisites
-
-- Python 3.11+
-- PostgreSQL 15+
-- Redis 7+
-- Nginx
-- Docker & Docker Compose (optional)
-
-### 2. Environment Setup
+### Option 1: Let's Encrypt (Production)
 
 ```bash
-# Clone repository
-git clone <repository-url>
-cd ACAS-Pro
+# Set environment variables
+export ENVIRONMENT=production
+export DOMAIN=your-domain.com
+export ADMIN_EMAIL=admin@your-domain.com
 
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# or: venv\Scripts\activate  # Windows
+# Run SSL setup
+chmod +x setup-ssl.sh
+./setup-ssl.sh
 
-# Install dependencies
-pip install -r requirements.txt
+# Start services
+docker-compose up -d nginx
 ```
 
-### 3. Configuration
-
-Create `.env` file:
+### Option 2: Self-Signed (Development)
 
 ```bash
-# Required
-ENVIRONMENT=production
-SECRET_KEY=<generate-with-python-secrets>
-
-# Database (PostgreSQL required for production)
-DATABASE_URL=postgresql://user:password@localhost:5432/acas
-
-# Redis
-REDIS_URL=redis://localhost:6379/0
-
-# LLM API Keys (at least one)
-DEEPSEEK_API_KEY=sk-...
-OPENAI_API_KEY=sk-...
-ANTHROPIC_API_KEY=sk-ant-...
-GOOGLE_API_KEY=...
-
-# Optional: OAuth
-QQ_APP_ID=...
-WECHAT_APP_ID=...
-
-# Optional: Alert webhooks
-DINGTALK_WEBHOOK=https://oapi.dingtalk.com/robot/send?access_token=...
-WECOM_WEBHOOK=https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=...
+export ENVIRONMENT=development
+export DOMAIN=localhost
+./setup-ssl.sh
 ```
 
-Generate secret key:
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(48))"
+### Option 3: Cloudflare (Recommended for China)
+
+1. Point domain to Cloudflare
+2. Enable "Full (Strict)" SSL mode
+3. Use Cloudflare Origin Certificates
+4. Install certificate in `ssl/` directory
+
+## 🔑 Secret Management
+
+### Docker Secrets (Production)
+
+```yaml
+# docker-compose.yml
+secrets:
+  secret_key:
+    file: ./secrets/secret_key.txt
+  db_password:
+    file: ./secrets/db_password.txt
+
+services:
+  app:
+    secrets:
+      - secret_key
+      - db_password
+    environment:
+      - SECRET_KEY_FILE=/run/secrets/secret_key
+      - DB_PASSWORD_FILE=/run/secrets/db_password
 ```
 
-### 4. Database Setup
-
-```bash
-# Create database
-createdb acas
-
-# Run migrations
-cd alembic
-alembic upgrade head
-```
-
-### 5. Start Production Server
+### Environment Variables (Development)
 
 ```bash
-# Option 1: Direct (with waitress)
-python wsgi.py
-
-# Option 2: Using start script
-python start_production.py
-
-# Option 3: Docker Compose
-docker-compose up -d
+# .env file
+SECRET_KEY=your-secret-key-32-chars-long
+DB_PASSWORD=development-password
+DEEPSEEK_API_KEY=your-api-key
 ```
 
-### 6. Nginx Configuration
+## 📊 Monitoring Setup
 
-```bash
-# Copy nginx config
-sudo cp nginx.conf /etc/nginx/sites-available/acas
-sudo ln -s /etc/nginx/sites-available/acas /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-```
+### Prometheus + Grafana
 
-### 7. SSL/TLS (Let's Encrypt)
+Already configured in `docker-compose.yml`:
 
-```bash
-# Install certbot
-sudo apt install certbot python3-certbot-nginx
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3000 (admin/admin)
 
-# Obtain certificate
-sudo certbot --nginx -d your-domain.com
-```
+### Key Metrics
 
----
+- Request rate (QPS)
+- Response time (p50, p95, p99)
+- Error rate
+- Database connections
+- Cache hit rate
+- LLM API latency
 
-## Docker Deployment
+## 🚀 Deployment Checklist
 
-### Build and Run
+- [ ] SSL certificate installed
+- [ ] Secrets configured (not in git)
+- [ ] Database migrated
+- [ ] Health check passing
+- [ ] Monitoring dashboards created
+- [ ] Backup strategy configured
+- [ ] Load balancer configured (if multi-node)
 
-```bash
-# Build image
-docker build -t acas-pro:latest .
+## 🔄 CI/CD Pipeline
 
-# Run with docker-compose
-docker-compose up -d
+GitHub Actions workflow in `.github/workflows/ci.yml`:
 
-# View logs
-docker-compose logs -f app
+1. **Lint**: ruff + mypy
+2. **Test**: pytest with coverage
+3. **Build**: Docker image
+4. **Deploy**: SSH to server + docker-compose up
 
-# Scale app instances
-docker-compose up -d --scale app=3
-```
+## 📞 Support
 
----
-
-## Health Checks
-
-```bash
-# Application health
-curl http://localhost:5000/api/health
-
-# Database health
-curl http://localhost:5000/api/health | jq '.database'
-```
-
----
-
-## Monitoring
-
-### Prometheus Metrics
-
-Endpoint: `http://localhost:5000/metrics`
-
-Key metrics:
-- `acas_http_requests_total` - HTTP request count
-- `acas_http_request_duration_seconds` - Request latency
-- `acas_llm_requests_total` - LLM API calls
-- `acas_active_users` - Active user count
-
-### Grafana Dashboard
-
-Access: `http://localhost:3000` (if using docker-compose)
-
-Default credentials: admin/admin
-
----
-
-## Backup & Recovery
-
-### Database Backup
-
-```bash
-# Automated daily backup
-pg_dump acas > backup/acas_$(date +%Y%m%d).sql
-
-# Restore
-psql acas < backup/acas_20240101.sql
-```
-
-### Docker Volume Backup
-
-```bash
-# Backup volumes
-docker run --rm -v acas_postgres_data:/data -v $(pwd):/backup alpine tar czf /backup/postgres_backup.tar.gz -C /data .
-
-# Restore
-docker run --rm -v acas_postgres_data:/data -v $(pwd):/backup alpine tar xzf /backup/postgres_backup.tar.gz -C /data
-```
-
----
-
-## Troubleshooting
-
-### Server won't start
-
-1. Check `.env` file exists and SECRET_KEY is set
-2. Verify database connection: `psql $DATABASE_URL -c "SELECT 1"`
-3. Check logs: `tail -f logs/acas.log`
-
-### Database connection errors
-
-1. Verify PostgreSQL is running: `sudo systemctl status postgresql`
-2. Check connection string format
-3. Ensure database exists: `psql -l | grep acas`
-
-### High memory usage
-
-1. Reduce connection pool size in `wsgi.py`
-2. Enable swap: `sudo swapon /swapfile`
-3. Add memory limits in docker-compose
-
----
-
-## Security Checklist
-
-- [ ] SECRET_KEY changed from default
-- [ ] HTTPS enabled with valid certificate
-- [ ] Database using PostgreSQL (not SQLite)
-- [ ] Redis password set
-- [ ] Firewall configured (only 80/443 open)
-- [ ] Regular backups configured
-- [ ] Log rotation enabled
-- [ ] Security headers verified (CSP, HSTS)
+- Issues: https://github.com/gaozhizhongke-wq/ACAS-Pro/issues
+- Documentation: https://github.com/gaozhizhongke-wq/ACAS-Pro/wiki
