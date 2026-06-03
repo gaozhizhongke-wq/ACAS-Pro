@@ -1,8 +1,6 @@
 # ACAS Pro - Docker Compose Configuration
 # Production-grade container orchestration
 
-version: '3.8'
-
 services:
   # PostgreSQL Database
   db:
