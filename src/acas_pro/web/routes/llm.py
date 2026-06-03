@@ -36,7 +36,7 @@ def create_llm_client() -> Any:
         provider=provider_enum,
         api_key=llm.api_key,
         model=llm.model,
-        api_base=llm.api_base,
+        api_base=getattr(llm, 'api_base', None) or getattr(llm, 'base_url', None),
         temperature=llm.temperature,
         max_tokens=llm.max_tokens,
     )
@@ -60,7 +60,7 @@ def save_llm_config() -> Any:
     config.llm.provider = req.provider
     config.llm.api_key = req.api_key
     if req.api_base:
-        config.llm.api_base = req.api_base
+        config.llm.base_url = req.api_base
     if req.model:
         config.llm.model = req.model
     config.llm.enabled = True
