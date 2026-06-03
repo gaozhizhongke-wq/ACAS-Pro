@@ -1,0 +1,25 @@
+apiVersion: v2
+name: acas-pro
+description: ACAS Pro - AI Content Automation System
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - ai
+  - content
+  - automation
+  - flask
+home: https://github.com/gaozhizhongke-wq/ACAS-Pro
+sources:
+  - https://github.com/gaozhizhongke-wq/ACAS-Pro
+maintainers:
+  - name: ACAS Team
+    email: team@acas.pro
+dependencies:
+  - name: postgresql
+    version: 12.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+  - name: redis
+    version: 17.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
