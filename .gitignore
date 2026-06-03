@@ -80,3 +80,7 @@ run_tests.py
 _skip*.txt
 _debug.txt
 _test_imports.py
+
+*.bak
+test_output_*.txt
+tdm.txt
