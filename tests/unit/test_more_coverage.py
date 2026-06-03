@@ -136,19 +136,15 @@ class TestConfigModule:
 class TestPublisherModules:
     """Test publisher modules."""
     
-    def test_scheduler_import(self):
-        try:
-            from acas_pro.publisher.scheduler import PublishScheduler
-            assert PublishScheduler is not None
-        except ImportError:
-            pytest.skip("Cannot import PublishScheduler")
-    
     def test_blockchain_import(self):
-        try:
-            from acas_pro.publisher.blockchain_publisher import BlockchainPublisher
-            assert BlockchainPublisher is not None
-        except ImportError:
-            pytest.skip("Cannot import BlockchainPublisher")
+        from acas_pro.publisher.blockchain_publisher import BlockchainPublisher
+        assert BlockchainPublisher is not None
+
+    def test_scheduler_removed(self):
+        # scheduler.py was removed as dead code
+        import importlib.util
+        spec = importlib.util.find_spec("acas_pro.publisher.scheduler")
+        assert spec is None, "scheduler module should have been removed"
 
 
 class TestMLModules:

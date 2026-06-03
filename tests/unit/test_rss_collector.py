@@ -60,7 +60,6 @@ class TestRSSCollector:
         result = rc.collect(sources=[])
         assert isinstance(result, list)
 
-    @pytest.mark.skip(reason="API mismatch - feedparser mock interference in full test run")
     def test_fetch_feed(self):
         rc = RSSCollector()
         
@@ -81,7 +80,10 @@ class TestRSSCollector:
         }
         mock_feed.entries = [mock_entry]
         
-        with patch('acas_pro.collectors.rss_collector.feedparser.parse', return_value=mock_feed):
+        # Mock the feedparser module itself (conftest mocks it globally)
+        import acas_pro.collectors.rss_collector as rss_mod
+        with patch.object(rss_mod, 'feedparser') as mock_fp:
+            mock_fp.parse.return_value = mock_feed
             result = rc._fetch_feed("test", "http://test.com")
         
         assert len(result) == 1
