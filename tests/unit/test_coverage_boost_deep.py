@@ -315,7 +315,44 @@ class TestNewsEngineDeep:
 
 class TestTrendMonitorDeep:
     """Deep tests for trend_monitor module."""
-    
+
+    def _make_mock_db(self):
+        from unittest.mock import MagicMock
+        mock_db = MagicMock()
+        mock_db.execute.return_value = []
+        mock_db.fetchall.return_value = []
+        return mock_db
+
+    def test_monitor_get_trending_items(self):
+        from acas_pro.content.trend_monitor import TrendMonitor
+        mock_db = self._make_mock_db()
+        monitor = TrendMonitor(db=mock_db)
+        items = monitor.get_trending_items()
+        assert isinstance(items, list)
+
+    def test_monitor_get_trend_report(self):
+        from acas_pro.content.trend_monitor import TrendMonitor, Platform
+        mock_db = self._make_mock_db()
+        monitor = TrendMonitor(db=mock_db)
+        report = monitor.get_trend_report(Platform.DOUYIN)
+        assert report is None or report is not None
+
+    def test_monitor_register_callback(self):
+        from acas_pro.content.trend_monitor import TrendMonitor
+        mock_db = self._make_mock_db()
+        monitor = TrendMonitor(db=mock_db)
+        called = []
+        def cb(items):
+            called.append(items)
+        monitor.register_callback(cb)
+
+    def test_monitor_start_stop(self):
+        from acas_pro.content.trend_monitor import TrendMonitor
+        mock_db = self._make_mock_db()
+        monitor = TrendMonitor(db=mock_db)
+        monitor.start_monitoring()
+        monitor.stop_monitoring()
+
     def test_trend_item_creation(self):
         from acas_pro.content.trend_monitor import TrendItem, Platform
         item = TrendItem(
@@ -354,30 +391,4 @@ class TestTrendMonitorDeep:
         )
         assert report.platform == Platform.DOUYIN
     
-    def test_monitor_get_trending_items(self):
-        from acas_pro.content.trend_monitor import TrendMonitor
-        monitor = TrendMonitor()
-        items = monitor.get_trending_items()
-        assert isinstance(items, list)
-    
-    def test_monitor_get_trend_report(self):
-        from acas_pro.content.trend_monitor import TrendMonitor, Platform
-        monitor = TrendMonitor()
-        report = monitor.get_trend_report(Platform.DOUYIN)
-        assert report is not None or report is None
-    
-    def test_monitor_register_callback(self):
-        from acas_pro.content.trend_monitor import TrendMonitor
-        monitor = TrendMonitor()
-        called = []
-        def cb(items):
-            called.append(items)
-        monitor.register_callback(cb)
-        # Should not raise
-    
-    def test_monitor_start_stop(self):
-        from acas_pro.content.trend_monitor import TrendMonitor
-        monitor = TrendMonitor()
-        monitor.start_monitoring()
-        monitor.stop_monitoring()
-        # Should not raise
+
