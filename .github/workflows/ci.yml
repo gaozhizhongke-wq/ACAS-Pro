@@ -87,7 +87,7 @@ jobs:
             --cov=src/acas_pro \
             --cov-report=term \
             --cov-report=xml \
-            --cov-fail-under=5
+            --cov-fail-under=78
 
       - name: Upload coverage to Codecov
         if: matrix.python-version == '3.11'
