@@ -1,6 +1,7 @@
 """LLM routes for ACAS Pro Web"""
 from flask import Blueprint, request, jsonify, g
 from typing import Any
+from pydantic import ValidationError
 
 from acas_pro.core.config import config
 from acas_pro.core.logging import get_logger
@@ -52,7 +53,7 @@ def save_llm_config() -> Any:
 
     try:
         req = LLMConfigRequest.model_validate(request.json or {})
-    except Exception as e:
+    except ValidationError as e:
         logger.warning(f"LLM config validation failed: {e}")
         return jsonify(AuthErrorResponse(error=f"Validation error: {e}").model_dump(mode='json')), 400
 
@@ -65,10 +66,9 @@ def save_llm_config() -> Any:
         config.llm.model = req.model
     config.llm.enabled = True
 
-    # Also update environment variable for runtime
-    env_key = f"{req.provider.upper()}_API_KEY"
-    import os
-    os.environ[env_key] = req.api_key
+    # NOTE: API key is stored in config object only, NOT in environment variable
+    # to prevent leakage to subprocesses. The config object is in-memory and
+    # not exposed to process environment.
 
     return jsonify(LLMConfigResponse(success=True, message='Configuration saved').model_dump(mode='json')), 200
 
@@ -78,7 +78,7 @@ def llm_chat() -> Any:
     """Chat with LLM with Pydantic validation"""
     try:
         req = LLMChatRequest.model_validate(request.json or {})
-    except Exception as e:
+    except ValidationError as e:
         logger.warning(f"LLM chat validation failed: {e}")
         return jsonify(AuthErrorResponse(error=f"Validation error: {e}").model_dump(mode='json')), 400
 
@@ -91,6 +91,15 @@ def llm_chat() -> Any:
             content=response.content,
             usage=getattr(response, 'usage', None)
         ).model_dump(mode='json')), 200
-    except Exception as e:
-        logger.error(f"LLM chat error: {e}")
+    except ConnectionError as e:
+        logger.error(f"LLM connection error: {e}")
+        return jsonify(AuthErrorResponse(error="LLM service unavailable").model_dump(mode='json')), 503
+    except TimeoutError as e:
+        logger.error(f"LLM timeout error: {e}")
+        return jsonify(AuthErrorResponse(error="LLM request timed out").model_dump(mode='json')), 504
+    except RuntimeError as e:
+        logger.error(f"LLM runtime error: {e}")
         return jsonify(AuthErrorResponse(error=str(e)).model_dump(mode='json')), 500
+    except Exception as e:
+        logger.error(f"LLM unexpected error: {e}")
+        return jsonify(AuthErrorResponse(error="LLM service error").model_dump(mode='json')), 500

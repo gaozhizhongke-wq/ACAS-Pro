@@ -10,6 +10,7 @@ import re
 import json
 import sqlite3
 import threading
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import List, Dict, Optional, Any, Callable, Union, Sequence
@@ -107,6 +108,11 @@ class DatabaseManager:
         self._db_path = cfg.database.path if hasattr(cfg, 'database') else 'data/acas.db'
         self._local = threading.local()
         self._pool = None
+        # Ensure directory exists and set secure permissions
+        Path(self._db_path).parent.mkdir(parents=True, exist_ok=True)
+        if sys.platform != 'win32':
+            import stat
+            os.chmod(Path(self._db_path).parent, stat.S_IRWXU)  # 0o700
         self._init_sqlite_db()
 
     def _init_postgres(self) -> Any:
@@ -181,7 +187,7 @@ class DatabaseManager:
                 self._pool.putconn(conn)
 
     def _get_sqlite_connection(self) -> Any:
-        """Get SQLite connection"""
+        """Get SQLite connection with auto-cleanup"""
         if not hasattr(self._local, 'connection') or self._local.connection is None:
             self._local.connection = sqlite3.connect(
                 self._db_path,
@@ -191,7 +197,22 @@ class DatabaseManager:
             self._local.connection.row_factory = sqlite3.Row
             self._local.connection.execute("PRAGMA journal_mode=WAL")
             self._local.connection.execute("PRAGMA synchronous=NORMAL")
+            # Set file permissions on first creation
+            if sys.platform != 'win32':
+                import stat
+                os.chmod(self._db_path, stat.S_IRUSR | stat.S_IWUSR)  # 0o600
         return self._local.connection
+    
+    def close(self) -> None:
+        """Close database connections (call on shutdown)"""
+        if not self._is_postgres and hasattr(self._local, 'connection') and self._local.connection:
+            try:
+                self._local.connection.close()
+            except Exception:
+                pass
+            self._local.connection = None
+        elif self._is_postgres and self._pool:
+            self._pool.closeall()
 
     def _get_sqlite_schema(self) -> str:
         """SQLite schema definition"""

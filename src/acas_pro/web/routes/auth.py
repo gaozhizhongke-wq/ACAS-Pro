@@ -9,6 +9,7 @@ import acas_pro.core.config as _cfg_mod
 import acas_pro.services.user_service as _us_mod
 from acas_pro.core.logging import get_logger
 from acas_pro.web.schemas import RegisterRequest, LoginRequest, AuthResponse, AuthErrorResponse
+from pydantic import ValidationError
 
 logger = get_logger(__name__)
 
@@ -32,16 +33,25 @@ def verify_token(token: str) -> dict | None:
     payload = _sec.JWTManager.verify_token(token, expected_type='access')
     if payload:
         return payload
-    # Fallback: try legacy format
+    # Fallback: try legacy format (strict validation)
     try:
-        # Use same secret key resolution as JWTManager so env ACAS_JWT_SECRET is honoured
         JWT_SECRET = _sec.JWTManager._get_secret_key()
         alg = _cfg_mod.config.security.jwt_algorithm or 'HS256'
+        # Enforce algorithm whitelist to prevent "none" algorithm attack
+        if alg not in ('HS256', 'HS384', 'HS512', 'RS256', 'RS384', 'RS512', 'ES256', 'ES384', 'ES512'):
+            logger.warning(f"Invalid JWT algorithm configured: {alg}")
+            return None
         payload = jwt.decode(token, JWT_SECRET, algorithms=[alg])
         if payload.get('user_id'):
             return payload
-    except Exception:
-        pass
+    except jwt.ExpiredSignatureError:
+        logger.warning("Legacy JWT token expired")
+    except jwt.InvalidTokenError as e:
+        logger.warning(f"Legacy JWT token invalid: {e}")
+    except (ValueError, KeyError) as e:
+        logger.warning(f"JWT configuration error: {e}")
+    except Exception as e:
+        logger.warning(f"Unexpected JWT error: {e}")
     return None
 
 
@@ -50,7 +60,7 @@ def auth_register() -> tuple:
     """Register a new user account with Pydantic validation"""
     try:
         req = RegisterRequest.model_validate(request.json or {})
-    except Exception as e:
+    except ValidationError as e:
         logger.warning(f"Registration validation failed: {e}")
         return jsonify(AuthErrorResponse(error=f"Validation error: {e}").model_dump(mode='json')), 400
 
@@ -83,7 +93,7 @@ def auth_login() -> tuple:
     """Login with account and password with Pydantic validation"""
     try:
         req = LoginRequest.model_validate(request.json or {})
-    except Exception as e:
+    except ValidationError as e:
         logger.warning(f"Login validation failed: {e}")
         return jsonify(AuthErrorResponse(error=f"Validation error: {e}").model_dump(mode='json')), 400
 

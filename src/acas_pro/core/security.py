@@ -125,7 +125,7 @@ class PasswordHasher:
             # Constant-time comparison
             return hmac.compare_digest(dk.hex(), stored_hash)
         
-        except Exception as e:
+        except (ValueError, IndexError, AttributeError) as e:
             logger.error(f"Password verification error: {e}")
             return False
 
@@ -150,6 +150,8 @@ class JWTManager:
         """Get secret key from environment or config"""
         # Priority: env var > config
         key = os.environ.get('ACAS_JWT_SECRET')
+        if not key:
+            key = os.environ.get('JWT_SECRET')  # Fallback for backward compatibility
         if not key:
             key = _cfg().security.secret_key
         if not key:
