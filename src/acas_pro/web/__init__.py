@@ -127,11 +127,12 @@ def _register_auth_middleware(app):
 
 def _register_blueprints(app):
     """Register all route blueprints"""
-    from .routes import auth, llm, dashboard
+    from .routes import auth, llm, dashboard, metrics
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(llm.bp)
     app.register_blueprint(dashboard.bp)
+    app.register_blueprint(metrics.bp)
 
     # Register authentication middleware
     _register_auth_middleware(app)
