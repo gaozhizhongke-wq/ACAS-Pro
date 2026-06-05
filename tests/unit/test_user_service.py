@@ -38,11 +38,13 @@ class MockDB:
             return list(self.users.values())
         return None
 
-    def update(self, table, data, where_clause=None, where_params=None):
-        if table == "users" and where_params:
-            key_val = where_params[0]
+    def update(self, table, data, where=None):
+        if table == "users" and where:
+            # where is a dict like {"id": value} from the new API
+            key_col = next(iter(where))
+            key_val = where[key_col]
             for uid, u in self.users.items():
-                if u.get("id") == key_val:
+                if u.get(key_col) == key_val:
                     u.update(data)
                     return True
         return False

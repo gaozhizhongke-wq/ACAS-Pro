@@ -10,6 +10,12 @@ import urllib.parse
 import urllib.error
 import secrets
 import logging
+try:
+    import aiohttp
+    _HAS_AIOHTTP = True
+except ImportError:
+    _HAS_AIOHTTP = False
+import asyncio
 from typing import Optional, Dict, Tuple, NamedTuple
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
@@ -154,6 +160,42 @@ class QQOAuth(OAuthProvider):
         except Exception as e:
             logger.error(f"QQ user info error: {e}")
             return None
+    
+    async def get_token_response_async(self, code: str) -> Optional[TokenResponse]:
+        """Get token (async)"""
+        params = {
+            "grant_type": "authorization_code",
+            "client_id": self.APP_ID,
+            "client_secret": self.APP_KEY,
+            "code": code,
+            "redirect_uri": self.REDIRECT_URI
+        }
+        try:
+            url = f"{self.TOKEN_URL}?{urllib.parse.urlencode(params)}"
+            if _HAS_AIOHTTP:
+                async with aiohttp.ClientSession() as session:
+                    async with session.get(url, timeout=10) as resp:
+                        data = urllib.parse.parse_qs(await resp.text())
+            else:
+                data = await asyncio.to_thread(self._blocking_get_token, params)
+            
+            access_token = data.get("access_token", [None])[0]
+            if not access_token:
+                return None
+            return TokenResponse(
+                access_token=access_token,
+                expires_in=int(data.get("expires_in", ["7200"])[0]),
+                refresh_token=data.get("refresh_token", [None])[0]
+            )
+        except Exception as e:
+            logger.error(f"QQ OAuth async error: {e}")
+            return None
+    
+    def _blocking_get_token(self, params: dict) -> dict:
+        """Blocking helper for token (used as fallback)"""
+        url = f"{self.TOKEN_URL}?{urllib.parse.urlencode(params)}"
+        with urllib.request.urlopen(url, timeout=10) as response:
+            return urllib.parse.parse_qs(response.read().decode())
 
 
 class WeChatOAuth(OAuthProvider):

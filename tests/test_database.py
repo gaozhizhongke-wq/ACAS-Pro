@@ -88,7 +88,7 @@ class TestDatabaseManager:
         db.insert('test_table2', {'name': 'Test', 'value': 100})
         
         # Update with WHERE clause
-        db.update('test_table2', {'value': 200}, 'name = ?', ('Test',))
+        db.update('test_table2', {'value': 200}, {'name': 'Test'})
         
         # Verify
         result = db.execute_one("SELECT value FROM test_table2 WHERE name = 'Test'")
@@ -109,7 +109,7 @@ class TestDatabaseManager:
         
         # Delete - use the id-based delete API
         result = db.execute_one("SELECT id FROM test_table3 WHERE name = 'ToDelete'")
-        db.delete('test_table3', result['id'])
+        db.delete('test_table3', where={'id': result['id']})
         
         # Verify
         result = db.execute_one("SELECT * FROM test_table3 WHERE name = 'ToDelete'")

@@ -12,10 +12,16 @@ import sqlite3
 import threading
 from datetime import datetime
 from pathlib import Path
-from typing import List, Dict, Optional, Any, Callable
+from typing import List, Dict, Optional, Any, Callable, Union, Sequence
 from contextlib import contextmanager
 from dataclasses import asdict
 from urllib.parse import urlparse
+
+try:
+    import aiosqlite
+    _HAS_AIOSQLITE = True
+except ImportError:
+    _HAS_AIOSQLITE = False
 
 from .logging import get_logger
 
@@ -64,7 +70,9 @@ class DatabaseManager:
         'description', 'region', 'category', 'tags', 'price', 'cost',
         'currency', 'shipping_address', 'start_date', 'end_date',
         'targeting', 'budget', 'spent', 'avatar_url', 'balance',
-        'last_sync', 'content_count', 'total_views'
+        'last_sync', 'content_count', 'total_views',
+        # Added for session management and audit logging
+        'sessions', 'audit_log', 'event_type', 'ip_address', 'severity'
     }
 
     def __new__(cls) -> Any:
@@ -674,57 +682,236 @@ class DatabaseManager:
             cursor = conn.execute(query, values)
             return str(cursor.lastrowid)
 
-    def update(self, table: str, data: Dict[str, Any],
-                 where_clause: str = None, where_params: tuple = None) -> bool:
+    @staticmethod
+    def _build_where_clause(
+        conditions: Union[Dict[str, Any], List[tuple], None],
+        placeholder: str = '?'
+    ) -> tuple:
         """
-        Update record with flexible WHERE clause.
+        Build parameterized WHERE clause from structured conditions.
+
+        Args:
+            conditions: One of:
+                - Dict[str, Any]: {"column": value} → all AND-ed with =
+                - List[tuple]: [("column", "op", value), ...] for flexible operators
+                - None: no WHERE clause
+            placeholder: '?' for SQLite, '%s' for PostgreSQL
+
+        Returns:
+            (where_sql: str, params: tuple)
+            If conditions is None, returns ("1=1", ()) for safety.
+
+        Raises:
+            ValueError: If condition format is invalid.
+        """
+        if conditions is None:
+            return "1=1", ()
+
+        if isinstance(conditions, dict):
+            if not conditions:
+                return "1=1", ()
+            clauses = []
+            params = []
+            for col, val in conditions.items():
+                # Validate column name
+                # (caller should validate, but defense-in-depth)
+                if not col.replace('_', '').isalnum():
+                    raise ValueError(f"Invalid WHERE column name: {col}")
+                clauses.append(f"{col} = {placeholder}")
+                params.append(val)
+            return " AND ".join(clauses), tuple(params)
+
+        if isinstance(conditions, (list, tuple)):
+            if not conditions:
+                return "1=1", ()
+            clauses = []
+            params = []
+            for cond in conditions:
+                if not isinstance(cond, (list, tuple)) or len(cond) != 3:
+                    raise ValueError(
+                        f"Invalid condition format: {cond}. "
+                        "Expected ('column', 'operator', value)."
+                    )
+                col, op, val = cond
+                if not col.replace('_', '').isalnum():
+                    raise ValueError(f"Invalid WHERE column name: {col}")
+                # Whitelist allowed operators to prevent injection
+                allowed_ops = {'=', '!=', '<', '>', '<=', '>=', 'LIKE', 'IN', 'IS'}
+                if op.upper() not in allowed_ops:
+                    raise ValueError(
+                        f"Invalid WHERE operator: {op}. "
+                        f"Allowed: {', '.join(sorted(allowed_ops))}"
+                    )
+                if op.upper() == 'IS':
+                    # IS NULL / IS NOT NULL - no parameter
+                    clauses.append(f"{col} IS {val}")
+                elif op.upper() == 'IN':
+                    # IN requires tuple value
+                    if not isinstance(val, (list, tuple)):
+                        raise ValueError("IN operator requires list/tuple value")
+                    in_placeholders = ', '.join([placeholder] * len(val))
+                    clauses.append(f"{col} IN ({in_placeholders})")
+                    params.extend(val)
+                else:
+                    clauses.append(f"{col} {op} {placeholder}")
+                    params.append(val)
+            return " AND ".join(clauses), tuple(params)
+
+        raise ValueError(
+            f"Invalid conditions type: {type(conditions).__name__}. "
+            "Expected dict, list, or None."
+        )
+
+    def update(self, table: str, data: Dict[str, Any],
+                 where: Union[Dict[str, Any], List[tuple], None] = None) -> bool:
+        """
+        Update records with structured WHERE conditions.
 
         Args:
             table: Table name (validated against whitelist)
             data: Dict of column -> value to update
-            where_clause: SQL WHERE clause (e.g. "id = ?")
-            where_params: Tuple of parameters for WHERE clause
+            where: Structured conditions (dict or list of tuples).
+                   Dict: {"id": user_id} → WHERE id = ?
+                   List: [("status", "!=", "deleted")] → WHERE status != ?
+                   None: Update all rows (use with extreme caution!)
 
         Returns:
             True if execution succeeded
+
+        Examples:
+            db.update("users", {"name": "Alice"}, {"id": 42})
+            db.update("users", {"active": True}, [("status", "!=", "deleted")])
         """
         table = self._validate_identifier(table)
         columns = [self._validate_identifier(c) for c in data.keys()]
         values = list(data.values())
 
-        set_clause = ', '.join([f"{c} = ?" if not self._is_postgres else f"{c} = %s" for c in columns])
+        placeholder = '%s' if self._is_postgres else '?'
+        set_clause = ', '.join([f"{c} = {placeholder}" for c in columns])
 
-        if where_clause and where_params:
-            # New flexible form: db.update("users", data, "id = ?", (uid,))
-            if self._is_postgres:
-                placeholders = ['%s'] * len(columns)
-            else:
-                placeholders = ['?'] * len(columns)
-            query = f"UPDATE {table} SET {', '.join([f'{c} = {p}' for c, p in zip(columns, placeholders)])} WHERE {where_clause}"
-        else:
-            # Fallback: UPDATE ... WHERE id = ? (legacy single-id form)
-            # This path is no longer used by callers; kept for potential migrations
-            raise ValueError(
-                "db.update() requires explicit where_clause and where_params. "
-                "Use: db.update('table', data, 'id = ?', (id_value,))"
-            )
+        where_sql, where_params = self._build_where_clause(where, placeholder)
 
-        self.execute(query, tuple(values) + (where_params or ()))
+        query = f"UPDATE {table} SET {set_clause} WHERE {where_sql}"
+        self.execute(query, tuple(values) + where_params)
         return True
 
-    def delete(self, table: str, id_value: str = None, where_clause: str = None, where_params: tuple = None) -> bool:
-        """Delete record by id or custom WHERE clause"""
+    def delete(self, table: str, where: Union[Dict[str, Any], List[tuple], None] = None) -> bool:
+        """
+        Delete records with structured WHERE conditions.
+
+        Args:
+            table: Table name (validated against whitelist)
+            where: Structured conditions (same format as update()).
+                   {"id": value} → WHERE id = ?
+                   None: Delete all rows (use with extreme caution!)
+
+        Returns:
+            True if execution succeeded
+
+        Examples:
+            db.delete("users", {"id": 42})
+            db.delete("logs", [("created_at", "<", cutoff_date)])
+        """
         table = self._validate_identifier(table)
         placeholder = '%s' if self._is_postgres else '?'
-        if where_clause and where_params:
-            query = f"DELETE FROM {table} WHERE {where_clause}"
-            self.execute(query, where_params)
-        elif id_value is not None:
-            query = f"DELETE FROM {table} WHERE id = {placeholder}"
-            self.execute(query, (id_value,))
-        else:
-            raise ValueError("delete() requires either id_value or where_clause+where_params")
+
+        where_sql, where_params = self._build_where_clause(where, placeholder)
+
+        query = f"DELETE FROM {table} WHERE {where_sql}"
+        self.execute(query, where_params)
         return True
+
+    # ── Async methods (SQLite only) ───────────────────────────────────────
+
+    async def execute_async(self, query: str, params: tuple = None) -> List[Dict]:
+        """Execute query asynchronously (SQLite only)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        if self._is_postgres:
+            # Fallback to sync for PostgreSQL
+            return self.execute(query, params)
+        
+        async with aiosqlite.connect(self._db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            async with conn.execute(query, params or ()) as cursor:
+                rows = await cursor.fetchall()
+                return [dict(row) for row in rows]
+
+    async def execute_one_async(self, query: str, params: tuple = None) -> Optional[Dict]:
+        """Execute query and return first row asynchronously (SQLite only)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        if self._is_postgres:
+            return self.execute_one(query, params)
+        
+        async with aiosqlite.connect(self._db_path) as conn:
+            conn.row_factory = sqlite3.Row
+            async with conn.execute(query, params or ()) as cursor:
+                row = await cursor.fetchone()
+                return dict(row) if row else None
+
+    async def insert_async(self, table: str, data: Dict[str, Any]) -> str:
+        """Insert record asynchronously (SQLite only)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        if self._is_postgres:
+            return self.insert(table, data)
+        
+        table = self._validate_identifier(table)
+        columns = [self._validate_identifier(c) for c in data.keys()]
+        values = list(data.values())
+        placeholders = ', '.join(['?'] * len(columns))
+        query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"
+        
+        async with aiosqlite.connect(self._db_path) as conn:
+            async with conn.execute(query, values) as cursor:
+                await conn.commit()
+                return str(cursor.lastrowid)
+
+    async def update_async(self, table: str, data: Dict[str, Any],
+                          where: Union[Dict[str, Any], List[tuple], None] = None) -> bool:
+        """Update records asynchronously (SQLite only)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        if self._is_postgres:
+            return self.update(table, data, where)
+        
+        table = self._validate_identifier(table)
+        columns = [self._validate_identifier(c) for c in data.keys()]
+        values = list(data.values())
+        set_clause = ', '.join([f"{c} = ?" for c in columns])
+        where_sql, where_params = self._build_where_clause(where, '?')
+        query = f"UPDATE {table} SET {set_clause} WHERE {where_sql}"
+        
+        async with aiosqlite.connect(self._db_path) as conn:
+            await conn.execute(query, tuple(values) + where_params)
+            await conn.commit()
+            return True
+
+    async def delete_async(self, table: str,
+                          where: Union[Dict[str, Any], List[tuple], None] = None) -> bool:
+        """Delete records asynchronously (SQLite only)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        if self._is_postgres:
+            return self.delete(table, where)
+        
+        table = self._validate_identifier(table)
+        where_sql, where_params = self._build_where_clause(where, '?')
+        query = f"DELETE FROM {table} WHERE {where_sql}"
+        
+        async with aiosqlite.connect(self._db_path) as conn:
+            await conn.execute(query, where_params)
+            await conn.commit()
+            return True
+
+    async def fetchall_async(self, query: str, params: tuple = None) -> List[Dict]:
+        """Alias for execute_async"""
+        return await self.execute_async(query, params)
+
+    async def fetchone_async(self, query: str, params: tuple = None) -> Optional[Dict]:
+        """Alias for execute_one_async"""
+        return await self.execute_one_async(query, params)
 
     def health_check(self) -> Dict[str, Any]:
         """Database health check"""
@@ -753,12 +940,16 @@ _db_instance: Optional['DatabaseManager'] = None
 
 
 def get_db() -> 'DatabaseManager':
-    """Get database manager singleton (lazy-loaded)"""
+    """Get database manager singleton (lazy-loaded, DI-aware)"""
     global _db_instance
-    # Always check the global variable - even if self._initialized is True
-    # on a stale module-level instance, we must create a new one after reset_db()
     if _db_instance is None:
-        _db_instance = DatabaseManager()
+        # Try DI container first
+        from .di_container import get_container
+        container = get_container()
+        if container.is_registered(DatabaseManager):
+            _db_instance = container.resolve(DatabaseManager)
+        else:
+            _db_instance = DatabaseManager()
     return _db_instance
 
 

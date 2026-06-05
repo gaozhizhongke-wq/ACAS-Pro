@@ -239,7 +239,7 @@ class UserService:
                 lock_until = (datetime.now(timezone.utc) + timedelta(minutes=30)).isoformat()
                 _get_lazy_db().update("users",
                     {"failed_login_count": failed_count, "locked_until": lock_until},
-                    "id = ?", (user["id"],)
+                    {"id": user["id"]}
                 )
                 audit_logger.log(
                     "ACCOUNT_LOCKED",
@@ -252,7 +252,7 @@ class UserService:
             else:
                 _get_lazy_db().update("users",
                     {"failed_login_count": failed_count},
-                    "id = ?", (user["id"],)
+                    {"id": user["id"]}
                 )
             
             _get_lazy_rate_limiter().record_attempt(rate_key)
@@ -272,7 +272,7 @@ class UserService:
             "login_count": user.get("login_count", 0) + 1,
             "failed_login_count": 0,
             "locked_until": None
-        }, "id = ?", (user["id"],))
+        }, {"id": user["id"]})
         
         _get_lazy_rate_limiter().reset(rate_key)
         
@@ -364,7 +364,7 @@ class UserService:
             return False, "No valid fields to update"
         
         try:
-            _get_lazy_db().update("users", filtered_updates, "id = ?", (user_id,))
+            _get_lazy_db().update("users", filtered_updates, {"id": user_id})
             audit_logger.log("PROFILE_UPDATED", user_id, {"fields": list(filtered_updates.keys())})
             return True, "Profile updated successfully"
         except Exception as e:
@@ -389,7 +389,7 @@ class UserService:
         
         # Update password
         new_hash = _get_lazy_password_hasher().hash(new_password)
-        _get_lazy_db().update("users", {"password_hash": new_hash}, "id = ?", (user_id,))
+        _get_lazy_db().update("users", {"password_hash": new_hash}, {"id": user_id})
         
         audit_logger.log("PASSWORD_CHANGED", user_id, {})
         return True, "Password changed successfully"

@@ -6,9 +6,16 @@
 import json
 import sqlite3
 from datetime import datetime
+import asyncio
 from typing import Dict, List, Optional, Any, Set
 from dataclasses import dataclass, asdict
 from enum import Enum
+
+try:
+    import aiosqlite
+    _HAS_AIOSQLITE = True
+except ImportError:
+    _HAS_AIOSQLITE = False
 
 from ..core.config import config
 from ..core.logging import logger
@@ -501,3 +508,213 @@ class AudienceTargeting:
             'gender': 'all',
             'age_range': {'min_age': 18, 'max_age': 65}
         })
+    
+    # ==================== 异步方法 ====================
+    
+    async def create_segment_async(self, segment: 'AudienceSegment') -> bool:
+        """创建人群包 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        try:
+            now = datetime.now().isoformat()
+            async with aiosqlite.connect(self.db_path) as conn:
+                await conn.execute("""
+                    INSERT INTO audience_segments
+                    (id, name, type, gender, age_range, geo_targeting, device_targeting,
+                     interests, behaviors, custom_tags, source_audience_id, lookalike_ratio,
+                     estimated_size, estimated_daily_impressions, status, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    segment.id, segment.name, segment.type.value, segment.gender.value,
+                    json.dumps(segment.age_range.to_dict()),
+                    json.dumps(segment.geo_targeting.__dict__),
+                    json.dumps(segment.device_targeting.__dict__),
+                    json.dumps(segment.interests),
+                    json.dumps(segment.behaviors),
+                    json.dumps(segment.custom_tags),
+                    segment.source_audience_id,
+                    segment.lookalike_ratio,
+                    segment.estimated_size,
+                    segment.estimated_daily_impressions,
+                    segment.status, now, now
+                ))
+                await conn.commit()
+            
+            self.logger.info(f"人群包创建成功(异步): {segment.name}")
+            return True
+        except Exception as e:
+            self.logger.error(f"创建人群包失败(异步): {e}")
+            return False
+    
+    async def get_segment_async(self, segment_id: str) -> 'Optional[AudienceSegment]':
+        """获取人群包 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        try:
+            async with aiosqlite.connect(self.db_path) as conn:
+                cursor = await conn.execute(
+                    "SELECT * FROM audience_segments WHERE id = ?",
+                    (segment_id,)
+                )
+                row = await cursor.fetchone()
+                
+                if row:
+                    return AudienceSegment(
+                        id=row[0],
+                        name=row[1],
+                        type=AudienceType(row[2]),
+                        gender=Gender(row[3]),
+                        age_range=AgeRange(**json.loads(row[4])),
+                        geo_targeting=GeoTargeting(**json.loads(row[5])),
+                        device_targeting=DeviceTargeting(**json.loads(row[6])),
+                        interests=json.loads(row[7]) if row[7] else [],
+                        behaviors=json.loads(row[8]) if row[8] else [],
+                        custom_tags=json.loads(row[9]) if row[9] else [],
+                        source_audience_id=row[10],
+                        lookalike_ratio=row[11],
+                        estimated_size=row[12],
+                        estimated_daily_impressions=row[13],
+                        status=row[14],
+                        created_at=row[15],
+                        updated_at=row[16]
+                    )
+        except Exception as e:
+            self.logger.error(f"获取人群包失败(异步): {e}")
+        
+        return None
+    
+    async def get_segments_async(self, type=None, status=None):
+        """获取人群包列表 (真正异步)
+        
+        Args:
+            type: 人群类型过滤 (AudienceType)
+            status: 状态过滤 (active/paused/expired)
+        """
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        segments = []
+        
+        try:
+            async with aiosqlite.connect(self.db_path) as conn:
+                query = "SELECT * FROM audience_segments WHERE 1=1"
+                params = []
+                
+                if type:
+                    query += " AND type = ?"
+                    params.append(type.value)
+                if status:
+                    query += " AND status = ?"
+                    params.append(status)
+                
+                cursor = await conn.execute(query, params)
+                rows = await cursor.fetchall()
+                
+                for row in rows:
+                    segments.append(AudienceSegment(
+                        id=row[0],
+                        name=row[1],
+                        type=AudienceType(row[2]),
+                        gender=Gender(row[3]),
+                        age_range=AgeRange(**json.loads(row[4])),
+                        geo_targeting=GeoTargeting(**json.loads(row[5])),
+                        device_targeting=DeviceTargeting(**json.loads(row[6])),
+                        interests=json.loads(row[7]) if row[7] else [],
+                        behaviors=json.loads(row[8]) if row[8] else [],
+                        custom_tags=json.loads(row[9]) if row[9] else [],
+                        source_audience_id=row[10],
+                        lookalike_ratio=row[11],
+                        estimated_size=row[12],
+                        estimated_daily_impressions=row[13],
+                        status=row[14],
+                        created_at=row[15],
+                        updated_at=row[16]
+                    ))
+        except Exception as e:
+            self.logger.error(f"获取人群包列表失败(异步): {e}")
+        
+        return segments
+    
+    async def update_segment_async(self, segment_id: str, updates: dict) -> bool:
+        """更新人群包 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        try:
+            allowed_fields = ['name', 'status', 'estimated_size', 
+                            'estimated_daily_impressions']
+            
+            set_clause = []
+            params = []
+            
+            for field, value in updates.items():
+                if field in allowed_fields:
+                    set_clause.append(f"{field} = ?")
+                    params.append(value)
+            
+            if not set_clause:
+                return False
+            
+            set_clause.append("updated_at = ?")
+            params.append(datetime.now().isoformat())
+            params.append(segment_id)
+            
+            async with aiosqlite.connect(self.db_path) as conn:
+                await conn.execute(
+                    f"UPDATE audience_segments SET {', '.join(set_clause)} WHERE id = ?",
+                    params
+                )
+                await conn.commit()
+            
+            return True
+        except Exception as e:
+            self.logger.error(f"更新人群包失败(异步): {e}")
+            return False
+    
+    async def delete_segment_async(self, segment_id: str) -> bool:
+        """删除人群包 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        try:
+            async with aiosqlite.connect(self.db_path) as conn:
+                await conn.execute("DELETE FROM audience_segments WHERE id = ?", (segment_id,))
+                await conn.commit()
+            return True
+        except Exception as e:
+            self.logger.error(f"删除人群包失败(异步): {e}")
+            return False
+    
+    async def estimate_audience_size_async(self, segment: 'AudienceSegment') -> dict:
+        """估算人群规模 (异步)"""
+        return await asyncio.to_thread(self.estimate_audience_size, segment)
+    
+    async def create_lookalike_async(self, source_segment_id: str, name: str,
+                                      ratio: float = 0.01):
+        """创建相似人群 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        
+        source = await self.get_segment_async(source_segment_id)
+        if not source:
+            self.logger.error(f"源人群包不存在: {source_segment_id}")
+            return None
+        
+        # 创建Lookalike人群包
+        lookalike = AudienceSegment(
+            id=f"lookalike_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+            name=name,
+            type=AudienceType.LOOKALIKE,
+            gender=source.gender,
+            age_range=source.age_range,
+            geo_targeting=source.geo_targeting,
+            device_targeting=source.device_targeting,
+            source_audience_id=source_segment_id,
+            lookalike_ratio=ratio,
+            estimated_size=int(source.estimated_size * (1 + ratio * 10)),
+            estimated_daily_impressions=int(source.estimated_daily_impressions * (1 + ratio * 5))
+        )
+        
+        if await self.create_segment_async(lookalike):
+            self.logger.info(f"相似人群包创建成功(异步): {name}")
+            return lookalike
+        
+        return None
+

@@ -192,6 +192,24 @@ class TrendMonitor:
             self._monitor_thread.join(timeout=5)
         logger.info("Trend monitoring stopped")
         
+    async def _monitor_loop_async(self):
+        """异步监控主循环"""
+        logger.info(f"[TrendMonitor] Started async monitoring loop")
+        while not self._stop_event.is_set():
+            current_time = time.time()
+            for platform in self._platforms:
+                last_fetch = getattr(self, "_last_fetch", {}).get(platform.value, 0)
+                if current_time - last_fetch >= self._interval:
+                    try:
+                        await asyncio.to_thread(self._fetch_platform_data, platform)
+                        if not hasattr(self, "_last_fetch"):
+                            object.__setattr__(self, "_last_fetch", {})
+                        self._last_fetch[platform.value] = current_time
+                    except Exception as e:
+                        logger.error(f"Failed to fetch {platform.value}: {e}")
+            self._process_callbacks()
+            await asyncio.sleep(10)
+
     def _monitor_loop(self):
         """监测主循环"""
         last_fetch = {p: 0 for p in Platform}

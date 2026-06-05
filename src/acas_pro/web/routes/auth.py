@@ -3,6 +3,7 @@
 from flask import Blueprint, request, jsonify, g
 from datetime import datetime, timezone
 
+import jwt
 import acas_pro.core.security as _sec
 import acas_pro.core.config as _cfg_mod
 import acas_pro.services.user_service as _us_mod
@@ -28,15 +29,15 @@ def verify_token(token: str) -> dict | None:
     - New tokens (JWTManager, claim='sub')
     - Old tokens (legacy, claim='user_id') for backward compatibility
     """
-    import jwt
-
     payload = _sec.JWTManager.verify_token(token, expected_type='access')
     if payload:
         return payload
     # Fallback: try legacy format
     try:
-        JWT_SECRET = _cfg_mod.config.security.secret_key
-        payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+        # Use same secret key resolution as JWTManager so env ACAS_JWT_SECRET is honoured
+        JWT_SECRET = _sec.JWTManager._get_secret_key()
+        alg = _cfg_mod.config.security.jwt_algorithm or 'HS256'
+        payload = jwt.decode(token, JWT_SECRET, algorithms=[alg])
         if payload.get('user_id'):
             return payload
     except Exception:

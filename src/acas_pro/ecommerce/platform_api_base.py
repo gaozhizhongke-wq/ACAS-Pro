@@ -8,12 +8,19 @@ ACAS Pro - Platform API Base Client
 import hashlib
 import hmac
 import json
+import asyncio
 import time
 import uuid
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass, field
 from enum import Enum
+
+try:
+    import httpx
+    _HAS_HTTPX = True
+except ImportError:
+    _HAS_HTTPX = False
 
 from ..core.logging import get_logger
 from ..core.config import config
@@ -135,6 +142,20 @@ class PlatformAPIClient(ABC):
                 'User-Agent': 'ACAS-Pro/4.0.0',
             })
         return self._session
+
+    def _get_async_client(self):
+        """获取异步HTTP client（延迟初始化）"""
+        if self._async_client is None:
+            if not _HAS_HTTPX:
+                raise RuntimeError("httpx not installed")
+            self._async_client = httpx.AsyncClient(
+                headers={
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'ACAS-Pro/4.0.0',
+                },
+                timeout=self.REQUEST_TIMEOUT,
+            )
+        return self._async_client
     
     def request(
         self,
@@ -229,6 +250,103 @@ class PlatformAPIClient(ABC):
         
         raise APIError("REQUEST_FAILED", f"Request failed: {last_error}")
     
+    async def request_async(
+        self,
+        method: str,
+        endpoint: str,
+        params: Optional[Dict] = None,
+        data: Optional[Dict] = None,
+        retry: bool = True,
+        token_refresh: bool = True,
+    ) -> Dict:
+        """异步HTTP请求（requests封装，支持重试和token刷新）"""
+        last_error = None
+        for attempt in range(1, self.MAX_RETRIES + 1):
+            try:
+                return await self._do_request_async(method, endpoint, params, data)
+            except UnauthorizedError:
+                logger.error(f"[{self.PLATFORM_NAME}] Unauthorized (401)")
+                if retry and token_refresh and attempt == 1:
+                    if not self.refresh_access_token():
+                        raise
+                else:
+                    raise
+            except (RateLimitError, APIError) as e:
+                last_error = e
+                wait = min(self.RETRY_BASE_DELAY * (2 ** (attempt - 1)), self.RETRY_MAX_DELAY)
+                if attempt < self.MAX_RETRIES:
+                    logger.warning(
+                        f"[{self.PLATFORM_NAME}] Request failed (attempt {attempt}/{self.MAX_RETRIES}), "
+                        f"retrying in {wait}s: {e}"
+                    )
+                    await asyncio.sleep(wait)
+                else:
+                    logger.error(
+                        f"[{self.PLATFORM_NAME}] Request failed after {self.MAX_RETRIES} attempts: {e}"
+                    )
+            except Exception as e:
+                last_error = e
+                if retry and attempt < self.MAX_RETRIES:
+                    wait = min(self.RETRY_BASE_DELAY * (2 ** (attempt - 1)), self.RETRY_MAX_DELAY)
+                    logger.warning(
+                        f"[{self.PLATFORM_NAME}] Request failed (attempt {attempt}/{self.MAX_RETRIES}), "
+                        f"retrying in {wait}s: {e}"
+                    )
+                    await asyncio.sleep(wait)
+                else:
+                    raise
+        raise APIError("REQUEST_FAILED", f"Request failed: {last_error}")
+
+    async def _do_request_async(
+        self,
+        method: str,
+        endpoint: str,
+        params: Optional[Dict] = None,
+        data: Optional[Dict] = None,
+    ) -> Dict:
+        """执行实际HTTP请求（异步版本，使用httpx）"""
+        if not _HAS_HTTPX:
+            raise RuntimeError("httpx not installed")
+        
+        url = f"{self.API_BASE}{endpoint}"
+        client = self._get_async_client()
+        
+        try:
+            if method.upper() == 'GET':
+                resp = await client.get(url, params=params)
+            else:
+                resp = await client.post(url, params=params, json=data)
+            
+            # 处理HTTP状态码
+            if resp.status_code == 401:
+                raise AuthError(f"Token expired or invalid: {resp.text[:200]}")
+            elif resp.status_code == 429:
+                retry_after = int(resp.headers.get('Retry-After', 60))
+                raise RateLimitError(retry_after)
+            elif resp.status_code >= 500:
+                raise APIError(
+                    f"SERVER_{resp.status_code}",
+                    f"Server error: {resp.text[:200]}"
+                )
+            elif resp.status_code >= 400:
+                raise APIError(
+                    f"CLIENT_{resp.status_code}",
+                    f"Client error: {resp.text[:200]}"
+                )
+            
+            result = resp.json()
+            
+            # 子类可覆盖此方法检查业务级错误码
+            self._check_business_error(result)
+            
+            return result
+            
+        except (APIError, AuthError, RateLimitError):
+            raise
+        except Exception as e:
+            raise APIError("REQUEST_FAILED", f"Async request failed: {e}")
+
+
     def _check_business_error(self, result: Dict):
         """检查业务级错误码，子类可覆盖"""
         pass

@@ -6,6 +6,7 @@ Weibo public timeline and search API integration
 """
 
 import hashlib
+import asyncio
 import time
 import urllib.parse
 from dataclasses import dataclass
@@ -118,14 +119,14 @@ class WeiboCollector:
         
         url = f"{self.API_BASE}/search/statuses.json"
         params = {
-            "access_token": self.access_token,
             "q": keyword,
             "count": min(count, 100),
             "page": page,
         }
         
         try:
-            response = self.session.get(url, params=params, timeout=10)
+            response = self.session.get(url, params=params,
+            headers={"Authorization": f"Bearer {self.access_token}"}, timeout=10)
             response.raise_for_status()
             data = response.json()
             
@@ -201,13 +202,13 @@ class WeiboCollector:
         
         url = f"{self.API_BASE}/statuses/user_timeline.json"
         params = {
-            "access_token": self.access_token,
             "uid": user_id,
             "count": min(count, 100),
         }
         
         try:
-            response = self.session.get(url, params=params, timeout=10)
+            response = self.session.get(url, params=params,
+            headers={"Authorization": f"Bearer {self.access_token}"}, timeout=10)
             response.raise_for_status()
             data = response.json()
             

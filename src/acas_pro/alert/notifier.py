@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
+import asyncio
 from enum import Enum
 from typing import Dict, List, Optional, Any
 
@@ -17,6 +18,12 @@ try:
 except ImportError:
     from unittest.mock import MagicMock
     requests = MagicMock()
+
+try:
+    import httpx
+    _HAS_HTTPX = True
+except ImportError:
+    _HAS_HTTPX = False
 
 
 class AlertChannel(Enum):
@@ -223,6 +230,23 @@ class AlertNotifier:
                 return False
         return False
 
+    async def _send_webhook_async(self, msg: AlertMessage, url: Optional[str] = None) -> bool:
+        """异步发送webhook通知"""
+        if not _HAS_HTTPX:
+            return False
+        hook_url = url or getattr(self, 'webhook_url', None)
+        if hook_url:
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    resp = await client.post(
+                        hook_url,
+                        json=msg.to_dict(),
+                    )
+                    return resp.status_code == 200
+            except Exception:
+                return False
+        return False
+
     def _record_alert(self, message: AlertMessage, results: Dict[AlertChannel, bool]):
         self._history.append({
             "message": message,
@@ -282,6 +306,37 @@ class AlertNotifier:
     def send_urgent_alert(self, title: str, content: str, **kwargs):
         msg = AlertMessage(title=title, content=content, priority=AlertPriority.P1_URGENT, **kwargs)
         return self.send(msg, force=True)
+
+    async def send_async(self, message: 'AlertMessage',
+                        channels: list = None,
+                        force: bool = False):
+        """异步发送告警通知（webhook使用httpx，其他使用to_thread）"""
+        if channels is None:
+            channels = self._select_channels(message.priority)
+        
+        results: Dict[AlertChannel, bool] = {}
+        for ch in channels:
+            if not force and not self.enabled_channels.get(ch, False):
+                results[ch] = False
+                continue
+            try:
+                # Webhook使用真正的异步
+                if ch == AlertChannel.WEBHOOK and _HAS_HTTPX:
+                    ok = await self._send_webhook_async(message)
+                    results[ch] = ok
+                else:
+                    # 其他channel使用to_thread
+                    handler = self._get_handler(ch)
+                    if handler:
+                        ok = await asyncio.to_thread(handler, message)
+                        results[ch] = bool(ok)
+                    else:
+                        results[ch] = False
+            except Exception:
+                results[ch] = False
+        
+        self._record_alert(message, results)
+        return results
 
 
 # Module-level convenience functions

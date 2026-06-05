@@ -71,6 +71,18 @@ if config().environment == 'production':
 # ── Flask App ──────────────────────────────────────────────────────────────
 app = Flask(__name__)
 
+# SECRET_KEY — required for Flask sessions/flash/CSRF
+_secret = os.environ.get('SECRET_KEY', config().security.secret_key)
+if not _secret or _secret in ('acas-pro-secret-key-change-me', 'dev-key-change-in-production'):
+    _env = os.environ.get('ACAS_ENV', os.environ.get('ENVIRONMENT', 'development'))
+    if _env in ('production', 'prod'):
+        raise ValueError("SECRET_KEY must be set in production! Add SECRET_KEY=<your-secret> to .env file.")
+    raise ValueError(
+        "SECRET_KEY must be configured! Add SECRET_KEY=<your-secret> to .env file. "
+        "Generate one: python -c \"import secrets; print(secrets.token_urlsafe(48))\""
+    )
+app.secret_key = _secret
+
 # Initialize security headers
 security = SecurityHeaders(app)
 

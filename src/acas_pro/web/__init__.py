@@ -35,21 +35,28 @@ def create_app(test_config=None):
 def _configure_app(app):
     """Configure Flask app settings"""
     import os
-    import uuid
-    import hashlib
 
-    # SECRET_KEY
+    # SECRET_KEY — consistent with config.py / security.py / secrets_manager.py
     _secret = os.environ.get('SECRET_KEY', config.security.secret_key)
     if not _secret or _secret in ('acas-pro-secret-key-change-me', 'dev-key-change-in-production'):
-        env_name = os.environ.get('ENVIRONMENT', os.environ.get('FLASK_ENV', 'development'))
+        env_name = os.environ.get('ACAS_ENV', os.environ.get('ENVIRONMENT', 'development'))
         if env_name in ('production', 'prod'):
             raise ValueError(
                 "SECRET_KEY must be set in production! "
                 "Add SECRET_KEY=<your-secret> to .env file. "
                 "Generate one: python -c \"import secrets; print(secrets.token_urlsafe(48))\""
             )
-        _secret = hashlib.sha256(uuid.uuid4().bytes).hexdigest()
-        logger.warning("SECRET_KEY not properly set — generated ephemeral key.")
+        # In non-prod: raise instead of generating ephemeral key so sessions survive restarts
+        # and misconfiguration is caught early.
+        logger.error(
+            "SECRET_KEY not configured. Sessions will not persist across restarts. "
+            "Set SECRET_KEY in .env or via secrets_manager."
+        )
+        raise ValueError(
+            "SECRET_KEY must be configured even in development! "
+            "Add SECRET_KEY=<your-secret> to .env file. "
+            "Generate one: python -c \"import secrets; print(secrets.token_urlsafe(48))\""
+        )
     app.secret_key = _secret
 
     # HTTPS check in production

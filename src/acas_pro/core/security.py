@@ -13,6 +13,14 @@ import hashlib
 import hmac
 import jwt
 import os
+import sys
+if sys.platform == 'win32':
+    import msvcrt
+    _WIN32 = True
+else:
+    import fcntl
+    _WIN32 = False
+from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, Tuple
 from pathlib import Path
@@ -289,7 +297,8 @@ class SessionManager:
             ))
         except Exception as e:
             logger.error(f"Failed to create session: {e}")
-        
+            return None  # FAIL FAST — do not return token without DB record
+
         audit_logger.log(
             'SESSION_CREATED',
             user_id,
@@ -346,10 +355,16 @@ class SessionManager:
 class RateLimiter:
     """
     File-based rate limiter for multi-process safety (gunicorn workers).
-    
+
     Uses a JSON file on disk to track attempt timestamps per key,
     so that rate limits persist across worker processes and restarts.
+
+    CRITICAL FIX: All operations use fcntl.flock for atomicity,
+    eliminating the read-modify-write race condition.
+    Bounded storage: max 100 entries per key to prevent unbounded growth.
     """
+
+    MAX_ENTRIES_PER_KEY = 100
 
     def __init__(self, storage_path: str = None) -> Any:
         if storage_path is None:
@@ -361,43 +376,71 @@ class RateLimiter:
         self._path = storage_path
         os.makedirs(os.path.dirname(self._path), exist_ok=True)
 
-    def _load(self) -> Dict[str, list]:
+    @contextmanager
+    def _atomic(self):
+        """Atomic read-write via exclusive file lock."""
+        lock_path = self._path + '.lock'
+        with open(lock_path, 'w') as lf:
+            if _WIN32:
+                msvcrt.locking(lf.fileno(), msvcrt.LK_LOCK, 1)
+                try:
+                    yield
+                finally:
+                    lf.seek(0)
+                    msvcrt.locking(lf.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                fcntl.flock(lf.fileno(), fcntl.LOCK_EX)
+                try:
+                    yield
+                finally:
+                    fcntl.flock(lf.fileno(), fcntl.LOCK_UN)
+
+    def _load_unlocked(self) -> Dict[str, list]:
         try:
             with open(self._path, 'r', encoding='utf-8') as f:
                 return json.load(f)
         except (FileNotFoundError, json.JSONDecodeError):
             return {}
 
-    def _save(self, data: Dict[str, list]) -> Any:
+    # Alias for test compatibility
+    def _load(self) -> Dict[str, list]:
+        with self._atomic():
+            return self._load_unlocked()
+
+    def _save_unlocked(self, data: Dict[str, list]) -> Any:
         with open(self._path + '.tmp', 'w', encoding='utf-8') as f:
             json.dump(data, f, default=str)
         os.replace(self._path + '.tmp', self._path)
 
     def is_allowed(self, key: str, max_attempts: int = 5,
                    window_seconds: int = 300) -> bool:
-        """Check if action is allowed under rate limit"""
+        """Check if action is allowed under rate limit (atomic, does NOT record)."""
         now = datetime.now(timezone.utc)
         window_start = now - timedelta(seconds=window_seconds)
 
-        data = self._load()
-        # Prune old entries for this key
-        data[key] = [t for t in data.get(key, []) if _parse_dt(t) > window_start]
-        self._save(data)
-        return len(data[key]) < max_attempts
+        with self._atomic():
+            data = self._load_unlocked()
+            entries = [t for t in data.get(key, []) if _parse_dt(t) > window_start]
+            return len(entries) < max_attempts
 
     def record_attempt(self, key: str) -> Any:
-        """Record an attempt"""
-        data = self._load()
-        if key not in data:
-            data[key] = []
-        data[key].append(datetime.now(timezone.utc).isoformat())
-        self._save(data)
+        """Record an attempt (atomic)."""
+        with self._atomic():
+            data = self._load_unlocked()
+            now = datetime.now(timezone.utc)
+            entries = data.get(key, [])
+            entries.append(now.isoformat())
+            if len(entries) > self.MAX_ENTRIES_PER_KEY:
+                entries = entries[-self.MAX_ENTRIES_PER_KEY:]
+            data[key] = entries
+            self._save_unlocked(data)
 
     def reset(self, key: str) -> Any:
-        """Reset attempts for key"""
-        data = self._load()
-        data.pop(key, None)
-        self._save(data)
+        """Reset attempts for key (atomic)."""
+        with self._atomic():
+            data = self._load_unlocked()
+            data.pop(key, None)
+            self._save_unlocked(data)
 
 
 def _parse_dt(val) -> datetime:
@@ -717,7 +760,16 @@ def get_jwt_from_cookie(request) -> str:
 
 # ── CSRF Protection ─────────────────────────────────────────────────────────
 
-CSRF_STATE_SECRET = os.environ.get('CSRF_STATE_SECRET') or secrets.token_hex(32)
+# CSRF_STATE_SECRET must be set via environment variable.
+# If not set, CSRF tokens are purely per-request (generate_csrf_token) and do not
+# need a persistent secret — but HMAC-based CSRF would require this.
+CSRF_STATE_SECRET = os.environ.get('CSRF_STATE_SECRET')
+if not CSRF_STATE_SECRET:
+    import logging as _logging
+    _logging.getLogger(__name__).warning(
+        "CSRF_STATE_SECRET not set — set it in .env for stable HMAC-based CSRF. "
+        "Per-request tokens still work."
+    )
 
 
 def generate_csrf_token() -> str:
@@ -729,14 +781,14 @@ def create_csrf_cookie(response) -> str:
     response.set_cookie(
         'csrf_token', token,
         max_age=3600 * 24,
-        httponly=False, secure=not os.environ.get('FLASK_ENV') == 'testing', samesite='Lax',
+        httponly=False, secure=os.environ.get('ACAS_ENV') != 'testing', samesite='Lax',
     )
     return token
 
 
 def validate_csrf_request(request) -> Tuple[bool, str]:
     # Skip CSRF validation in testing environment
-    if os.environ.get('FLASK_ENV') == 'testing':
+    if os.environ.get('ACAS_ENV') == 'testing':
         return True, ''
     header_token = request.headers.get('X-CSRF-Token', '').strip()
     cookie_token = request.cookies.get('csrf_token', '').strip()

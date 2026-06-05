@@ -354,7 +354,7 @@ class TestCSRF:
         assert len(token) == 64
 
     def test_validate_csrf_testing_env(self):
-        with patch.dict(os.environ, {'FLASK_ENV': 'testing'}):
+        with patch.dict(os.environ, {'ACAS_ENV': 'testing'}):
             ok, msg = validate_csrf_request(None)
             assert ok is True
             assert msg == ""

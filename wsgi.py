@@ -30,7 +30,7 @@ from web_app import app
 # Validate production configuration
 def validate_production_config():
     """Ensure production environment is properly configured."""
-    env = os.environ.get('ENVIRONMENT', os.environ.get('FLASK_ENV', 'development'))
+    env = os.environ.get('ACAS_ENV', os.environ.get('ENVIRONMENT', 'development'))
     
     if env in ('production', 'prod'):
         secret_key = os.environ.get('SECRET_KEY')

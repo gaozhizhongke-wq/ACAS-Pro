@@ -3,10 +3,19 @@
 """
 
 import json
+import asyncio
+import hashlib
+import os
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from typing import Optional, List, Dict, Any
+
+try:
+    import httpx
+    _HAS_HTTPX = True
+except ImportError:
+    _HAS_HTTPX = False
 
 from ..core.config import config
 from ..core.logging import get_logger
@@ -707,3 +716,123 @@ class SupplyChainManager:
         except Exception as e:
             logger.exception(f"[SupplyChain] KDNiao API error")
             return None
+
+    # ==================== 异步方法 ====================
+
+    async def _query_kdniao_async(self, company: str, tracking_no: str) -> Optional[Dict[str, Any]]:
+        """异步版：通过快递鸟API查询物流信息"""
+        if not _HAS_HTTPX:
+            raise RuntimeError("httpx not installed")
+        
+        api_key = os.environ.get('KDNIAO_API_KEY', '')
+        business_id = os.environ.get('KDNIAO_EBUSINESS_ID', '')
+        
+        if not api_key or not business_id:
+            return None
+        
+        try:
+            request_data = {
+                'OrderCode': '',
+                'ShipperCode': company,
+                'LogisticCode': tracking_no,
+            }
+            
+            data = json.dumps(request_data, ensure_ascii=False)
+            sign_data = data + api_key
+            sign = hashlib.md5(sign_data.encode('utf-8')).hexdigest()
+            
+            params = {
+                'RequestData': data,
+                'EBusinessID': business_id,
+                'RequestType': '1002',  # 即时查询
+                'DataSign': sign,
+                'DataType': '2',  # JSON
+            }
+            
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                resp = await client.post(
+                    'https://api.kdniao.com/Ebusiness/EbusinessOrderHandle.aspx',
+                    data=params,
+                )
+                result = resp.json()
+            
+            if result.get('Success', False):
+                traces = result.get('Traces', [])
+                return {
+                    'company': company,
+                    'tracking_no': tracking_no,
+                    'status': result.get('State', 'unknown'),
+                    'current_location': traces[-1].get('AcceptStation', '') if traces else '',
+                    'estimated_delivery': None,
+                    'history': traces,
+                }
+            else:
+                logger.warning(
+                    f"[SupplyChain] KDNiao async query failed: {result.get('Reason', 'Unknown')}"
+                )
+                return None
+                
+        except Exception as e:
+            logger.exception(f"[SupplyChain] KDNiao async API error")
+            return None
+
+    async def track_logistics_async(self, company: str, tracking_no: str) -> Dict[str, Any]:
+        """异步版：追踪物流信息（真正异步）
+        
+        优先级:
+        1. 平台API查询（需订单关联）
+        2. 快递100 API查询（异步HTTP）
+        3. 本地记录查询
+        """
+        # 1. 尝试平台API查询（目前返回None）
+        order_tracking = self._query_platform_logistics(company, tracking_no)
+        if order_tracking and order_tracking.get('status') not in (None, 'pending', 'unknown'):
+            logger.info(
+                f"[SupplyChain] Tracked via platform API: {company} {tracking_no}, "
+                f"status={order_tracking.get('status')}"
+            )
+            return order_tracking
+        
+        # 2. 尝试快递100 API（异步）
+        if _HAS_HTTPX:
+            kdniao_result = await self._query_kdniao_async(company, tracking_no)
+            if kdniao_result and kdniao_result.get('status') != 'pending':
+                logger.info(
+                    f"[SupplyChain] Tracked via KDNiao (async): {company} {tracking_no}, "
+                    f"status={kdniao_result.get('status')}"
+                )
+                return kdniao_result
+        
+        # 3. 查询本地记录
+        result = self._query_local_tracking(company, tracking_no)
+        if result:
+            logger.info(
+                f"[SupplyChain] Tracked logistics from local: {company} {tracking_no}, "
+                f"status={result.get('status', 'unknown')}"
+            )
+            return result
+        
+        # 所有查询方式均无结果
+        return {
+            'company': company,
+            'tracking_no': tracking_no,
+            'status': 'pending',
+            'current_location': '未知',
+            'estimated_delivery': None,
+            'history': [],
+            'note': '请配置快递100 API或平台API以启用实时物流追踪',
+        }
+
+    async def get_supplier_async(self, *args, **kwargs):
+        """异步版本: get_supplier"""
+        return await asyncio.to_thread(self.get_supplier, *args, **kwargs)
+
+    async def get_suppliers_by_owner_async(self, *args, **kwargs):
+        """异步版本: get_suppliers_by_owner"""
+        return await asyncio.to_thread(self.get_suppliers_by_owner, *args, **kwargs)
+
+    async def get_low_stock_alerts_async(self, *args, **kwargs):
+        """异步版本: get_low_stock_alerts"""
+        return await asyncio.to_thread(self.get_low_stock_alerts, *args, **kwargs)
+
+

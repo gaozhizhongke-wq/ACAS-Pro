@@ -73,7 +73,6 @@ class SecurityConfig:
     
     def __post_init__(self) -> Any:
         if not self.secret_key:
-            # Try environment variable first via SecretsManager
             from ..core.secrets_manager import get_secrets_manager
             sm = get_secrets_manager()
             env_key = sm.get('secret_key')
@@ -83,14 +82,10 @@ class SecurityConfig:
                 key_file = Path.home() / ".acas-pro" / ".secret"
                 if key_file.exists():
                     self.secret_key = key_file.read_text().strip()
-                else:
-                    self.secret_key = secrets.token_hex(32)
-                    key_file.parent.mkdir(parents=True, exist_ok=True)
-                    key_file.write_text(self.secret_key)
-                    try:
-                        os.chmod(key_file, 0o600)
-                    except OSError:
-                        pass
+                # NOTE: intentionally NO random fallback in production —
+                # JWTManager._get_secret_key() raises ValueError instead,
+                # forcing operator to provide ACAS_JWT_SECRET env var or _cfg().security.secret_key.
+                # This prevents silent degraded security on misconfiguration.
 
 
 @dataclass
@@ -219,9 +214,9 @@ class AppConfig:
             missing.append("SECRET_KEY (must be >= 32 chars)")
         
         # Check JWT_SECRET
-        jwt_secret = os.environ.get('JWT_SECRET', '')
+        jwt_secret = os.environ.get('ACAS_JWT_SECRET', '')
         if not jwt_secret or len(jwt_secret) < 32:
-            missing.append("JWT_SECRET (must be >= 32 chars)")
+            missing.append("ACAS_JWT_SECRET (must be >= 32 chars)")
         
         if missing:
             logger.error(f"Production secrets missing: {', '.join(missing)}")
@@ -312,23 +307,42 @@ _config_instance: Optional[AppConfig] = None
 
 
 def get_config() -> AppConfig:
-    """Get global config instance (lazy-loaded)"""
+    """Get global config instance (lazy-loaded, DI-aware)"""
     global _config_instance
     if _config_instance is None:
-        _config_instance = AppConfig.load()
-        # Validate on load in production
-        if _config_instance.is_production():
-            is_valid, errors = _config_instance.validate()
-            if not is_valid:
-                for error in errors:
-                    logger.error(f"Production config validation failed: {error}")
+        # Try DI container first
+        from .di_container import get_container, DIContainer
+        container = get_container()
+        if container.is_registered(AppConfig):
+            _config_instance = container.resolve(AppConfig)
+        else:
+            _config_instance = AppConfig.load()
+            # Validate on load in production
+            if _config_instance.is_production():
+                is_valid, errors = _config_instance.validate()
+                if not is_valid:
+                    for error in errors:
+                        logger.error(f"Production config validation failed: {error}")
     return _config_instance
 
 
+def reset_config() -> None:
+    """Reset the global config singleton (for testing)"""
+    global _config_instance
+    _config_instance = None
+
+
 # Global singleton instance - use this directly
-config = get_config()
+# Implemented as a module-level lazy accessor via __getattr__
+# to avoid import-time side effects while maintaining backward compatibility.
+
+def __getattr__(name):
+    if name == 'config':
+        return get_config()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 # Backward compatibility - config() function still works
 def config_func() -> AppConfig:
     """Backward-compatible lazy config accessor - returns global singleton"""
-    return config
+    return get_config()

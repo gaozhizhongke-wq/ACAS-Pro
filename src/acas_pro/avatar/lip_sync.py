@@ -10,6 +10,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from enum import Enum
 from pathlib import Path
 
+import asyncio
 import numpy as np
 
 from ..core.config import config
@@ -339,9 +340,24 @@ class LipSyncEngine:
             logger.info(f"Output: {output_path}")
             
             # 模拟处理
-            import time
             time.sleep(0.5)
-            
+
+            return True
+        except Exception as e:
+            logger.error(f"Failed to apply lip sync: {e}")
+            return False
+
+    async def apply_to_avatar_async(
+        self,
+        avatar_model_path: str,
+        visemes: List[VisemeFrame],
+        output_path: str
+    ) -> bool:
+        """将口型动画应用到数字人模型（异步版本）"""
+        try:
+            logger.info(f"Applying lip sync to avatar: {avatar_model_path}")
+            logger.info(f"Output: {output_path}")
+            await asyncio.sleep(0.5)
             return True
             
         except Exception as e:

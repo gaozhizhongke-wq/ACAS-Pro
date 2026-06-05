@@ -51,7 +51,7 @@ def flask_server():
     
     # Set environment
     env = os.environ.copy()
-    env["FLASK_ENV"] = "testing"
+    env["ACAS_ENV"] = "testing"
     env["SECRET_KEY"] = "test-secret-key-for-e2e-testing-only-not-for-production"
     env["ENVIRONMENT"] = "testing"
     env["PYTHONPATH"] = str(PROJECT_ROOT / "src")

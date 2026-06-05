@@ -9,12 +9,20 @@ import json
 import time
 import hashlib
 import secrets
+import asyncio
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Callable, Any, AsyncIterator
 from enum import Enum
 import urllib.request
 import urllib.error
+
+# Try importing aiohttp for async HTTP
+try:
+    import aiohttp
+    _HAS_AIOHTTP = True
+except ImportError:
+    _HAS_AIOHTTP = False
 
 
 class LLMProvider(Enum):
@@ -134,6 +142,23 @@ class BaseLLMProvider(ABC):
             raise RuntimeError(f"API Error {e.code}: {error_body}")
 
 
+    async def _make_request_async(self, url: str, data: Dict, headers: Dict) -> Dict:
+        """Make HTTP request (async)"""
+        if not _HAS_AIOHTTP:
+            return await asyncio.to_thread(self._make_request, url, data, headers)
+        
+        timeout = aiohttp.ClientTimeout(total=120)
+        try:
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.post(url, json=data, headers=headers) as response:
+                    if response.status != 200:
+                        error_body = await response.text()
+                        raise RuntimeError(f"API Error {response.status}: {error_body}")
+                    return await response.json()
+        except aiohttp.ClientError as e:
+            raise RuntimeError(f"HTTP Error: {e}")
+
+
 class OpenAIProvider(BaseLLMProvider):
     """OpenAI-compatible provider (works for OpenAI, DeepSeek, Qwen, LMStudio)"""
     
@@ -170,6 +195,48 @@ class OpenAIProvider(BaseLLMProvider):
         response_data = self._make_request(url, payload, headers)
         
         # Parse response
+        choice = response_data['choices'][0]
+        message = choice['message']
+        
+        return LLMResponse(
+            content=message.get('content', ''),
+            role=message.get('role', 'assistant'),
+            model=response_data.get('model', self.config.model),
+            usage=response_data.get('usage', {}),
+            tool_calls=message.get('tool_calls'),
+            finish_reason=choice.get('finish_reason', 'stop'),
+            latency_ms=int((time.time() - start_time) * 1000)
+        )
+
+    async def chat_async(self, messages: List[LLMMessage],
+                        tools: Optional[List[Dict]] = None,
+                        **kwargs) -> LLMResponse:
+        """Chat with async HTTP"""
+        start_time = time.time()
+        
+        payload = {
+            "model": kwargs.get('model', self.config.model),
+            "messages": [self._format_message(m) for m in messages],
+            "max_tokens": kwargs.get('max_tokens', self.config.max_tokens),
+            "temperature": kwargs.get('temperature', self.config.temperature),
+            "top_p": kwargs.get('top_p', self.config.top_p),
+            "stream": False
+        }
+        
+        if tools:
+            payload["tools"] = tools
+            payload["tool_choice"] = "auto"
+        
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.config.api_key}"
+        }
+        if self.config.provider == LLMProvider.KIMI:
+            headers["X-Timestamp"] = str(int(time.time()))
+        
+        url = f"{self.config.api_base}/chat/completions"
+        response_data = await self._make_request_async(url, payload, headers)
+        
         choice = response_data['choices'][0]
         message = choice['message']
         
@@ -273,6 +340,64 @@ class AnthropicProvider(BaseLLMProvider):
             finish_reason=response_data.get('stop_reason', 'stop'),
             latency_ms=int((time.time() - start_time) * 1000)
         )
+
+    async def chat_async(self, messages: List[LLMMessage],
+                        tools: Optional[List[Dict]] = None,
+                        **kwargs) -> LLMResponse:
+        """Chat with async HTTP (Anthropic)"""
+        start_time = time.time()
+        
+        system_msg = ""
+        chat_messages = []
+        for msg in messages:
+            if msg.role == "system":
+                system_msg = msg.content
+            else:
+                chat_messages.append({"role": msg.role, "content": msg.content})
+        
+        payload = {
+            "model": kwargs.get('model', self.config.model),
+            "max_tokens": kwargs.get('max_tokens', self.config.max_tokens),
+            "messages": chat_messages,
+            "temperature": kwargs.get('temperature', self.config.temperature)
+        }
+        if system_msg:
+            payload["system"] = system_msg
+        if tools:
+            payload["tools"] = self._format_tools(tools)
+        
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": self.config.api_key,
+            "anthropic-version": "2023-06-01"
+        }
+        
+        url = f"{self.config.api_base}/messages"
+        response_data = await self._make_request_async(url, payload, headers)
+        
+        content_blocks = response_data.get('content', [])
+        text_content = ""
+        tool_calls = []
+        
+        for block in content_blocks:
+            if block.get('type') == 'text':
+                text_content += block.get('text', '')
+            elif block.get('type') == 'tool_use':
+                tool_calls.append({
+                    "id": block.get('id'),
+                    "type": block.get('type'),
+                    "function": block.get('input', {})
+                })
+        
+        return LLMResponse(
+            content=text_content,
+            role='assistant',
+            model=response_data.get('model', self.config.model),
+            usage=response_data.get('usage', {}),
+            tool_calls=tool_calls if tool_calls else None,
+            finish_reason=response_data.get('stop_reason', 'stop'),
+            latency_ms=int((time.time() - start_time) * 1000)
+        )
     
     def stream_chat(self, messages: List[LLMMessage],
                     tools: Optional[List[Dict]] = None,
@@ -326,6 +451,12 @@ class LLMClient:
              **kwargs) -> LLMResponse:
         """Send chat completion request"""
         return self._provider.chat(messages, tools, **kwargs)
+    
+    async def chat_async(self, messages: List[LLMMessage],
+                        tools: Optional[List[Dict]] = None,
+                        **kwargs) -> LLMResponse:
+        """Send chat completion request (async)"""
+        return await self._provider.chat_async(messages, tools, **kwargs)
     
     def stream_chat(self, messages: List[LLMMessage],
                     tools: Optional[List[Dict]] = None,

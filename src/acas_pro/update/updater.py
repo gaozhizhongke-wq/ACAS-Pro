@@ -9,8 +9,16 @@ import hashlib
 import urllib.request
 import urllib.error
 from pathlib import Path
-from typing import Optional, Tuple, Callable
+from typing import Optional, Tuple, Callable, Awaitable
 from dataclasses import dataclass
+import asyncio
+
+# Try importing aiohttp for async HTTP
+try:
+    import aiohttp
+    _HAS_AIOHTTP = True
+except ImportError:
+    _HAS_AIOHTTP = False
 import logging
 
 logger = logging.getLogger(__name__)
@@ -63,6 +71,35 @@ class UpdateChecker:
 
         except Exception as e:
             logger.exception(f"Error in unknown_function: {e}")
+            return False, None
+
+    async def check_async(self) -> Tuple[bool, Optional[UpdateInfo]]:
+        """检查是否有更新 (异步版本)"""
+        if not _HAS_AIOHTTP:
+            # Fallback to threaded sync version
+            return await asyncio.to_thread(self.check)
+        
+        try:
+            timeout = aiohttp.ClientTimeout(total=10)
+            async with aiohttp.ClientSession(timeout=timeout) as session:
+                async with session.get(self.VERSION_FILE) as response:
+                    data = await response.json()
+
+            latest = data.get("latest_version", self.current_version)
+            if self._compare_versions(latest, self.current_version) > 0:
+                self._update_info = UpdateInfo(
+                    version=latest,
+                    release_date=data.get("release_date", ""),
+                    download_url=data.get("download_url", ""),
+                    sha256=data.get("sha256", ""),
+                    changelog=data.get("changelog", "Bug fixes and improvements"),
+                    mandatory=data.get("mandatory", False)
+                )
+                return True, self._update_info
+            return False, None
+
+        except Exception as e:
+            logger.exception(f"Error in check_async: {e}")
             return False, None
 
     def _compare_versions(self, v1: str, v2: str) -> int:

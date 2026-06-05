@@ -44,6 +44,8 @@ def _make_isolated_app(monkeypatch, *, register_ok=True, login_ok=True,
             return tok
         def verify_token(self, token, expected_type=None):
             return _jwt_store.get(token)
+        def _get_secret_key(self):
+            return 'test_secret_key_32_chars_long!!'
     monkeypatch.setattr(_sec_mod, 'JWTManager', MockJWTMgr(), raising=False)
 
     # 2. Mock acas_pro.services.user_service.user_service
@@ -58,7 +60,7 @@ def _make_isolated_app(monkeypatch, *, register_ok=True, login_ok=True,
 
     # 3. Mock config
     monkeypatch.setattr(_cfg_mod, 'config', type('C', (), {
-        'security': type('S', (), {'secret_key': 'x' * 32})()
+        'security': type('S', (), {'secret_key': 'x' * 32, 'jwt_algorithm': 'HS256'})()
     })(), raising=False)
 
     # 4. Build fresh Flask app and re-import auth blueprint
@@ -226,14 +228,22 @@ class TestTokenFunctions:
     def test_verify_token_legacy(self, monkeypatch):
         """JWTManager returns None -> fallback to jwt.decode"""
         import acas_pro.core.security as _sec_mod
-        import jwt as _jwt
+        import acas_pro.web.routes.auth as _auth_mod
         monkeypatch.setattr(_sec_mod.JWTManager, 'verify_token',
                            staticmethod(lambda tok, expected_type=None: None),
                            raising=False)
+        monkeypatch.setattr(_sec_mod.JWTManager, '_get_secret_key',
+                           staticmethod(lambda: 'test_secret_key_32_chars_long!!'),
+                           raising=False)
+        
+        app, _, verify_token = _make_isolated_app(monkeypatch)
+        
+        # Mock jwt.decode in auth.py's namespace AFTER _make_isolated_app reloads it
+        import jwt as _jwt
         monkeypatch.setattr(_jwt, 'decode',
                            staticmethod(lambda *a, **kw: {'user_id': 'u1', 'account': 'test'}),
                            raising=False)
-        app, _, verify_token = _make_isolated_app(monkeypatch)
+        
         payload = verify_token('tok')
         assert payload is not None
         assert payload['user_id'] == 'u1'

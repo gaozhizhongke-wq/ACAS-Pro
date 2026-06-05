@@ -182,7 +182,7 @@ class AuditLogger:
                 self.db = get_db()
             
             self.db.execute("""
-                INSERT INTO audit_log (timestamp, event_type, user_id, ip_address, details, severity)
+                INSERT INTO audit_logs (timestamp, event_type, user_id, ip_address, details, severity)
                 VALUES (?, ?, ?, ?, ?, ?)
             """, (
                 datetime.now(timezone.utc).isoformat(),

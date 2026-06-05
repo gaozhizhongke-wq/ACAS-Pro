@@ -4,8 +4,14 @@
 """
 
 import json
+try:
+    import aiosqlite
+    _HAS_AIOSQLITE = True
+except ImportError:
+    _HAS_AIOSQLITE = False
 import sqlite3
 from datetime import datetime, timedelta
+import asyncio
 from enum import Enum
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
@@ -639,4 +645,366 @@ class AdManager:
         except Exception as e:
             self.logger.error(f"获取平台对比失败: {e}")
         
+        return comparison
+    
+    # ==================== 异步方法 (使用 aiosqlite 真正异步化) ====================
+    
+    async def add_account_async(self, account: AdAccount) -> bool:
+        """添加广告账户 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        try:
+            encrypted_token = encrypt_data(account.access_token)
+            encrypted_refresh = encrypt_data(account.refresh_token) if account.refresh_token else None
+            now = datetime.now().isoformat()
+            async with aiosqlite.connect(self.db_path) as conn:
+                await conn.execute("""
+                    INSERT INTO ad_accounts 
+                    (id, platform, account_name, account_id, access_token, refresh_token,
+                     token_expires_at, status, balance, daily_budget_limit, created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    account.id, account.platform.value, account.account_name, account.account_id,
+                    encrypted_token, encrypted_refresh, account.token_expires_at,
+                    account.status, account.balance, account.daily_budget_limit, now, now
+                ))
+                await conn.commit()
+            self.logger.info(f"广告账户添加成功(异步): {account.account_name}")
+            return True
+        except Exception as e:
+            self.logger.error(f"添加广告账户失败(异步): {e}")
+            return False
+    
+    async def get_account_async(self, account_id: str) -> Optional[AdAccount]:
+        """获取广告账户 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        try:
+            async with aiosqlite.connect(self.db_path) as conn:
+                cursor = await conn.execute(
+                    "SELECT * FROM ad_accounts WHERE id = ?",
+                    (account_id,)
+                )
+                row = await cursor.fetchone()
+                if row:
+                    access_token = decrypt_data(row[4])
+                    refresh_token = decrypt_data(row[5]) if row[5] else None
+                    return AdAccount(
+                        id=row[0],
+                        platform=AdPlatform(row[1]),
+                        account_name=row[2],
+                        account_id=row[3],
+                        access_token=access_token,
+                        refresh_token=refresh_token,
+                        token_expires_at=row[6],
+                        status=row[7],
+                        balance=row[8],
+                        daily_budget_limit=row[9],
+                        total_spend_7d=row[10],
+                        total_spend_30d=row[11],
+                        created_at=row[12],
+                        updated_at=row[13]
+                    )
+        except Exception as e:
+            self.logger.error(f"获取广告账户失败(异步): {e}")
+        return None
+    
+    async def get_all_accounts_async(self, platform: Optional[AdPlatform] = None) -> List[AdAccount]:
+        """获取所有广告账户 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        accounts = []
+        try:
+            async with aiosqlite.connect(self.db_path) as conn:
+                if platform:
+                    cursor = await conn.execute(
+                        "SELECT * FROM ad_accounts WHERE platform = ?",
+                        (platform.value,)
+                    )
+                else:
+                    cursor = await conn.execute("SELECT * FROM ad_accounts")
+                rows = await cursor.fetchall()
+                for row in rows:
+                    access_token = decrypt_data(row[4])
+                    refresh_token = decrypt_data(row[5]) if row[5] else None
+                    accounts.append(AdAccount(
+                        id=row[0],
+                        platform=AdPlatform(row[1]),
+                        account_name=row[2],
+                        account_id=row[3],
+                        access_token=access_token,
+                        refresh_token=refresh_token,
+                        token_expires_at=row[6],
+                        status=row[7],
+                        balance=row[8],
+                        daily_budget_limit=row[9],
+                        total_spend_7d=row[10],
+                        total_spend_30d=row[11],
+                        created_at=row[12],
+                        updated_at=row[13]
+                    ))
+        except Exception as e:
+            self.logger.error(f"获取广告账户列表失败(异步): {e}")
+        return accounts
+    
+    async def update_account_balance_async(self, account_id: str, balance: float) -> bool:
+        """更新账户余额 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        try:
+            async with aiosqlite.connect(self.db_path) as conn:
+                await conn.execute(
+                    "UPDATE ad_accounts SET balance = ?, updated_at = ? WHERE id = ?",
+                    (balance, datetime.now().isoformat(), account_id)
+                )
+                await conn.commit()
+            return True
+        except Exception as e:
+            self.logger.error(f"更新账户余额失败(异步): {e}")
+            return False
+    
+    async def delete_account_async(self, account_id: str) -> bool:
+        """删除广告账户 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        try:
+            async with aiosqlite.connect(self.db_path) as conn:
+                await conn.execute("DELETE FROM ad_accounts WHERE id = ?", (account_id,))
+                await conn.commit()
+            self.logger.info(f"广告账户已删除(异步): {account_id}")
+            return True
+        except Exception as e:
+            self.logger.error(f"删除广告账户失败(异步): {e}")
+            return False
+    
+    async def create_campaign_async(self, campaign: AdCampaign) -> bool:
+        """创建广告计划 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        try:
+            now = datetime.now().isoformat()
+            adsets_json = json.dumps([a.to_dict() for a in campaign.adsets])
+            async with aiosqlite.connect(self.db_path) as conn:
+                await conn.execute("""
+                    INSERT INTO ad_campaigns
+                    (id, name, platform, account_id, status, objective, conversion_goal,
+                     budget_type, budget_amount, start_date, end_date, adsets_data,
+                     total_impressions, total_clicks, total_conversions, total_spend,
+                     created_at, updated_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    campaign.id, campaign.name, campaign.platform.value, campaign.account_id,
+                    campaign.status.value, campaign.objective, campaign.conversion_goal,
+                    campaign.budget_type.value, campaign.budget_amount,
+                    campaign.start_date, campaign.end_date, adsets_json,
+                    campaign.total_impressions, campaign.total_clicks,
+                    campaign.total_conversions, campaign.total_spend, now, now
+                ))
+                await conn.commit()
+            self.logger.info(f"广告计划创建成功(异步): {campaign.name}")
+            return True
+        except Exception as e:
+            self.logger.error(f"创建广告计划失败(异步): {e}")
+            return False
+    
+    async def get_campaign_async(self, campaign_id: str) -> Optional[AdCampaign]:
+        """获取广告计划 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        try:
+            async with aiosqlite.connect(self.db_path) as conn:
+                cursor = await conn.execute(
+                    "SELECT * FROM ad_campaigns WHERE id = ?",
+                    (campaign_id,)
+                )
+                row = await cursor.fetchone()
+                if row:
+                    adsets_data = json.loads(row[11])
+                    return AdCampaign(
+                        id=row[0],
+                        name=row[1],
+                        platform=AdPlatform(row[2]),
+                        account_id=row[3],
+                        status=CampaignStatus(row[4]),
+                        objective=row[5],
+                        conversion_goal=row[6],
+                        budget_type=BudgetType(row[7]),
+                        budget_amount=row[8],
+                        start_date=row[9],
+                        end_date=row[10],
+                        adsets=[AdSet.from_dict(a) for a in adsets_data],
+                        total_impressions=row[12],
+                        total_clicks=row[13],
+                        total_conversions=row[14],
+                        total_spend=row[15],
+                        created_at=row[16],
+                        updated_at=row[17]
+                    )
+        except Exception as e:
+            self.logger.error(f"获取广告计划失败(异步): {e}")
+        return None
+    
+    async def get_campaigns_async(self, account_id: Optional[str] = None,
+                                  status: Optional[CampaignStatus] = None) -> List[AdCampaign]:
+        """获取广告计划列表 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        campaigns = []
+        try:
+            query = "SELECT * FROM ad_campaigns WHERE 1=1"
+            params = []
+            if account_id:
+                query += " AND account_id = ?"
+                params.append(account_id)
+            if status:
+                query += " AND status = ?"
+                params.append(status.value)
+            async with aiosqlite.connect(self.db_path) as conn:
+                cursor = await conn.execute(query, params)
+                rows = await cursor.fetchall()
+                for row in rows:
+                    adsets_data = json.loads(row[11])
+                    campaigns.append(AdCampaign(
+                        id=row[0],
+                        name=row[1],
+                        platform=AdPlatform(row[2]),
+                        account_id=row[3],
+                        status=CampaignStatus(row[4]),
+                        objective=row[5],
+                        conversion_goal=row[6],
+                        budget_type=BudgetType(row[7]),
+                        budget_amount=row[8],
+                        start_date=row[9],
+                        end_date=row[10],
+                        adsets=[AdSet.from_dict(a) for a in adsets_data],
+                        total_impressions=row[12],
+                        total_clicks=row[13],
+                        total_conversions=row[14],
+                        total_spend=row[15],
+                        created_at=row[16],
+                        updated_at=row[17]
+                    ))
+        except Exception as e:
+            self.logger.error(f"获取广告计划列表失败(异步): {e}")
+        return campaigns
+    
+    async def update_campaign_status_async(self, campaign_id: str, status: CampaignStatus) -> bool:
+        """更新广告计划状态 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        try:
+            async with aiosqlite.connect(self.db_path) as conn:
+                await conn.execute("""UPDATE ad_campaigns 
+                       SET status = ?, updated_at = ? 
+                       WHERE id = ?""",
+                    (status.value, datetime.now().isoformat(), campaign_id)
+                )
+                await conn.commit()
+            return True
+        except Exception as e:
+            self.logger.error(f"更新广告计划状态失败(异步): {e}")
+            return False
+    
+    async def delete_campaign_async(self, campaign_id: str) -> bool:
+        """删除广告计划 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        try:
+            async with aiosqlite.connect(self.db_path) as conn:
+                await conn.execute("DELETE FROM ad_campaigns WHERE id = ?", (campaign_id,))
+                await conn.commit()
+            return True
+        except Exception as e:
+            self.logger.error(f"删除广告计划失败(异步): {e}")
+            return False
+    
+    async def record_daily_stats_async(self, campaign_id: str, adset_id: str,
+                                       date: str, impressions: int, clicks: int,
+                                       conversions: int, spend: float) -> bool:
+        """记录每日投放数据 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        try:
+            ctr = (clicks / impressions * 100) if impressions > 0 else 0
+            cpc = (spend / clicks) if clicks > 0 else 0
+            cpm = (spend / impressions * 1000) if impressions > 0 else 0
+            conversion_rate = (conversions / clicks * 100) if clicks > 0 else 0
+            cost_per_conversion = (spend / conversions) if conversions > 0 else 0
+            async with aiosqlite.connect(self.db_path) as conn:
+                await conn.execute("""
+                    INSERT OR REPLACE INTO ad_records
+                    (campaign_id, adset_id, date, impressions, clicks, conversions, spend,
+                     ctr, cpc, cpm, conversion_rate, cost_per_conversion)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (campaign_id, adset_id, date, impressions, clicks, conversions, spend,
+                      ctr, cpc, cpm, conversion_rate, cost_per_conversion))
+                await conn.commit()
+            return True
+        except Exception as e:
+            self.logger.error(f"记录投放数据失败(异步): {e}")
+            return False
+    
+    async def get_campaign_stats_async(self, campaign_id: str, days: int = 30) -> Dict[str, Any]:
+        """获取广告计划统计 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        try:
+            async with aiosqlite.connect(self.db_path) as conn:
+                cursor = await conn.execute("""
+                    SELECT 
+                        SUM(impressions), SUM(clicks), SUM(conversions), SUM(spend),
+                        AVG(ctr), AVG(cpc), AVG(cpm), AVG(conversion_rate), AVG(cost_per_conversion)
+                    FROM ad_records
+                    WHERE campaign_id = ? AND date >= date('now', '-{} days')
+                """.format(days), (campaign_id,))
+                row = await cursor.fetchone()
+                if row and row[0]:
+                    return {
+                        'impressions': row[0] or 0,
+                        'clicks': row[1] or 0,
+                        'conversions': row[2] or 0,
+                        'spend': row[3] or 0.0,
+                        'ctr': row[4] or 0.0,
+                        'cpc': row[5] or 0.0,
+                        'cpm': row[6] or 0.0,
+                        'conversion_rate': row[7] or 0.0,
+                        'cost_per_conversion': row[8] or 0.0
+                    }
+        except Exception as e:
+            self.logger.error(f"获取广告统计失败(异步): {e}")
+        return {
+            'impressions': 0, 'clicks': 0, 'conversions': 0, 'spend': 0.0,
+            'ctr': 0.0, 'cpc': 0.0, 'cpm': 0.0,
+            'conversion_rate': 0.0, 'cost_per_conversion': 0.0
+        }
+    
+    async def get_platform_comparison_async(self, days: int = 30) -> Dict[str, Dict[str, Any]]:
+        """获取各平台投放对比 (真正异步)"""
+        if not _HAS_AIOSQLITE:
+            raise RuntimeError("aiosqlite not installed")
+        comparison = {}
+        try:
+            async with aiosqlite.connect(self.db_path) as conn:
+                cursor = await conn.execute("""
+                    SELECT c.platform,
+                           SUM(r.impressions), SUM(r.clicks), SUM(r.conversions), SUM(r.spend),
+                           AVG(r.ctr), AVG(r.cpc)
+                    FROM ad_campaigns c
+                    JOIN ad_records r ON c.id = r.campaign_id
+                    WHERE r.date >= date('now', '-{} days')
+                    GROUP BY c.platform
+                """.format(days))
+                rows = await cursor.fetchall()
+                for row in rows:
+                    platform = row[0]
+                    comparison[platform] = {
+                        'impressions': row[1] or 0,
+                        'clicks': row[2] or 0,
+                        'conversions': row[3] or 0,
+                        'spend': row[4] or 0.0,
+                        'ctr': row[5] or 0.0,
+                        'cpc': row[6] or 0.0
+                    }
+        except Exception as e:
+            self.logger.error(f"获取平台对比失败(异步): {e}")
         return comparison
