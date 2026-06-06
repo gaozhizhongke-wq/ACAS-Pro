@@ -271,6 +271,27 @@ def _reset_lazy_singletons():
     # Do NOT delete acas_pro.* — see comment above.
 
 
+# --- Flask test fixtures ---
+@pytest.fixture
+def app():
+    """Create and configure a Flask app for testing."""
+    from acas_pro.web import create_app
+    test_config = {
+        'TESTING': True,
+        'SECRET_KEY': 'test-secret-key-32-chars-long!!',
+        'DATABASE': 'test.db',
+        'ENVIRONMENT': 'development'
+    }
+    app = create_app(test_config)
+    return app
+
+
+@pytest.fixture
+def client(app):
+    """Create a test client for the app."""
+    return app.test_client()
+
+
 
 
 # Windows: clean up pytest-current on exit to prevent stale junction next run
