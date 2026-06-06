@@ -380,6 +380,8 @@ class DatabaseManager:
             CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
             CREATE INDEX IF NOT EXISTS idx_chat_history_session ON chat_history(session_id);
         '''
+
+    def _get_postgres_schema(self) -> str:
         """PostgreSQL schema definition (SQLite schema with PostgreSQL-specific types)"""
         return '''
             CREATE TABLE IF NOT EXISTS users (

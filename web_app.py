@@ -63,7 +63,7 @@ setup_logging()
 logger = get_logger(__name__)
 
 # ── HTTPS Enforcement (Production) ──────────────────────────────────────────
-if config().environment == 'production':
+if config.environment == 'production':
     from flask import request
     if not request.is_secure:
         logger.warning("HTTPS not enforced — configure your reverse proxy (nginx) to redirect HTTP → HTTPS in production")
@@ -72,7 +72,7 @@ if config().environment == 'production':
 app = Flask(__name__)
 
 # SECRET_KEY — required for Flask sessions/flash/CSRF
-_secret = os.environ.get('SECRET_KEY', config().security.secret_key)
+_secret = os.environ.get('SECRET_KEY', config.security.secret_key)
 if not _secret or _secret in ('acas-pro-secret-key-change-me', 'dev-key-change-in-production'):
     _env = os.environ.get('ACAS_ENV', os.environ.get('ENVIRONMENT', 'development'))
     if _env in ('production', 'prod'):
@@ -101,16 +101,24 @@ logger.info("Blueprints registered: auth, llm, dashboard")
 
 
 
+@app.route('/api/health')
+def health():
+    """Health check endpoint for monitoring and E2E tests."""
+    result = health_checker.check_all()
+    status_code = 200 if result['status'] == 'healthy' else 503
+    return jsonify(result), status_code
+
+
 @app.route('/')
 def index():
-    llm_provider = config().llm.provider if config().llm.enabled else 'not configured'
-    key_val = config().llm.api_key
+    llm_provider = config.llm.provider if config.llm.enabled else 'not configured'
+    key_val = config.llm.api_key
     llm_key_mask = ('*' * 20) + key_val[-4:] if key_val else 'not set'
     return render_template(
         'dashboard.html',
         llm_provider=llm_provider,
         llm_key_mask=llm_key_mask,
-        llm_enabled=config().llm.enabled,
+        llm_enabled=config.llm.enabled,
     )
 
 
@@ -118,9 +126,9 @@ def index():
 @app.after_request
 def add_cors_headers(response):
     """Production-grade CORS with security controls"""
-    origins = config().security.cors_allowed_origins
+    origins = config.security.cors_allowed_origins
     
-    if config().environment == 'production':
+    if config.environment == 'production':
         # Production: strict origin validation
         if not origins or origins == '*':
             logger.error("[SECURITY] CORS allowed origins not configured in production. "

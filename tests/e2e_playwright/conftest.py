@@ -21,12 +21,12 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 
 def wait_for_server(url: str, timeout: int = 30) -> bool:
-    """Wait for server to be ready."""
+    """Wait for server to be ready. Accepts 200 (healthy) or 503 (degraded/unhealthy)."""
     start = time.time()
     while time.time() - start < timeout:
         try:
             resp = requests.get(f"{url}/api/health", timeout=2)
-            if resp.status_code == 200:
+            if resp.status_code in (200, 503):
                 return True
         except requests.exceptions.RequestException:
             pass
@@ -43,12 +43,12 @@ def flask_server():
     # Check if server already running
     try:
         resp = requests.get(f"{base_url}/api/health", timeout=2)
-        if resp.status_code == 200:
+        if resp.status_code in (200, 503):
             yield base_url
             return
     except requests.exceptions.RequestException:
         pass
-    
+
     # Set environment
     env = os.environ.copy()
     env["ACAS_ENV"] = "testing"
@@ -98,31 +98,12 @@ def flask_server():
 #
 # We need to configure the base_url for tests
 @pytest.fixture(scope="session")
-def base_url(flask_server):
-    """Base URL for the Flask server."""
-    return flask_server
+def browser_context_args(flask_server):
+    """Configure browser context with base URL."""
+    return {"base_url": flask_server}
 
 
-@pytest.fixture(scope="function")
-def authenticated_page(page, flask_server: str):
-    """Page with auth token pre-injected to bypass login overlay."""
-    # Generate a test token (matches JWT format expected by web_app.py)
-    import jwt
-    from datetime import datetime, timedelta, timezone
-    
-    # Create a test JWT token
-    test_payload = {
-        'user_id': 'test-user-e2e',
-        'account': 'test_e2e@acas.local',
-        'exp': datetime.now(timezone.utc) + timedelta(hours=24),
-        'iat': datetime.now(timezone.utc),
-    }
-    test_secret = 'test-secret-key-for-e2e-testing-only-not-for-production'
-    test_token = jwt.encode(test_payload, test_secret, algorithm='HS256')
-    
-    # Inject token into localStorage before page loads
-    page.add_init_script(f"""
-        localStorage.setItem('acas_token', '{test_token}');
-    """)
-    
-    yield page
+@pytest.fixture(scope="session")
+def browser_type_launch_args():
+    """Configure browser launch args."""
+    return {"headless": True}
