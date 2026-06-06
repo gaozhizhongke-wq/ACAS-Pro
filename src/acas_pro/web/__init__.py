@@ -1,5 +1,10 @@
-"""ACAS Pro Web - Flask application factory"""
+"""ACAS Pro Web - Flask application factory
+
+This module implements the Flask application factory pattern,
+providing a centralized way to create and configure the Flask app.
+"""
 from flask import Flask, jsonify, g, request
+from typing import Optional, Dict, Any
 from acas_pro.core.config import config
 from acas_pro.core.logging import setup_logging, get_logger
 
@@ -7,8 +12,19 @@ setup_logging()
 logger = get_logger(__name__)
 
 
-def create_app(test_config=None):
-    """Application factory pattern"""
+def create_app(test_config: Optional[Dict[str, Any]] = None) -> Flask:
+    """Application factory pattern.
+    
+    Args:
+        test_config: Optional configuration dictionary for testing.
+            If provided, overrides default configuration.
+            
+    Returns:
+        Flask: Configured Flask application instance.
+        
+    Raises:
+        ValueError: If configuration is invalid or SECRET_KEY is not set.
+    """
     app = Flask(__name__)
 
     # Load test config
@@ -146,8 +162,25 @@ def _register_blueprints(app):
     app.register_blueprint(metrics.bp)
 
 
-def _register_error_handlers(app):
-    """Register global error handlers."""
+def _register_error_handlers(app: Flask) -> None:
+    """Register global error handlers for the Flask application.
+    
+    Registers error handlers for common HTTP errors:
+    - 400 Bad Request
+    - 401 Unauthorized
+    - 403 Forbidden
+    - 404 Not Found
+    - 405 Method Not Allowed
+    - 500 Internal Server Error
+    - Generic exceptions
+    
+    Error responses are format based on request type:
+    - API requests (URL starts with /api/ or Accept: application/json) → JSON
+    - Browser requests → HTML
+    
+    Args:
+        app: Flask application instance.
+    """
     import traceback
     import logging
 
