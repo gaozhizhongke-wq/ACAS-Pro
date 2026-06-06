@@ -29,6 +29,13 @@ def create_app(test_config=None):
     # Register blueprints
     _register_blueprints(app)
 
+    # Register API documentation (OpenAPI/Swagger)
+    try:
+        from .api_spec import register_api_docs
+        register_api_docs(app)
+    except ImportError:
+        logger.warning('api_spec module not available, skipping API docs registration')
+
     return app
 
 
@@ -76,7 +83,8 @@ def _register_auth_middleware(app):
         'static',
     }
     PUBLIC_PREFIXES = ('/api/auth/register', '/api/auth/login',
-                       '/api/v2/auth/register', '/api/v2/auth/login', '/api/health')
+                       '/api/v2/auth/register', '/api/v2/auth/login', '/api/health',
+                       '/api/docs', '/api/openapi.json', '/api/openapi.yaml')
 
     # Routes that are accessible without auth but don't expose sensitive data
     READ_ONLY_PUBLIC_PATHS = ('/', '/api/stats', '/api/activity')
