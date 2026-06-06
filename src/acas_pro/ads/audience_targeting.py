@@ -175,35 +175,51 @@ class AudienceTargeting:
     
     def __init__(self, db_path: Optional[str] = None):
         self.db_path = db_path or config.database.path
+        self._conn = None  # explicit single connection to avoid ResourceWarning
         self._init_database()
         self.logger = logger.getChild("audience_targeting")
-    
+
+    def close(self):
+        """Close the managed database connection."""
+        if self._conn is not None:
+            try:
+                self._conn.close()
+            except Exception:
+                pass
+            self._conn = None
+
+    def __del__(self):
+        self.close()
+
     def _init_database(self):
         """初始化数据库表"""
-        with sqlite3.connect(self.db_path) as conn:
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS audience_segments (
-                    id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    type TEXT NOT NULL,
-                    gender TEXT DEFAULT 'all',
-                    age_range TEXT NOT NULL,
-                    geo_targeting TEXT NOT NULL,
-                    device_targeting TEXT NOT NULL,
-                    interests TEXT,
-                    behaviors TEXT,
-                    custom_tags TEXT,
-                    source_audience_id TEXT,
-                    lookalike_ratio REAL,
-                    estimated_size INTEGER DEFAULT 0,
-                    estimated_daily_impressions INTEGER DEFAULT 0,
-                    status TEXT DEFAULT 'active',
-                    created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL
-                )
-            """)
-            conn.commit()
-    
+        self._conn = sqlite3.connect(self.db_path)
+        conn = self._conn
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS audience_segments (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                type TEXT NOT NULL,
+                gender TEXT DEFAULT 'all',
+                age_range TEXT NOT NULL,
+                geo_targeting TEXT NOT NULL,
+                device_targeting TEXT NOT NULL,
+                interests TEXT,
+                behaviors TEXT,
+                custom_tags TEXT,
+                source_audience_id TEXT,
+                lookalike_ratio REAL,
+                estimated_size INTEGER DEFAULT 0,
+                estimated_daily_impressions INTEGER DEFAULT 0,
+                status TEXT DEFAULT 'active',
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+        """)
+        conn.commit()
+        conn.close()
+        self._conn = None
+
     def create_segment(self, segment: AudienceSegment) -> bool:
         """创建人群包"""
         try:

@@ -203,6 +203,13 @@ class DatabaseManager:
                 os.chmod(self._db_path, stat.S_IRUSR | stat.S_IWUSR)  # 0o600
         return self._local.connection
     
+    def __del__(self):
+        """Close connection on garbage collection to avoid ResourceWarning."""
+        try:
+            self.close()
+        except Exception:
+            pass
+
     def close(self) -> None:
         """Close database connections (call on shutdown)"""
         if not self._is_postgres and hasattr(self._local, 'connection') and self._local.connection:

@@ -46,13 +46,17 @@ def temp_db():
 @pytest.fixture
 def ad_manager(temp_db):
     """AdManager 实例"""
-    return AdManager(db_path=temp_db)
+    manager = AdManager(db_path=temp_db)
+    yield manager
+    manager.close()
 
 
 @pytest.fixture
 def audience_targeting(temp_db):
     """AudienceTargeting 实例"""
-    return AudienceTargeting(db_path=temp_db)
+    targeting = AudienceTargeting(db_path=temp_db)
+    yield targeting
+    targeting.close()
 
 
 @pytest.fixture

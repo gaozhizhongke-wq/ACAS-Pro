@@ -209,78 +209,94 @@ class AdManager:
     
     def __init__(self, db_path: Optional[str] = None):
         self.db_path = db_path or config.database.path
+        self._conn = None  # explicit single connection to avoid ResourceWarning
         self._init_database()
         self.logger = logger.getChild("ad_manager")
-    
+
+    def close(self):
+        """Close the managed database connection."""
+        if self._conn is not None:
+            try:
+                self._conn.close()
+            except Exception:
+                pass
+            self._conn = None
+
+    def __del__(self):
+        self.close()
+
     def _init_database(self):
         """初始化数据库表"""
-        with sqlite3.connect(self.db_path) as conn:
-            # 广告账户表
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS ad_accounts (
-                    id TEXT PRIMARY KEY,
-                    platform TEXT NOT NULL,
-                    account_name TEXT NOT NULL,
-                    account_id TEXT NOT NULL,
-                    access_token TEXT NOT NULL,
-                    refresh_token TEXT,
-                    token_expires_at TEXT,
-                    status TEXT DEFAULT 'active',
-                    balance REAL DEFAULT 0.0,
-                    daily_budget_limit REAL DEFAULT 0.0,
-                    total_spend_7d REAL DEFAULT 0.0,
-                    total_spend_30d REAL DEFAULT 0.0,
-                    created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL
-                )
-            """)
-            
-            # 广告计划表
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS ad_campaigns (
-                    id TEXT PRIMARY KEY,
-                    name TEXT NOT NULL,
-                    platform TEXT NOT NULL,
-                    account_id TEXT NOT NULL,
-                    status TEXT NOT NULL,
-                    objective TEXT NOT NULL,
-                    conversion_goal TEXT,
-                    budget_type TEXT NOT NULL,
-                    budget_amount REAL NOT NULL,
-                    start_date TEXT NOT NULL,
-                    end_date TEXT,
-                    adsets_data TEXT NOT NULL,
-                    total_impressions INTEGER DEFAULT 0,
-                    total_clicks INTEGER DEFAULT 0,
-                    total_conversions INTEGER DEFAULT 0,
-                    total_spend REAL DEFAULT 0.0,
-                    created_at TEXT NOT NULL,
-                    updated_at TEXT NOT NULL
-                )
-            """)
-            
-            # 投放记录表
-            conn.execute("""
-                CREATE TABLE IF NOT EXISTS ad_records (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    campaign_id TEXT NOT NULL,
-                    adset_id TEXT NOT NULL,
-                    date TEXT NOT NULL,
-                    impressions INTEGER DEFAULT 0,
-                    clicks INTEGER DEFAULT 0,
-                    conversions INTEGER DEFAULT 0,
-                    spend REAL DEFAULT 0.0,
-                    ctr REAL DEFAULT 0.0,
-                    cpc REAL DEFAULT 0.0,
-                    cpm REAL DEFAULT 0.0,
-                    conversion_rate REAL DEFAULT 0.0,
-                    cost_per_conversion REAL DEFAULT 0.0,
-                    UNIQUE(campaign_id, adset_id, date)
-                )
-            """)
-            
-            conn.commit()
-    
+        self._conn = sqlite3.connect(self.db_path)
+        conn = self._conn
+        # 广告账户表
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS ad_accounts (
+                id TEXT PRIMARY KEY,
+                platform TEXT NOT NULL,
+                account_name TEXT NOT NULL,
+                account_id TEXT NOT NULL,
+                access_token TEXT NOT NULL,
+                refresh_token TEXT,
+                token_expires_at TEXT,
+                status TEXT DEFAULT 'active',
+                balance REAL DEFAULT 0.0,
+                daily_budget_limit REAL DEFAULT 0.0,
+                total_spend_7d REAL DEFAULT 0.0,
+                total_spend_30d REAL DEFAULT 0.0,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+        """)
+
+        # 广告计划表
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS ad_campaigns (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                platform TEXT NOT NULL,
+                account_id TEXT NOT NULL,
+                status TEXT NOT NULL,
+                objective TEXT NOT NULL,
+                conversion_goal TEXT,
+                budget_type TEXT NOT NULL,
+                budget_amount REAL NOT NULL,
+                start_date TEXT NOT NULL,
+                end_date TEXT,
+                adsets_data TEXT NOT NULL,
+                total_impressions INTEGER DEFAULT 0,
+                total_clicks INTEGER DEFAULT 0,
+                total_conversions INTEGER DEFAULT 0,
+                total_spend REAL DEFAULT 0.0,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+        """)
+
+        # 投放记录表
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS ad_records (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                campaign_id TEXT NOT NULL,
+                adset_id TEXT NOT NULL,
+                date TEXT NOT NULL,
+                impressions INTEGER DEFAULT 0,
+                clicks INTEGER DEFAULT 0,
+                conversions INTEGER DEFAULT 0,
+                spend REAL DEFAULT 0.0,
+                ctr REAL DEFAULT 0.0,
+                cpc REAL DEFAULT 0.0,
+                cpm REAL DEFAULT 0.0,
+                conversion_rate REAL DEFAULT 0.0,
+                cost_per_conversion REAL DEFAULT 0.0,
+                UNIQUE(campaign_id, adset_id, date)
+            )
+        """)
+
+        conn.commit()
+        conn.close()  # close init connection to avoid ResourceWarning on Python 3.14
+        self._conn = None  # mark as closed; will reconnect in next operation
+
     # ==================== 账户管理 ====================
     
     def add_account(self, account: AdAccount) -> bool:
