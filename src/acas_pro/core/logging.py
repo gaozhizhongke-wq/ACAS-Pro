@@ -181,17 +181,18 @@ class AuditLogger:
                 from .database import get_db
                 self.db = get_db()
             
-            self.db.execute("""
-                INSERT INTO audit_logs (timestamp, event_type, user_id, ip_address, details, severity)
-                VALUES (?, ?, ?, ?, ?, ?)
-            """, (
-                datetime.now(timezone.utc).isoformat(),
-                event_type,
-                user_id,
-                ip_address,
-                json.dumps(details, ensure_ascii=False),
-                severity
-            ))
+            self.db.insert("audit_logs", {
+                "id": f"A{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S%f')[:-3]}",
+                "user_id": user_id,
+                "action": event_type,
+                "resource_type": details.get('resource_type', '') if isinstance(details, dict) else '',
+                "resource_id": details.get('resource_id', '') if isinstance(details, dict) else '',
+                "details": json.dumps(details, ensure_ascii=False),
+                "ip_address": ip_address or '',
+                "user_agent": details.get('user_agent', '') if isinstance(details, dict) else '',
+                "severity": severity,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+            })
         except Exception as e:
             self.logger.error(f"Failed to write audit log: {e}")
 

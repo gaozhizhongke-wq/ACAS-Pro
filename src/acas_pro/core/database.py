@@ -380,6 +380,7 @@ class DatabaseManager:
                 details TEXT,
                 ip_address TEXT,
                 user_agent TEXT,
+                severity TEXT DEFAULT 'info',
                 created_at TEXT
             );
             
@@ -547,6 +548,7 @@ class DatabaseManager:
                 details TEXT,
                 ip_address TEXT,
                 user_agent TEXT,
+                severity TEXT DEFAULT 'info',
                 created_at TIMESTAMP DEFAULT NOW()
             );
 
