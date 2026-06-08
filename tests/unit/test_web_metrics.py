@@ -81,15 +81,5 @@ class TestMetricsBlueprintRegistration:
         assert metrics.bp.url_prefix == '/metrics'
 
 
-@pytest.mark.skipif(
-    True,  # Skip because prometheus_client is installed
-    reason="prometheus_client is installed, cannot test missing import"
-)
-class TestMetricsWithoutPrometheus:
-    """Metrics endpoint when prometheus_client is NOT installed."""
-
-    def test_has_prometheus_false(self):
-        pass  # Skipped
-
-    def test_metrics_endpoint_returns_503(self):
-        pass  # Skipped
+# TestMetricsWithoutPrometheus removed: prometheus_client is installed,
+# cannot test missing import scenario without uninstalling the package

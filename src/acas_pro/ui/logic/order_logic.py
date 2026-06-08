@@ -59,7 +59,7 @@ class Order:
 class OrderLogic:
     """Order management business logic"""
     
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self._orders: Dict[str, Order] = {}
     
     def create_order(self, customer_id: str, customer_name: str,

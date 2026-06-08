@@ -62,7 +62,7 @@ class VideoLogic:
         VideoQuality.UHD_4K: {"width": 3840, "height": 2160, "bitrate": "35M"},
     }
     
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self._projects: Dict[str, VideoProject] = {}
         self._render_jobs: Dict[str, RenderJob] = {}
     

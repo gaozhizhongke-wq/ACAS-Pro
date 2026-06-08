@@ -23,7 +23,7 @@ class SettingItem:
 class SettingsLogic:
     """Settings business logic"""
     
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self._settings: Dict[str, SettingItem] = {}
     
     def get_setting(self, key: str) -> Optional[SettingItem]:

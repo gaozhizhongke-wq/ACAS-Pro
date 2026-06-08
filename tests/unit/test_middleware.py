@@ -75,10 +75,8 @@ class TestRequestContext:
             log_call = mock_logger.info.call_args[0][0]
             assert 'Request completed' in log_call
     
-    @pytest.mark.skip(reason="Flask testing mode propagates exceptions, not testable")
-    def test_error_request_logging(self, client, caplog):
-        """Test error request logging - skipped in testing mode"""
-        pass
+    # test_error_request_logging removed: Flask testing mode propagates exceptions,
+    # making error logging untestable without production server
 
 
 class TestErrorHandler:

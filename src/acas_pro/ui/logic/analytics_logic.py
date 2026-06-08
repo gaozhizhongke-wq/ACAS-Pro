@@ -55,7 +55,7 @@ class AnalyticsReport:
 class AnalyticsLogic:
     """Analytics business logic"""
     
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self._data_cache: Dict[str, List[MetricData]] = {}
     
     def get_time_range(self, range_type: TimeRange, 

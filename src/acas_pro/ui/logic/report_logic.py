@@ -45,7 +45,7 @@ class Report:
 class ReportLogic:
     """Report generation business logic"""
     
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self._reports: Dict[str, Report] = {}
     
     def generate_sales_report(self, start_date: datetime, end_date: datetime,

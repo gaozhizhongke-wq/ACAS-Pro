@@ -23,7 +23,7 @@ class ContentTemplate:
 class ContentCreationLogic:
     """Content creation business logic"""
     
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self._templates: List[ContentTemplate] = []
     
     def get_templates(self, platform: Optional[str] = None) -> List[ContentTemplate]:

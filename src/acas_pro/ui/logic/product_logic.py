@@ -39,7 +39,7 @@ class Product:
 class ProductLogic:
     """Product management business logic"""
     
-    def __init__(self) -> Any:
+    def __init__(self) -> None:
         self._products: Dict[str, Product] = {}
     
     def create_product(self, name: str, description: str, price: float,
