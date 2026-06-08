@@ -70,7 +70,7 @@ class StyledButton(QPushButton):
         self.setMinimumWidth(200)
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
         
-    def _update_style(self):
+    def _update_style(self) -> None:
         if self.primary:
             self.setStyleSheet(f"""
                 QPushButton {{
@@ -120,7 +120,7 @@ class LoginPage(QWidget):
         super().__init__()
         self._setup_ui()
         
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(48, 56, 48, 48)
         layout.setSpacing(0)  # 手动控制每个间距
@@ -325,7 +325,7 @@ class LoginPage(QWidget):
         
         layout.addLayout(switch_row)
         
-    def _on_login(self):
+    def _on_login(self) -> None:
         username = self.username_input.text().strip()
         password = self.password_input.text()
         
@@ -340,10 +340,10 @@ class LoginPage(QWidget):
         else:
             QMessageBox.warning(self, "登录失败", "用户名或密码错误")
             
-    def _on_forgot_password(self):
+    def _on_forgot_password(self) -> None:
         QMessageBox.information(self, "忘记密码", "请联系管理员重置密码")
     
-    def _on_qq_login(self):
+    def _on_qq_login(self) -> None:
         """QQ登录"""
         # 使用OAuth服务
         from ...services.oauth import OAuthService
@@ -371,7 +371,7 @@ class LoginPage(QWidget):
             # 模拟登录成功
             # self.login_success.emit({"username": "qq_user", "nickname": "QQ用户"})
     
-    def _on_wechat_login(self):
+    def _on_wechat_login(self) -> None:
         """微信登录"""
         from ...services.oauth import OAuthService
         from ...core.config import config
@@ -403,7 +403,7 @@ class RegisterPage(QWidget):
         super().__init__()
         self._setup_ui()
         
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(48, 56, 48, 48)
         layout.setSpacing(0)
@@ -536,7 +536,7 @@ class RegisterPage(QWidget):
         layout.addLayout(switch_row)
         layout.addStretch()
         
-    def _on_register(self):
+    def _on_register(self) -> None:
         username = self.username_input.text().strip()
         nickname = self.nickname_input.text().strip()
         email = self.email_input.text().strip()
@@ -596,7 +596,7 @@ class LoginDialog(QDialog):
         
         self._setup_ui()
         
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -619,17 +619,17 @@ class LoginDialog(QDialog):
         
         layout.addWidget(self.stack)
         
-    def _show_login(self):
+    def _show_login(self) -> None:
         self.stack.setCurrentIndex(0)
         self.setWindowTitle("ACAS Pro - 登录")
         
-    def _show_register(self):
+    def _show_register(self) -> None:
         self.stack.setCurrentIndex(1)
         self.setWindowTitle("ACAS Pro - 注册")
         
-    def _on_login_success(self, user_data):
+    def _on_login_success(self, user_data) -> None:
         self.login_success.emit(user_data)
         self.accept()
         
-    def _on_register_success(self, user_data):
+    def _on_register_success(self, user_data) -> None:
         self._show_login()

@@ -9,7 +9,7 @@ bp = Blueprint('dashboard_stats', __name__, url_prefix='')
 
 
 @bp.route('/api/dashboard/stats')
-def dashboard_stats():
+def dashboard_stats() -> None:
     """Real dashboard data from database."""
     import logging
     lg = logging.getLogger(__name__)
@@ -89,7 +89,7 @@ def dashboard_stats():
 
 
 @bp.route('/api/festivals', methods=['GET'])
-def list_festivals():
+def list_festivals() -> None:
     db = DatabaseManager()
     try:
         rows = db.fetchall(
@@ -103,7 +103,7 @@ def list_festivals():
 
 
 @bp.route('/api/products', methods=['GET'])
-def list_products():
+def list_products() -> None:
     db = DatabaseManager()
     try:
         rows = db.fetchall(
@@ -117,7 +117,7 @@ def list_products():
 
 
 @bp.route('/api/products/low-stock', methods=['GET'])
-def low_stock_products():
+def low_stock_products() -> None:
     db = DatabaseManager()
     try:
         rows = db.fetchall(
@@ -134,7 +134,7 @@ def low_stock_products():
 
 
 @bp.route('/api/accounts', methods=['GET'])
-def list_accounts():
+def list_accounts() -> None:
     db = DatabaseManager()
     try:
         rows = db.fetchall(
@@ -149,7 +149,7 @@ def list_accounts():
 
 
 @bp.route('/api/forecast/daily', methods=['GET'])
-def forecast_daily():
+def forecast_daily() -> None:
     db = DatabaseManager()
     try:
         rows = db.fetchall(

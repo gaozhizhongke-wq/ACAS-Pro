@@ -137,7 +137,7 @@ class OrderManager:
         self.db = DatabaseManager()
         self._init_database()
     
-    def _init_database(self):
+    def _init_database(self) -> None:
         """初始化数据库表"""
         self.db.execute("""
             CREATE TABLE IF NOT EXISTS orders (
@@ -194,7 +194,7 @@ class OrderManager:
         logger.info(f"Created order: {order_id}")
         return order
     
-    def _save_order(self, order: Order):
+    def _save_order(self, order: Order) -> None:
         """保存订单"""
         self.db.execute("""
             INSERT OR REPLACE INTO orders (

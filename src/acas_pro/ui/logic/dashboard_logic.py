@@ -6,7 +6,7 @@ Extracted from DashboardPage for testability
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Callable
+from typing import List, Dict, Optional, Callable, Any
 from datetime import datetime, timedelta
 
 

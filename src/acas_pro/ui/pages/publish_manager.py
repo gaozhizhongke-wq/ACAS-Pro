@@ -46,10 +46,10 @@ class PublishManagerPage(QWidget):
         self._setup_ui()
         self._load_tasks()
         
-    def __del__(self):
+    def __del__(self) -> None:
         self.scheduler.stop()
         
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(20)
@@ -404,7 +404,7 @@ class PublishManagerPage(QWidget):
         
         return widget
         
-    def _load_tasks(self):
+    def _load_tasks(self) -> None:
         """加载任务列表"""
         self.tasks_list.clear()
         tasks = self.publish_manager.list_tasks(limit=50)
@@ -444,7 +444,7 @@ class PublishManagerPage(QWidget):
             item.setData(Qt.UserRole, task.id)
             self.tasks_list.addItem(item)
             
-    def _filter_tasks(self):
+    def _filter_tasks(self) -> None:
         """筛选任务"""
         status_map = {
             "全部": None,
@@ -464,7 +464,7 @@ class PublishManagerPage(QWidget):
         # 复用_load_tasks中的显示逻辑
         self._display_tasks(tasks)
         
-    def _display_tasks(self, tasks):
+    def _display_tasks(self, tasks) -> None:
         """显示任务列表"""
         status_icons = {
             PublishStatus.PENDING: "⏳",
@@ -501,7 +501,7 @@ class PublishManagerPage(QWidget):
             item.setData(Qt.UserRole, task.id)
             self.tasks_list.addItem(item)
             
-    def _browse_file(self):
+    def _browse_file(self) -> None:
         """浏览文件"""
         file_path, _ = QFileDialog.getOpenFileName(
             self,
@@ -512,7 +512,7 @@ class PublishManagerPage(QWidget):
         if file_path:
             self.file_path.setText(file_path)
             
-    def _create_task(self):
+    def _create_task(self) -> None:
         """创建发布任务"""
         file_path = self.file_path.text().strip()
         title = self.title_input.text().strip()
@@ -565,6 +565,6 @@ class PublishManagerPage(QWidget):
             
         self._load_tasks()
         
-    def _batch_schedule(self):
+    def _batch_schedule(self) -> None:
         """批量智能排期"""
         QMessageBox.information(self, "提示", "批量排期功能开发中...")

@@ -115,7 +115,7 @@ class CacheManager:
 cache = CacheManager()
 
 
-def cached(ttl: int = 300, key_prefix: str = ""):
+def cached(ttl: int = 300, key_prefix: str = "") -> None:
     """缓存装饰器
     
     Usage:
@@ -125,7 +125,7 @@ def cached(ttl: int = 300, key_prefix: str = ""):
     """
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> None:
             # 生成缓存key
             cache_key = _generate_cache_key(key_prefix, func.__name__, args, kwargs)
             
@@ -159,23 +159,23 @@ def _generate_cache_key(prefix: str, func_name: str, args: tuple, kwargs: dict) 
 
 
 # 常用缓存模式
-def cache_model_list(model_name: str, ttl: int = 60):
+def cache_model_list(model_name: str, ttl: int = 60) -> None:
     """模型列表缓存"""
     return cached(ttl=ttl, key_prefix=f"model:{model_name}:list")
 
 
-def cache_api_response(endpoint: str, ttl: int = 30):
+def cache_api_response(endpoint: str, ttl: int = 30) -> None:
     """API响应缓存"""
     return cached(ttl=ttl, key_prefix=f"api:{endpoint}")
 
 
-def cache_forecast_result(model_type: str, ttl: int = 600):
+def cache_forecast_result(model_type: str, ttl: int = 600) -> None:
     """预测结果缓存（10分钟）"""
     return cached(ttl=ttl, key_prefix=f"forecast:{model_type}")
 
 
 # 缓存预热工具
-async def warm_cache(patterns: list[str]):
+async def warm_cache(patterns: list[str]) -> None:
     """缓存预热 - 预加载常用数据"""
     logger.info(f"Cache warming started for {len(patterns)} patterns")
     # 实际实现由业务层填充

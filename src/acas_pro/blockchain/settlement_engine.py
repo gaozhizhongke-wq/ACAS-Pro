@@ -166,7 +166,7 @@ class SettlementEngine:
         self.db = DatabaseManager()
         self._init_database()
     
-    def _init_database(self):
+    def _init_database(self) -> None:
         """初始化数据库表"""
         self.db.execute("""
             CREATE TABLE IF NOT EXISTS settlements (
@@ -281,7 +281,7 @@ class SettlementEngine:
             **kwargs
         )
     
-    def _save_settlement(self, record: SettlementRecord):
+    def _save_settlement(self, record: SettlementRecord) -> None:
         """保存结算记录"""
         self.db.execute("""
             INSERT OR REPLACE INTO settlements (
@@ -508,5 +508,6 @@ class SettlementEngine:
                 (SettlementStatus.COMPLETED.value, datetime.now().isoformat(), settlement_id)
             )
             return True
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Settlement status update failed: {e}")
             return False

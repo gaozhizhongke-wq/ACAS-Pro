@@ -36,7 +36,7 @@ class AvatarCard(QFrame):
         self.avatar = avatar
         self.setup_ui()
     
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         self.setFixedSize(200, 280)
         self.setCursor(Qt.PointingHandCursor)
         self.setStyleSheet("""
@@ -110,7 +110,7 @@ class AvatarCard(QFrame):
         usage.setStyleSheet("color: #58a6ff; font-size: 11px;")
         layout.addWidget(usage)
     
-    def mousePressEvent(self, event):
+    def mousePressEvent(self, event) -> None:
         self.clicked.emit(self.avatar.id)
 
 
@@ -124,7 +124,7 @@ class CreateAvatarDialog(QDialog):
         self.setMinimumSize(600, 700)
         self.setup_ui()
     
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         
         # 创建方式选择
@@ -189,7 +189,7 @@ class CreateAvatarDialog(QDialog):
         
         self.selected_template = None
     
-    def on_template_selected(self, template_id: str):
+    def on_template_selected(self, template_id: str) -> None:
         """选择模板"""
         self.selected_template = template_id
         self.accept()
@@ -223,7 +223,7 @@ class AvatarStudioPage(QWidget):
         self.setup_ui()
         self.load_data()
     
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
         
@@ -459,13 +459,13 @@ class AvatarStudioPage(QWidget):
         
         return widget
     
-    def load_data(self):
+    def load_data(self) -> None:
         """加载数据"""
         self.load_avatars()
         self.load_scenes()
         self.load_combos()
     
-    def load_avatars(self):
+    def load_avatars(self) -> None:
         """加载数字人列表"""
         # 清除现有
         while self.avatars_grid.count():
@@ -480,7 +480,7 @@ class AvatarStudioPage(QWidget):
             card.clicked.connect(self.on_avatar_clicked)
             self.avatars_grid.addWidget(card, i // 4, i % 4)
     
-    def load_scenes(self):
+    def load_scenes(self) -> None:
         """加载场景列表"""
         self.scene_list.clear()
         
@@ -490,7 +490,7 @@ class AvatarStudioPage(QWidget):
             item.setData(Qt.UserRole, scene.id)
             self.scene_list.addItem(item)
     
-    def load_combos(self):
+    def load_combos(self) -> None:
         """加载下拉框"""
         # 数字人
         self.avatar_combo.clear()
@@ -510,7 +510,7 @@ class AvatarStudioPage(QWidget):
         for scene in scenes:
             self.scene_combo.addItem(scene.name, scene.id)
     
-    def on_create_avatar(self):
+    def on_create_avatar(self) -> None:
         """创建数字人"""
         dialog = CreateAvatarDialog(self.engine, self)
         if dialog.exec() == QDialog.Accepted:
@@ -527,7 +527,7 @@ class AvatarStudioPage(QWidget):
             else:
                 QMessageBox.information(self, "提示", "自定义创建功能开发中...")
     
-    def on_avatar_clicked(self, avatar_id: str):
+    def on_avatar_clicked(self, avatar_id: str) -> None:
         """点击数字人"""
         avatar = self.engine.get_avatar(avatar_id)
         if avatar:
@@ -539,11 +539,11 @@ class AvatarStudioPage(QWidget):
                 f"使用次数: {avatar.usage_count}"
             )
     
-    def on_create_scene(self):
+    def on_create_scene(self) -> None:
         """创建场景"""
         QMessageBox.information(self, "提示", "场景创建功能开发中...")
     
-    def on_generate_video(self):
+    def on_generate_video(self) -> None:
         """生成视频"""
         avatar_id = self.avatar_combo.currentData()
         scene_id = self.scene_combo.currentData()
@@ -576,7 +576,7 @@ class AvatarStudioPage(QWidget):
             f"生成过程可能需要几分钟，请稍后查看。"
         )
     
-    def _update_progress(self):
+    def _update_progress(self) -> None:
         """更新进度"""
         self.current_progress += 2
         self.progress_bar.setValue(min(self.current_progress, 100))

@@ -46,7 +46,7 @@ class RenderThread(QThread):
         self.video_maker = video_maker
         self.project_id = project_id
         
-    def run(self):
+    def run(self) -> None:
         try:
             for i in range(0, 101, 10):
                 self.progress.emit(i)
@@ -75,7 +75,7 @@ class VideoMakerPage(QWidget):
         self._setup_ui()
         self._load_projects()
         
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(20)
@@ -397,7 +397,7 @@ class VideoMakerPage(QWidget):
         
         return widget
         
-    def _load_projects(self):
+    def _load_projects(self) -> None:
         """加载项目列表"""
         self.projects_list.clear()
         projects = self.video_maker.list_projects(limit=20)
@@ -426,7 +426,7 @@ class VideoMakerPage(QWidget):
             item.setData(Qt.UserRole, project.id)
             self.projects_list.addItem(item)
             
-    def _create_new_project(self):
+    def _create_new_project(self) -> None:
         """创建新项目"""
         from PySide6.QtWidgets import QDialog, QFormLayout
         
@@ -487,7 +487,7 @@ class VideoMakerPage(QWidget):
             
             QMessageBox.information(self, "成功", f"项目 '{project.name}' 创建成功！")
             
-    def _import_materials(self):
+    def _import_materials(self) -> None:
         """导入素材"""
         files, _ = QFileDialog.getOpenFileNames(
             self,
@@ -501,14 +501,14 @@ class VideoMakerPage(QWidget):
             self._update_materials_list()
             QMessageBox.information(self, "成功", f"已导入 {len(files)} 个素材文件")
             
-    def _update_materials_list(self):
+    def _update_materials_list(self) -> None:
         """更新素材列表显示"""
         self.materials_list.clear()
         for material in self.materials:
             item = QListWidgetItem(material)
             self.materials_list.addItem(item)
             
-    def _auto_edit(self):
+    def _auto_edit(self) -> None:
         """智能自动剪辑"""
         if not self.current_project:
             QMessageBox.warning(self, "提示", "请先选择一个项目")
@@ -529,7 +529,7 @@ class VideoMakerPage(QWidget):
         else:
             QMessageBox.critical(self, "错误", "剪辑失败")
             
-    def _render_video(self):
+    def _render_video(self) -> None:
         """渲染视频"""
         if not self.current_project:
             QMessageBox.warning(self, "提示", "请先选择一个项目")
@@ -544,18 +544,18 @@ class VideoMakerPage(QWidget):
         self.render_thread.error.connect(self._on_render_error)
         self.render_thread.start()
         
-    def _on_render_finished(self, output_path):
+    def _on_render_finished(self, output_path) -> None:
         """渲染完成回调"""
         self.progress_bar.setVisible(False)
         QMessageBox.information(self, "成功", f"视频渲染完成！\n保存位置: {output_path}")
         self._load_projects()
         
-    def _on_render_error(self, error_msg):
+    def _on_render_error(self, error_msg) -> None:
         """渲染错误回调"""
         self.progress_bar.setVisible(False)
         QMessageBox.critical(self, "错误", f"渲染失败: {error_msg}")
         
-    def _generate_voice(self):
+    def _generate_voice(self) -> None:
         """生成配音"""
         text = self.voice_text.toPlainText().strip()
         if not text:

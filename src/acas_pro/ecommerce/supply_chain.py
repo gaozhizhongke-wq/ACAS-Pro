@@ -133,7 +133,7 @@ class SupplyChainManager:
         self.db = DatabaseManager()
         self._init_database()
     
-    def _init_database(self):
+    def _init_database(self) -> None:
         """初始化数据库表"""
         # 供应商表
         self.db.execute("""
@@ -218,7 +218,7 @@ class SupplyChainManager:
         logger.info(f"Created supplier: {supplier_id}")
         return supplier
     
-    def _save_supplier(self, supplier: Supplier):
+    def _save_supplier(self, supplier: Supplier) -> None:
         """保存供应商"""
         self.db.execute("""
             INSERT OR REPLACE INTO suppliers (
@@ -334,7 +334,7 @@ class SupplyChainManager:
             self._sync_to_platforms(product_id, shop_id, new_quantity)
             
         except Exception as e:
-            logger.exception(f"Error in unknown_function: {e}")
+            logger.exception(f"Error in track_logistics: {e}")
             sync_record.status = InventorySyncStatus.FAILED
             sync_record.error_message = str(e)
             logger.error(f"Inventory sync failed: {e}")
@@ -342,7 +342,7 @@ class SupplyChainManager:
         self._save_inventory_sync(sync_record)
         return sync_record
     
-    def _save_inventory_sync(self, sync: InventorySync):
+    def _save_inventory_sync(self, sync: InventorySync) -> None:
         """保存库存同步记录"""
         self.db.execute("""
             INSERT INTO inventory_syncs (
@@ -356,7 +356,7 @@ class SupplyChainManager:
             sync.status.value, sync.error_message, sync.synced_at, sync.source
         ))
     
-    def _sync_to_platforms(self, product_id: str, shop_id: str, quantity: int):
+    def _sync_to_platforms(self, product_id: str, shop_id: str, quantity: int) -> None:
         """同步库存到各电商平台
         
         通过平台API客户端更新库存。如API未配置，仅记录日志。
@@ -452,7 +452,7 @@ class SupplyChainManager:
         logger.info(f"Created purchase order: {order_id}")
         return order
     
-    def _save_purchase_order(self, order: PurchaseOrder):
+    def _save_purchase_order(self, order: PurchaseOrder) -> None:
         """保存采购订单"""
         self.db.execute("""
             INSERT OR REPLACE INTO purchase_orders (
@@ -622,7 +622,7 @@ class SupplyChainManager:
         
         return alerts
     
-    def _get_shop_manager(self):
+    def _get_shop_manager(self) -> None:
         """获取ShopManager实例（延迟导入避免循环依赖）"""
         from .shop_manager import ShopManager
         return ShopManager()
@@ -638,9 +638,8 @@ class SupplyChainManager:
             if rows:
                 latest = rows[0]
                 return dict(latest)
-        except Exception:
-            pass
-        return None
+        except Exception as e:
+            logger.debug(f"Local logistics query failed: {e}")
 
     def _query_platform_logistics(self, company: str, tracking_no: str) -> Optional[Dict[str, Any]]:
         """通过平台API查询物流信息"""
@@ -823,15 +822,15 @@ class SupplyChainManager:
             'note': '请配置快递100 API或平台API以启用实时物流追踪',
         }
 
-    async def get_supplier_async(self, *args, **kwargs):
+    async def get_supplier_async(self, *args, **kwargs) -> None:
         """异步版本: get_supplier"""
         return await asyncio.to_thread(self.get_supplier, *args, **kwargs)
 
-    async def get_suppliers_by_owner_async(self, *args, **kwargs):
+    async def get_suppliers_by_owner_async(self, *args, **kwargs) -> None:
         """异步版本: get_suppliers_by_owner"""
         return await asyncio.to_thread(self.get_suppliers_by_owner, *args, **kwargs)
 
-    async def get_low_stock_alerts_async(self, *args, **kwargs):
+    async def get_low_stock_alerts_async(self, *args, **kwargs) -> None:
         """异步版本: get_low_stock_alerts"""
         return await asyncio.to_thread(self.get_low_stock_alerts, *args, **kwargs)
 

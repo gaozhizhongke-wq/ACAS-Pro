@@ -29,7 +29,7 @@ class RSSArticle:
     language: str = "zh"
     tags: List[str] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.tags is None:
             self.tags = []
     
@@ -264,7 +264,7 @@ class RSSCollector:
         union = len(words1 | words2)
         return intersection / union if union > 0 else 0.0
     
-    def add_source(self, name: str, url: str):
+    def add_source(self, name: str, url: str) -> None:
         """Add a custom RSS source"""
         self.sources[name] = url
         logger.info(f"Added RSS source: {name}")

@@ -42,7 +42,7 @@ class TrendItemCard(QFrame):
         self.item = trend_item
         self._setup_ui()
         
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         self.setStyleSheet(f"""
             QFrame {{
                 background-color: {COLORS['surface']};
@@ -132,7 +132,7 @@ class ContentCreationPage(QWidget):
         # 启动趋势监测
         self.trend_monitor.start_monitoring()
         
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(20)
@@ -441,7 +441,7 @@ class ContentCreationPage(QWidget):
         layout.addStretch()
         return widget
         
-    def _refresh_trends(self):
+    def _refresh_trends(self) -> None:
         """刷新热点列表"""
         # 清空现有列表
         while self.trend_layout.count() > 1:
@@ -485,7 +485,7 @@ class ContentCreationPage(QWidget):
             error_label.setStyleSheet(f"color: {COLORS['danger']};")
             self.trend_layout.insertWidget(0, error_label)
             
-    def _generate_script(self):
+    def _generate_script(self) -> None:
         """生成文案"""
         input_text = self.script_input.toPlainText().strip()
         if not input_text:
@@ -542,7 +542,7 @@ class ContentCreationPage(QWidget):
             logger.error(f"Failed to generate script: {e}")
             QMessageBox.critical(self, "生成失败", f"文案生成失败: {e}")
             
-    def _copy_script(self):
+    def _copy_script(self) -> None:
         """复制文案到剪贴板"""
         from PySide6.QtWidgets import QApplication
         text = self.script_output.toPlainText()

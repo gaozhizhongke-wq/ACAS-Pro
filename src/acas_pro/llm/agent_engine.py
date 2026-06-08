@@ -246,7 +246,7 @@ Available tools will be provided in the conversation. Use them when appropriate.
         if isinstance(task, str):
             task = AgentTask(prompt=task)
         
-        def _run():
+        def _run() -> None:
             try:
                 result = self.execute(task)
                 if callback:
@@ -258,7 +258,7 @@ Available tools will be provided in the conversation. Use them when appropriate.
         thread.start()
         return thread
     
-    def stop(self):
+    def stop(self) -> None:
         """Stop current execution"""
         self._stop_flag = True
         self.status = AgentStatus.STOPPED
@@ -346,7 +346,7 @@ class AgentOrchestrator:
             
             agent = self._agents[agent_id]
             
-            def _run(tid, t, a):
+            def _run(tid, t, a) -> None:
                 results[tid] = a.execute(t)
             
             thread = threading.Thread(target=_run, args=(task.id, task, agent))

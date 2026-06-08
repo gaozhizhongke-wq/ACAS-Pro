@@ -18,7 +18,7 @@ _registry = None
 _metrics = {}
 
 
-def _init_metrics():
+def _init_metrics() -> None:
     """Lazily initialise metrics on first request (idempotent)."""
     global _registry, _metrics
     if _registry is not None:
@@ -69,7 +69,7 @@ def _init_metrics():
 
 
 @bp.route('', methods=['GET'])
-def metrics():
+def metrics() -> None:
     """Expose Prometheus metrics."""
     if not _HAS_PROMETHEUS:
         return Response('prometheus_client not installed', status=503, mimetype='text/plain')

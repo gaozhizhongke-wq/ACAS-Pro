@@ -132,7 +132,7 @@ class SentimentAnalyzer:
     def __init__(self):
         self._compile_patterns()
     
-    def _compile_patterns(self):
+    def _compile_patterns(self) -> None:
         """Compile regex patterns for efficiency"""
         self.patterns = {}
         for lang in ['en', 'zh']:

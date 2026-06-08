@@ -8,7 +8,7 @@ class TimesFMModel:
     def __init__(self, model_path: str = "", **kwargs):
         self.model_path = model_path
     
-    def load(self):
+    def load(self) -> None:
         """Load model weights."""
         pass
     

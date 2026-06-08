@@ -13,11 +13,11 @@ class MetricsMonitor:
         self._gauges: Dict[str, float] = {}
         self._histories: Dict[str, List[tuple]] = defaultdict(list)
 
-    def increment(self, name: str, value: float = 1.0):
+    def increment(self, name: str, value: float = 1.0) -> None:
         self._counters[name] += value
         self._histories[name].append((datetime.now(timezone.utc).isoformat(), value))
 
-    def gauge(self, name: str, value: float):
+    def gauge(self, name: str, value: float) -> None:
         self._gauges[name] = value
 
     def get_counter(self, name: str) -> float:
@@ -36,7 +36,7 @@ class MetricsMonitor:
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
-    def reset(self):
+    def reset(self) -> None:
         self._counters.clear()
         self._gauges.clear()
         self._histories.clear()

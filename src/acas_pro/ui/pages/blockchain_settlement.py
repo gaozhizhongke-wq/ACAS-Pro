@@ -30,7 +30,7 @@ class WalletCard(QFrame):
         self.wallet = wallet
         self.setup_ui()
     
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         self.setFixedSize(280, 160)
         self.setStyleSheet("""
             WalletCard {
@@ -119,7 +119,7 @@ class SettlementCard(QFrame):
         self.settlement = settlement
         self.setup_ui()
     
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         self.setMinimumHeight(120)
         self.setStyleSheet("""
             SettlementCard {
@@ -195,7 +195,7 @@ class BlockchainSettlementPage(QWidget):
         self.setup_ui()
         self.load_data()
     
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
         
@@ -429,13 +429,13 @@ class BlockchainSettlementPage(QWidget):
         
         return widget
     
-    def load_data(self):
+    def load_data(self) -> None:
         """加载数据"""
         self.load_wallets()
         self.load_settlements()
         self.load_transactions()
     
-    def load_wallets(self):
+    def load_wallets(self) -> None:
         """加载钱包列表"""
         # 清除现有
         while self.wallet_grid.count():
@@ -470,7 +470,7 @@ class BlockchainSettlementPage(QWidget):
         # 更新余额汇总
         self.balance_summary.setText("USDT: 16,080.50 | USDC: 5,000.00")
     
-    def load_settlements(self):
+    def load_settlements(self) -> None:
         """加载结算记录"""
         # 清除现有
         while self.settlement_list_layout.count() > 1:
@@ -516,7 +516,7 @@ class BlockchainSettlementPage(QWidget):
             card = SettlementCard(settlement)
             self.settlement_list_layout.insertWidget(0, card)
     
-    def load_transactions(self):
+    def load_transactions(self) -> None:
         """加载交易记录"""
         self.tx_table.setRowCount(0)
         
@@ -538,11 +538,11 @@ class BlockchainSettlementPage(QWidget):
             detail_btn = QPushButton("详情")
             self.tx_table.setCellWidget(row, 6, detail_btn)
     
-    def on_create_wallet(self):
+    def on_create_wallet(self) -> None:
         """创建钱包"""
         QMessageBox.information(self, "创建钱包", "钱包创建功能开发中...")
     
-    def on_create_settlement(self):
+    def on_create_settlement(self) -> None:
         """创建结算"""
         QMessageBox.information(
             self, "创建结算",

@@ -11,9 +11,26 @@ import re
 
 
 class SecurityHeaders:
-    """Security headers middleware for Flask applications"""
+    """Security headers middleware for Flask applications.
     
-    DEFAULT_CSP = (
+    Generates a per-request nonce for CSP, replacing unsafe-inline with nonce-based policy.
+    """
+    
+    # Base CSP template (no unsafe-inline or unsafe-eval)
+    BASE_CSP = (
+        "default-src 'self'; "
+        "script-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net; "
+        "style-src 'self' 'nonce-{nonce}' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
+        "font-src 'self' https://fonts.gstatic.com; "
+        "img-src 'self' data: https: blob:; "
+        "connect-src 'self' https://api.deepseek.com https://api.openai.com; "
+        "frame-ancestors 'none'; "
+        "base-uri 'self'; "
+        "form-action 'self';"
+    )
+    
+    # Legacy CSP for templates that cannot use nonce (gradually migrate)
+    LEGACY_CSP = (
         "default-src 'self'; "
         "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "
         "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; "
@@ -26,21 +43,22 @@ class SecurityHeaders:
     )
     
     def __init__(self, app: Flask = None, 
-                 csp: str = None,
+                 use_nonce: bool = True,
                  hsts: bool = True,
                  hsts_max_age: int = 63072000):
-        self.csp = csp or self.DEFAULT_CSP
+        self.use_nonce = use_nonce
         self.hsts = hsts
         self.hsts_max_age = hsts_max_age
         
         if app:
             self.init_app(app)
     
-    def init_app(self, app: Flask):
+    def init_app(self, app: Flask) -> None:
         """Initialize security headers for Flask app"""
+        import secrets
         
         @app.after_request
-        def add_security_headers(response):
+        def add_security_headers(response) -> None:
             # Prevent MIME type sniffing
             response.headers['X-Content-Type-Options'] = 'nosniff'
             
@@ -60,7 +78,12 @@ class SecurityHeaders:
             )
             
             # Content Security Policy
-            response.headers['Content-Security-Policy'] = self.csp
+            if self.use_nonce:
+                nonce = secrets.token_urlsafe(16)
+                csp = self.BASE_CSP.format(nonce=nonce)
+                response.headers['Content-Security-Policy'] = csp
+            else:
+                response.headers['Content-Security-Policy'] = self.LEGACY_CSP
             
             # HSTS (HTTPS Strict Transport Security)
             if self.hsts and request.is_secure:
@@ -72,6 +95,16 @@ class SecurityHeaders:
             response.headers.pop('Server', None)
             
             return response
+    
+    _current_nonce: str = ''
+    
+    @classmethod
+    def set_nonce(cls, nonce: str) -> None:
+        cls._current_nonce = nonce
+    
+    @classmethod
+    def get_nonce(cls) -> str:
+        return cls._current_nonce
 
 
 class InputValidator:
@@ -136,44 +169,46 @@ class InputValidator:
         return bool(re.match(pattern, phone))
 
 
-def require_https(f):
+def require_https(f) -> None:
     """Decorator to require HTTPS for a route"""
     @wraps(f)
-    def decorated_function(*args, **kwargs):
+    def decorated_function(*args, **kwargs) -> None:
         if not request.is_secure and request.headers.get('X-Forwarded-Proto') != 'https':
             return {'error': 'HTTPS required'}, 403
         return f(*args, **kwargs)
     return decorated_function
 
 
-def rate_limit_by_ip(max_requests: int = 100, window_seconds: int = 60):
-    """Simple rate limiter by IP (uses Flask g object)"""
-    def decorator(f):
+def rate_limit_by_ip(max_requests: int = 100, window_seconds: int = 60) -> None:
+    """Rate limiter by IP using module-level storage with auto-cleanup."""
+    import time as _time
+    _rate_store: dict = {}
+    _last_cleanup = 0.0
+
+    def decorator(f) -> None:
         @wraps(f)
-        def decorated_function(*args, **kwargs):
-            # Note: This is a simple implementation
-            # For production, use Redis-based rate limiting
+        def decorated_function(*args, **kwargs) -> None:
+            nonlocal _last_cleanup
+            now = _time.time()
+            
+            # Auto-cleanup old entries every 60s
+            if now - _last_cleanup > 60:
+                _rate_store.clear()
+                _last_cleanup = now
+            
             ip = request.remote_addr
             key = f"rate_limit:{ip}:{f.__name__}"
             
-            # Check if rate limit exceeded (using simple in-memory store)
-            if not hasattr(g, '_rate_limits'):
-                g._rate_limits = {}
+            if key not in _rate_store:
+                _rate_store[key] = []
             
-            import time
-            now = time.time()
+            # Clean expired entries for this key
+            _rate_store[key] = [t for t in _rate_store[key] if now - t < window_seconds]
             
-            if key not in g._rate_limits:
-                g._rate_limits[key] = []
-            
-            # Clean old entries
-            g._rate_limits[key] = [t for t in g._rate_limits[key] if now - t < window_seconds]
-            
-            if len(g._rate_limits[key]) >= max_requests:
+            if len(_rate_store[key]) >= max_requests:
                 return {'error': 'Rate limit exceeded'}, 429
             
-            g._rate_limits[key].append(now)
-            
+            _rate_store[key].append(now)
             return f(*args, **kwargs)
         return decorated_function
     return decorator

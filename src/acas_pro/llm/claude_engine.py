@@ -46,7 +46,7 @@ class ClaudeEngine(BaseLLMEngine):
         self._client = None
         self._init_client()
     
-    def _init_client(self):
+    def _init_client(self) -> None:
         """Initialize Anthropic client"""
         try:
             import anthropic
@@ -112,7 +112,7 @@ class ClaudeEngine(BaseLLMEngine):
                 finish_reason=response.stop_reason
             )
         except Exception as e:
-            logger.exception(f"Error in unknown_function: {e}")
+            logger.exception(f"Error in chat: {e}")
             raise RuntimeError(f"Claude API error: {e}")
     
     def chat_stream(self, messages: List[LLMMessage]) -> Iterator[LLMStreamChunk]:
@@ -141,7 +141,7 @@ class ClaudeEngine(BaseLLMEngine):
                     is_finished=True
                 )
         except Exception as e:
-            logger.exception(f"Error in unknown_function: {e}")
+            logger.exception(f"Error in chat_stream: {e}")
             raise RuntimeError(f"Claude streaming error: {e}")
     
     def quick_chat(self, message: str, system: str = None) -> str:

@@ -35,7 +35,7 @@ class WeiboPost:
     source: str
     pics: List[str] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.pics is None:
             self.pics = []
     
@@ -248,7 +248,7 @@ class WeiboCollector:
             pics=pics
         )
     
-    def _check_rate_limit(self):
+    def _check_rate_limit(self) -> None:
         """Check and handle rate limiting"""
         # Weibo API: 1000 requests per hour per app
         current_time = time.time()

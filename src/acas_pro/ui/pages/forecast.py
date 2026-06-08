@@ -39,7 +39,7 @@ class ForecastPage(QWidget):
         self._setup_ui()
         self._generate_sample_forecast()
     
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 24, 28, 24)
         layout.setSpacing(24)
@@ -154,7 +154,7 @@ class ForecastPage(QWidget):
         """)
         layout.addWidget(self.summary)
     
-    def _generate_sample_forecast(self):
+    def _generate_sample_forecast(self) -> None:
         """Generate sample forecast data"""
         # Create sample historical data
         history = []
@@ -171,11 +171,11 @@ class ForecastPage(QWidget):
         result = timesfm_engine.forecast("SAMPLE-001", history, 30)
         self._display_result(result)
     
-    def _generate_forecast(self):
+    def _generate_forecast(self) -> None:
         """Generate forecast from user input"""
         self._generate_sample_forecast()
     
-    def _display_result(self, result: ForecastResult):
+    def _display_result(self, result: ForecastResult) -> None:
         """Display forecast result"""
         # Update table
         self.table.setRowCount(len(result.forecast))

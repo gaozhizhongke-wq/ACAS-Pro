@@ -20,15 +20,15 @@ class _Translations:
                 pass
         return text
 
-    def register(self, lang: str, catalog: Dict[str, str]):
+    def register(self, lang: str, catalog: Dict[str, str]) -> None:
         if lang not in self._catalog:
             self._catalog[lang] = {}
         self._catalog[lang].update(catalog)
 
-    def set_default_lang(self, lang: str):
+    def set_default_lang(self, lang: str) -> None:
         self._default_lang = lang
 
-    def available_languages(self):
+    def available_languages(self) -> None:
         return list(self._catalog.keys())
 
 

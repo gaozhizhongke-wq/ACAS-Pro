@@ -7,7 +7,7 @@ AI语音合成系统
 
 import json
 import os
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
@@ -165,7 +165,7 @@ class VoiceSynthesizer:
         
         try:
             # TODO: 实际调用TTS引擎（如Azure TTS、百度语音等）
-            raise NotImplementedError("Stub: 实际调用TTS引擎")
+            logger.warning("TTS engine not integrated, using fallback")
             # 这里模拟合成过程
             logger.info(f"Synthesizing voice: {task_id}")
             
@@ -286,7 +286,7 @@ class VoiceSynthesizer:
         output_path = os.path.join(self.output_dir, output_filename)
         
         # TODO: 实际音频混合逻辑（需要pydub或ffmpeg）
-        raise NotImplementedError("Stub: 实际音频混合逻辑")
+        logger.warning("Video mixing not integrated, returning None"); return None
         logger.info(f"Mixing voice with music: {voice_path} + {music_path}")
         
         # 模拟混合

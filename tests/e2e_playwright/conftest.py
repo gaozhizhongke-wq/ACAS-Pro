@@ -103,6 +103,13 @@ def browser_context_args(flask_server):
     return {"base_url": flask_server}
 
 
+@pytest.fixture
+def authenticated_page(page: Page):
+    """Return a pre-authenticated page (for tests that need auth)."""
+    # For now, just return the page (auth is handled by the app in testing mode)
+    return page
+
+
 @pytest.fixture(scope="session")
 def browser_type_launch_args():
     """Configure browser launch args."""

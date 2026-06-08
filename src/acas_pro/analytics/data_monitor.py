@@ -91,7 +91,7 @@ class DataMonitor:
         self.db = db or DatabaseManager()
         self._init_database()
         
-    def _init_database(self):
+    def _init_database(self) -> None:
         """初始化数据库表"""
         # 指标数据表
         self.db.execute("""
@@ -433,7 +433,7 @@ class DataMonitor:
         
         return self.db.fetchall(query, params)
         
-    def acknowledge_alert(self, alert_id: int, user: str):
+    def acknowledge_alert(self, alert_id: int, user: str) -> None:
         """确认预警"""
         self.db.execute("""
             UPDATE data_alerts 

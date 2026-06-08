@@ -55,7 +55,7 @@ class GeoTargeting:
     exclude_regions: List[str] = None  # 排除地区
     radius_targeting: Optional[Dict[str, Any]] = None  # 半径定向
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.provinces is None:
             self.provinces = []
         if self.cities is None:
@@ -73,7 +73,7 @@ class DeviceTargeting:
     brands: List[str] = None           # 手机品牌
     price_ranges: List[str] = None     # 手机价位段
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.device_types is None:
             self.device_types = ['mobile']
         if self.os_types is None:
@@ -118,7 +118,7 @@ class AudienceSegment:
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.age_range is None:
             self.age_range = AgeRange()
         if self.geo_targeting is None:
@@ -179,19 +179,19 @@ class AudienceTargeting:
         self._init_database()
         self.logger = logger.getChild("audience_targeting")
 
-    def close(self):
+    def close(self) -> None:
         """Close the managed database connection."""
         if self._conn is not None:
             try:
                 self._conn.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("audience_targeting DB connection cleanup: {e}")
             self._conn = None
 
-    def __del__(self):
+    def __del__(self) -> None:
         self.close()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """初始化数据库表"""
         self._conn = sqlite3.connect(self.db_path)
         conn = self._conn
@@ -599,7 +599,7 @@ class AudienceTargeting:
         
         return None
     
-    async def get_segments_async(self, type=None, status=None):
+    async def get_segments_async(self, type=None, status=None) -> None:
         """获取人群包列表 (真正异步)
         
         Args:

@@ -6,7 +6,7 @@ Extracted from order pages for testability
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 from datetime import datetime
 from enum import Enum
 

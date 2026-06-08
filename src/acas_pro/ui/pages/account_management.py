@@ -47,7 +47,7 @@ class AddAccountDialog(QDialog):
         self.setMinimumWidth(400)
         self._setup_ui()
         
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QFormLayout(self)
         layout.setSpacing(12)
         
@@ -105,7 +105,7 @@ class AddAccountDialog(QDialog):
         
         layout.addRow(btn_layout)
         
-    def _on_add(self):
+    def _on_add(self) -> None:
         """添加账号"""
         platform_map = {
             "抖音": Platform.DOUYIN,
@@ -143,7 +143,7 @@ class AccountCard(QFrame):
         self.account = account
         self._setup_ui()
         
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         self.setStyleSheet(f"""
             QFrame {{
                 background-color: {COLORS['surface']};
@@ -315,7 +315,7 @@ class AccountManagementPage(QWidget):
         self._setup_ui()
         self._load_accounts()
         
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(20)
@@ -449,7 +449,7 @@ class AccountManagementPage(QWidget):
         scroll.setWidget(self.accounts_container)
         layout.addWidget(scroll)
         
-    def _load_accounts(self):
+    def _load_accounts(self) -> None:
         """加载账号列表"""
         # 清空现有列表
         while self.accounts_layout.count() > 1:
@@ -464,7 +464,7 @@ class AccountManagementPage(QWidget):
             card = AccountCard(account)
             self.accounts_layout.insertWidget(self.accounts_layout.count() - 1, card)
             
-    def _filter_accounts(self):
+    def _filter_accounts(self) -> None:
         """筛选账号"""
         platform_map = {
             "全部平台": None,
@@ -501,13 +501,13 @@ class AccountManagementPage(QWidget):
             card = AccountCard(account)
             self.accounts_layout.insertWidget(self.accounts_layout.count() - 1, card)
             
-    def _show_add_dialog(self):
+    def _show_add_dialog(self) -> None:
         """显示添加账号对话框"""
         dialog = AddAccountDialog(self)
         dialog.account_added.connect(self._on_account_added)
         dialog.exec()
         
-    def _on_account_added(self, data: dict):
+    def _on_account_added(self, data: dict) -> None:
         """处理账号添加"""
         try:
             account = self.account_manager.add_account(

@@ -64,7 +64,7 @@ class Wallet:
         """获取余额"""
         return self.balances.get(currency, 0.0)
     
-    def update_balance(self, currency: str, delta: float):
+    def update_balance(self, currency: str, delta: float) -> None:
         """更新余额"""
         current = self.balances.get(currency, 0.0)
         self.balances[currency] = max(0, current + delta)
@@ -141,7 +141,7 @@ class WalletManager:
         self.db = DatabaseManager()
         self._init_database()
     
-    def _init_database(self):
+    def _init_database(self) -> None:
         """初始化数据库表"""
         self.db.execute("""
             CREATE TABLE IF NOT EXISTS wallets (
@@ -215,7 +215,7 @@ class WalletManager:
         address = "0x" + random_bytes.hex()
         return address
     
-    def _save_wallet(self, wallet: Wallet):
+    def _save_wallet(self, wallet: Wallet) -> None:
         """保存钱包"""
         self.db.execute("""
             INSERT OR REPLACE INTO wallets (
@@ -307,7 +307,7 @@ class WalletManager:
         logger.info(f"Created transaction: {tx_id}")
         return tx
     
-    def _save_transaction(self, tx: Transaction):
+    def _save_transaction(self, tx: Transaction) -> None:
         """保存交易"""
         self.db.execute("""
             INSERT OR REPLACE INTO transactions (

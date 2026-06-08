@@ -11,7 +11,7 @@ class HealthMonitor:
         self._checks: Dict[str, dict] = {}
         self._status = "healthy"
 
-    def register_check(self, name: str, check_fn=None):
+    def register_check(self, name: str, check_fn=None) -> None:
         self._checks[name] = {"fn": check_fn, "status": "unknown", "last_check": None}
 
     def check(self, name: Optional[str] = None) -> dict:
@@ -23,7 +23,7 @@ class HealthMonitor:
             results[n] = info.get("status", "unknown")
         return results
 
-    def update_status(self, name: str, status: str):
+    def update_status(self, name: str, status: str) -> None:
         if name in self._checks:
             self._checks[name]["status"] = status
             self._checks[name]["last_check"] = datetime.now(timezone.utc).isoformat()

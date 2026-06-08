@@ -40,7 +40,7 @@ class KuaishouShopClient(PlatformAPIClient):
     def __init__(self, credentials: PlatformCredentials):
         super().__init__(credentials)
     
-    def _check_business_error(self, result: Dict):
+    def _check_business_error(self, result: Dict) -> None:
         """检查快手业务错误码"""
         error_code = result.get("result", 1)
         if error_code != 1:

@@ -83,7 +83,7 @@ class MainWindow(QMainWindow):
         
         logger.info("Main window initialized")
     
-    def _show_login_dialog(self):
+    def _show_login_dialog(self) -> None:
         """显示登录对话框"""
         login_dialog = LoginDialog(self)
         login_dialog.login_success.connect(self._on_login_success)
@@ -94,7 +94,7 @@ class MainWindow(QMainWindow):
             return False
         return True
     
-    def _on_login_success(self, user_data):
+    def _on_login_success(self, user_data) -> None:
         """登录成功回调"""
         self.current_user = user_data
         self.setWindowTitle(f"{config.name} v{config.version} - {user_data.get('nickname', user_data.get('username', ''))}")
@@ -105,7 +105,7 @@ class MainWindow(QMainWindow):
         
         logger.info(f"User logged in: {user_data.get('username')}")
     
-    def _setup_styles(self):
+    def _setup_styles(self) -> None:
         """Setup application styles"""
         self.setStyleSheet(f"""
             QMainWindow {{
@@ -125,7 +125,7 @@ class MainWindow(QMainWindow):
             }}
         """)
     
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         """Setup user interface"""
         # Central widget
         central = QWidget()
@@ -144,7 +144,7 @@ class MainWindow(QMainWindow):
         content = self._create_content()
         main_layout.addWidget(content, 1)
     
-    def _create_sidebar(self):
+    def _create_sidebar(self) -> None:
         """Create navigation sidebar with scrollable nav area"""
         sidebar = QFrame()
         sidebar.setMaximumWidth(280)
@@ -252,7 +252,7 @@ class MainWindow(QMainWindow):
             layout.addWidget(user_label)
         return sidebar
     
-    def _create_content(self):
+    def _create_content(self) -> None:
         """Create content area"""
         content = QFrame()
         content.setStyleSheet(f"background-color: {COLORS['bg']};")
@@ -319,7 +319,7 @@ class MainWindow(QMainWindow):
         
         return content
     
-    def _create_top_bar(self):
+    def _create_top_bar(self) -> None:
         """Create top navigation bar"""
         top_bar = QFrame()
         top_bar.setMaximumHeight(64)
@@ -358,7 +358,7 @@ class MainWindow(QMainWindow):
         
         return top_bar
     
-    def _navigate(self, nav_id):
+    def _navigate(self, nav_id) -> None:
         """Navigate to page"""
         # Update button states
         for btn, nid in self.nav_buttons:
@@ -391,7 +391,7 @@ class MainWindow(QMainWindow):
             self.content_stack.setCurrentWidget(page)
             logger.info(f"Navigated to {nav_id}")
     
-    def closeEvent(self, event):
+    def closeEvent(self, event) -> None:
         """Handle window close"""
         logger.info("Application shutting down...")
         event.accept()

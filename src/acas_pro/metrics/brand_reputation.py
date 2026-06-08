@@ -55,7 +55,7 @@ class ReputationScore:
     category_breakdown: Dict[str, float] = field(default_factory=dict)
     calculated_at: datetime = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.calculated_at is None:
             self.calculated_at = datetime.now(timezone.utc)
     

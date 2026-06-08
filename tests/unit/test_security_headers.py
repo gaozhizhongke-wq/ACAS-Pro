@@ -10,20 +10,20 @@ from acas_pro.core.security_headers import SecurityHeaders, InputValidator
 class TestSecurityHeaders:
     def test_init_without_app(self):
         sh = SecurityHeaders()
-        assert sh.csp == SecurityHeaders.DEFAULT_CSP
+        assert sh.use_nonce is True
         assert sh.hsts is True
         assert sh.hsts_max_age == 63072000
 
     def test_init_with_custom_csp(self):
-        custom_csp = "default-src 'self';"
-        sh = SecurityHeaders(csp=custom_csp)
-        assert sh.csp == custom_csp
+        # Legacy CSP mode (no nonce)
+        sh = SecurityHeaders(use_nonce=False)
+        assert sh.use_nonce is False
 
     def test_init_with_app(self):
         app = MagicMock()
         app.after_request = lambda f: f
         sh = SecurityHeaders(app=app)
-        assert sh.csp == SecurityHeaders.DEFAULT_CSP
+        assert sh.use_nonce is True
 
     def test_init_app_adds_headers(self):
         app = MagicMock()
@@ -35,7 +35,7 @@ class TestSecurityHeaders:
             return f
         app.after_request = capture_after_request
         
-        sh = SecurityHeaders(app=app, hsts=False)
+        sh = SecurityHeaders(app=app, use_nonce=True)
         assert len(registered_handlers) == 1
         
         # Test the handler - need to mock request before calling handler
@@ -94,7 +94,7 @@ class TestSecurityHeaders:
             return f
         app.after_request = capture_after_request
         
-        sh = SecurityHeaders(app=app, hsts=False)
+        sh = SecurityHeaders(app=app, use_nonce=False)
         handler = registered_handlers[0]
         
         response = MagicMock()

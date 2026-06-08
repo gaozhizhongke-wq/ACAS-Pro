@@ -24,7 +24,7 @@ class Conversation:
     updated_at: float = field(default_factory=time.time)
     metadata: Dict[str, any] = field(default_factory=dict)
     
-    def add_message(self, role: str, content: str, **kwargs):
+    def add_message(self, role: str, content: str, **kwargs) -> None:
         """Add a message to conversation"""
         msg = LLMMessage(role=role, content=content, **kwargs)
         self.messages.append(msg)
@@ -136,7 +136,7 @@ class ConversationManager:
             return self.get_conversation(self._active_conversation)
         return None
     
-    def set_active(self, conv_id: str):
+    def set_active(self, conv_id: str) -> None:
         """Set active conversation"""
         if conv_id in self._conversations or self._load_conversation(conv_id):
             self._active_conversation = conv_id
@@ -178,7 +178,7 @@ class ConversationManager:
         
         return False
     
-    def update_conversation(self, conv: Conversation):
+    def update_conversation(self, conv: Conversation) -> None:
         """Update conversation in storage"""
         self._save_conversation(conv)
     
@@ -214,12 +214,12 @@ class ConversationManager:
                     break
                     
             except Exception as e:
-                logger.exception(f"Error in unknown_function: {e}")
+                logger.exception(f"Error in search_conversations: {e}")
                 continue
         
         return results
     
-    def _save_conversation(self, conv: Conversation):
+    def _save_conversation(self, conv: Conversation) -> None:
         """Save conversation to disk"""
         conv_file = self.storage_path / f"{conv.id}.json"
         with open(conv_file, "w", encoding="utf-8") as f:
@@ -239,7 +239,7 @@ class ConversationManager:
             logger.exception(f"Error in _load_conversation: {e}")
             return None
     
-    def clear_all(self):
+    def clear_all(self) -> None:
         """Clear all conversations"""
         self._conversations.clear()
         self._active_conversation = None

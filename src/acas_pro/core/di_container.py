@@ -103,7 +103,7 @@ def inject(interface: Type[T]) -> Callable:
     """
     def decorator(func: Callable) -> Callable:
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> None:
             container = get_container()
             if interface not in kwargs:
                 kwargs[interface.__name__.lower()] = container.resolve(interface)

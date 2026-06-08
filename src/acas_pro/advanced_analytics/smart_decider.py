@@ -63,7 +63,7 @@ class Decision:
     notes: str = ""
     created_at: Optional[datetime] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.created_at is None:
             self.created_at = datetime.now()
 
@@ -105,14 +105,14 @@ class SmartDecider:
         self._decision_templates: Dict[str, Any] = {}
 
     @property
-    def decision_history(self):
+    def decision_history(self) -> None:
         return self._decisions
 
     @decision_history.setter
-    def decision_history(self, value):
+    def decision_history(self, value) -> None:
         self._decisions = value
 
-    def _init_decision_templates(self):
+    def _init_decision_templates(self) -> None:
         """Initialize decision templates."""
         self._decision_templates = {}
 

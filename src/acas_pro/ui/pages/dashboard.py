@@ -69,12 +69,12 @@ class DashboardPage(QWidget):
         self.welcome_label = None
         self._setup_ui()
     
-    def update_welcome(self, nickname):
+    def update_welcome(self, nickname) -> None:
         """更新欢迎信息"""
         if self.welcome_label:
             self.welcome_label.setText(f"欢迎回来, {nickname}! 👋")
     
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 24, 28, 24)
         layout.setSpacing(24)
@@ -150,14 +150,14 @@ class DashboardPage(QWidget):
         
         layout.addStretch()
     
-    def _view_forecast(self):
+    def _view_forecast(self) -> None:
         pass
     
-    def _check_inventory(self):
+    def _check_inventory(self) -> None:
         pass
     
-    def _market_intel(self):
+    def _market_intel(self) -> None:
         pass
     
-    def _open_settings(self):
+    def _open_settings(self) -> None:
         pass

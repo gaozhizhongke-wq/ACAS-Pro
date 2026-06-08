@@ -1,4 +1,5 @@
 """Dashboard routes for ACAS Pro Web"""
+from typing import Any
 from flask import Blueprint, render_template_string, jsonify, request, session
 from datetime import datetime, timezone
 from acas_pro.core.config import config

@@ -144,7 +144,7 @@ class ProductManager:
         self.db = DatabaseManager()
         self._init_database()
     
-    def _init_database(self):
+    def _init_database(self) -> None:
         """初始化数据库表"""
         self.db.execute("""
             CREATE TABLE IF NOT EXISTS products (
@@ -211,7 +211,7 @@ class ProductManager:
         logger.info(f"Created product: {product_id} ({name})")
         return product
     
-    def _save_product(self, product: Product):
+    def _save_product(self, product: Product) -> None:
         """保存商品"""
         self.db.execute("""
             INSERT OR REPLACE INTO products (
@@ -464,5 +464,6 @@ class ProductManager:
         try:
             rows = self.db.fetchall("SELECT * FROM products")
             return [dict(row) for row in rows] if rows else []
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Product list query failed: {e}")
             return []

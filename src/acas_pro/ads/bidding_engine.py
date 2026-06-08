@@ -51,7 +51,7 @@ class BiddingConfig:
     target_roi: Optional[float] = None # 目标ROI
     adjustments: List[BidAdjustment] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.adjustments is None:
             self.adjustments = []
 

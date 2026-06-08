@@ -53,12 +53,12 @@ class AttributionChart(QFrame):
             }}
         """)
     
-    def set_data(self, data: Dict[str, float]):
+    def set_data(self, data: Dict[str, float]) -> None:
         """设置图表数据"""
         self.data = data
         self.update()
     
-    def paintEvent(self, event):
+    def paintEvent(self, event) -> None:
         painter = QPainter(self)
         painter.setRenderHint(QPainter.Antialiasing)
         
@@ -110,7 +110,7 @@ class DecisionCard(QFrame):
         self.decision = decision
         self._init_ui()
     
-    def _init_ui(self):
+    def _init_ui(self) -> None:
         self.setStyleSheet(f"""
             QFrame {{
                 background-color: {COLORS['bg_card']};
@@ -238,7 +238,7 @@ class AdvancedAnalyticsPage(QWidget):
         self._init_engines()
         self._init_ui()
     
-    def _init_engines(self):
+    def _init_engines(self) -> None:
         """初始化分析引擎"""
         try:
             from .advanced_analytics import AttributionEngine, SmartDecider
@@ -247,7 +247,7 @@ class AdvancedAnalyticsPage(QWidget):
         except ImportError:
             pass
     
-    def _init_ui(self):
+    def _init_ui(self) -> None:
         """初始化UI"""
         self.setStyleSheet(f"""
             QWidget {{
@@ -1032,13 +1032,13 @@ class AdvancedAnalyticsPage(QWidget):
         
         return card
     
-    def _update_stat_card(self, card: QFrame, value: str):
+    def _update_stat_card(self, card: QFrame, value: str) -> None:
         """更新统计卡片值"""
         value_label = card.findChild(QLabel, "statValue")
         if value_label:
             value_label.setText(value)
     
-    def _run_attribution_analysis(self):
+    def _run_attribution_analysis(self) -> None:
         """执行归因分析"""
         # 模拟数据
         sample_data = {
@@ -1082,7 +1082,7 @@ class AdvancedAnalyticsPage(QWidget):
         for suggestion in suggestions:
             self.suggestion_list.addItem(suggestion)
     
-    def _generate_decisions(self):
+    def _generate_decisions(self) -> None:
         """生成智能决策"""
         # 清空现有决策
         for i in reversed(range(self.decision_list_layout.count() - 1)):
@@ -1166,7 +1166,7 @@ class AdvancedAnalyticsPage(QWidget):
         self._update_stat_card(self.executing_card, "0")
         self._update_stat_card(self.completed_card, "0")
     
-    def _compare_models(self):
+    def _compare_models(self) -> None:
         """对比归因模型"""
         models = [
             "首次触达（First Touch）",
@@ -1194,6 +1194,6 @@ class AdvancedAnalyticsPage(QWidget):
             ])
             self.compare_table.setItem(i, 5, QTableWidgetItem(suggestion))
     
-    def refresh_data(self):
+    def refresh_data(self) -> None:
         """刷新数据"""
         pass

@@ -127,7 +127,7 @@ class GestureGenerator:
         self._gesture_library: Dict[str, Gesture] = {}
         self._load_gesture_library()
     
-    def _load_gesture_library(self):
+    def _load_gesture_library(self) -> None:
         """加载手势库"""
         # 预定义手势模板
         gestures = [
@@ -649,7 +649,7 @@ class GestureGenerator:
     ) -> PoseFrame:
         """插值两个姿态"""
         # 线性插值
-        def lerp(a, b, t):
+        def lerp(a, b, t) -> None:
             return a + (b - a) * t
         
         # 插值所有关节

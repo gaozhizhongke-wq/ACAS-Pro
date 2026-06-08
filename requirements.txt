@@ -33,11 +33,12 @@ pandas==2.2.2
 # scikit-learn==1.5.1
 
 # Monitoring
-prometheus-client==0.20.0
+prometheus-client==0.25.0
 
 # Utilities
 python-dotenv==1.0.1
 pytz==2024.1
+PyYAML==6.0.2
 
 # Testing (not installed in production)
 # pytest==8.2.2

@@ -234,7 +234,7 @@ class AuditLog(Base):
 
 
 # 数据库连接工厂
-def get_engine():
+def get_engine() -> None:
     """获取 SQLAlchemy 引擎"""
     db_config = config.database
     if db_config.type == 'postgresql':
@@ -244,7 +244,7 @@ def get_engine():
     return create_engine(url, echo=db_config.echo, pool_pre_ping=True)
 
 
-def init_database():
+def init_database() -> None:
     """初始化数据库（创建所有表）"""
     engine = get_engine()
     Base.metadata.create_all(engine)

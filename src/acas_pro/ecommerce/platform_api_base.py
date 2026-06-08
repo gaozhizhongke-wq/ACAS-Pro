@@ -132,7 +132,7 @@ class PlatformAPIClient(ABC):
     
     # ── 通用HTTP请求 ──────────────────────────────────────────────
     
-    def _get_session(self):
+    def _get_session(self) -> None:
         """获取HTTP session（延迟初始化）"""
         if self._session is None:
             import requests
@@ -143,7 +143,7 @@ class PlatformAPIClient(ABC):
             })
         return self._session
 
-    def _get_async_client(self):
+    def _get_async_client(self) -> None:
         """获取异步HTTP client（延迟初始化）"""
         if self._async_client is None:
             if not _HAS_HTTPX:
@@ -347,7 +347,7 @@ class PlatformAPIClient(ABC):
             raise APIError("REQUEST_FAILED", f"Async request failed: {e}")
 
 
-    def _check_business_error(self, result: Dict):
+    def _check_business_error(self, result: Dict) -> None:
         """检查业务级错误码，子类可覆盖"""
         pass
     
@@ -370,7 +370,7 @@ class PlatformAPIClient(ABC):
     
     def _do_refresh_token(self) -> Optional[str]:
         """子类实现token刷新逻辑"""
-        raise NotImplementedError(f"{self.PLATFORM_NAME} token refresh not implemented")
+        logger.warning(f"{self.PLATFORM_NAME} token refresh not implemented"); return None
     
     # ── 抽象方法：子类必须实现 ─────────────────────────────────────
     

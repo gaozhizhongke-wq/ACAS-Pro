@@ -88,7 +88,7 @@ class PlatformAccount:
     updated_at: datetime = None
     last_login_at: Optional[datetime] = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.tags is None:
             self.tags = []
         if self.created_at is None:
@@ -138,7 +138,7 @@ class AccountManager:
         self.security = security or SessionManager()
         self._init_database()
         
-    def _init_database(self):
+    def _init_database(self) -> None:
         """初始化数据库表"""
         # 账号表
         self.db.execute("""
@@ -270,7 +270,7 @@ class AccountManager:
         logger.info(f"Added account: {account.id}")
         return account
         
-    def _save_account(self, account: PlatformAccount):
+    def _save_account(self, account: PlatformAccount) -> None:
         """保存账号到数据库"""
         self.db.execute("""
             INSERT OR REPLACE INTO platform_accounts (
@@ -451,7 +451,7 @@ class AccountManager:
             
         logger.info(f"Updated status for {account_id}: {status.value}")
         
-    def refresh_token(self, account_id: str, new_token: str, expires_in: int = 3600):
+    def refresh_token(self, account_id: str, new_token: str, expires_in: int = 3600) -> None:
         """刷新访问令牌"""
         encrypted_token = self.security.encrypt(new_token)
         expires_at = datetime.now() + timedelta(seconds=expires_in)
@@ -540,7 +540,7 @@ class AccountManager:
             "platform_distribution": {r['platform']: r['count'] for r in platform_dist}
         }
         
-    def delete_account(self, account_id: str):
+    def delete_account(self, account_id: str) -> None:
         """删除账号"""
         self.db.execute("DELETE FROM platform_accounts WHERE id = ?", (account_id,))
         self.db.execute("DELETE FROM account_stats WHERE account_id = ?", (account_id,))

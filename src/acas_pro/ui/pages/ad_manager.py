@@ -38,7 +38,7 @@ class CampaignDialog(QDialog):
         if campaign:
             self.load_campaign_data()
     
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         
         # 基本信息
@@ -114,7 +114,7 @@ class CampaignDialog(QDialog):
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
     
-    def load_campaign_data(self):
+    def load_campaign_data(self) -> None:
         """加载广告计划数据"""
         if not self.campaign:
             return
@@ -176,7 +176,7 @@ class AdManagerPage(QWidget):
         self.setup_ui()
         self.load_data()
     
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
         
@@ -438,13 +438,13 @@ class AdManagerPage(QWidget):
         
         return widget
     
-    def load_data(self):
+    def load_data(self) -> None:
         """加载所有数据"""
         self.load_campaigns()
         self.load_accounts()
         self.load_segments()
     
-    def load_campaigns(self):
+    def load_campaigns(self) -> None:
         """加载广告计划列表"""
         self.campaign_table.setRowCount(0)
         
@@ -540,7 +540,7 @@ class AdManagerPage(QWidget):
         avg_ctr = (total_clicks / total_impressions * 100) if total_impressions > 0 else 0
         self.avg_ctr_label.setText(f"平均CTR: {avg_ctr:.2f}%")
     
-    def load_accounts(self):
+    def load_accounts(self) -> None:
         """加载账户列表"""
         self.account_table.setRowCount(0)
         
@@ -570,7 +570,7 @@ class AdManagerPage(QWidget):
             for col, text in enumerate(items):
                 self.account_table.setItem(row, col, QTableWidgetItem(text))
     
-    def load_segments(self):
+    def load_segments(self) -> None:
         """加载人群包列表"""
         self.segment_list.clear()
         
@@ -583,7 +583,7 @@ class AdManagerPage(QWidget):
         
         self.segment_list.itemClicked.connect(self.on_segment_selected)
     
-    def on_new_campaign(self):
+    def on_new_campaign(self) -> None:
         """新建广告计划"""
         dialog = CampaignDialog(self.manager, parent=self)
         if dialog.exec() == QDialog.Accepted:
@@ -612,11 +612,11 @@ class AdManagerPage(QWidget):
             else:
                 QMessageBox.warning(self, "错误", "创建失败，请重试")
     
-    def on_new_segment(self):
+    def on_new_segment(self) -> None:
         """新建人群包"""
         QMessageBox.information(self, "提示", "人群包创建功能开发中...")
     
-    def on_segment_selected(self, item):
+    def on_segment_selected(self, item) -> None:
         """选择人群包"""
         segment_id = item.data(Qt.UserRole)
         segment = self.audience_targeting.get_segment(segment_id)
@@ -627,7 +627,7 @@ class AdManagerPage(QWidget):
             self.segment_size_label.setText(f"{segment.estimated_size:,}人")
             self.segment_status_label.setText('正常" if segment.status == "active" else "暂停')
     
-    def on_generate_report(self):
+    def on_generate_report(self) -> None:
         """生成报表"""
         start_date = self.report_start.date().toString("yyyy-MM-dd")
         end_date = self.report_end.date().toString("yyyy-MM-dd")

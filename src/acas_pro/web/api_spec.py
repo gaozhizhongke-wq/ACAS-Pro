@@ -156,7 +156,7 @@ docs_bp = Blueprint('api_docs', __name__, url_prefix='/api/docs')
 
 
 @docs_bp.route('', methods=['GET'])
-def swagger_ui():
+def swagger_ui() -> None:
     """Serve Swagger UI HTML."""
     html = """
     <!DOCTYPE html>
@@ -188,7 +188,7 @@ def swagger_ui():
 # Register function
 # ---------------------------------------------------------------------------
 
-def register_api_docs(app):
+def register_api_docs(app) -> None:
     """Register API documentation endpoints.
     
     Adds:
@@ -197,12 +197,15 @@ def register_api_docs(app):
     - /api/openapi.yaml - OpenAPI spec (YAML)
     """
     @app.route('/api/openapi.json', methods=['GET'])
-    def openapi_json():
+    def openapi_json() -> None:
         return jsonify(OPENAPI_SPEC)
 
     @app.route('/api/openapi.yaml', methods=['GET'])
-    def openapi_yaml():
-        import yaml
+    def openapi_yaml() -> None:
+        try:
+            import yaml
+        except ImportError:
+            return jsonify({'error': 'YAML serialization unavailable — PyYAML not installed'}), 503
         yaml_str = yaml.dump(OPENAPI_SPEC, default_flow_style=False, allow_unicode=True)
         return yaml_str, 200, {'Content-Type': 'application/yaml'}
 

@@ -175,7 +175,7 @@ class PublishManager:
         self.db = db or DatabaseManager()
         self._init_database()
         
-    def _init_database(self):
+    def _init_database(self) -> None:
         """初始化数据库表"""
         self.db.execute("""
             CREATE TABLE IF NOT EXISTS publish_tasks (
@@ -239,7 +239,7 @@ class PublishManager:
         logger.info(f"Created publish task: {task.id}")
         return task
         
-    def _save_task(self, task: PublishTask):
+    def _save_task(self, task: PublishTask) -> None:
         """保存任务到数据库"""
         self.db.execute("""
             INSERT OR REPLACE INTO publish_tasks (
@@ -443,7 +443,7 @@ class PublishManager:
         发布到指定平台
         
         TODO: 实际实现需要调用各平台API
-        raise NotImplementedError("Stub: 实际实现需要调用各平台API")
+        logger.warning("Platform API publish not integrated, returning False"); return False
         """
         logger.info(f"Publishing to {platform}: {title}")
         

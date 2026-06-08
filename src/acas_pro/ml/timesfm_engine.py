@@ -144,7 +144,7 @@ class TimesFMEngine:
             logging.getLogger(__name__).debug(f"Failed to read status file: {e}")
         return True
     
-    def _save_statsforecast_status(self, available: bool):
+    def _save_statsforecast_status(self, available: bool) -> None:
         """Persist StatsForecast availability status"""
         try:
             import json

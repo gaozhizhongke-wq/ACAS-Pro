@@ -336,7 +336,7 @@ def reset_config() -> None:
 # Implemented as a module-level lazy accessor via __getattr__
 # to avoid import-time side effects while maintaining backward compatibility.
 
-def __getattr__(name):
+def __getattr__(name) -> None:
     if name == 'config':
         return get_config()
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

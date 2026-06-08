@@ -70,7 +70,7 @@ class UpdateChecker:
             return False, None
 
         except Exception as e:
-            logger.exception(f"Error in unknown_function: {e}")
+            logger.exception(f"Error in check: {e}")
             return False, None
 
     async def check_async(self) -> Tuple[bool, Optional[UpdateInfo]]:
@@ -104,7 +104,7 @@ class UpdateChecker:
 
     def _compare_versions(self, v1: str, v2: str) -> int:
         """比较版本号，返回 >0 表示 v1>v2"""
-        def parse(v):
+        def parse(v) -> None:
             parts = v.replace("v", "").split(".")
             return [int(p) for p in parts if p.isdigit()]
 
@@ -156,7 +156,7 @@ class UpdateChecker:
             return filepath
 
         except Exception as e:
-            logger.exception(f"Error in unknown_function: {e}")
+            logger.exception(f"Error in download: {e}")
             return None
 
     def get_update_info(self) -> Optional[UpdateInfo]:

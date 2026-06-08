@@ -40,7 +40,7 @@ class XiaohongshuShopClient(PlatformAPIClient):
     def __init__(self, credentials: PlatformCredentials):
         super().__init__(credentials)
     
-    def _check_business_error(self, result: Dict):
+    def _check_business_error(self, result: Dict) -> None:
         """检查小红书业务错误码"""
         if not result.get("success", True):
             error_code = result.get("errorCode", "UNKNOWN")

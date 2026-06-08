@@ -68,7 +68,7 @@ class Festival:
     is_active: bool = True
     created_at: datetime = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.themes is None:
             self.themes = []
         if self.keywords is None:
@@ -103,7 +103,7 @@ class MarketingPlan:
     status: str = "draft"  # draft, active, completed, cancelled
     created_at: datetime = None
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.created_at is None:
             self.created_at = datetime.now()
 
@@ -276,7 +276,7 @@ class FestivalCalendar:
         self._init_database()
         self._load_default_festivals()
         
-    def _init_database(self):
+    def _init_database(self) -> None:
         """初始化数据库表"""
         self.db.execute("""
             CREATE TABLE IF NOT EXISTS festivals (
@@ -320,12 +320,12 @@ class FestivalCalendar:
             )
         """)
         
-    def _load_default_festivals(self):
+    def _load_default_festivals(self) -> None:
         """加载默认节日"""
         for festival in self.DEFAULT_FESTIVALS:
             self._save_festival(festival)
             
-    def _save_festival(self, festival: Festival):
+    def _save_festival(self, festival: Festival) -> None:
         """保存节日到数据库"""
         try:
             self.db.execute("""
@@ -357,11 +357,11 @@ class FestivalCalendar:
         
     def _row_to_festival(self, row: dict) -> Festival:
         """将数据库行转换为节日对象"""
-        def _json_loads(val):
+        def _json_loads(val) -> None:
             if isinstance(val, str):
                 return json.loads(val)
             return val if val is not None else []
-        def _parse_dt(val):
+        def _parse_dt(val) -> None:
             if isinstance(val, datetime):
                 return val
             if isinstance(val, str):
@@ -507,7 +507,7 @@ class FestivalCalendar:
         
         rows = self.db.fetchall(query, params)
         
-        def _parse_dt(val):
+        def _parse_dt(val) -> None:
             if isinstance(val, datetime):
                 return val
             if isinstance(val, str):

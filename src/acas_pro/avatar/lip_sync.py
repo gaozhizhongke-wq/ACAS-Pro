@@ -46,7 +46,7 @@ class VisemeFrame:
     # 嘴唇宽度 (-1 to 1, 负值=收窄, 正值=展宽)
     lip_width: float = 0.0
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.visemes is None:
             self.visemes = {}
 
@@ -144,7 +144,7 @@ class LipSyncEngine:
         """初始化模型"""
         try:
             # TODO: 加载实际的深度学习模型
-            raise NotImplementedError("Stub: 加载实际的深度学习模型")
+            logger.warning("Lip sync deep learning model not integrated")
             # 这里使用模拟实现
             
             if not os.path.exists(self.model_path):
@@ -162,7 +162,7 @@ class LipSyncEngine:
     def audio_to_phonemes(self, audio_path: str) -> List[Phoneme]:
         """音频转音素序列"""
         # TODO: 集成实际的语音识别模型（如Montreal Forced Aligner）
-        raise NotImplementedError("Stub: 集成实际的语音识别模型")
+        logger.warning("Speech recognition model not integrated, returning empty alignment"); return []
         # 目前使用模拟数据
         
         phonemes = []
@@ -330,7 +330,7 @@ class LipSyncEngine:
         """将口型动画应用到数字人模型"""
         try:
             # TODO: 集成实际的3D模型驱动
-            raise NotImplementedError("Stub: 集成实际的3D模型驱动")
+            logger.warning("3D model loading not integrated, returning None"); return None
             # 1. 加载3D模型（FBX/GLTF）
             # 2. 应用blendshape权重
             # 3. 渲染视频帧

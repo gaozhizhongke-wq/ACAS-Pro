@@ -28,7 +28,7 @@ class MessageBubble(QFrame):
         self.is_user = is_user
         self.setup_ui(text)
     
-    def setup_ui(self, text: str):
+    def setup_ui(self, text: str) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(10, 8, 10, 8)
         
@@ -69,7 +69,7 @@ class MessageBubble(QFrame):
                 }
             """)
     
-    def append_text(self, text: str):
+    def append_text(self, text: str) -> None:
         """Append text to message (for streaming)"""
         cursor = self.text_edit.textCursor()
         cursor.movePosition(QTextCursor.End)
@@ -90,7 +90,7 @@ class LLMChatPage(QWidget):
         self.setup_ui()
         self._init_llm()
     
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
@@ -335,7 +335,7 @@ class LLMChatPage(QWidget):
         
         return panel
     
-    def _init_llm(self):
+    def _init_llm(self) -> None:
         """Initialize LLM client"""
         try:
             from ...llm.llm_client import LLMClient, LLMConfig, LLMProvider
@@ -352,11 +352,11 @@ class LLMChatPage(QWidget):
             self.status_label.setText(f"初始化失败: {str(e)}")
             self.status_label.setStyleSheet("color: #F44336; font-size: 12px;")
     
-    def _on_provider_changed(self, index: int):
+    def _on_provider_changed(self, index: int) -> None:
         """Handle provider change"""
         self._update_model_list()
     
-    def _update_model_list(self):
+    def _update_model_list(self) -> None:
         """Update model list based on provider"""
         from ...llm.llm_client import LLMClient, LLMProvider
         
@@ -377,7 +377,7 @@ class LLMChatPage(QWidget):
         self.model_combo.clear()
         self.model_combo.addItems(models)
     
-    def _send_message(self):
+    def _send_message(self) -> None:
         """Send user message"""
         text = self.input_field.text().strip()
         if not text or self._is_generating:
@@ -414,7 +414,7 @@ class LLMChatPage(QWidget):
         
         return bubble
     
-    def _generate_response(self, user_text: str):
+    def _generate_response(self, user_text: str) -> None:
         """Generate AI response"""
         try:
             from ...llm.llm_client import LLMClient, LLMConfig, LLMProvider
@@ -486,7 +486,7 @@ class LLMChatPage(QWidget):
             self._is_generating = False
             self.send_btn.setEnabled(True)
     
-    def _new_conversation(self):
+    def _new_conversation(self) -> None:
         """Start new conversation"""
         # Clear messages
         while self.messages_layout.count() > 1:
@@ -501,7 +501,7 @@ class LLMChatPage(QWidget):
         welcome.setStyleSheet("padding: 20px; color: #666; font-size: 13px;")
         self.messages_layout.insertWidget(0, welcome)
     
-    def _apply_settings(self):
+    def _apply_settings(self) -> None:
         """Apply LLM settings"""
         try:
             from ...core.config import config
@@ -529,7 +529,7 @@ class LLMChatPage(QWidget):
             self.status_label.setText(f"保存失败: {str(e)}")
             self.status_label.setStyleSheet("color: #F44336; font-size: 12px;")
     
-    def _scroll_to_bottom(self):
+    def _scroll_to_bottom(self) -> None:
         """Scroll to bottom of messages"""
         scrollbar = self.scroll_area.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())

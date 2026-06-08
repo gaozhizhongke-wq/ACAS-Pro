@@ -111,7 +111,7 @@ class ACASTools:
         self.registry = ToolRegistry()
         self._register_all()
     
-    def _register_all(self):
+    def _register_all(self) -> None:
         """Register all ACAS Pro tools"""
         
         # ===== 销售预测 =====
@@ -417,7 +417,7 @@ class ACASTools:
                 "summary": f"预测功能暂不可用，产品{product_id}需安装TimesFM引擎"
             }
         except Exception as e:
-            logger.exception(f"Error in unknown_function: {e}")
+            logger.exception(f"Error in _sales_forecast: {e}")
             return {"error": str(e), "summary": f"预测失败: {str(e)}"}
     
     def _inventory_optimize(self, product_id: str, current_stock: int,
@@ -451,7 +451,7 @@ class ACASTools:
                 "summary": f"产品{product_id}库存{current_stock}，安全库存{safety_stock}，{'需要补货' if current_stock < safety_stock else '库存充足'}"
             }
         except Exception as e:
-            logger.exception(f"Error in unknown_function: {e}")
+            logger.exception(f"Error in _inventory_optimize: {e}")
             return {"error": str(e), "summary": f"库存优化失败: {str(e)}"}
     
     def _market_intelligence(self, keyword: str = "", industry: str = "",
@@ -486,7 +486,7 @@ class ACASTools:
                 "summary": f"舆情分析模块未安装，无法分析'{keyword or industry}'"
             }
         except Exception as e:
-            logger.exception(f"Error in unknown_function: {e}")
+            logger.exception(f"Error in _market_intelligence: {e}")
             return {"error": str(e), "summary": f"市场情报获取失败: {str(e)}"}
     
     def _content_create(self, topic: str, platform: str, style: str = "professional",
@@ -533,7 +533,7 @@ class ACASTools:
                     "summary": f"已为{platform_names.get(platform, platform)}生成关于「{topic}」的{style_desc}风格内容"
                 }
         except Exception as e:
-            logger.exception(f"Error in unknown_function: {e}")
+            logger.exception(f"Error in _content_create: {e}")
             import logging
             logging.debug(f"{type(e).__name__}: {e}")
         
@@ -575,7 +575,7 @@ class ACASTools:
                 "summary": f"趋势监控模块未完整安装，显示模拟数据。类别: {category or '全部'}，平台: {platform}"
             }
         except Exception as e:
-            logger.exception(f"Error in unknown_function: {e}")
+            logger.exception(f"Error in _trend_monitor: {e}")
             return {"error": str(e), "summary": f"趋势监控失败: {str(e)}"}
     
     def _account_analyze(self, account_id: str, metric: str = "overview",
@@ -651,7 +651,7 @@ class ACASTools:
         except ImportError:
             return {"action": action, "summary": f"电商模块未安装，{action_names.get(action, action)}查询暂不可用"}
         except Exception as e:
-            logger.exception(f"Error in unknown_function: {e}")
+            logger.exception(f"Error in _ecommerce_manage: {e}")
             return {"error": str(e), "summary": f"电商操作失败: {str(e)}"}
     
     def _data_query(self, query_type: str, time_range: str = "30d",
@@ -708,10 +708,10 @@ class ACASTools:
                 "summary": f"{current_month}月共{len(events)}个营销节点（模拟数据，安装festival_calendar模块获取完整日历）"
             }
         except Exception as e:
-            logger.exception(f"Error in unknown_function: {e}")
+            logger.exception(f"Error in _festival_calendar: {e}")
             return {"error": str(e), "summary": f"节日日历查询失败: {str(e)}"}
     
-    def _get_llm_config(self):
+    def _get_llm_config(self) -> None:
         """Get LLM config from app config"""
         try:
             from ...core.config import config

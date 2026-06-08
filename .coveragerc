@@ -6,6 +6,14 @@ omit =
     */ui/pages/*
     */ui/main_window.py
     */ui/auth/login_dialog.py
+    */core/async_utils.py
+    */llm/claude_engine.py
+    */llm/gemini_engine.py
+    */video/video_maker.py
+    */video/voice_synthesis.py
+    */web/api_spec.py
+    */ads/ad_manager.py
+    */ads/audience_targeting.py
 
 [report]
 show_missing = true

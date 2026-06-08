@@ -213,19 +213,20 @@ class AdManager:
         self._init_database()
         self.logger = logger.getChild("ad_manager")
 
-    def close(self):
+    def close(self) -> None:
         """Close the managed database connection."""
         if self._conn is not None:
             try:
                 self._conn.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("ad_manager DB connection cleanup: {e}")
             self._conn = None
 
-    def __del__(self):
-        self.close()
+    def __del__(self) -> None:
+        if hasattr(self, '_conn'):
+            self.close()
 
-    def _init_database(self):
+    def _init_database(self) -> None:
         """初始化数据库表"""
         self._conn = sqlite3.connect(self.db_path)
         conn = self._conn

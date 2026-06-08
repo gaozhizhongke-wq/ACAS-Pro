@@ -6,7 +6,7 @@ Extracted from ContentCreationPage for testability
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Callable
+from typing import List, Dict, Optional, Callable, Any
 from enum import Enum
 from datetime import datetime
 

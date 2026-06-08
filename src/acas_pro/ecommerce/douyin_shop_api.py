@@ -39,7 +39,7 @@ class DouyinShopClient(PlatformAPIClient):
     def __init__(self, credentials: PlatformCredentials):
         super().__init__(credentials)
     
-    def _check_business_error(self, result: Dict):
+    def _check_business_error(self, result: Dict) -> None:
         """检查抖音业务错误码"""
         err_no = result.get("err_no", 0)
         if err_no != 0:

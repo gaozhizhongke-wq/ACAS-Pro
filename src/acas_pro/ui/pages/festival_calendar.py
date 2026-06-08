@@ -45,7 +45,7 @@ class FestivalCard(QFrame):
         self.days_until = days_until
         self._setup_ui()
         
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         importance_colors = {
             5: COLORS['danger'],
             4: COLORS['warning'],
@@ -181,7 +181,7 @@ class FestivalCalendarPage(QWidget):
         self._setup_ui()
         self._load_festivals()
         
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(20)
@@ -416,13 +416,13 @@ class FestivalCalendarPage(QWidget):
         
         return widget
         
-    def _load_festivals(self):
+    def _load_festivals(self) -> None:
         """加载节日数据"""
         self._load_upcoming()
         self._load_all_festivals()
         self._load_plans()
         
-    def _load_upcoming(self):
+    def _load_upcoming(self) -> None:
         """加载即将到来的节日"""
         # 清空列表
         while self.upcoming_layout.count() > 1:
@@ -474,11 +474,11 @@ class FestivalCalendarPage(QWidget):
             card = FestivalCard(festival, days_until)
             self.upcoming_layout.insertWidget(self.upcoming_layout.count() - 1, card)
             
-    def _filter_festivals(self):
+    def _filter_festivals(self) -> None:
         """根据类型筛选节日"""
         self._load_all_festivals()
         
-    def _load_all_festivals(self):
+    def _load_all_festivals(self) -> None:
         """加载全部节日"""
         # 获取筛选条件
         type_map_reverse = {
@@ -528,7 +528,7 @@ class FestivalCalendarPage(QWidget):
             action_btn = QPushButton("创建计划")
             self.festivals_table.setCellWidget(i, 5, action_btn)
             
-    def _load_plans(self):
+    def _load_plans(self) -> None:
         """加载营销计划"""
         plans = self.calendar.get_marketing_plans()
         

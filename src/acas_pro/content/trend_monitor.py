@@ -60,7 +60,7 @@ class TrendItem:
     transcript: str = ""  # 语音转文字
     visual_tags: List[str] = None  # 视觉标签
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.key_frames is None:
             self.key_frames = []
         if self.visual_tags is None:
@@ -138,7 +138,7 @@ class TrendMonitor:
         # 初始化数据表
         self._init_database()
         
-    def _init_database(self):
+    def _init_database(self) -> None:
         """初始化数据库表"""
         self.db.execute("""
             CREATE TABLE IF NOT EXISTS trend_items (
@@ -175,7 +175,7 @@ class TrendMonitor:
             CREATE INDEX IF NOT EXISTS idx_trend_time ON trend_items(publish_time DESC)
         """)
         
-    def start_monitoring(self):
+    def start_monitoring(self) -> None:
         """启动监测"""
         if self._running:
             return
@@ -185,14 +185,14 @@ class TrendMonitor:
         self._monitor_thread.start()
         logger.info("Trend monitoring started")
         
-    def stop_monitoring(self):
+    def stop_monitoring(self) -> None:
         """停止监测"""
         self._running = False
         if self._monitor_thread:
             self._monitor_thread.join(timeout=5)
         logger.info("Trend monitoring stopped")
         
-    async def _monitor_loop_async(self):
+    async def _monitor_loop_async(self) -> None:
         """异步监控主循环"""
         logger.info(f"[TrendMonitor] Started async monitoring loop")
         while not self._stop_event.is_set():
@@ -210,7 +210,7 @@ class TrendMonitor:
             self._process_callbacks()
             await asyncio.sleep(10)
 
-    def _monitor_loop(self):
+    def _monitor_loop(self) -> None:
         """监测主循环"""
         last_fetch = {p: 0 for p in Platform}
         
@@ -233,7 +233,7 @@ class TrendMonitor:
             
             time.sleep(10)  # 10秒检查一次
             
-    def _fetch_platform_data(self, platform: Platform):
+    def _fetch_platform_data(self, platform: Platform) -> None:
         """获取平台数据"""
         logger.info(f"Fetching data from {platform.value}")
         
@@ -272,7 +272,7 @@ class TrendMonitor:
             
         return items
         
-    def _analyze_content(self, item: TrendItem):
+    def _analyze_content(self, item: TrendItem) -> None:
         """分析内容并计算评分"""
         # 计算爆款潜力指数
         engagement_rate = (item.likes + item.comments + item.shares) / max(item.views, 1)
@@ -288,7 +288,7 @@ class TrendMonitor:
         # 模拟适配度评分（实际应基于产品匹配模型）
         item.relevance_score = 70 + (hash(item.id) % 30)
         
-    def _save_trend_item(self, item: TrendItem):
+    def _save_trend_item(self, item: TrendItem) -> None:
         """保存热点项到数据库"""
         try:
             self.db.execute("""
@@ -390,11 +390,11 @@ class TrendMonitor:
             category_distribution=type_dist
         )
         
-    def register_callback(self, callback: Callable):
+    def register_callback(self, callback: Callable) -> None:
         """注册数据更新回调"""
         self._callbacks.append(callback)
         
-    def _notify_callbacks(self, platform: Platform, items: List[TrendItem]):
+    def _notify_callbacks(self, platform: Platform, items: List[TrendItem]) -> None:
         """通知所有回调"""
         for callback in self._callbacks:
             try:
@@ -402,7 +402,7 @@ class TrendMonitor:
             except Exception as e:
                 logger.error(f"Callback error: {e}")
                 
-    def _process_callbacks(self):
+    def _process_callbacks(self) -> None:
         """处理回调队列"""
         while not self._callback_queue.empty():
             try:

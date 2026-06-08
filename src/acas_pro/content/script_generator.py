@@ -191,7 +191,7 @@ class ScriptGenerator:
         self.db = db or DatabaseManager()
         self._init_database()
         
-    def _init_database(self):
+    def _init_database(self) -> None:
         """初始化数据库表"""
         self.db.execute("""
             CREATE TABLE IF NOT EXISTS generated_scripts (
@@ -499,7 +499,7 @@ class ScriptGenerator:
             
         return variations
         
-    def _save_script(self, script: GeneratedScript):
+    def _save_script(self, script: GeneratedScript) -> None:
         """保存生成的文案"""
         try:
             self.db.execute("""

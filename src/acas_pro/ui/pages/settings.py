@@ -36,7 +36,7 @@ COLORS = {
 
 class SafeDict(dict):
     """Subclass dict so missing keys return the key name literally (avoids {{key}} escaping issues)."""
-    def __missing__(self, key):
+    def __missing__(self, key) -> None:
         return '{' + key + '}'
 
 class SettingsPage(QWidget):
@@ -49,7 +49,7 @@ class SettingsPage(QWidget):
         self._setup_ui()
         self._load_settings()
     
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 24, 28, 24)
         layout.setSpacing(20)
@@ -508,7 +508,7 @@ class SettingsPage(QWidget):
         
         return widget
     
-    def _load_llm_settings(self):
+    def _load_llm_settings(self) -> None:
         """加载 LLM 配置"""
         try:
             # Provider 映射
@@ -534,7 +534,7 @@ class SettingsPage(QWidget):
         except Exception as e:
             logger.warning(f"加载 LLM 配置失败: {e}")
     
-    def _save_llm_settings(self):
+    def _save_llm_settings(self) -> None:
         """保存 LLM 配置"""
         try:
             # Provider 映射
@@ -554,7 +554,7 @@ class SettingsPage(QWidget):
             logger.exception(f"Error in _save_llm_settings: {e}")
             QMessageBox.warning(self, "错误", f"保存失败: {e}")
     
-    def _test_llm_connection(self):
+    def _test_llm_connection(self) -> None:
         """测试 LLM 连接"""
         try:
             from ...llm.client import LLMClient
@@ -690,7 +690,7 @@ class SettingsPage(QWidget):
 
         return widget
 
-    def _load_oauth_settings(self):
+    def _load_oauth_settings(self) -> None:
         """加载 OAuth 设置"""
         try:
             qq_enabled = config.oauth.qq_app_id != ""
@@ -706,7 +706,7 @@ class SettingsPage(QWidget):
             import logging
             logging.debug(f"{type(e).__name__}: {e}")
 
-    def _save_oauth_settings(self):
+    def _save_oauth_settings(self) -> None:
         """保存 OAuth 设置"""
         try:
             config.oauth.qq_app_id = self.qq_app_id.text().strip()
@@ -849,7 +849,7 @@ class SettingsPage(QWidget):
         
         return widget
     
-    def _load_settings(self):
+    def _load_settings(self) -> None:
         """加载设置"""
         # 语言
         lang_index = self.lang_combo.findData(get_language())
@@ -872,14 +872,14 @@ class SettingsPage(QWidget):
             self.llm_agent_mode.setChecked(getattr(config.llm, 'agent_mode', True))
             self.llm_max_steps.setValue(getattr(config.llm, 'max_agent_steps', 10))
     
-    def _on_language_changed(self, index):
+    def _on_language_changed(self, index) -> None:
         """语言切换"""
         lang = self.lang_combo.currentData()
         if lang:
             set_language(lang)
             QMessageBox.information(self, "语言切换", "语言设置将在重启后生效")
     
-    def _save_general_settings(self):
+    def _save_general_settings(self) -> None:
         """保存通用设置"""
         # 保存主题
         theme = "dark" if self.theme_combo.currentIndex() == 0 else "light"
@@ -903,7 +903,7 @@ class SettingsPage(QWidget):
         QMessageBox.information(self, "保存成功", "设置已保存（含大模型配置）")
         self.settings_changed.emit()
     
-    def _change_password(self):
+    def _change_password(self) -> None:
         """修改密码"""
         current = self.current_pwd.text()
         new = self.new_pwd.text()
@@ -929,7 +929,7 @@ class SettingsPage(QWidget):
         self.new_pwd.clear()
         self.confirm_pwd.clear()
     
-    def _check_updates(self):
+    def _check_updates(self) -> None:
         """检查更新"""
         self.update_status.setText(t("update.checking", "正在检查更新..."))
         
@@ -956,12 +956,12 @@ class SettingsPage(QWidget):
         else:
             self.update_status.setText(t("update.up_to_date", "已是最新版本"))
     
-    def _download_update(self):
+    def _download_update(self) -> None:
         """下载更新"""
         self.download_progress.setVisible(True)
         self.update_status.setText(t("update.downloading", "正在下载更新..."))
         
-        def progress(percent):
+        def progress(percent) -> None:
             self.download_progress.setValue(percent)
         
         from ...update import download_update

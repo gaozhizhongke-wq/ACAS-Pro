@@ -6,7 +6,7 @@ Placeholder for content creation logic
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 
 
 @dataclass

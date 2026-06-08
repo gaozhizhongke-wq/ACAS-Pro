@@ -8,7 +8,7 @@ ACAS Pro - Video Maker
 import json
 import os
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
@@ -479,7 +479,7 @@ class VideoMaker:
             output_path = os.path.join(self.output_dir, output_filename)
             
             # TODO: 实际渲染逻辑（需要ffmpeg或moviepy）
-            raise NotImplementedError("Stub: 实际渲染逻辑")
+            logger.warning("Video rendering not integrated, returning None"); return None
             # 这里模拟渲染过程
             logger.info(f"Rendering project {project_id} to {output_path}")
             

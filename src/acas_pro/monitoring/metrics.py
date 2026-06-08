@@ -88,15 +88,15 @@ class MetricsMiddleware:
         if app:
             self.init_app(app)
     
-    def init_app(self, app):
+    def init_app(self, app) -> None:
         """Initialize metrics middleware"""
         
         @app.before_request
-        def before_request():
+        def before_request() -> None:
             g.start_time = time.time()
         
         @app.after_request
-        def after_request(response):
+        def after_request(response) -> None:
             if hasattr(g, 'start_time'):
                 duration = time.time() - g.start_time
                 
@@ -120,11 +120,11 @@ class MetricsMiddleware:
             return response
 
 
-def monitor_llm(provider: str, model: str):
+def monitor_llm(provider: str, model: str) -> None:
     """Decorator to monitor LLM calls"""
-    def decorator(f: Callable):
+    def decorator(f: Callable) -> None:
         @wraps(f)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs) -> None:
             start = time.time()
             try:
                 result = f(*args, **kwargs)
@@ -151,12 +151,12 @@ def monitor_llm(provider: str, model: str):
     return decorator
 
 
-def get_metrics():
+def get_metrics() -> None:
     """Get Prometheus metrics output"""
     return generate_latest()
 
 
-def init_app_info(version: str = "2.0.0", environment: str = "production"):
+def init_app_info(version: str = "2.0.0", environment: str = "production") -> None:
     """Initialize application info metrics"""
     APP_INFO.info({
         'version': version,

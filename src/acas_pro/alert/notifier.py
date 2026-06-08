@@ -8,6 +8,8 @@ from typing import Dict, List, Optional, Any
 
 # Standard library imports (patchable in tests)
 import smtplib
+import logging
+logger = logging.getLogger(__name__)
 
 # Config placeholder for patching in tests
 config = None
@@ -60,7 +62,7 @@ class AlertMessage:
     timestamp: Optional[datetime] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.timestamp is None:
             self.timestamp = datetime.now(timezone.utc)
 
@@ -141,7 +143,7 @@ class AlertNotifier:
                 return channels
             return [AlertChannel.EMAIL]
 
-    def _get_handler(self, channel: AlertChannel):
+    def _get_handler(self, channel: AlertChannel) -> None:
         mapping = {
             AlertChannel.WECHAT_WORK: self._send_wechat,
             AlertChannel.DINGTALK: self._send_dingtalk,
@@ -161,7 +163,8 @@ class AlertNotifier:
                     timeout=10,
                 )
                 return resp.status_code == 200
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Notification send failed: {e}")
                 return False
         return False
 
@@ -174,7 +177,8 @@ class AlertNotifier:
                     timeout=10,
                 )
                 return resp.status_code == 200
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Notification send failed: {e}")
                 return False
         return False
 
@@ -188,7 +192,8 @@ class AlertNotifier:
                     timeout=10,
                 )
                 return resp.status_code == 200
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Notification send failed: {e}")
                 return False
         return False
 
@@ -226,7 +231,8 @@ class AlertNotifier:
                     timeout=10,
                 )
                 return resp.status_code == 200
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Notification send failed: {e}")
                 return False
         return False
 
@@ -243,11 +249,12 @@ class AlertNotifier:
                         json=msg.to_dict(),
                     )
                     return resp.status_code == 200
-            except Exception:
+            except Exception as e:
+                logger.warning(f"Notification send failed: {e}")
                 return False
         return False
 
-    def _record_alert(self, message: AlertMessage, results: Dict[AlertChannel, bool]):
+    def _record_alert(self, message: AlertMessage, results: Dict[AlertChannel, bool]) -> None:
         self._history.append({
             "message": message,
             "results": results,
@@ -259,7 +266,7 @@ class AlertNotifier:
     def get_history(self, limit: int = 100) -> List[Dict]:
         return self._history[-limit:]
 
-    def configure_channel(self, channel: AlertChannel = None, **kwargs):
+    def configure_channel(self, channel: AlertChannel = None, **kwargs) -> None:
         """Configure a channel with settings like webhook URLs."""
         self.enabled_channels[channel] = True
         if channel == AlertChannel.WECHAT_WORK:
@@ -279,15 +286,15 @@ class AlertNotifier:
         elif channel == AlertChannel.WEBHOOK:
             if "url" in kwargs: self.webhook_url = kwargs["url"]
 
-    def configure_wechat(self, webhook: str = ""):
+    def configure_wechat(self, webhook: str = "") -> None:
         self.wechat_webhook = webhook
         self.enabled_channels[AlertChannel.WECHAT_WORK] = True
 
-    def configure_dingtalk(self, webhook: str = ""):
+    def configure_dingtalk(self, webhook: str = "") -> None:
         self.dingtalk_webhook = webhook
         self.enabled_channels[AlertChannel.DINGTALK] = True
 
-    def configure_feishu(self, webhook: str = ""):
+    def configure_feishu(self, webhook: str = "") -> None:
         self.feishu_webhook = webhook
         self.enabled_channels[AlertChannel.FEISHU] = True
 
@@ -299,11 +306,11 @@ class AlertNotifier:
         self.smtp_password = smtp_password
         self.enabled_channels[AlertChannel.EMAIL] = True
 
-    def send_critical_alert(self, title: str, content: str, **kwargs):
+    def send_critical_alert(self, title: str, content: str, **kwargs) -> None:
         msg = AlertMessage(title=title, content=content, priority=AlertPriority.P0_CRITICAL, **kwargs)
         return self.send(msg, force=True)
 
-    def send_urgent_alert(self, title: str, content: str, **kwargs):
+    def send_urgent_alert(self, title: str, content: str, **kwargs) -> None:
         msg = AlertMessage(title=title, content=content, priority=AlertPriority.P1_URGENT, **kwargs)
         return self.send(msg, force=True)
 
@@ -340,13 +347,13 @@ class AlertNotifier:
 
 
 # Module-level convenience functions
-def send_critical_alert(title: str, content: str, **kwargs):
+def send_critical_alert(title: str, content: str, **kwargs) -> None:
     """Send a critical alert using a default AlertNotifier instance."""
     notifier = AlertNotifier()
     return notifier.send_critical_alert(title, content, **kwargs)
 
 
-def send_urgent_alert(title: str, content: str, **kwargs):
+def send_urgent_alert(title: str, content: str, **kwargs) -> None:
     """Send an urgent alert using a default AlertNotifier instance."""
     notifier = AlertNotifier()
     return notifier.send_urgent_alert(title, content, **kwargs)

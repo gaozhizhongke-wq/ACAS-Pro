@@ -130,6 +130,47 @@ class PasswordHasher:
             return False
 
 
+class TokenBlacklist:
+    """JWT token blacklist for revocation support"""
+    
+    # In-memory blacklist: jti -> expiry timestamp
+    _blacklist: Dict[str, float] = {}
+    _lock = None  # Thread lock for thread safety
+    
+    @classmethod
+    def _get_lock(cls) -> None:
+        """Get or create thread lock"""
+        if cls._lock is None:
+            import threading
+            cls._lock = threading.Lock()
+        return cls._lock
+    
+    @classmethod
+    def add(cls, jti: str, expires_at: datetime) -> None:
+        """Add token jti to blacklist"""
+        with cls._get_lock():
+            cls._blacklist[jti] = expires_at.timestamp()
+            logger.info(f"Token revoked: jti={jti[:16]}...")
+            # Cleanup expired entries
+            cls._cleanup()
+    
+    @classmethod
+    def is_revoked(cls, jti: str) -> bool:
+        """Check if token jti is revoked"""
+        with cls._get_lock():
+            return jti in cls._blacklist
+    
+    @classmethod
+    def _cleanup(cls) -> None:
+        """Remove expired entries from blacklist"""
+        now = time.time()
+        expired = [jti for jti, exp in cls._blacklist.items() if exp < now]
+        for jti in expired:
+            del cls._blacklist[jti]
+        if expired:
+            logger.debug(f"Cleaned {len(expired)} expired blacklist entries")
+
+
 class JWTManager:
     """
     JWT token management with refresh token support
@@ -137,7 +178,7 @@ class JWTManager:
     Features:
     - Access token (short-lived, 15 min default)
     - Refresh token (long-lived, 7 days default)
-    - Token revocation support
+    - Token revocation support via blacklist
     - Secure secret key from environment
     """
     
@@ -222,6 +263,12 @@ class JWTManager:
                 logger.warning(f"Invalid token type: expected {expected_type}, got {payload.get('type')}")
                 return None
             
+            # Check blacklist (token revocation)
+            jti = payload.get('jti')
+            if jti and TokenBlacklist.is_revoked(jti):
+                logger.warning(f"Token revoked: jti={jti[:16]}...")
+                return None
+            
             return payload
         except jwt.ExpiredSignatureError:
             logger.warning("JWT token expired")
@@ -251,6 +298,35 @@ class JWTManager:
         
         # Generate new access token
         return cls.generate_token(user_id)
+    
+    @classmethod
+    def revoke_token(cls, token: str) -> bool:
+        """
+        Revoke a token by adding its jti to blacklist
+        
+        Args:
+            token: JWT token to revoke
+            
+        Returns:
+            True if token was revoked, False if already expired/invalid
+        """
+        try:
+            # Decode without expiry verification to get jti
+            payload = jwt.decode(
+                token,
+                cls._get_secret_key(),
+                algorithms=[_cfg().security.jwt_algorithm],
+                options={'verify_exp': False}
+            )
+            jti = payload.get('jti')
+            exp = payload.get('exp')
+            
+            if jti and exp:
+                TokenBlacklist.add(jti, datetime.fromtimestamp(exp, tz=timezone.utc))
+                return True
+        except jwt.InvalidTokenError:
+            pass
+        return False
 
 
 class SessionManager:
@@ -379,7 +455,7 @@ class RateLimiter:
         os.makedirs(os.path.dirname(self._path), exist_ok=True)
 
     @contextmanager
-    def _atomic(self):
+    def _atomic(self) -> None:
         """Atomic read-write via exclusive file lock."""
         lock_path = self._path + '.lock'
         with open(lock_path, 'w') as lf:

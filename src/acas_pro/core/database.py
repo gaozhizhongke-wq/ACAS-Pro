@@ -85,9 +85,11 @@ class DatabaseManager:
         return cls._instance
 
     def __init__(self) -> Any:
-        # Check the global _db_instance, NOT self._initialized.
-        global _db_instance
-        if _db_instance is not None and self is _db_instance and self._initialized:
+        # Guard: skip re-init if already initialized (singleton pattern).
+        # Use cls._instance (class attr) consistently — NOT a global variable,
+        # avoiding the bug where global _db_instance was checked before being
+        # defined at module scope (causing NameError in some import orders).
+        if self._initialized:
             return
         self._db_url = os.environ.get('DATABASE_URL', '')
         self._is_postgres = 'postgresql' in self._db_url.lower() or 'postgres' in self._db_url.lower()
@@ -203,20 +205,20 @@ class DatabaseManager:
                 os.chmod(self._db_path, stat.S_IRUSR | stat.S_IWUSR)  # 0o600
         return self._local.connection
     
-    def __del__(self):
+    def __del__(self) -> None:
         """Close connection on garbage collection to avoid ResourceWarning."""
         try:
             self.close()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("database GC cleanup: {e}")
 
     def close(self) -> None:
         """Close database connections (call on shutdown)"""
         if not self._is_postgres and hasattr(self._local, 'connection') and self._local.connection:
             try:
                 self._local.connection.close()
-            except Exception:
-                pass
+            except Exception as e:
+                logger.debug("database connection close: {e}")
             self._local.connection = None
         elif self._is_postgres and self._pool:
             self._pool.closeall()
@@ -575,9 +577,9 @@ class DatabaseManager:
                 yield cursor
                 conn.commit()
             except Exception as e:
-                _get_logger().exception(f"Error in transaction: {e}")
+                _get_logger().exception(f"SQLite transaction failed, rolling back: {e}")
                 conn.rollback()
-                _get_logger().error(f"Transaction failed: {e}")
+                _get_logger().error(f"Transaction rolled back due to: {type(e).__name__}: {e}")
                 raise
             finally:
                 cursor.close()
@@ -589,9 +591,9 @@ class DatabaseManager:
                 yield conn
                 conn.execute("COMMIT")
             except Exception as e:
-                _get_logger().exception(f"Error in transaction: {e}")
+                _get_logger().exception(f"PostgreSQL transaction failed, rolling back: {e}")
                 conn.execute("ROLLBACK")
-                _get_logger().error(f"Transaction failed: {e}")
+                _get_logger().error(f"Transaction rolled back due to: {type(e).__name__}: {e}")
                 raise
 
     @staticmethod
@@ -994,8 +996,8 @@ def reset_db() -> Any:
     if old is not None:
         try:
             old._pool.dispose()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("connection pool dispose: {e}")
 
 
 # Backward compatibility - deprecated, use get_db()

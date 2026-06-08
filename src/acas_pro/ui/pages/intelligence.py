@@ -62,7 +62,7 @@ class IntelligencePage(QWidget):
         self._refresh_timer.timeout.connect(self._auto_refresh)
         self._refresh_timer.start(300000)
     
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 24, 28, 24)
         layout.setSpacing(24)
@@ -388,7 +388,7 @@ class IntelligencePage(QWidget):
         
         return widget
     
-    def _load_intelligence(self):
+    def _load_intelligence(self) -> None:
         """Load market intelligence"""
         try:
             articles = market_intelligence.fetch_intelligence(max_items=50)
@@ -424,7 +424,7 @@ class IntelligencePage(QWidget):
         except Exception as e:
             logger.error(f"Failed to load intelligence: {e}")
     
-    def _fetch_rss(self):
+    def _fetch_rss(self) -> None:
         """Fetch RSS feeds"""
         if not WORLDMONITOR_ENABLED:
             QMessageBox.warning(self, "Error", "WorldMonitor modules not available")
@@ -447,7 +447,7 @@ class IntelligencePage(QWidget):
             logger.error(f"RSS fetch failed: {e}")
             QMessageBox.warning(self, "Error", f"RSS fetch failed: {str(e)}")
     
-    def _update_reputation(self):
+    def _update_reputation(self) -> None:
         """Update reputation score from articles"""
         if not WORLDMONITOR_ENABLED or not self._articles:
             return
@@ -515,7 +515,7 @@ class IntelligencePage(QWidget):
         }
         return mapping.get(level.lower(), "neutral")
     
-    def _check_alerts(self):
+    def _check_alerts(self) -> None:
         """Check and send alerts based on reputation score"""
         if not WORLDMONITOR_ENABLED or not self._reputation_score:
             return
@@ -541,7 +541,7 @@ class IntelligencePage(QWidget):
                 alert_manager.send(alert_msg)
                 self.alert_triggered.emit(alert_msg.title, alert_msg.content)
     
-    def _test_wechat_alert(self):
+    def _test_wechat_alert(self) -> None:
         """Test WeChat Work alert"""
         if not WORLDMONITOR_ENABLED:
             QMessageBox.warning(self, "Error", "WorldMonitor modules not available")
@@ -569,10 +569,10 @@ class IntelligencePage(QWidget):
         else:
             QMessageBox.warning(self, "Failed", "Failed to send test alert")
     
-    def _update_refresh_interval(self, minutes: int):
+    def _update_refresh_interval(self, minutes: int) -> None:
         """Update auto-refresh interval"""
         self._refresh_timer.setInterval(minutes * 60 * 1000)
     
-    def _auto_refresh(self):
+    def _auto_refresh(self) -> None:
         """Auto-refresh handler"""
         self._load_intelligence()

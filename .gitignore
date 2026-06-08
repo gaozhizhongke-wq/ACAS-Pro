@@ -84,3 +84,6 @@ _test_imports.py
 *.bak
 test_output_*.txt
 tdm.txt
+
+# Private keys and certificates (NEVER commit)
+certs/

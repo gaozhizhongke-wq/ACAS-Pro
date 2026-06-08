@@ -283,7 +283,7 @@ class SceneAdapter:
         self._custom_scenes: Dict[str, SceneConfig] = {}
         self._load_custom_scenes()
     
-    def _load_custom_scenes(self):
+    def _load_custom_scenes(self) -> None:
         """加载自定义场景"""
         scenes_dir = Path(config.data_dir) / "avatars" / "scenes"
         scenes_dir.mkdir(parents=True, exist_ok=True)
@@ -345,7 +345,7 @@ class SceneAdapter:
         
         return scene
     
-    def _save_scene(self, scene: SceneConfig):
+    def _save_scene(self, scene: SceneConfig) -> None:
         """保存场景配置"""
         scenes_dir = Path(config.data_dir) / "avatars" / "scenes"
         scenes_dir.mkdir(parents=True, exist_ok=True)

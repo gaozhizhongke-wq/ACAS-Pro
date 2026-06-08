@@ -13,7 +13,7 @@ import threading
 T = TypeVar('T')
 
 
-def run_in_thread(executor: Optional[threading.ThreadPoolExecutor] = None):
+def run_in_thread(executor: Optional[threading.ThreadPoolExecutor] = None) -> None:
     """
     Decorator to run blocking sync functions in a thread pool.
     
@@ -28,7 +28,7 @@ def run_in_thread(executor: Optional[threading.ThreadPoolExecutor] = None):
     """
     def decorator(func: Callable[..., T]) -> Callable[..., Coroutine[Any, Any, T]]:
         @wraps(func)
-        async def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs) -> None:
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(executor, lambda: func(*args, **kwargs))
         return wrapper
@@ -62,7 +62,7 @@ class AsyncIOMixin:
     def asyncify(sync_method: Callable[..., T]) -> Callable[..., Coroutine[Any, Any, T]]:
         """Convert a sync method to async using run_in_executor"""
         @wraps(sync_method)
-        async def wrapper(self, *args, **kwargs):
+        async def wrapper(self, *args, **kwargs) -> None:
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(None, lambda: sync_method(self, *args, **kwargs))
         return wrapper

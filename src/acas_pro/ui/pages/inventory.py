@@ -36,7 +36,7 @@ class InventoryPage(QWidget):
         self._setup_ui()
         self._generate_recommendations()
     
-    def _setup_ui(self):
+    def _setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setContentsMargins(28, 24, 28, 24)
         layout.setSpacing(24)
@@ -111,7 +111,7 @@ class InventoryPage(QWidget):
         """)
         layout.addWidget(self.table, 1)
     
-    def _generate_recommendations(self):
+    def _generate_recommendations(self) -> None:
         """Generate inventory recommendations"""
         from datetime import datetime, timedelta
         import random

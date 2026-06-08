@@ -47,7 +47,7 @@ class GeminiEngine(BaseLLMEngine):
         self._model = None
         self._init_client()
     
-    def _init_client(self):
+    def _init_client(self) -> None:
         """Initialize Gemini client"""
         try:
             import google.generativeai as genai
@@ -117,7 +117,7 @@ class GeminiEngine(BaseLLMEngine):
                 finish_reason="stop"
             )
         except Exception as e:
-            logger.exception(f"Error in unknown_function: {e}")
+            logger.exception(f"Error in chat: {e}")
             raise RuntimeError(f"Gemini API error: {e}")
     
     def chat_stream(self, messages: List[LLMMessage]) -> Iterator[LLMStreamChunk]:
@@ -141,7 +141,7 @@ class GeminiEngine(BaseLLMEngine):
                 is_finished=True
             )
         except Exception as e:
-            logger.exception(f"Error in unknown_function: {e}")
+            logger.exception(f"Error in chat_stream: {e}")
             raise RuntimeError(f"Gemini streaming error: {e}")
     
     def quick_chat(self, message: str, system: str = None) -> str:

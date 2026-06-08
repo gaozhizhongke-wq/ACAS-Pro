@@ -6,7 +6,7 @@ Extracted from analytics pages for testability
 """
 
 from dataclasses import dataclass
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 from datetime import datetime, timedelta
 from enum import Enum
 

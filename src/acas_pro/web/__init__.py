@@ -45,6 +45,9 @@ def create_app(test_config: Optional[Dict[str, Any]] = None) -> Flask:
     # Register blueprints
     _register_blueprints(app)
 
+    # Register authentication middleware (MUST be before other handlers)
+    _register_auth_middleware(app)
+
     # Register API documentation (OpenAPI/Swagger)
     try:
         from .api_spec import register_api_docs
@@ -58,7 +61,7 @@ def create_app(test_config: Optional[Dict[str, Any]] = None) -> Flask:
     return app
 
 
-def _configure_app(app):
+def _configure_app(app) -> None:
     """Configure Flask app settings"""
     import os
 
@@ -90,29 +93,34 @@ def _configure_app(app):
         logger.warning("HTTPS not enforced — configure nginx to redirect HTTP -> HTTPS in production")
 
 
-def _register_auth_middleware(app):
+def _register_auth_middleware(app) -> None:
     """Register before_request middleware for JWT authentication"""
     from flask import g, request
     from .routes.auth import verify_token
 
     # Routes that do NOT require authentication at all
     PUBLIC_ROUTES = {
-        'auth.auth_register', 'auth.auth_login', 'auth_v2.register', 'auth_v2.login',
+        'auth.auth_register', 'auth.auth_login',
         'dashboard.index',
         'static',
+        'health.health_check',
     }
     PUBLIC_PREFIXES = ('/api/auth/register', '/api/auth/login',
-                       '/api/v2/auth/register', '/api/v2/auth/login', '/api/health',
+                       '/api/health',
                        '/api/docs', '/api/openapi.json', '/api/openapi.yaml')
 
     # Routes that are accessible without auth but don't expose sensitive data
     READ_ONLY_PUBLIC_PATHS = ('/', '/api/stats', '/api/activity')
 
     @app.before_request
-    def authenticate():
+    def authenticate() -> None:
         """Extract user from JWT token; reject unauthenticated access to protected routes."""
         endpoint = request.endpoint or ''
         path = request.path or ''
+        
+        # If route doesn't exist, let Flask return 404 (don't require auth for 404)
+        if not endpoint:
+            return None
 
         # 1. Fully public routes — no auth needed
         if endpoint in PUBLIC_ROUTES or any(path.startswith(p) for p in PUBLIC_PREFIXES):
@@ -139,7 +147,7 @@ def _register_auth_middleware(app):
         g.user = {'user_id': user_id, 'account': account}
         return None
 
-    def _extract_user_from_token(req):
+    def _extract_user_from_token(req) -> None:
         """Best-effort: parse JWT from request and set g.user if valid."""
         auth_header = req.headers.get('Authorization', '')
         if not auth_header.startswith('Bearer '):
@@ -152,14 +160,15 @@ def _register_auth_middleware(app):
             g.user = {'user_id': user_id, 'account': account}
 
 
-def _register_blueprints(app):
+def _register_blueprints(app) -> None:
     """Register all route blueprints"""
-    from .routes import auth, llm, dashboard, metrics
+    from .routes import auth, llm, dashboard, metrics, health
 
     app.register_blueprint(auth.bp)
     app.register_blueprint(llm.bp)
     app.register_blueprint(dashboard.bp)
     app.register_blueprint(metrics.bp)
+    app.register_blueprint(health.bp)
 
 
 def _register_error_handlers(app: Flask) -> None:
@@ -186,7 +195,7 @@ def _register_error_handlers(app: Flask) -> None:
 
     logger = logging.getLogger(__name__)
 
-    def _is_api_request():
+    def _is_api_request() -> None:
         """Check if request expects JSON response."""
         # Check URL prefix
         if request.path.startswith('/api/'):
@@ -197,7 +206,7 @@ def _register_error_handlers(app: Flask) -> None:
             return True
         return False
 
-    def _make_error_response(status_code, message, details=None):
+    def _make_error_response(status_code, message, details=None) -> None:
         """Create error response (JSON or HTML)."""
         if _is_api_request():
             error_data = {
@@ -223,38 +232,38 @@ def _register_error_handlers(app: Flask) -> None:
             return html, status_code, {'Content-Type': 'text/html'}
 
     @app.errorhandler(400)
-    def handle_bad_request(e):
+    def handle_bad_request(e) -> None:
         logger.warning(f'Bad request: {request.path} - {str(e)}')
         return _make_error_response(400, 'Bad Request', str(e))
 
     @app.errorhandler(401)
-    def handle_unauthorized(e):
+    def handle_unauthorized(e) -> None:
         logger.warning(f'Unauthorized: {request.path}')
         return _make_error_response(401, 'Unauthorized', str(e))
 
     @app.errorhandler(403)
-    def handle_forbidden(e):
+    def handle_forbidden(e) -> None:
         logger.warning(f'Forbidden: {request.path}')
         return _make_error_response(403, 'Forbidden', str(e))
 
     @app.errorhandler(404)
-    def handle_not_found(e):
+    def handle_not_found(e) -> None:
         logger.info(f'Not found: {request.path}')
         return _make_error_response(404, 'Not Found', str(e))
 
     @app.errorhandler(405)
-    def handle_method_not_allowed(e):
+    def handle_method_not_allowed(e) -> None:
         logger.warning(f'Method not allowed: {request.method} {request.path}')
         return _make_error_response(405, 'Method Not Allowed', str(e))
 
     @app.errorhandler(500)
-    def handle_internal_error(e):
+    def handle_internal_error(e) -> None:
         logger.error(f'Internal server error: {request.path}', exc_info=True)
         details = traceback.format_exc() if app.debug else None
         return _make_error_response(500, 'Internal Server Error', details)
 
     @app.errorhandler(Exception)
-    def handle_generic_exception(e):
+    def handle_generic_exception(e) -> None:
         logger.error(f'Unhandled exception: {request.path}', exc_info=True)
         details = traceback.format_exc() if app.debug else None
         return _make_error_response(500, 'Internal Server Error', details)

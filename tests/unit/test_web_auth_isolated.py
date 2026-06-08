@@ -43,7 +43,7 @@ class TestAuthMiddlewareIsolated:
             response = client.get('/api/auth/register')
             assert response.status_code != 401
 
-    @pytest.mark.skip(reason="Auth middleware not enforced in TESTING mode")
+    # Remove skip: auth middleware now registered in create_app
     def test_protected_route_no_auth(self, monkeypatch):
         """Test protected route without auth returns 401."""
         app = self._create_app_with_auth(monkeypatch)
@@ -59,7 +59,7 @@ class TestAuthMiddlewareIsolated:
             # Should return 401 (Unauthorized) because route is protected
             assert response.status_code == 401
 
-    @pytest.mark.skip(reason="Auth middleware not enforced in TESTING mode")
+    # Remove skip: auth middleware now registered in create_app
     def test_protected_route_with_invalid_token(self, monkeypatch):
         """Test protected route with invalid token returns 401."""
         app = self._create_app_with_auth(monkeypatch)

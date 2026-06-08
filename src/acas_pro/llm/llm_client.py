@@ -72,7 +72,7 @@ class LLMConfig:
     stream: bool = False
     
     # Provider-specific defaults
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if not self.api_base:
             self.api_base = self._get_default_base()
         if not self.model:

@@ -29,7 +29,7 @@ class ShopCard(QFrame):
         self.shop = shop
         self.setup_ui()
     
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         self.setFixedSize(280, 180)
         self.setStyleSheet("""
             ShopCard {
@@ -144,7 +144,7 @@ class EcommerceManagerPage(QWidget):
         self.setup_ui()
         self.load_data()
     
-    def setup_ui(self):
+    def setup_ui(self) -> None:
         layout = QVBoxLayout(self)
         layout.setSpacing(15)
         
@@ -394,14 +394,14 @@ class EcommerceManagerPage(QWidget):
         
         return widget
     
-    def load_data(self):
+    def load_data(self) -> None:
         """加载数据"""
         self.load_shops()
         self.load_products()
         self.load_orders()
         self.load_supply_data()
     
-    def load_shops(self):
+    def load_shops(self) -> None:
         """加载店铺列表"""
         # 清除现有
         while self.shops_grid.count():
@@ -432,7 +432,7 @@ class EcommerceManagerPage(QWidget):
             card = ShopCard(shop)
             self.shops_grid.addWidget(card, i // 3, i % 3)
     
-    def load_products(self):
+    def load_products(self) -> None:
         """加载商品列表"""
         self.product_table.setRowCount(0)
         
@@ -455,7 +455,7 @@ class EcommerceManagerPage(QWidget):
             action_btn = QPushButton("编辑")
             self.product_table.setCellWidget(row, 6, action_btn)
     
-    def load_orders(self):
+    def load_orders(self) -> None:
         """加载订单列表"""
         self.order_table.setRowCount(0)
         
@@ -477,7 +477,7 @@ class EcommerceManagerPage(QWidget):
             action_btn = QPushButton("详情")
             self.order_table.setCellWidget(row, 6, action_btn)
     
-    def load_supply_data(self):
+    def load_supply_data(self) -> None:
         """加载供应链数据"""
         # 供应商列表
         self.supplier_list.clear()
@@ -498,6 +498,6 @@ class EcommerceManagerPage(QWidget):
         for alert in demo_alerts:
             self.alert_list.addItem(alert)
     
-    def on_add_shop(self):
+    def on_add_shop(self) -> None:
         """添加店铺"""
         QMessageBox.information(self, "添加店铺", "店铺授权功能开发中...")

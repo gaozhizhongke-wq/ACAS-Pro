@@ -4,6 +4,7 @@ Request tracking, logging, and utility middleware for production.
 """
 import uuid
 import time
+from typing import Any
 from flask import request, g, jsonify
 from functools import wraps
 from acas_pro.core.logging import get_logger
@@ -11,8 +12,25 @@ from acas_pro.core.logging import get_logger
 logger = get_logger(__name__)
 
 
+# Paths that do NOT require authentication
+PUBLIC_PATHS = frozenset({
+    '/health',
+    '/api/health',
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/docs',
+    '/api/spec',
+    '/favicon.ico',
+})
+
+# Path prefixes that do NOT require authentication
+PUBLIC_PREFIXES = (
+    '/static/',
+)
+
+
 class RequestContext:
-    """Request context manager for tracking and logging"""
+    """Request context manager for tracking, logging, and authentication"""
     
     @staticmethod
     def init_app(app) -> None:
@@ -27,6 +45,54 @@ class RequestContext:
             # Store client info
             g.client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
             g.user_agent = request.headers.get('User-Agent', 'Unknown')[:200]
+            
+            # ── Authentication check ─────────────────────────────
+            g.user = None  # Default: unauthenticated
+            
+            path = request.path
+            
+            # Skip auth for public paths
+            if path in PUBLIC_PATHS or any(path.startswith(p) for p in PUBLIC_PREFIXES):
+                return None  # Continue without auth
+            
+            # Skip auth for OPTIONS (CORS preflight)
+            if request.method == 'OPTIONS':
+                return None
+            
+            # Extract token from Authorization header or cookie
+            token = None
+            auth_header = request.headers.get('Authorization', '')
+            if auth_header.startswith('Bearer '):
+                token = auth_header[7:].strip()
+            elif not token:
+                token = request.cookies.get('access_token')
+            
+            if token:
+                try:
+                    import acas_pro.core.security as _sec
+                    payload = _sec.JWTManager.verify_token(token)
+                    if payload and 'sub' in payload:
+                        g.user = {
+                            'user_id': payload['sub'],
+                            'account': payload.get('account', ''),
+                        }
+                except Exception as e:
+                    logger.debug(f"Token verification failed: {e}")
+            
+            # If this is a public path (dashboard HTML page), allow without auth
+            # but API endpoints and /metrics require authentication
+            requires_auth = (
+                path.startswith('/api/') and not path.startswith('/api/auth/')
+            ) or path == '/metrics'
+            if requires_auth and g.user is None:
+                logger.warning(f"Unauthenticated API access: {request.method} {path}")
+                return jsonify({
+                    'error': 'Authentication required',
+                    'message': 'Provide a valid JWT token via Authorization header',
+                    'request_id': g.get('request_id')
+                }), 401
+            
+            return None  # Continue
         
         @app.after_request
         def after_request(response) -> Any:

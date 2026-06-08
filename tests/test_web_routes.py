@@ -91,10 +91,23 @@ class TestLLMConfig:
 
 
 class TestLLMChat:
-    @pytest.mark.skip(reason="Auth middleware not enforced in test mode, LLM not configured")
-    def test_chat_unauthorized(self, client):
+    # Remove skip: now we mock create_llm_client to test auth
+    def test_chat_unauthorized(self, client, monkeypatch):
+        """Test /api/llm/chat returns 401 without valid token."""
+        # Mock create_llm_client to avoid LLM configuration error
+        class MockClient:
+            def chat(self, **kwargs):
+                # Return a mock response similar to OpenAI chat completions
+                mock_message = type('M', (), {'content': 'test response'})()
+                mock_choice = type('Ch', (), {'message': mock_message})()
+                mock_response = type('Resp', (), {'choices': [mock_choice]})()
+                return mock_response
+        
+        monkeypatch.setattr('acas_pro.web.routes.llm.create_llm_client', lambda **kw: MockClient())
+        
+        # Request without token should return 401
         resp = client.post('/api/llm/chat', json={'messages': [{'role': 'user', 'content': 'hello'}]})
-        assert resp.status_code in (401, 403)
+        assert resp.status_code in (401, 403), f'Expected 401/403, got {resp.status_code}: {resp.data}'
 
 
 class TestAuthV2Routes:

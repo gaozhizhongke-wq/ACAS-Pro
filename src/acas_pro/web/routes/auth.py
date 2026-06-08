@@ -115,6 +115,26 @@ def auth_login() -> tuple:
     ).model_dump(mode='json')), 200
 
 
+@bp.route('/logout', methods=['POST'])
+def auth_logout() -> tuple:
+    """Logout and revoke current token"""
+    # Extract token from Authorization header or cookie
+    token = None
+    auth_header = request.headers.get('Authorization', '')
+    if auth_header.startswith('Bearer '):
+        token = auth_header[7:].strip()
+    elif not token:
+        token = request.cookies.get('access_token')
+    
+    if token:
+        # Revoke the token
+        _sec.JWTManager.revoke_token(token)
+    
+    response = jsonify({'success': True, 'message': 'Logged out successfully'})
+    response.delete_cookie('access_token')
+    return response, 200
+
+
 @bp.route('/me', methods=['GET'])
 def auth_me() -> tuple:
     """Get current user info (requires authentication)"""

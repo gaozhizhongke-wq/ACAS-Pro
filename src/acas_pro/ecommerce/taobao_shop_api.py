@@ -40,7 +40,7 @@ class TaobaoShopClient(PlatformAPIClient):
     def __init__(self, credentials: PlatformCredentials):
         super().__init__(credentials)
     
-    def _check_business_error(self, result: Dict):
+    def _check_business_error(self, result: Dict) -> None:
         """检查淘宝业务错误码"""
         if "error_response" in result:
             err = result["error_response"]

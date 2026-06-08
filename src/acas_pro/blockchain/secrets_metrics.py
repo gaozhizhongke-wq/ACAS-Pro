@@ -7,7 +7,7 @@ class SecretsMetrics:
     def __init__(self):
         self._metrics: dict = {}
 
-    def record(self, name: str, value: float = 1.0, tags: dict = None):
+    def record(self, name: str, value: float = 1.0, tags: dict = None) -> None:
         self._metrics[name] = {"value": value, "tags": tags or {}}
 
     def get(self, name: str, default: float = 0.0) -> float:
@@ -16,5 +16,5 @@ class SecretsMetrics:
     def report(self) -> dict:
         return dict(self._metrics)
 
-    def reset(self):
+    def reset(self) -> None:
         self._metrics.clear()

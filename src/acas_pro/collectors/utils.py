@@ -1,4 +1,4 @@
 """Utils - Stub for test compatibility"""
 class Utils:
-    def util(self):
+    def util(self) -> None:
         return True

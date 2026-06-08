@@ -205,12 +205,12 @@ class ShopManager:
     def __init__(self):
         self.db = DatabaseManager()
 
-    def _get_db(self):
+    def _get_db(self) -> None:
         """获取数据库连接（兼容方法）"""
         return self.db
         self._init_database()
     
-    def _init_database(self):
+    def _init_database(self) -> None:
         """初始化数据库表"""
         self.db.execute("""
             CREATE TABLE IF NOT EXISTS shops (
@@ -286,7 +286,7 @@ class ShopManager:
         logger.info(f"Created shop: {shop_id} ({name})")
         return shop
     
-    def _save_shop(self, shop: Shop):
+    def _save_shop(self, shop: Shop) -> None:
         """保存店铺"""
         self.db.execute("""
             INSERT OR REPLACE INTO shops (
@@ -301,12 +301,12 @@ class ShopManager:
             shop.shop_id_on_platform, shop.shop_url, shop.logo_url,
             shop.description, shop.contact_name, shop.contact_phone,
             shop.contact_email, shop.main_category, shop.business_license,
-            json.dumps(shop.credentials.__dict__),
+            json.dumps(shop.credentials.__dict__) if hasattr(shop.credentials, '__dict__') else shop.credentials,
             int(shop.auto_sync), shop.sync_interval,
             shop.created_at, shop.updated_at, shop.owner_id, shop.last_sync_at
         ))
     
-    def _init_shop_stats(self, shop_id: str):
+    def _init_shop_stats(self, shop_id: str) -> None:
         """初始化店铺统计"""
         self.db.execute("""
             INSERT OR IGNORE INTO shop_stats (
@@ -670,7 +670,7 @@ class ShopManager:
                         'status': 'success',
                     })
                 except Exception as e:
-                    logger.exception(f"Error in unknown_function: {e}")
+                    logger.exception(f"Error in batch_sync: {e}")
                     results['failed'] += 1
                     results['details'].append({
                         'shop_id': shop.id,
@@ -722,10 +722,8 @@ class ShopManager:
                        WHERE id = ?""",
                     (stats['order_count'], stats['revenue'], datetime.now().isoformat(), shop_id)
                 )
-        except Exception:
-            pass
-
-    def _save_shop(self, shop) -> bool:
+        except Exception as e:
+            logger.debug(f"Shop stats refresh failed for shop {shop_id}: {e}")
         """保存店铺对象到数据库"""
         try:
             db = self._get_db()
@@ -741,5 +739,6 @@ class ShopManager:
                 )
             )
             return True
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Shop save failed: {e}")
             return False

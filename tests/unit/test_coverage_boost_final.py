@@ -882,26 +882,42 @@ class TestWebInit:
 
     def test_register_auth_middleware_public_routes(self):
         from acas_pro.web import create_app
-        app = create_app(test_config={"TESTING": True})
-        client = app.test_client()
-        # Public routes should work without auth
-        resp = client.get("/api/health")
-        assert resp.status_code in (200, 404)
+        with patch('acas_pro.web.health.DatabaseManager') as MockDB:
+            mock_db = MagicMock()
+            mock_db.execute_one.return_value = {'health_check': 1}
+            MockDB.return_value = mock_db
+            app = create_app(test_config={"TESTING": True})
+            client = app.test_client()
+            # Public routes should work without auth
+            resp = client.get("/api/health")
+            assert resp.status_code in (200, 404)
 
-    @pytest.mark.skip(reason="Auth middleware not enforced in TESTING mode")
+    # Remove skip: auth middleware now registered in create_app
     def test_register_auth_middleware_protected_without_token(self):
+        """Test that protected routes require authentication."""
         from acas_pro.web import create_app
         app = create_app(test_config={"TESTING": True})
+        
+        # Add a test protected route (not in PUBLIC_ROUTES or PUBLIC_PREFIXES)
+        @app.route('/api/protected_test')
+        def protected_test():
+            from flask import jsonify
+            return jsonify({'message': 'protected'}), 200
+        
         client = app.test_client()
-        resp = client.get("/api/users/me")
-        assert resp.status_code == 401
+        resp = client.get("/api/protected_test")
+        assert resp.status_code == 401, f'Expected 401, got {resp.status_code}'
 
     def test_authenticate_with_bearer_token(self):
         from acas_pro.web import create_app
-        app = create_app(test_config={"TESTING": True})
-        client = app.test_client()
-        resp = client.get("/api/health")  # public
-        assert resp.status_code in (200, 404)
+        with patch('acas_pro.web.health.DatabaseManager') as MockDB:
+            mock_db = MagicMock()
+            mock_db.execute_one.return_value = {'health_check': 1}
+            MockDB.return_value = mock_db
+            app = create_app(test_config={"TESTING": True})
+            client = app.test_client()
+            resp = client.get("/api/health")  # public
+            assert resp.status_code in (200, 404)
 
 
 # =============================================================================
