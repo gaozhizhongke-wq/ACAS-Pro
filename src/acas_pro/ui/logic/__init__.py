@@ -2,21 +2,11 @@
 # -*- coding: utf-8 -*-
 """
 ACAS Pro - UI Business Logic Layer
-Extracted from Qt views for testability
 """
 
-# Temporarily commented out due to encoding issues
-# from .dashboard_logic import DashboardLogic, KPIData, QuickAction, AlertItem
-from .content_creation_logic import ContentCreationLogic, ContentTemplate
+from .dashboard_logic import DashboardLogic, KPIData, QuickAction, AlertItem
+from .content_logic import ContentCreationLogic, Platform, ContentStyle, GeneratedScript, TrendItem, ContentTemplate
 from .settings_logic import SettingsLogic, SettingItem
-# Temporarily commented out due to encoding issues
-# from .inventory_logic import InventoryLogic, InventoryItem, InventoryAlert
-# Temporarily commented out due to encoding issues
-# from .content_logic import (
-#     ContentCreationLogic as ContentLogic,
-#     TrendItem, ScriptTemplate, GeneratedScript,
-#     ContentStyle, Platform
-# )
 from .video_logic import VideoLogic, VideoProject, RenderJob, VideoFormat, VideoQuality
 from .analytics_logic import AnalyticsLogic, MetricData, AnalyticsReport, MetricType, TimeRange
 from .order_logic import OrderLogic, Order, OrderItem, OrderStatus, PaymentStatus
@@ -29,9 +19,6 @@ __all__ = [
     'DashboardLogic', 'KPIData', 'QuickAction', 'AlertItem',
     'ContentCreationLogic', 'ContentTemplate',
     'SettingsLogic', 'SettingItem',
-    'InventoryLogic', 'InventoryItem', 'InventoryAlert',
-    'ContentLogic', 'TrendItem', 'ScriptTemplate', 'GeneratedScript',
-    'ContentStyle', 'Platform',
     'VideoLogic', 'VideoProject', 'RenderJob', 'VideoFormat', 'VideoQuality',
     'AnalyticsLogic', 'MetricData', 'AnalyticsReport', 'MetricType', 'TimeRange',
     'OrderLogic', 'Order', 'OrderItem', 'OrderStatus', 'PaymentStatus',

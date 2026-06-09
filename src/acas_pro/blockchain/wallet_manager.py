@@ -107,6 +107,9 @@ class Transaction:
         return self.amount + self.fee
 
 
+# Tables managed by core/schema.py — do not add CREATE TABLE here
+
+
 class WalletManager:
     """钱包管理器"""
     
@@ -139,44 +142,6 @@ class WalletManager:
     
     def __init__(self):
         self.db = DatabaseManager()
-        self._init_database()
-    
-    def _init_database(self) -> None:
-        """初始化数据库表"""
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS wallets (
-                id TEXT PRIMARY KEY,
-                owner_id TEXT NOT NULL,
-                owner_type TEXT NOT NULL,
-                address TEXT UNIQUE NOT NULL,
-                chain_type TEXT DEFAULT 'ethereum',
-                balances TEXT,
-                encrypted_private_key TEXT,
-                is_active INTEGER DEFAULT 1,
-                created_at TEXT,
-                last_activity TEXT
-            )
-        """)
-        
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS transactions (
-                id TEXT PRIMARY KEY,
-                tx_type TEXT NOT NULL,
-                from_wallet TEXT,
-                to_wallet TEXT,
-                amount REAL NOT NULL,
-                currency TEXT DEFAULT 'USDT',
-                fee REAL DEFAULT 0.0,
-                status TEXT DEFAULT 'pending',
-                blockchain_tx_hash TEXT,
-                block_number INTEGER,
-                confirmations INTEGER DEFAULT 0,
-                settlement_id TEXT,
-                description TEXT,
-                created_at TEXT,
-                confirmed_at TEXT
-            )
-        """)
     
     def create_wallet(
         self,

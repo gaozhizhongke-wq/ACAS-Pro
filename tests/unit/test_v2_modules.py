@@ -13,8 +13,7 @@ if 'numpy' not in sys.modules:
 class TestSettlementEngine:
     def test_create_settlement(self):
         from acas_pro.blockchain.settlement_engine import SettlementEngine, SettlementType, SettlementParty
-        with patch.object(SettlementEngine, '_init_database'), \
-             patch('acas_pro.blockchain.settlement_engine.DatabaseManager') as MockDB:
+        with patch('acas_pro.blockchain.settlement_engine.DatabaseManager') as MockDB:
             mock_db = MagicMock()
             MockDB.return_value = mock_db
             engine = SettlementEngine()
@@ -30,8 +29,7 @@ class TestSettlementEngine:
     def test_complete_settlement(self):
         """Test complete_settlement method"""
         from acas_pro.blockchain.settlement_engine import SettlementEngine
-        with patch.object(SettlementEngine, '_init_database'), \
-             patch('acas_pro.blockchain.settlement_engine.DatabaseManager') as MockDB:
+        with patch('acas_pro.blockchain.settlement_engine.DatabaseManager') as MockDB:
             mock_db = MagicMock()
             MockDB.return_value = mock_db
             engine = SettlementEngine()
@@ -42,8 +40,7 @@ class TestSettlementEngine:
 class TestOrderManager:
     def test_create_order(self):
         from acas_pro.ecommerce.order_manager import OrderManager
-        with patch.object(OrderManager, '_init_database'), \
-             patch('acas_pro.ecommerce.order_manager.DatabaseManager') as MockDB:
+        with patch('acas_pro.ecommerce.order_manager.DatabaseManager') as MockDB:
             mock_db = MagicMock()
             MockDB.return_value = mock_db
             mgr = OrderManager()
@@ -59,8 +56,7 @@ class TestOrderManager:
 
     def test_create_order_calculates_total(self):
         from acas_pro.ecommerce.order_manager import OrderManager
-        with patch.object(OrderManager, '_init_database'), \
-             patch('acas_pro.ecommerce.order_manager.DatabaseManager') as MockDB:
+        with patch('acas_pro.ecommerce.order_manager.DatabaseManager') as MockDB:
             mock_db = MagicMock()
             MockDB.return_value = mock_db
             mgr = OrderManager()
@@ -71,8 +67,7 @@ class TestOrderManager:
 class TestProductManager:
     def test_create_product(self):
         from acas_pro.ecommerce.product_manager import ProductManager
-        with patch.object(ProductManager, '_init_database'), \
-             patch('acas_pro.ecommerce.product_manager.DatabaseManager') as MockDB:
+        with patch('acas_pro.ecommerce.product_manager.DatabaseManager') as MockDB:
             mock_db = MagicMock()
             MockDB.return_value = mock_db
             mgr = ProductManager()
@@ -86,8 +81,7 @@ class TestProductManager:
 
     def test_get_product(self):
         from acas_pro.ecommerce.product_manager import ProductManager
-        with patch.object(ProductManager, '_init_database'), \
-             patch('acas_pro.ecommerce.product_manager.DatabaseManager') as MockDB:
+        with patch('acas_pro.ecommerce.product_manager.DatabaseManager') as MockDB:
             mock_db = MagicMock()
             mock_db.fetchone.return_value = None
             MockDB.return_value = mock_db
@@ -98,8 +92,7 @@ class TestProductManager:
     def test_list_products(self):
         """Test list_products method"""
         from acas_pro.ecommerce.product_manager import ProductManager
-        with patch.object(ProductManager, '_init_database'), \
-             patch('acas_pro.ecommerce.product_manager.DatabaseManager') as MockDB:
+        with patch('acas_pro.ecommerce.product_manager.DatabaseManager') as MockDB:
             mock_db = MagicMock()
             mock_db.fetchall.return_value = []
             MockDB.return_value = mock_db

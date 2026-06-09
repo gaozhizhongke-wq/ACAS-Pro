@@ -42,8 +42,23 @@ def verify_token(token: str) -> dict | None:
             logger.warning(f"Invalid JWT algorithm configured: {alg}")
             return None
         payload = jwt.decode(token, JWT_SECRET, algorithms=[alg])
-        if payload.get('user_id'):
-            return payload
+        # Validate legacy token has required claims
+        if not payload.get('user_id'):
+            return None
+        # Check expiration — legacy tokens must have valid exp
+        exp = payload.get('exp')
+        if exp is None:
+            logger.warning("Legacy JWT token missing exp claim — rejecting")
+            return None
+        if datetime.now(timezone.utc) > datetime.fromtimestamp(exp, tz=timezone.utc):
+            logger.warning("Legacy JWT token expired")
+            return None
+        # Check token is not revoked
+        jti = payload.get('jti')
+        if jti and _sec.TokenBlacklist.is_revoked(jti):
+            logger.warning(f"Legacy JWT token revoked: jti={jti[:16]}...")
+            return None
+        return payload
     except jwt.ExpiredSignatureError:
         logger.warning("Legacy JWT token expired")
     except jwt.InvalidTokenError as e:

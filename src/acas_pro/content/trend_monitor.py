@@ -89,6 +89,8 @@ class TrendMonitor:
     4. 实时热点推送
     """
     
+    # Tables managed by core/schema.py — do not add CREATE TABLE here
+
     def __init__(self, db: 'DatabaseManager' = None):
         self.db = db or DatabaseManager()
         self._running = False
@@ -135,46 +137,8 @@ class TrendMonitor:
             },
         }
         
-        # 初始化数据表
-        self._init_database()
         
-    def _init_database(self) -> None:
-        """初始化数据库表"""
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS trend_items (
-                id TEXT PRIMARY KEY,
-                platform TEXT NOT NULL,
-                title TEXT,
-                author TEXT,
-                url TEXT,
-                views INTEGER DEFAULT 0,
-                likes INTEGER DEFAULT 0,
-                comments INTEGER DEFAULT 0,
-                shares INTEGER DEFAULT 0,
-                publish_time TIMESTAMP,
-                tags TEXT,  -- JSON array
-                content_type TEXT,
-                thumbnail_url TEXT,
-                viral_score REAL DEFAULT 0,
-                efficiency_score REAL DEFAULT 0,
-                relevance_score REAL DEFAULT 0,
-                transcript TEXT,
-                visual_tags TEXT,  -- JSON array
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        self.db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_trend_platform ON trend_items(platform)
-        """)
-        self.db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_trend_viral ON trend_items(viral_score DESC)
-        """)
-        self.db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_trend_time ON trend_items(publish_time DESC)
-        """)
-        
+    
     def start_monitoring(self) -> None:
         """启动监测"""
         if self._running:

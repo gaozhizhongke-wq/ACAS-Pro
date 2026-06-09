@@ -16,6 +16,8 @@ from ..core.database import DatabaseManager
 
 logger = get_logger(__name__)
 
+# Tables managed by core/schema.py — do not add CREATE TABLE here
+
 
 class MetricType(Enum):
     """指标类型"""
@@ -89,69 +91,6 @@ class DataMonitor:
     
     def __init__(self, db: 'DatabaseManager' = None):
         self.db = db or DatabaseManager()
-        self._init_database()
-        
-    def _init_database(self) -> None:
-        """初始化数据库表"""
-        # 指标数据表
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS metrics_data (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                metric_type TEXT NOT NULL,
-                platform TEXT NOT NULL,
-                account_id TEXT NOT NULL,
-                content_id TEXT,
-                value REAL NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        # 每日汇总表
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS daily_metrics (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                date DATE NOT NULL,
-                platform TEXT NOT NULL,
-                account_id TEXT NOT NULL,
-                views INTEGER DEFAULT 0,
-                likes INTEGER DEFAULT 0,
-                comments INTEGER DEFAULT 0,
-                shares INTEGER DEFAULT 0,
-                new_followers INTEGER DEFAULT 0,
-                orders INTEGER DEFAULT 0,
-                revenue REAL DEFAULT 0,
-                UNIQUE(date, platform, account_id)
-            )
-        """)
-        
-        # 异常预警表
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS data_alerts (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                alert_type TEXT NOT NULL,
-                platform TEXT,
-                account_id TEXT,
-                content_id TEXT,
-                message TEXT,
-                severity TEXT,  -- info, warning, critical
-                acknowledged BOOLEAN DEFAULT 0,
-                acknowledged_at TIMESTAMP,
-                acknowledged_by TEXT
-            )
-        """)
-        
-        # 创建索引
-        self.db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_metrics_time ON metrics_data(timestamp)
-        """)
-        self.db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_metrics_platform ON metrics_data(platform)
-        """)
-        self.db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_daily_metrics_date ON daily_metrics(date)
-        """)
         
     def record_metric(
         self,

@@ -219,84 +219,19 @@ class AvatarScene:
     props: List[str] = field(default_factory=list)
 
 
+# Tables managed by core/schema.py — do not add CREATE TABLE here
+
+
 class AvatarEngine:
     """数字人引擎"""
     
     def __init__(self):
         self.db = DatabaseManager()
-        self._init_database()
         self._ensure_directories()
         
         # 预置模板库
         self._templates: Dict[str, DigitalAvatar] = {}
         self._load_templates()
-    
-    def _init_database(self) -> None:
-        """初始化数据库表"""
-        # 数字人表
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS digital_avatars (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                type TEXT NOT NULL,
-                style TEXT NOT NULL,
-                gender TEXT NOT NULL,
-                age_group TEXT NOT NULL,
-                appearance TEXT,
-                model_path TEXT,
-                texture_path TEXT,
-                voice_id TEXT,
-                idle_animation TEXT,
-                talking_animation TEXT,
-                gesture_set TEXT,
-                created_at TEXT,
-                updated_at TEXT,
-                owner_id TEXT,
-                is_public INTEGER DEFAULT 0,
-                usage_count INTEGER DEFAULT 0,
-                rating REAL DEFAULT 5.0,
-                training_images TEXT,
-                training_videos TEXT,
-                training_status TEXT DEFAULT 'pending'
-            )
-        """)
-        
-        # 场景表
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS avatar_scenes (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                description TEXT,
-                scene_type TEXT,
-                background_type TEXT,
-                background_path TEXT,
-                lighting_preset TEXT,
-                camera_angle TEXT,
-                camera_distance TEXT,
-                avatar_position TEXT,
-                avatar_scale REAL,
-                props TEXT,
-                created_at TEXT,
-                owner_id TEXT
-            )
-        """)
-        
-        # 渲染任务表
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS avatar_render_tasks (
-                id TEXT PRIMARY KEY,
-                avatar_id TEXT NOT NULL,
-                scene_id TEXT,
-                script TEXT NOT NULL,
-                audio_path TEXT,
-                output_path TEXT,
-                status TEXT DEFAULT 'pending',
-                progress REAL DEFAULT 0.0,
-                created_at TEXT,
-                completed_at TEXT,
-                error_message TEXT
-            )
-        """)
     
     def _ensure_directories(self) -> None:
         """确保目录存在"""

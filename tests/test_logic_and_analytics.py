@@ -7,6 +7,7 @@ import sys
 from unittest.mock import MagicMock, patch
 import inspect
 import pytest
+from datetime import datetime
 
 
 def _clear_module(prefix):
@@ -203,19 +204,18 @@ class TestContentLogic:
     def test_import(self):
         _clear_module('acas_pro.ui.logic')
         from acas_pro.ui.logic.content_logic import (
-            ContentStyle, Platform, TrendItem, ScriptTemplate,
+            ContentStyle, Platform, TrendItem, ContentTemplate,
             GeneratedScript, ContentCreationLogic
         )
         # Test enums
         assert True
         # Test dataclasses
-        ti = TrendItem(id=1, title='test', author='author', platform='douyin',
+        ti = TrendItem(id='1', title='test', author='author', platform=Platform.DOUYIN,
                       views=100, likes=10, comments=5, viral_score=0.9,
-                      timestamp='2025-01-01', url='http://test.com')
-        st = ScriptTemplate(id=1, name='test', platform='douyin', style='casual',
-                           template='hello', estimated_duration=60)
-        gs = GeneratedScript(title='test', content='hello world', platform='douyin',
-                           style='casual', word_count=100, estimated_duration=60, keywords=['test'])
+                      timestamp=datetime.now())
+        st = ContentTemplate(name='test', platform=Platform.DOUYIN, duration=60)
+        gs = GeneratedScript(title='test', content='hello world', platform=Platform.DOUYIN,
+                           style=ContentStyle.CASUAL, word_count=100, estimated_duration=60, keywords=['test'])
         # Test main logic
         logic = ContentCreationLogic()
         _call_methods(logic)

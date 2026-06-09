@@ -132,8 +132,9 @@ class TestAccountManager:
                 return AccountManager()
     
     def test_init(self, manager, mock_db):
-        """Test initialization"""
-        mock_db.execute.assert_called()
+        """Test initialization — schema is managed by core/schema.py, no inline CREATE TABLE"""
+        assert manager is not None
+        # execute is no longer called during init (schema centralized)
     
     def test_get_account_not_found(self, manager, mock_db):
         """Test get account not found"""

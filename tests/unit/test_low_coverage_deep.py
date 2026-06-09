@@ -21,6 +21,7 @@ class TestAdManagerDeep:
             am = AdManager()
         am.db = MagicMock()
         am.db_path = ":memory:"
+        am._logger = MagicMock()
         am.logger = MagicMock()
         return am
 

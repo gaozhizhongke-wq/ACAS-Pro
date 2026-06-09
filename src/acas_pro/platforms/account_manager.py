@@ -133,91 +133,13 @@ class AccountManager:
     5. 数据统计与分析
     """
     
+    # Tables managed by core/schema.py — do not add CREATE TABLE here
+
     def __init__(self, db: DatabaseManager = None, security: SessionManager = None):
         self.db = db or DatabaseManager()
         self.security = security or SessionManager()
-        self._init_database()
         
-    def _init_database(self) -> None:
-        """初始化数据库表"""
-        # 账号表
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS platform_accounts (
-                id TEXT PRIMARY KEY,
-                platform TEXT NOT NULL,
-                account_id TEXT NOT NULL,
-                account_name TEXT,
-                nickname TEXT,
-                access_token TEXT NOT NULL,
-                refresh_token TEXT,
-                token_expires_at TIMESTAMP,
-                avatar_url TEXT,
-                followers INTEGER DEFAULT 0,
-                following INTEGER DEFAULT 0,
-                total_likes INTEGER DEFAULT 0,
-                total_views INTEGER DEFAULT 0,
-                content_count INTEGER DEFAULT 0,
-                status TEXT DEFAULT 'active',
-                phase TEXT DEFAULT 'warmup',
-                tags TEXT,  -- JSON array
-                region TEXT,
-                category TEXT,
-                risk_score REAL DEFAULT 0,
-                last_violation_at TIMESTAMP,
-                violation_count INTEGER DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                last_login_at TIMESTAMP,
-                UNIQUE(platform, account_id)
-            )
-        """)
-        
-        # 账号统计表
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS account_stats (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                account_id TEXT NOT NULL,
-                date DATE NOT NULL,
-                new_content INTEGER DEFAULT 0,
-                total_views INTEGER DEFAULT 0,
-                total_likes INTEGER DEFAULT 0,
-                total_comments INTEGER DEFAULT 0,
-                total_shares INTEGER DEFAULT 0,
-                new_followers INTEGER DEFAULT 0,
-                unfollows INTEGER DEFAULT 0,
-                net_followers INTEGER DEFAULT 0,
-                orders INTEGER DEFAULT 0,
-                revenue REAL DEFAULT 0,
-                commission REAL DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                UNIQUE(account_id, date)
-            )
-        """)
-        
-        # 登录日志表
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS account_login_logs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                account_id TEXT NOT NULL,
-                ip_address TEXT,
-                device_info TEXT,
-                location TEXT,
-                success BOOLEAN,
-                error_message TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        # 创建索引
-        self.db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_account_platform ON platform_accounts(platform)
-        """)
-        self.db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_account_status ON platform_accounts(status)
-        """)
-        self.db.execute("""
-            CREATE INDEX IF NOT EXISTS idx_stats_account ON account_stats(account_id)
-        """)
+
         
     def add_account(
         self,

@@ -44,19 +44,31 @@ def temp_db():
 
 
 @pytest.fixture
-def ad_manager(temp_db):
-    """AdManager 实例"""
-    manager = AdManager(db_path=temp_db)
+def ad_manager():
+    """AdManager 实例 — uses DatabaseManager singleton"""
+    from acas_pro.core.database import DatabaseManager
+    manager = AdManager()
+    # Clean tables for test isolation
+    try:
+        DatabaseManager().execute("DELETE FROM ad_records")
+        DatabaseManager().execute("DELETE FROM ad_campaigns")
+        DatabaseManager().execute("DELETE FROM ad_accounts")
+    except Exception:
+        pass
     yield manager
-    manager.close()
 
 
 @pytest.fixture
-def audience_targeting(temp_db):
-    """AudienceTargeting 实例"""
-    targeting = AudienceTargeting(db_path=temp_db)
+def audience_targeting():
+    """AudienceTargeting 实例 — uses DatabaseManager singleton"""
+    from acas_pro.core.database import DatabaseManager
+    targeting = AudienceTargeting()
+    # Clean table for test isolation
+    try:
+        DatabaseManager().execute("DELETE FROM audience_segments")
+    except Exception:
+        pass
     yield targeting
-    targeting.close()
 
 
 @pytest.fixture
@@ -158,17 +170,14 @@ def sample_bidding_config():
 class TestAdManager:
     """AdManager 测试"""
 
-    def test_init_with_db_path(self, temp_db):
-        """测试带数据库路径初始化"""
-        manager = AdManager(db_path=temp_db)
+    def test_init_with_db_path(self):
+        """测试初始化（db_path legacy compat）"""
+        manager = AdManager(db_path="/tmp/unused.db")
         assert manager is not None
 
     def test_init_without_db_path(self):
-        """测试不带数据库路径初始化"""
-        import tempfile
-        import uuid
-        db_path = os.path.join(tempfile.gettempdir(), f"test_ads_{uuid.uuid4().hex}.db")
-        manager = AdManager(db_path=db_path)
+        """测试不带参数初始化"""
+        manager = AdManager()
         assert manager is not None
 
     def test_add_account(self, ad_manager, sample_ad_account):
@@ -292,9 +301,9 @@ class TestAdManager:
 class TestAudienceTargeting:
     """AudienceTargeting 测试"""
 
-    def test_init_with_db_path(self, temp_db):
-        """测试带数据库路径初始化"""
-        targeting = AudienceTargeting(db_path=temp_db)
+    def test_init_with_db_path(self):
+        """测试初始化（db_path legacy compat）"""
+        targeting = AudienceTargeting(db_path="/tmp/unused.db")
         assert targeting is not None
 
     def test_create_segment(self, audience_targeting, sample_audience_segment):

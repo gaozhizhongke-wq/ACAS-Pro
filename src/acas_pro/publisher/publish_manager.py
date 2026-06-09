@@ -171,47 +171,12 @@ class PublishManager:
         },
     }
     
+    # Tables managed by core/schema.py — do not add CREATE TABLE here
+
     def __init__(self, db: 'DatabaseManager' = None):
         self.db = db or DatabaseManager()
-        self._init_database()
         
-    def _init_database(self) -> None:
-        """初始化数据库表"""
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS publish_tasks (
-                id TEXT PRIMARY KEY,
-                content_path TEXT NOT NULL,
-                content_type TEXT,
-                title TEXT,
-                description TEXT,
-                tags TEXT,  -- JSON array
-                cover_image TEXT,
-                platforms TEXT,  -- JSON array
-                scheduled_time TIMESTAMP,
-                status TEXT DEFAULT 'pending',
-                publish_results TEXT,  -- JSON
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                published_at TIMESTAMP,
-                retry_count INTEGER DEFAULT 0,
-                max_retries INTEGER DEFAULT 3
-            )
-        """)
-        
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS platform_accounts (
-                id TEXT PRIMARY KEY,
-                platform TEXT NOT NULL,
-                account_id TEXT NOT NULL,
-                account_name TEXT,
-                access_token TEXT,
-                refresh_token TEXT,
-                token_expires_at TIMESTAMP,
-                settings TEXT,  -- JSON
-                is_active BOOLEAN DEFAULT 1,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
+
         
     def create_task(
         self,

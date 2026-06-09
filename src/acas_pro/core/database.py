@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 ACAS Pro - Unified Database Layer
@@ -65,7 +65,7 @@ class DatabaseManager:
         'failed_login_count', 'locked_until', 'password_hash', 'wallet_balance',
         'wallet_currency', 'model_preference', 'account_type',
         'reserved_quantity', 'warehouse_location', 'last_updated',
-        'campaign_id', 'segment_type', 'criteria', 'size',
+        'campaign_id', 'criteria',
         'template_content', 'variables', 'usage_count',
         'session_id', 'tokens_used', 'action', 'resource_type',
         'description', 'region', 'category', 'tags', 'price', 'cost',
@@ -73,7 +73,18 @@ class DatabaseManager:
         'targeting', 'budget', 'spent', 'avatar_url', 'balance',
         'last_sync', 'content_count', 'total_views',
         # Added for session management and audit logging
-        'sessions', 'audit_log', 'event_type', 'ip_address', 'severity'
+        'sessions', 'audit_log', 'event_type', 'ip_address', 'severity',
+        # Added for ad_manager tables
+        'ad_accounts', 'ad_campaigns', 'ad_records',
+        'adset_id', 'adsets_data', 'impression_url', 'click_url',
+        'tracking_url', 'conversion_goal', 'budget_type', 'budget_amount',
+        'conversion_rate', 'cost_per_conversion', 'daily_budget_limit',
+        'total_spend_7d', 'total_spend_30d', 'total_impressions',
+        'total_clicks', 'total_conversions', 'total_spend',
+        'access_token', 'refresh_token', 'token_expires_at',
+        # Added for audience_targeting columns
+        'source_audience_id',
+        'lookalike_ratio', 'estimated_size', 'estimated_daily_impressions',
     }
 
     def __new__(cls) -> Any:
@@ -210,7 +221,7 @@ class DatabaseManager:
         try:
             self.close()
         except Exception as e:
-            logger.debug("database GC cleanup: {e}")
+            logger.debug(f"database GC cleanup: {e}")
 
     def close(self) -> None:
         """Close database connections (call on shutdown)"""
@@ -218,346 +229,28 @@ class DatabaseManager:
             try:
                 self._local.connection.close()
             except Exception as e:
-                logger.debug("database connection close: {e}")
+                logger.debug(f"database connection close: {e}")
             self._local.connection = None
         elif self._is_postgres and self._pool:
             self._pool.closeall()
 
     def _get_sqlite_schema(self) -> str:
-        """SQLite schema definition"""
-        return '''
-            CREATE TABLE IF NOT EXISTS users (
-                id TEXT PRIMARY KEY,
-                account_type TEXT NOT NULL,
-                account TEXT UNIQUE NOT NULL,
-                password_hash TEXT NOT NULL,
-                nickname TEXT,
-                email TEXT,
-                phone TEXT,
-                role TEXT DEFAULT 'user',
-                status TEXT DEFAULT 'active',
-                region TEXT DEFAULT 'global',
-                language TEXT DEFAULT 'zh',
-                timezone TEXT DEFAULT 'Asia/Shanghai',
-                created_at TEXT NOT NULL
-            );
+        """SQLite schema — delegated to schema.py"""
+        from .schema import SCHEMA_SQLITE, INDEXES_SQL
+        return SCHEMA_SQLITE + INDEXES_SQL
 
-            CREATE TABLE IF NOT EXISTS products (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                name TEXT NOT NULL,
-                description TEXT,
-                price REAL,
-                cost REAL,
-                currency TEXT DEFAULT 'CNY',
-                stock_quantity INTEGER DEFAULT 0,
-                category TEXT,
-                tags TEXT,
-                reorder_point INTEGER DEFAULT 10,
-                reorder_quantity INTEGER DEFAULT 100,
-                status TEXT DEFAULT 'active',
-                created_at TEXT,
-                updated_at TEXT,
-                metadata TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS transactions (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                product_id TEXT REFERENCES products(id),
-                type TEXT NOT NULL,
-                amount REAL NOT NULL,
-                currency TEXT DEFAULT 'CNY',
-                status TEXT DEFAULT 'pending',
-                platform TEXT,
-                metadata TEXT,
-                created_at TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS orders (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                product_id TEXT REFERENCES products(id),
-                quantity INTEGER NOT NULL,
-                total_amount REAL NOT NULL,
-                status TEXT DEFAULT 'pending',
-                shipping_address TEXT,
-                created_at TEXT,
-                updated_at TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS inventory (
-                id TEXT PRIMARY KEY,
-                product_id TEXT REFERENCES products(id),
-                quantity INTEGER DEFAULT 0,
-                reserved_quantity INTEGER DEFAULT 0,
-                reorder_point INTEGER DEFAULT 10,
-                reorder_quantity INTEGER DEFAULT 100,
-                warehouse_location TEXT,
-                last_updated TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS accounts (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                platform TEXT NOT NULL,
-                account_id TEXT NOT NULL,
-                account_name TEXT,
-                followers INTEGER DEFAULT 0,
-                engagement_rate REAL DEFAULT 0,
-                status TEXT DEFAULT 'active',
-                credentials TEXT,
-                created_at TEXT,
-                updated_at TEXT,
-                UNIQUE(user_id, platform, account_id)
-            );
-
-            CREATE TABLE IF NOT EXISTS campaigns (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                name TEXT NOT NULL,
-                platform TEXT,
-                budget REAL,
-                spent REAL DEFAULT 0,
-                status TEXT DEFAULT 'draft',
-                start_date TEXT,
-                end_date TEXT,
-                targeting TEXT,
-                created_at TEXT,
-                updated_at TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS audience_segments (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                name TEXT NOT NULL,
-                segment_type TEXT,
-                size INTEGER DEFAULT 0,
-                criteria TEXT,
-                created_at TEXT,
-                updated_at TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS festival_calendar (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                festival_type TEXT,
-                date TEXT NOT NULL,
-                region TEXT,
-                description TEXT,
-                marketing_tips TEXT,
-                created_at TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS content_templates (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                name TEXT NOT NULL,
-                content_type TEXT,
-                platform TEXT,
-                template_content TEXT NOT NULL,
-                variables TEXT,
-                usage_count INTEGER DEFAULT 0,
-                created_at TEXT,
-                updated_at TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS chat_history (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                session_id TEXT NOT NULL,
-                role TEXT NOT NULL,
-                content TEXT NOT NULL,
-                model TEXT,
-                tokens_used INTEGER,
-                created_at TEXT
-            );
-            
-            CREATE TABLE IF NOT EXISTS audit_logs (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                action TEXT NOT NULL,
-                resource_type TEXT,
-                resource_id TEXT,
-                details TEXT,
-                ip_address TEXT,
-                user_agent TEXT,
-                severity TEXT DEFAULT 'info',
-                created_at TEXT
-            );
-            
-            CREATE INDEX IF NOT EXISTS idx_users_account ON users(account);
-            CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
-            CREATE INDEX IF NOT EXISTS idx_chat_history_session ON chat_history(session_id);
-        '''
+    # NOTE: The original inline SQLite schema (13 core tables + 3 indexes)
+    # has been migrated to core/schema.py which contains ALL 47 tables.
+    # This stub is kept for backward compatibility with callers.
 
     def _get_postgres_schema(self) -> str:
-        """PostgreSQL schema definition (SQLite schema with PostgreSQL-specific types)"""
-        return '''
-            CREATE TABLE IF NOT EXISTS users (
-                id TEXT PRIMARY KEY,
-                account_type TEXT NOT NULL,
-                account TEXT UNIQUE NOT NULL,
-                password_hash TEXT NOT NULL,
-                nickname TEXT,
-                email TEXT,
-                phone TEXT,
-                role TEXT DEFAULT 'user',
-                status TEXT DEFAULT 'active',
-                region TEXT DEFAULT 'global',
-                language TEXT DEFAULT 'zh',
-                timezone TEXT DEFAULT 'Asia/Shanghai',
-                created_at TIMESTAMP NOT NULL DEFAULT NOW()
-            );
+        """PostgreSQL schema — delegated to schema.py"""
+        from .schema import SCHEMA_POSTGRES, INDEXES_SQL
+        return SCHEMA_POSTGRES + INDEXES_SQL
 
-            CREATE TABLE IF NOT EXISTS products (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                name TEXT NOT NULL,
-                description TEXT,
-                price REAL,
-                cost REAL,
-                currency TEXT DEFAULT 'CNY',
-                stock_quantity INTEGER DEFAULT 0,
-                category TEXT,
-                tags TEXT,
-                reorder_point INTEGER DEFAULT 10,
-                reorder_quantity INTEGER DEFAULT 100,
-                status TEXT DEFAULT 'active',
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW(),
-                metadata TEXT
-            );
-
-            CREATE TABLE IF NOT EXISTS transactions (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                product_id TEXT REFERENCES products(id),
-                type TEXT NOT NULL,
-                amount REAL NOT NULL,
-                currency TEXT DEFAULT 'CNY',
-                status TEXT DEFAULT 'pending',
-                platform TEXT,
-                metadata TEXT,
-                created_at TIMESTAMP DEFAULT NOW()
-            );
-
-            CREATE TABLE IF NOT EXISTS orders (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                product_id TEXT REFERENCES products(id),
-                quantity INTEGER NOT NULL,
-                total_amount REAL NOT NULL,
-                status TEXT DEFAULT 'pending',
-                shipping_address TEXT,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
-            );
-
-            CREATE TABLE IF NOT EXISTS inventory (
-                id TEXT PRIMARY KEY,
-                product_id TEXT REFERENCES products(id),
-                quantity INTEGER DEFAULT 0,
-                reserved_quantity INTEGER DEFAULT 0,
-                reorder_point INTEGER DEFAULT 10,
-                reorder_quantity INTEGER DEFAULT 100,
-                warehouse_location TEXT,
-                last_updated TIMESTAMP DEFAULT NOW()
-            );
-
-            CREATE TABLE IF NOT EXISTS accounts (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                platform TEXT NOT NULL,
-                account_id TEXT NOT NULL,
-                account_name TEXT,
-                followers INTEGER DEFAULT 0,
-                engagement_rate REAL DEFAULT 0,
-                status TEXT DEFAULT 'active',
-                credentials TEXT,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW(),
-                UNIQUE(user_id, platform, account_id)
-            );
-
-            CREATE TABLE IF NOT EXISTS campaigns (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                name TEXT NOT NULL,
-                platform TEXT,
-                budget REAL,
-                spent REAL DEFAULT 0,
-                status TEXT DEFAULT 'draft',
-                start_date TIMESTAMP,
-                end_date TIMESTAMP,
-                targeting TEXT,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
-            );
-
-            CREATE TABLE IF NOT EXISTS audience_segments (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                name TEXT NOT NULL,
-                segment_type TEXT,
-                size INTEGER DEFAULT 0,
-                criteria TEXT,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
-            );
-
-            CREATE TABLE IF NOT EXISTS festival_calendar (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                festival_type TEXT,
-                date TEXT NOT NULL,
-                region TEXT,
-                description TEXT,
-                marketing_tips TEXT,
-                created_at TIMESTAMP DEFAULT NOW()
-            );
-
-            CREATE TABLE IF NOT EXISTS content_templates (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                name TEXT NOT NULL,
-                content_type TEXT,
-                platform TEXT,
-                template_content TEXT NOT NULL,
-                variables TEXT,
-                usage_count INTEGER DEFAULT 0,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
-            );
-
-            CREATE TABLE IF NOT EXISTS chat_history (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                session_id TEXT NOT NULL,
-                role TEXT NOT NULL,
-                content TEXT NOT NULL,
-                model TEXT,
-                tokens_used INTEGER,
-                created_at TIMESTAMP DEFAULT NOW()
-            );
-
-            CREATE TABLE IF NOT EXISTS audit_logs (
-                id TEXT PRIMARY KEY,
-                user_id TEXT REFERENCES users(id),
-                action TEXT NOT NULL,
-                resource_type TEXT,
-                resource_id TEXT,
-                details TEXT,
-                ip_address TEXT,
-                user_agent TEXT,
-                severity TEXT DEFAULT 'info',
-                created_at TIMESTAMP DEFAULT NOW()
-            );
-
-            CREATE INDEX IF NOT EXISTS idx_users_account ON users(account);
-            CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
-            CREATE INDEX IF NOT EXISTS idx_chat_history_session ON chat_history(session_id);
-        '''
+    # NOTE: The original inline PostgreSQL schema has been migrated to
+    # core/schema.py.  SCHEMA_POSTGRES is auto-derived from SCHEMA_SQLITE
+    # with CURRENT_TIMESTAMP→NOW() and AUTOINCREMENT→'' substitutions.
 
     def _validate_identifier(self, identifier: str) -> str:
         """Validate SQL identifier to prevent injection"""
@@ -783,6 +476,11 @@ class DatabaseManager:
                     # IN requires tuple value
                     if not isinstance(val, (list, tuple)):
                         raise ValueError("IN operator requires list/tuple value")
+                    if len(val) > 1000:
+                        raise ValueError(
+                            f"IN clause exceeds maximum of 1000 values "
+                            f"(got {len(val)}). Use batched queries instead."
+                        )
                     in_placeholders = ', '.join([placeholder] * len(val))
                     clauses.append(f"{col} IN ({in_placeholders})")
                     params.extend(val)
@@ -997,7 +695,7 @@ def reset_db() -> Any:
         try:
             old._pool.dispose()
         except Exception as e:
-            logger.debug("connection pool dispose: {e}")
+            logger.debug(f"connection pool dispose: {e}")
 
 
 # Backward compatibility - deprecated, use get_db()

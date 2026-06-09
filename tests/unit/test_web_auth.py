@@ -241,7 +241,7 @@ class TestTokenFunctions:
         # Mock jwt.decode in auth.py's namespace AFTER _make_isolated_app reloads it
         import jwt as _jwt
         monkeypatch.setattr(_jwt, 'decode',
-                           staticmethod(lambda *a, **kw: {'user_id': 'u1', 'account': 'test'}),
+                           staticmethod(lambda *a, **kw: {'user_id': 'u1', 'account': 'test', 'exp': 9999999999}),
                            raising=False)
         
         payload = verify_token('tok')

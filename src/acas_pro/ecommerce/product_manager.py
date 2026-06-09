@@ -142,48 +142,9 @@ class ProductManager:
     
     def __init__(self):
         self.db = DatabaseManager()
-        self._init_database()
+        # Tables managed by core/schema.py — do not add CREATE TABLE here
     
-    def _init_database(self) -> None:
-        """初始化数据库表"""
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS products (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                description TEXT,
-                category TEXT,
-                sub_category TEXT,
-                price REAL DEFAULT 0.0,
-                original_price REAL,
-                cost_price REAL,
-                stock INTEGER DEFAULT 0,
-                stock_alert_threshold INTEGER DEFAULT 10,
-                has_variants INTEGER DEFAULT 0,
-                variants TEXT,
-                variant_attributes TEXT,
-                images TEXT,
-                main_image TEXT,
-                video_url TEXT,
-                weight REAL DEFAULT 0.0,
-                length REAL,
-                width REAL,
-                height REAL,
-                status TEXT DEFAULT 'draft',
-                platform_mappings TEXT,
-                created_at TEXT,
-                updated_at TEXT,
-                owner_id TEXT,
-                shop_id TEXT,
-                total_sales INTEGER DEFAULT 0,
-                monthly_sales INTEGER DEFAULT 0,
-                weekly_sales INTEGER DEFAULT 0
-            )
-        """)
-        # Ensure shop_id column exists (for compatibility with existing tables)
-        try:
-            self.db.execute("ALTER TABLE products ADD COLUMN shop_id TEXT")
-        except Exception:
-            logger.debug("shop_id column already exists or other alter error")
+
     
     def create_product(
         self,

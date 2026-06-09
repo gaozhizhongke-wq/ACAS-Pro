@@ -5,6 +5,7 @@ ACAS Pro - User Service
 Enterprise user management with security controls
 """
 
+import sys as _sys
 import json
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Tuple, Dict, Any
@@ -49,7 +50,7 @@ logger = get_logger(__name__)
 # inside this module's own functions. These properties bridge the gap.
 
 
-import sys as _sys
+# _sys already imported at top of file
 
 
 def _get_lazy(name, factory) -> Any:
@@ -217,6 +218,10 @@ class UserService:
                 severity="warning"
             )
             return False, "Invalid account or password", None
+        
+        # Prevent guest accounts from logging in via normal flow
+        if user.get("account_type") == "guest":
+            return False, "Guest accounts cannot log in directly", None
         
         # Check if locked
         if user.get("locked_until"):

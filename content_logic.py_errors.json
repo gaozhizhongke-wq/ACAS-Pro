@@ -1,0 +1,45 @@
+{
+  "error": "Line 180: unterminated string literal (detected at line 180)",
+  "context": [
+    {
+      "line": 176,
+      "content": "'        return factors'"
+    },
+    {
+      "line": 177,
+      "content": "'    '"
+    },
+    {
+      "line": 178,
+      "content": "'    def _infer_audience(self, trend: TrendItem) -> str:'"
+    },
+    {
+      "line": 179,
+      "content": "'        \"\"\"Infer target audience\"\"\"'"
+    },
+    {
+      "line": 180,
+      "content": "'        return \"18-35岁年轻用�?'"
+    },
+    {
+      "line": 181,
+      "content": "'    '"
+    },
+    {
+      "line": 182,
+      "content": "'    def _find_content_gaps(self, trend: TrendItem) -> List[str]:'"
+    },
+    {
+      "line": 183,
+      "content": "'        \"\"\"Find content gaps\"\"\"'"
+    },
+    {
+      "line": 184,
+      "content": "'        return [\"深度解析\", \"实操教程\", \"对比评测\"]'"
+    },
+    {
+      "line": 185,
+      "content": "'    '"
+    }
+  ]
+}

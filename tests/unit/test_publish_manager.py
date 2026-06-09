@@ -67,6 +67,6 @@ class TestPublishManagerInit:
     def test_init_with_mock_db(self):
         from acas_pro.publisher.publish_manager import PublishManager
         mock_db = MagicMock()
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager(db=mock_db)
-            assert mgr.db is mock_db
+        # _init_database removed — schema managed by core/schema.py
+        mgr = PublishManager(db=mock_db)
+        assert mgr.db is mock_db

@@ -138,6 +138,14 @@ Available tools will be provided in the conversation. Use them when appropriate.
             
             step = 0
             while step < task.max_steps and not self._stop_flag:
+                # Check timeout
+                elapsed = time.time() - start_time
+                if elapsed > task.timeout_seconds:
+                    self.status = AgentStatus.FAILED
+                    error = f"Task timed out after {task.timeout_seconds}s ({elapsed:.1f}s elapsed)"
+                    final_response = f"执行超时: {error}"
+                    break
+
                 self.status = AgentStatus.THINKING
                 
                 # Call LLM
@@ -333,29 +341,38 @@ class AgentOrchestrator:
         self._agents[agent_id] = agent
         return agent
     
-    def execute_parallel(self, tasks: List[AgentTask], agent_ids: List[str] = None) -> Dict[str, AgentResult]:
-        """Execute multiple tasks in parallel"""
+    def execute_parallel(self, tasks: List[AgentTask], agent_ids: List[str] = None,
+                         timeout_per_task: float = None) -> Dict[str, AgentResult]:
+        """Execute multiple tasks in parallel
+
+        Args:
+            tasks: List of tasks to execute
+            agent_ids: Optional list of agent IDs to use
+            timeout_per_task: Max seconds per task (default: uses task.timeout_seconds)
+        """
         results = {}
         threads = []
-        
+
         for i, task in enumerate(tasks):
             agent_id = agent_ids[i] if agent_ids and i < len(agent_ids) else f"agent_{i}"
-            
+
             if agent_id not in self._agents:
                 self.create_agent(agent_id)
-            
+
             agent = self._agents[agent_id]
-            
+
             def _run(tid, t, a) -> None:
                 results[tid] = a.execute(t)
-            
+
             thread = threading.Thread(target=_run, args=(task.id, task, agent))
             threads.append(thread)
             thread.start()
-        
+
+        # Join with timeout to avoid blocking forever
+        timeout = timeout_per_task or max(t.timeout_seconds for t in tasks) if tasks else 300
         for thread in threads:
-            thread.join()
-        
+            thread.join(timeout=timeout + 30)  # extra buffer for cleanup
+
         return results
     
     def execute_pipeline(self, tasks: List[AgentTask], pass_results: bool = True) -> List[AgentResult]:

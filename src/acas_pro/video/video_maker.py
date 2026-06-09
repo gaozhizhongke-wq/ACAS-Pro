@@ -167,50 +167,14 @@ class VideoMaker:
         "dissolve",       # 溶解
     ]
     
+    # Tables managed by core/schema.py — do not add CREATE TABLE here
+
     def __init__(self, db: 'DatabaseManager' = None, output_dir: str = None) -> Any:
         self.db = db or DatabaseManager()
         self.output_dir = output_dir or os.path.expanduser("~/ACAS-Videos")
-        self._init_database()
         self._ensure_output_dir()
         
-    def _init_database(self) -> Any:
-        """初始化数据库表"""
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS video_projects (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                width INTEGER DEFAULT 1080,
-                height INTEGER DEFAULT 1920,
-                fps INTEGER DEFAULT 30,
-                duration REAL DEFAULT 0,
-                title TEXT,
-                description TEXT,
-                script TEXT,
-                clips TEXT,  -- JSON
-                background_music TEXT,
-                voice_over TEXT,
-                status TEXT DEFAULT 'draft',
-                output_path TEXT,
-                target_platform TEXT DEFAULT 'douyin'
-            )
-        """)
-        
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS video_materials (
-                id TEXT PRIMARY KEY,
-                name TEXT,
-                material_type TEXT,  -- video/image/audio
-                file_path TEXT NOT NULL,
-                duration REAL,
-                width INTEGER,
-                height INTEGER,
-                tags TEXT,  -- JSON array
-                usage_count INTEGER DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
+
         
     def _ensure_output_dir(self) -> Any:
         """确保输出目录存在"""

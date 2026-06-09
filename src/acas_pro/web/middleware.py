@@ -12,93 +12,36 @@ from acas_pro.core.logging import get_logger
 logger = get_logger(__name__)
 
 
-# Paths that do NOT require authentication
-PUBLIC_PATHS = frozenset({
-    '/health',
-    '/api/health',
-    '/api/auth/login',
-    '/api/auth/register',
-    '/api/docs',
-    '/api/spec',
-    '/favicon.ico',
-})
-
-# Path prefixes that do NOT require authentication
-PUBLIC_PREFIXES = (
-    '/static/',
-)
+# Auth public paths are defined in web/__init__.py (_register_auth_middleware)
+# This module only handles request tracking, logging, and error handling.
 
 
 class RequestContext:
     """Request context manager for tracking, logging, and authentication"""
-    
+
     @staticmethod
     def init_app(app) -> None:
         """Initialize request context middleware"""
-        
+
         @app.before_request
         def before_request() -> Any:
             # Generate request ID
             g.request_id = request.headers.get('X-Request-ID', str(uuid.uuid4())[:16])
             g.start_time = time.time()
-            
+
             # Store client info
             g.client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
             g.user_agent = request.headers.get('User-Agent', 'Unknown')[:200]
-            
-            # ── Authentication check ─────────────────────────────
-            g.user = None  # Default: unauthenticated
-            
-            path = request.path
-            
-            # Skip auth for public paths
-            if path in PUBLIC_PATHS or any(path.startswith(p) for p in PUBLIC_PREFIXES):
-                return None  # Continue without auth
-            
-            # Skip auth for OPTIONS (CORS preflight)
-            if request.method == 'OPTIONS':
-                return None
-            
-            # Extract token from Authorization header or cookie
-            token = None
-            auth_header = request.headers.get('Authorization', '')
-            if auth_header.startswith('Bearer '):
-                token = auth_header[7:].strip()
-            elif not token:
-                token = request.cookies.get('access_token')
-            
-            if token:
-                try:
-                    import acas_pro.core.security as _sec
-                    payload = _sec.JWTManager.verify_token(token)
-                    if payload and 'sub' in payload:
-                        g.user = {
-                            'user_id': payload['sub'],
-                            'account': payload.get('account', ''),
-                        }
-                except Exception as e:
-                    logger.debug(f"Token verification failed: {e}")
-            
-            # If this is a public path (dashboard HTML page), allow without auth
-            # but API endpoints and /metrics require authentication
-            requires_auth = (
-                path.startswith('/api/') and not path.startswith('/api/auth/')
-            ) or path == '/metrics'
-            if requires_auth and g.user is None:
-                logger.warning(f"Unauthenticated API access: {request.method} {path}")
-                return jsonify({
-                    'error': 'Authentication required',
-                    'message': 'Provide a valid JWT token via Authorization header',
-                    'request_id': g.get('request_id')
-                }), 401
-            
-            return None  # Continue
-        
+
+            # ── Authentication is handled by web/__init__.py _register_auth_middleware ──
+            # This middleware only handles request tracking and logging.
+            # g.user is set by the auth middleware in __init__.py before this runs.
+
         @app.after_request
         def after_request(response) -> Any:
             # Add request ID to response headers
             response.headers['X-Request-ID'] = g.get('request_id', 'unknown')
-            
+
             # Log request completion
             duration = (time.time() - g.get('start_time', time.time())) * 1000
             log_data = {
@@ -110,7 +53,7 @@ class RequestContext:
                 'client_ip': g.get('client_ip'),
                 'user_agent': g.get('user_agent')[:50] if g.get('user_agent') else None,
             }
-            
+
             # Log based on status code
             if response.status_code >= 500:
                 logger.error(f"Request failed: {log_data}")
@@ -118,17 +61,17 @@ class RequestContext:
                 logger.warning(f"Request error: {log_data}")
             else:
                 logger.info(f"Request completed: {log_data}")
-            
+
             return response
 
 
 class ErrorHandler:
     """Centralized error handling"""
-    
+
     @staticmethod
     def init_app(app) -> None:
         """Initialize error handlers"""
-        
+
         @app.errorhandler(400)
         def bad_request(error) -> Any:
             return jsonify({
@@ -136,7 +79,7 @@ class ErrorHandler:
                 'message': str(error.description) if hasattr(error, 'description') else 'Invalid request',
                 'request_id': g.get('request_id')
             }), 400
-        
+
         @app.errorhandler(401)
         def unauthorized(error) -> Any:
             return jsonify({
@@ -144,7 +87,7 @@ class ErrorHandler:
                 'message': 'Authentication required',
                 'request_id': g.get('request_id')
             }), 401
-        
+
         @app.errorhandler(403)
         def forbidden(error) -> Any:
             return jsonify({
@@ -152,7 +95,7 @@ class ErrorHandler:
                 'message': 'Access denied',
                 'request_id': g.get('request_id')
             }), 403
-        
+
         @app.errorhandler(404)
         def not_found(error) -> Any:
             return jsonify({
@@ -160,7 +103,7 @@ class ErrorHandler:
                 'message': f"Endpoint {request.path} not found",
                 'request_id': g.get('request_id')
             }), 404
-        
+
         @app.errorhandler(429)
         def rate_limit_exceeded(error) -> Any:
             return jsonify({
@@ -168,7 +111,7 @@ class ErrorHandler:
                 'message': 'Rate limit exceeded. Please try again later.',
                 'request_id': g.get('request_id')
             }), 429
-        
+
         @app.errorhandler(500)
         def internal_error(error) -> Any:
             logger.exception(f"Internal server error: {error}")
@@ -186,16 +129,16 @@ def validate_json(*required_fields) -> bool:
         def decorated_function(*args, **kwargs) -> Any:
             if not request.is_json:
                 return jsonify({'error': 'Content-Type must be application/json'}), 400
-            
+
             data = request.get_json(silent=True) or {}
             missing = [field for field in required_fields if field not in data]
-            
+
             if missing:
                 return jsonify({
                     'error': 'Missing required fields',
                     'fields': missing
                 }), 400
-            
+
             g.json_data = data
             return f(*args, **kwargs)
         return decorated_function

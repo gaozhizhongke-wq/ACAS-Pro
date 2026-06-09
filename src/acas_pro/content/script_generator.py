@@ -187,28 +187,12 @@ class ScriptGenerator:
         },
     }
     
+    # Tables managed by core/schema.py — do not add CREATE TABLE here
+
     def __init__(self, db: 'DatabaseManager' = None):
         self.db = db or DatabaseManager()
-        self._init_database()
         
-    def _init_database(self) -> None:
-        """初始化数据库表"""
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS generated_scripts (
-                id TEXT PRIMARY KEY,
-                input_text TEXT,
-                title TEXT,
-                content TEXT,
-                style TEXT,
-                platform TEXT,
-                word_count INTEGER,
-                hashtags TEXT,  -- JSON array
-                hooks TEXT,  -- JSON array
-                cta TEXT,
-                variations TEXT,  -- JSON array
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
+
         
     def generate(
         self,

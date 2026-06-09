@@ -77,41 +77,14 @@ class VoiceSynthesizer:
         VoiceProfile("ar_female_01", "Aisha", "female", Language.AR, VoiceStyle.GENTLE, "阿拉伯语女声"),
     ]
     
+    # Tables managed by core/schema.py — do not add CREATE TABLE here
+
     def __init__(self, db: 'DatabaseManager' = None, output_dir: str = None) -> Any:
         self.db = db or DatabaseManager()
         self.output_dir = output_dir or os.path.expanduser("~/ACAS-Audio")
-        self._init_database()
         self._ensure_output_dir()
         
-    def _init_database(self) -> Any:
-        """初始化数据库表"""
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS voice_tasks (
-                id TEXT PRIMARY KEY,
-                text TEXT NOT NULL,
-                voice_id TEXT NOT NULL,
-                language TEXT,
-                speed REAL DEFAULT 1.0,
-                pitch REAL DEFAULT 1.0,
-                volume REAL DEFAULT 1.0,
-                emotion TEXT,
-                output_path TEXT,
-                status TEXT DEFAULT 'pending',  -- pending/processing/completed/failed
-                duration REAL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                completed_at TIMESTAMP
-            )
-        """)
-        
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS voice_clones (
-                id TEXT PRIMARY KEY,
-                name TEXT,
-                sample_path TEXT NOT NULL,
-                voice_profile TEXT,  -- JSON
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
+
         
     def _ensure_output_dir(self) -> Any:
         """确保输出目录存在"""

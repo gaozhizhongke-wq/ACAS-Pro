@@ -135,7 +135,9 @@ class TestSecretsManagerCoverage:
     
     def test_get_secrets_manager_default_development(self, monkeypatch):
         """Test default environment is development"""
+        import acas_pro.core.secrets_manager as sm_mod
         monkeypatch.delenv('ACAS_ENV', raising=False)
+        monkeypatch.setattr(sm_mod, '_instance', None)
         sm = get_secrets_manager()
         assert sm._is_production is False
     
@@ -201,8 +203,8 @@ class TestSecretsManagerEdgeCases:
         sm = SecretsManager()
         result = sm.mask('sk-abcdefghijklmnop', visible=6)
         # visible=6: first 6 chars + '...' + last 6 chars
-        # 'sk-abcd' + '...' + 'klmnop'
-        assert result == 'sk-abcd...klmnop'
+        # 'sk-abc' + '...' + 'klmnop'
+        assert result == 'sk-abc...klmnop'
         assert result.count('...') == 1
         assert len(result) == 6 + 3 + 6  # 15 chars
     

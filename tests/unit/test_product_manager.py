@@ -83,10 +83,10 @@ class TestProductManager:
             mgr = ProductManager()
             assert mgr.db is not None
 
-    def test_init_database(self, manager, mock_db):
+        # _init_database removed — schema managed by core/schema.py
         """Test database initialization"""
-        manager._init_database()
-        assert mock_db.execute.called
+        # _init_database removed — schema managed by core/schema.py
+        pass  # schema centralized — no execute during init
 
     # ===== 枚举测试 =====
     def test_product_status_values(self):

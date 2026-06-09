@@ -16,6 +16,8 @@ from ..core.database import DatabaseManager
 
 logger = get_logger(__name__)
 
+# Tables managed by core/schema.py — do not add CREATE TABLE here
+
 
 class FestivalType(Enum):
     """节日类型"""
@@ -273,52 +275,7 @@ class FestivalCalendar:
     
     def __init__(self, db: 'DatabaseManager' = None):
         self.db = db or DatabaseManager()
-        self._init_database()
         self._load_default_festivals()
-        
-    def _init_database(self) -> None:
-        """初始化数据库表"""
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS festivals (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                name_en TEXT,
-                festival_type TEXT,
-                markets TEXT,  -- JSON array
-                month INTEGER,
-                day INTEGER,
-                lunar BOOLEAN DEFAULT 0,
-                floating BOOLEAN DEFAULT 0,
-                floating_rule TEXT,
-                importance INTEGER DEFAULT 3,
-                duration_days INTEGER DEFAULT 1,
-                pre_heat_days INTEGER DEFAULT 7,
-                themes TEXT,  -- JSON array
-                keywords TEXT,  -- JSON array
-                visual_style TEXT,
-                content_tips TEXT,
-                is_active BOOLEAN DEFAULT 1,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS marketing_plans (
-                id TEXT PRIMARY KEY,
-                festival_id TEXT,
-                name TEXT,
-                start_date TIMESTAMP,
-                end_date TIMESTAMP,
-                target_platforms TEXT,  -- JSON array
-                target_accounts TEXT,  -- JSON array
-                content_count INTEGER,
-                content_types TEXT,  -- JSON array
-                budget REAL,
-                status TEXT DEFAULT 'draft',
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (festival_id) REFERENCES festivals(id)
-            )
-        """)
         
     def _load_default_festivals(self) -> None:
         """加载默认节日"""

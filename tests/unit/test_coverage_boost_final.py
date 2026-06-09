@@ -422,266 +422,246 @@ class TestInventoryOptimizerCore:
 class TestPublishManagerMethods:
     def test_create_task(self):
         from acas_pro.publisher.publish_manager import PublishManager, ContentType
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            mgr._save_task = MagicMock()
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        mgr._save_task = MagicMock()
 
-            task = mgr.create_task(
-                content_path="/video.mp4",
-                content_type=ContentType.VIDEO,
-                title="Test Video",
-                description="Desc",
-                tags=["tag1", "tag2"],
-                platforms=["douyin", "bilibili"],
-            )
-            assert task.title == "Test Video"
-            assert task.description == "Desc"
-            assert len(task.platforms) == 2
-            assert task.status.value == "pending"
+        task = mgr.create_task(
+            content_path="/video.mp4",
+            content_type=ContentType.VIDEO,
+            title="Test Video",
+            description="Desc",
+            tags=["tag1", "tag2"],
+            platforms=["douyin", "bilibili"],
+        )
+        assert task.title == "Test Video"
+        assert task.description == "Desc"
+        assert len(task.platforms) == 2
+        assert task.status.value == "pending"
 
     def test_get_task_not_found(self):
         from acas_pro.publisher.publish_manager import PublishManager
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            mgr.db.execute_one.return_value = None
-            result = mgr.get_task("nonexistent")
-            assert result is None
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        mgr.db.execute_one.return_value = None
+        result = mgr.get_task("nonexistent")
+        assert result is None
 
     def test_adapt_content_douyin(self):
         from acas_pro.publisher.publish_manager import PublishManager
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
 
-            adapted = mgr.adapt_content_for_platform(
-                title="A" * 100, description="B" * 600, tags=["t1", "t2", "t3"], platform="douyin"
-            )
-            assert len(adapted["title"]) <= 55
-            assert len(adapted["description"]) <= 500
-            assert len(adapted["tags"]) <= 10
+        adapted = mgr.adapt_content_for_platform(
+            title="A" * 100, description="B" * 600, tags=["t1", "t2", "t3"], platform="douyin"
+        )
+        assert len(adapted["title"]) <= 55
+        assert len(adapted["description"]) <= 500
+        assert len(adapted["tags"]) <= 10
 
     def test_adapt_content_xiaohongshu_hashtags(self):
         from acas_pro.publisher.publish_manager import PublishManager
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
 
-            adapted = mgr.adapt_content_for_platform(
-                title="Test", description="Desc", tags=["fashion", "style"], platform="xiaohongshu"
-            )
-            assert "#fashion" in adapted["description"]
-            assert "#style" in adapted["description"]
+        adapted = mgr.adapt_content_for_platform(
+            title="Test", description="Desc", tags=["fashion", "style"], platform="xiaohongshu"
+        )
+        assert "#fashion" in adapted["description"]
+        assert "#style" in adapted["description"]
 
     def test_adapt_content_instagram_no_tags_field(self):
         from acas_pro.publisher.publish_manager import PublishManager
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
 
-            adapted = mgr.adapt_content_for_platform(
-                title="Test", description="Desc", tags=["tag1", "tag2"], platform="instagram"
-            )
-            assert adapted["tags"] == []  # Instagram moves tags to desc
-            assert "#tag1" in adapted["description"]
+        adapted = mgr.adapt_content_for_platform(
+            title="Test", description="Desc", tags=["tag1", "tag2"], platform="instagram"
+        )
+        assert adapted["tags"] == []  # Instagram moves tags to desc
+        assert "#tag1" in adapted["description"]
 
     def test_adapt_content_unknown_platform(self):
         from acas_pro.publisher.publish_manager import PublishManager
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            adapted = mgr.adapt_content_for_platform("T", "D", ["t1"], "unknown")
-            assert adapted["title"] == "T"
-            assert adapted["description"] == "D"
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        adapted = mgr.adapt_content_for_platform("T", "D", ["t1"], "unknown")
+        assert adapted["title"] == "T"
+        assert adapted["description"] == "D"
 
     def test_publish_task_not_found(self):
         from acas_pro.publisher.publish_manager import PublishManager
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            mgr.get_task = MagicMock(return_value=None)
-            result = mgr.publish("nonexistent")
-            assert result is False
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        mgr.get_task = MagicMock(return_value=None)
+        result = mgr.publish("nonexistent")
+        assert result is False
 
     def test_publish_already_published(self):
         from acas_pro.publisher.publish_manager import PublishManager, PublishStatus, ContentType
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            already_pub = MagicMock()
-            already_pub.status = PublishStatus.PUBLISHED
-            mgr.get_task = MagicMock(return_value=already_pub)
-            result = mgr.publish("already-done")
-            assert result is False
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        already_pub = MagicMock()
+        already_pub.status = PublishStatus.PUBLISHED
+        mgr.get_task = MagicMock(return_value=already_pub)
+        result = mgr.publish("already-done")
+        assert result is False
 
     def test_publish_scheduled_future(self):
         from acas_pro.publisher.publish_manager import PublishManager, PublishStatus, ContentType
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            mgr._save_task = MagicMock()
-            future_task = MagicMock()
-            future_task.status = PublishStatus.PENDING
-            future_task.scheduled_time = datetime.now() + timedelta(hours=1)
-            future_task.platforms = []
-            mgr.get_task = MagicMock(return_value=future_task)
-            result = mgr.publish("scheduled-future", immediate=False)
-            assert result is True
-            assert future_task.status == PublishStatus.SCHEDULED
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        mgr._save_task = MagicMock()
+        future_task = MagicMock()
+        future_task.status = PublishStatus.PENDING
+        future_task.scheduled_time = datetime.now() + timedelta(hours=1)
+        future_task.platforms = []
+        mgr.get_task = MagicMock(return_value=future_task)
+        result = mgr.publish("scheduled-future", immediate=False)
+        assert result is True
+        assert future_task.status == PublishStatus.SCHEDULED
 
     def test_publish_immediate_success(self):
         from acas_pro.publisher.publish_manager import (
             PublishManager, PublishStatus, ContentType, PlatformConfig
         )
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            mgr._save_task = MagicMock()
-            mgr._publish_to_platform = MagicMock(return_value={
-                "success": True, "post_id": "pid1", "url": "http://x.com"
-            })
-            task = MagicMock()
-            task.status = PublishStatus.PENDING
-            task.scheduled_time = None
-            task.title = "T"
-            task.description = "D"
-            task.tags = ["t1"]
-            task.cover_image = None
-            task.platforms = [PlatformConfig(platform="douyin", account_id="a1")]
-            task.publish_results = {}
-            mgr.get_task = MagicMock(return_value=task)
-            result = mgr.publish("task1", immediate=True)
-            assert result is True
-            assert task.status == PublishStatus.PUBLISHED
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        mgr._save_task = MagicMock()
+        mgr._publish_to_platform = MagicMock(return_value={
+            "success": True, "post_id": "pid1", "url": "http://x.com"
+        })
+        task = MagicMock()
+        task.status = PublishStatus.PENDING
+        task.scheduled_time = None
+        task.title = "T"
+        task.description = "D"
+        task.tags = ["t1"]
+        task.cover_image = None
+        task.platforms = [PlatformConfig(platform="douyin", account_id="a1")]
+        task.publish_results = {}
+        mgr.get_task = MagicMock(return_value=task)
+        result = mgr.publish("task1", immediate=True)
+        assert result is True
+        assert task.status == PublishStatus.PUBLISHED
 
     def test_publish_partial_failure(self):
         from acas_pro.publisher.publish_manager import (
             PublishManager, PublishStatus, ContentType, PlatformConfig
         )
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            mgr._save_task = MagicMock()
-            mgr._publish_to_platform = MagicMock(return_value={"success": False, "error": "API error"})
-            task = MagicMock()
-            task.status = PublishStatus.PENDING
-            task.scheduled_time = None
-            task.title = "T"
-            task.description = "D"
-            task.tags = ["t1"]
-            task.cover_image = None
-            task.platforms = [PlatformConfig(platform="douyin", account_id="a1")]
-            task.publish_results = {}
-            mgr.get_task = MagicMock(return_value=task)
-            result = mgr.publish("task-fail", immediate=True)
-            assert result is False
-            assert task.status == PublishStatus.FAILED
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        mgr._save_task = MagicMock()
+        mgr._publish_to_platform = MagicMock(return_value={"success": False, "error": "API error"})
+        task = MagicMock()
+        task.status = PublishStatus.PENDING
+        task.scheduled_time = None
+        task.title = "T"
+        task.description = "D"
+        task.tags = ["t1"]
+        task.cover_image = None
+        task.platforms = [PlatformConfig(platform="douyin", account_id="a1")]
+        task.publish_results = {}
+        mgr.get_task = MagicMock(return_value=task)
+        result = mgr.publish("task-fail", immediate=True)
+        assert result is False
+        assert task.status == PublishStatus.FAILED
 
     def test_schedule_task(self):
         from acas_pro.publisher.publish_manager import PublishManager, PublishStatus
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            mgr._save_task = MagicMock()
-            task = MagicMock()
-            task.status = PublishStatus.PENDING
-            mgr.get_task = MagicMock(return_value=task)
-            new_time = datetime.now(timezone.utc) + timedelta(hours=2)
-            result = mgr.schedule_task("task1", new_time)
-            assert result is True
-            assert task.scheduled_time == new_time
-            assert task.status == PublishStatus.SCHEDULED
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        mgr._save_task = MagicMock()
+        task = MagicMock()
+        task.status = PublishStatus.PENDING
+        mgr.get_task = MagicMock(return_value=task)
+        new_time = datetime.now(timezone.utc) + timedelta(hours=2)
+        result = mgr.schedule_task("task1", new_time)
+        assert result is True
+        assert task.scheduled_time == new_time
+        assert task.status == PublishStatus.SCHEDULED
 
     def test_cancel_task(self):
         from acas_pro.publisher.publish_manager import PublishManager, PublishStatus
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            mgr._save_task = MagicMock()
-            task = MagicMock()
-            task.status = PublishStatus.PENDING
-            mgr.get_task = MagicMock(return_value=task)
-            result = mgr.cancel_task("task1")
-            assert result is True
-            assert task.status == PublishStatus.CANCELLED
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        mgr._save_task = MagicMock()
+        task = MagicMock()
+        task.status = PublishStatus.PENDING
+        mgr.get_task = MagicMock(return_value=task)
+        result = mgr.cancel_task("task1")
+        assert result is True
+        assert task.status == PublishStatus.CANCELLED
 
     def test_cancel_already_published(self):
         from acas_pro.publisher.publish_manager import PublishManager, PublishStatus
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            task = MagicMock()
-            task.status = PublishStatus.PUBLISHED
-            mgr.get_task = MagicMock(return_value=task)
-            result = mgr.cancel_task("task1")
-            assert result is False
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        task = MagicMock()
+        task.status = PublishStatus.PUBLISHED
+        mgr.get_task = MagicMock(return_value=task)
+        result = mgr.cancel_task("task1")
+        assert result is False
 
     def test_retry_task_max_retries(self):
         from acas_pro.publisher.publish_manager import PublishManager, PublishStatus
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            task = MagicMock()
-            task.status = PublishStatus.FAILED
-            task.retry_count = 3
-            task.max_retries = 3
-            mgr.get_task = MagicMock(return_value=task)
-            result = mgr.retry_task("task1")
-            assert result is False
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        task = MagicMock()
+        task.status = PublishStatus.FAILED
+        task.retry_count = 3
+        task.max_retries = 3
+        mgr.get_task = MagicMock(return_value=task)
+        result = mgr.retry_task("task1")
+        assert result is False
 
     def test_list_tasks_with_status_filter(self):
         from acas_pro.publisher.publish_manager import PublishManager, PublishStatus
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            mgr.db.execute.return_value = []
-            mgr._row_to_task = MagicMock(return_value=MagicMock(
-                status=PublishStatus.PENDING, platforms=[]
-            ))
-            result = mgr.list_tasks(status=PublishStatus.PENDING)
-            assert isinstance(result, list)
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        mgr.db.execute.return_value = []
+        mgr._row_to_task = MagicMock(return_value=MagicMock(
+            status=PublishStatus.PENDING, platforms=[]
+        ))
+        result = mgr.list_tasks(status=PublishStatus.PENDING)
+        assert isinstance(result, list)
 
     def test_list_tasks_with_platform_filter(self):
         from acas_pro.publisher.publish_manager import PublishManager, PublishStatus
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            mgr.db.execute.return_value = []
-            mock_task = MagicMock()
-            mock_task.status = PublishStatus.PENDING
-            mock_task.platforms = [MagicMock(platform="douyin")]
-            mgr._row_to_task = MagicMock(return_value=mock_task)
-            result = mgr.list_tasks(platform="douyin")
-            assert isinstance(result, list)
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        mgr.db.execute.return_value = []
+        mock_task = MagicMock()
+        mock_task.status = PublishStatus.PENDING
+        mock_task.platforms = [MagicMock(platform="douyin")]
+        mgr._row_to_task = MagicMock(return_value=mock_task)
+        result = mgr.list_tasks(platform="douyin")
+        assert isinstance(result, list)
 
     def test_get_pending_tasks(self):
         from acas_pro.publisher.publish_manager import PublishManager, PublishStatus
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            mgr.list_tasks = MagicMock(return_value=[])
-            result = mgr.get_pending_tasks()
-            mgr.list_tasks.assert_called_once()
-            mgr.list_tasks.assert_called_with(status=PublishStatus.PENDING)
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        mgr.list_tasks = MagicMock(return_value=[])
+        result = mgr.get_pending_tasks()
+        mgr.list_tasks.assert_called_once()
+        mgr.list_tasks.assert_called_with(status=PublishStatus.PENDING)
 
     def test_delete_task_success(self):
         from acas_pro.publisher.publish_manager import PublishManager
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            mgr.db.execute.return_value = None
-            result = mgr.delete_task("task1")
-            assert result is True
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        mgr.db.execute.return_value = None
+        result = mgr.delete_task("task1")
+        assert result is True
 
     def test_delete_task_failure(self):
         from acas_pro.publisher.publish_manager import PublishManager
-        with patch.object(PublishManager, '_init_database'):
-            mgr = PublishManager.__new__(PublishManager)
-            mgr.db = MagicMock()
-            mgr.db.execute.side_effect = Exception("DB error")
-            result = mgr.delete_task("task1")
-            assert result is False
+        mgr = PublishManager.__new__(PublishManager)
+        mgr.db = MagicMock()
+        mgr.db.execute.side_effect = Exception("DB error")
+        result = mgr.delete_task("task1")
+        assert result is False
 
 
 # =============================================================================

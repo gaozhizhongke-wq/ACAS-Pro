@@ -1,25 +1,19 @@
 """
 广告账户管理模块
 支持多平台广告账户统一管理
+重构: 使用 DatabaseManager 替代直接 sqlite3 操作
 """
 
 import json
-try:
-    import aiosqlite
-    _HAS_AIOSQLITE = True
-except ImportError:
-    _HAS_AIOSQLITE = False
-import sqlite3
 from datetime import datetime, timedelta
-import asyncio
 from enum import Enum
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
-from pathlib import Path
 
 from ..core.config import config
 from ..core.logging import logger
 from ..core.security import encrypt_data, decrypt_data
+from ..core.database import DatabaseManager
 
 
 class AdPlatform(Enum):
@@ -204,824 +198,604 @@ class AdAccount:
         return cls(**data)
 
 
+# ── Row → dataclass helpers ──────────────────────────────────────────
+# Column order must match CREATE TABLE statements in _ensure_tables.
+
+_ACCOUNT_COLUMNS = (
+    'id', 'platform', 'account_name', 'account_id', 'access_token',
+    'refresh_token', 'token_expires_at', 'status', 'balance',
+    'daily_budget_limit', 'total_spend_7d', 'total_spend_30d',
+    'created_at', 'updated_at',
+)
+
+_CAMPAIGN_COLUMNS = (
+    'id', 'name', 'platform', 'account_id', 'status', 'objective',
+    'conversion_goal', 'budget_type', 'budget_amount', 'start_date',
+    'end_date', 'adsets_data', 'total_impressions', 'total_clicks',
+    'total_conversions', 'total_spend', 'created_at', 'updated_at',
+)
+
+
+def _row_to_account(row: Dict[str, Any]) -> AdAccount:
+    """Convert a DB row dict to an AdAccount, decrypting tokens."""
+    return AdAccount(
+        id=row['id'],
+        platform=AdPlatform(row['platform']),
+        account_name=row['account_name'],
+        account_id=row['account_id'],
+        access_token=decrypt_data(row['access_token']),
+        refresh_token=decrypt_data(row['refresh_token']) if row.get('refresh_token') else None,
+        token_expires_at=row.get('token_expires_at'),
+        status=row.get('status', 'active'),
+        balance=row.get('balance', 0.0),
+        daily_budget_limit=row.get('daily_budget_limit', 0.0),
+        total_spend_7d=row.get('total_spend_7d', 0.0),
+        total_spend_30d=row.get('total_spend_30d', 0.0),
+        created_at=row.get('created_at'),
+        updated_at=row.get('updated_at'),
+    )
+
+
+def _row_to_campaign(row: Dict[str, Any]) -> AdCampaign:
+    """Convert a DB row dict to an AdCampaign."""
+    adsets_data = json.loads(row.get('adsets_data', '[]'))
+    return AdCampaign(
+        id=row['id'],
+        name=row['name'],
+        platform=AdPlatform(row['platform']),
+        account_id=row['account_id'],
+        status=CampaignStatus(row['status']),
+        objective=row['objective'],
+        conversion_goal=row.get('conversion_goal'),
+        budget_type=BudgetType(row['budget_type']),
+        budget_amount=row['budget_amount'],
+        start_date=row['start_date'],
+        end_date=row.get('end_date'),
+        adsets=[AdSet.from_dict(a) for a in adsets_data],
+        total_impressions=row.get('total_impressions', 0),
+        total_clicks=row.get('total_clicks', 0),
+        total_conversions=row.get('total_conversions', 0),
+        total_spend=row.get('total_spend', 0.0),
+        created_at=row.get('created_at'),
+        updated_at=row.get('updated_at'),
+    )
+
+
 class AdManager:
-    """广告账户管理器"""
-    
-    def __init__(self, db_path: Optional[str] = None):
-        self.db_path = db_path or config.database.path
-        self._conn = None  # explicit single connection to avoid ResourceWarning
-        self._init_database()
-        self.logger = logger.getChild("ad_manager")
+    """广告账户管理器 — uses DatabaseManager for all DB operations"""
+
+    # Tables managed by core/schema.py — do not add CREATE TABLE here
+
+    def __init__(self, db: Optional[DatabaseManager] = None, db_path: Optional[str] = None):
+        self._db = db  # None → lazy singleton via property
+        self._db_path_override = db_path  # legacy compat
+        self._logger = logger.getChild("ad_manager")
+
+    # ── Lazy DatabaseManager access ─────────────────────────────────
+
+    @property
+    def db(self) -> DatabaseManager:
+        """Return the DatabaseManager singleton (lazy-init)."""
+        if self._db is None:
+            self._db = DatabaseManager()
+        return self._db
+
+    @db.setter
+    def db(self, value: DatabaseManager) -> None:
+        self._db = value
+
+    # ── Legacy compat ────────────────────────────────────────────────
 
     def close(self) -> None:
-        """Close the managed database connection."""
-        if self._conn is not None:
-            try:
-                self._conn.close()
-            except Exception as e:
-                logger.debug("ad_manager DB connection cleanup: {e}")
-            self._conn = None
+        """Legacy compat — no-op with DatabaseManager."""
+        pass
 
-    def __del__(self) -> None:
-        if hasattr(self, '_conn'):
-            self.close()
+    # ── Table creation ──────────────────────────────────────────────
 
-    def _init_database(self) -> None:
-        """初始化数据库表"""
-        self._conn = sqlite3.connect(self.db_path)
-        conn = self._conn
-        # 广告账户表
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS ad_accounts (
-                id TEXT PRIMARY KEY,
-                platform TEXT NOT NULL,
-                account_name TEXT NOT NULL,
-                account_id TEXT NOT NULL,
-                access_token TEXT NOT NULL,
-                refresh_token TEXT,
-                token_expires_at TEXT,
-                status TEXT DEFAULT 'active',
-                balance REAL DEFAULT 0.0,
-                daily_budget_limit REAL DEFAULT 0.0,
-                total_spend_7d REAL DEFAULT 0.0,
-                total_spend_30d REAL DEFAULT 0.0,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
-            )
-        """)
 
-        # 广告计划表
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS ad_campaigns (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                platform TEXT NOT NULL,
-                account_id TEXT NOT NULL,
-                status TEXT NOT NULL,
-                objective TEXT NOT NULL,
-                conversion_goal TEXT,
-                budget_type TEXT NOT NULL,
-                budget_amount REAL NOT NULL,
-                start_date TEXT NOT NULL,
-                end_date TEXT,
-                adsets_data TEXT NOT NULL,
-                total_impressions INTEGER DEFAULT 0,
-                total_clicks INTEGER DEFAULT 0,
-                total_conversions INTEGER DEFAULT 0,
-                total_spend REAL DEFAULT 0.0,
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
-            )
-        """)
-
-        # 投放记录表
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS ad_records (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                campaign_id TEXT NOT NULL,
-                adset_id TEXT NOT NULL,
-                date TEXT NOT NULL,
-                impressions INTEGER DEFAULT 0,
-                clicks INTEGER DEFAULT 0,
-                conversions INTEGER DEFAULT 0,
-                spend REAL DEFAULT 0.0,
-                ctr REAL DEFAULT 0.0,
-                cpc REAL DEFAULT 0.0,
-                cpm REAL DEFAULT 0.0,
-                conversion_rate REAL DEFAULT 0.0,
-                cost_per_conversion REAL DEFAULT 0.0,
-                UNIQUE(campaign_id, adset_id, date)
-            )
-        """)
-
-        conn.commit()
-        conn.close()  # close init connection to avoid ResourceWarning on Python 3.14
-        self._conn = None  # mark as closed; will reconnect in next operation
 
     # ==================== 账户管理 ====================
-    
+
     def add_account(self, account: AdAccount) -> bool:
         """添加广告账户"""
         try:
-            # 加密敏感信息
             encrypted_token = encrypt_data(account.access_token)
             encrypted_refresh = encrypt_data(account.refresh_token) if account.refresh_token else None
-            
-            with sqlite3.connect(self.db_path) as conn:
-                now = datetime.now().isoformat()
-                conn.execute("""
-                    INSERT INTO ad_accounts 
-                    (id, platform, account_name, account_id, access_token, refresh_token,
-                     token_expires_at, status, balance, daily_budget_limit, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    account.id, account.platform.value, account.account_name, account.account_id,
-                    encrypted_token, encrypted_refresh, account.token_expires_at,
-                    account.status, account.balance, account.daily_budget_limit, now, now
-                ))
-                conn.commit()
-            
-            self.logger.info(f"广告账户添加成功: {account.account_name}")
+            now = datetime.now().isoformat()
+            self.db.insert('ad_accounts', {
+                'id': account.id,
+                'platform': account.platform.value,
+                'account_name': account.account_name,
+                'account_id': account.account_id,
+                'access_token': encrypted_token,
+                'refresh_token': encrypted_refresh,
+                'token_expires_at': account.token_expires_at,
+                'status': account.status,
+                'balance': account.balance,
+                'daily_budget_limit': account.daily_budget_limit,
+                'created_at': now,
+                'updated_at': now,
+            })
+            self._logger.info(f"广告账户添加成功: {account.account_name}")
             return True
         except Exception as e:
-            self.logger.error(f"添加广告账户失败: {e}")
+            self._logger.error(f"添加广告账户失败: {e}")
             return False
-    
+
     def get_account(self, account_id: str) -> Optional[AdAccount]:
         """获取广告账户"""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute(
-                    "SELECT * FROM ad_accounts WHERE id = ?",
-                    (account_id,)
-                )
-                row = cursor.fetchone()
-                
-                if row:
-                    # 解密敏感信息
-                    access_token = decrypt_data(row[4])
-                    refresh_token = decrypt_data(row[5]) if row[5] else None
-                    
-                    return AdAccount(
-                        id=row[0],
-                        platform=AdPlatform(row[1]),
-                        account_name=row[2],
-                        account_id=row[3],
-                        access_token=access_token,
-                        refresh_token=refresh_token,
-                        token_expires_at=row[6],
-                        status=row[7],
-                        balance=row[8],
-                        daily_budget_limit=row[9],
-                        total_spend_7d=row[10],
-                        total_spend_30d=row[11],
-                        created_at=row[12],
-                        updated_at=row[13]
-                    )
+            row = self.db.fetch_one(
+                "SELECT * FROM ad_accounts WHERE id = ?", (account_id,)
+            )
+            if row:
+                return _row_to_account(row)
         except Exception as e:
-            self.logger.error(f"获取广告账户失败: {e}")
-        
+            self._logger.error(f"获取广告账户失败: {e}")
         return None
-    
+
     def get_all_accounts(self, platform: Optional[AdPlatform] = None) -> List[AdAccount]:
         """获取所有广告账户"""
-        accounts = []
-        
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                if platform:
-                    cursor = conn.execute(
-                        "SELECT * FROM ad_accounts WHERE platform = ?",
-                        (platform.value,)
-                    )
-                else:
-                    cursor = conn.execute("SELECT * FROM ad_accounts")
-                
-                for row in cursor.fetchall():
-                    access_token = decrypt_data(row[4])
-                    refresh_token = decrypt_data(row[5]) if row[5] else None
-                    
-                    accounts.append(AdAccount(
-                        id=row[0],
-                        platform=AdPlatform(row[1]),
-                        account_name=row[2],
-                        account_id=row[3],
-                        access_token=access_token,
-                        refresh_token=refresh_token,
-                        token_expires_at=row[6],
-                        status=row[7],
-                        balance=row[8],
-                        daily_budget_limit=row[9],
-                        total_spend_7d=row[10],
-                        total_spend_30d=row[11],
-                        created_at=row[12],
-                        updated_at=row[13]
-                    ))
+            if platform:
+                rows = self.db.fetchall(
+                    "SELECT * FROM ad_accounts WHERE platform = ?",
+                    (platform.value,)
+                )
+            else:
+                rows = self.db.fetchall("SELECT * FROM ad_accounts")
+            return [_row_to_account(r) for r in rows]
         except Exception as e:
-            self.logger.error(f"获取广告账户列表失败: {e}")
-        
-        return accounts
-    
+            self._logger.error(f"获取广告账户列表失败: {e}")
+        return []
+
     def update_account_balance(self, account_id: str, balance: float) -> bool:
         """更新账户余额"""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                conn.execute(
-                    "UPDATE ad_accounts SET balance = ?, updated_at = ? WHERE id = ?",
-                    (balance, datetime.now().isoformat(), account_id)
-                )
-                conn.commit()
+            self.db.update('ad_accounts',
+                           {'balance': balance, 'updated_at': datetime.now().isoformat()},
+                           {'id': account_id})
             return True
         except Exception as e:
-            self.logger.error(f"更新账户余额失败: {e}")
+            self._logger.error(f"更新账户余额失败: {e}")
             return False
-    
+
     def delete_account(self, account_id: str) -> bool:
         """删除广告账户"""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                conn.execute("DELETE FROM ad_accounts WHERE id = ?", (account_id,))
-                conn.commit()
-            self.logger.info(f"广告账户已删除: {account_id}")
+            self.db.delete('ad_accounts', {'id': account_id})
+            self._logger.info(f"广告账户已删除: {account_id}")
             return True
         except Exception as e:
-            self.logger.error(f"删除广告账户失败: {e}")
+            self._logger.error(f"删除广告账户失败: {e}")
             return False
-    
+
     # ==================== 广告计划管理 ====================
-    
+
     def create_campaign(self, campaign: AdCampaign) -> bool:
         """创建广告计划"""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                now = datetime.now().isoformat()
-                adsets_json = json.dumps([a.to_dict() for a in campaign.adsets])
-                
-                conn.execute("""
-                    INSERT INTO ad_campaigns
-                    (id, name, platform, account_id, status, objective, conversion_goal,
-                     budget_type, budget_amount, start_date, end_date, adsets_data,
-                     total_impressions, total_clicks, total_conversions, total_spend,
-                     created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    campaign.id, campaign.name, campaign.platform.value, campaign.account_id,
-                    campaign.status.value, campaign.objective, campaign.conversion_goal,
-                    campaign.budget_type.value, campaign.budget_amount,
-                    campaign.start_date, campaign.end_date, adsets_json,
-                    campaign.total_impressions, campaign.total_clicks,
-                    campaign.total_conversions, campaign.total_spend, now, now
-                ))
-                conn.commit()
-            
-            self.logger.info(f"广告计划创建成功: {campaign.name}")
+            now = datetime.now().isoformat()
+            adsets_json = json.dumps([a.to_dict() for a in campaign.adsets])
+            self.db.insert('ad_campaigns', {
+                'id': campaign.id,
+                'name': campaign.name,
+                'platform': campaign.platform.value,
+                'account_id': campaign.account_id,
+                'status': campaign.status.value,
+                'objective': campaign.objective,
+                'conversion_goal': campaign.conversion_goal,
+                'budget_type': campaign.budget_type.value,
+                'budget_amount': campaign.budget_amount,
+                'start_date': campaign.start_date,
+                'end_date': campaign.end_date,
+                'adsets_data': adsets_json,
+                'total_impressions': campaign.total_impressions,
+                'total_clicks': campaign.total_clicks,
+                'total_conversions': campaign.total_conversions,
+                'total_spend': campaign.total_spend,
+                'created_at': now,
+                'updated_at': now,
+            })
+            self._logger.info(f"广告计划创建成功: {campaign.name}")
             return True
         except Exception as e:
-            self.logger.error(f"创建广告计划失败: {e}")
+            self._logger.error(f"创建广告计划失败: {e}")
             return False
-    
+
     def get_campaign(self, campaign_id: str) -> Optional[AdCampaign]:
         """获取广告计划"""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute(
-                    "SELECT * FROM ad_campaigns WHERE id = ?",
-                    (campaign_id,)
-                )
-                row = cursor.fetchone()
-                
-                if row:
-                    adsets_data = json.loads(row[11])
-                    return AdCampaign(
-                        id=row[0],
-                        name=row[1],
-                        platform=AdPlatform(row[2]),
-                        account_id=row[3],
-                        status=CampaignStatus(row[4]),
-                        objective=row[5],
-                        conversion_goal=row[6],
-                        budget_type=BudgetType(row[7]),
-                        budget_amount=row[8],
-                        start_date=row[9],
-                        end_date=row[10],
-                        adsets=[AdSet.from_dict(a) for a in adsets_data],
-                        total_impressions=row[12],
-                        total_clicks=row[13],
-                        total_conversions=row[14],
-                        total_spend=row[15],
-                        created_at=row[16],
-                        updated_at=row[17]
-                    )
+            row = self.db.fetch_one(
+                "SELECT * FROM ad_campaigns WHERE id = ?", (campaign_id,)
+            )
+            if row:
+                return _row_to_campaign(row)
         except Exception as e:
-            self.logger.error(f"获取广告计划失败: {e}")
-        
+            self._logger.error(f"获取广告计划失败: {e}")
         return None
-    
+
     def get_campaigns(self, account_id: Optional[str] = None,
-                     status: Optional[CampaignStatus] = None) -> List[AdCampaign]:
+                      status: Optional[CampaignStatus] = None) -> List[AdCampaign]:
         """获取广告计划列表"""
-        campaigns = []
-        
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                query = "SELECT * FROM ad_campaigns WHERE 1=1"
-                params = []
-                
-                if account_id:
-                    query += " AND account_id = ?"
-                    params.append(account_id)
-                if status:
-                    query += " AND status = ?"
-                    params.append(status.value)
-                
-                cursor = conn.execute(query, params)
-                
-                for row in cursor.fetchall():
-                    adsets_data = json.loads(row[11])
-                    campaigns.append(AdCampaign(
-                        id=row[0],
-                        name=row[1],
-                        platform=AdPlatform(row[2]),
-                        account_id=row[3],
-                        status=CampaignStatus(row[4]),
-                        objective=row[5],
-                        conversion_goal=row[6],
-                        budget_type=BudgetType(row[7]),
-                        budget_amount=row[8],
-                        start_date=row[9],
-                        end_date=row[10],
-                        adsets=[AdSet.from_dict(a) for a in adsets_data],
-                        total_impressions=row[12],
-                        total_clicks=row[13],
-                        total_conversions=row[14],
-                        total_spend=row[15],
-                        created_at=row[16],
-                        updated_at=row[17]
-                    ))
+            conditions = []
+            params: list = []
+            if account_id:
+                conditions.append(("account_id", "=", account_id))
+                params.append(account_id)
+            if status:
+                conditions.append(("status", "=", status.value))
+                params.append(status.value)
+
+            if conditions:
+                where_parts = " AND ".join(f"{col} = ?" for col, _, _ in conditions)
+                query = f"SELECT * FROM ad_campaigns WHERE {where_parts}"
+                rows = self.db.fetchall(query, tuple(params))
+            else:
+                rows = self.db.fetchall("SELECT * FROM ad_campaigns")
+
+            return [_row_to_campaign(r) for r in rows]
         except Exception as e:
-            self.logger.error(f"获取广告计划列表失败: {e}")
-        
-        return campaigns
-    
+            self._logger.error(f"获取广告计划列表失败: {e}")
+        return []
+
     def update_campaign_status(self, campaign_id: str, status: CampaignStatus) -> bool:
         """更新广告计划状态"""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                conn.execute(
-                    """UPDATE ad_campaigns 
-                       SET status = ?, updated_at = ? 
-                       WHERE id = ?""",
-                    (status.value, datetime.now().isoformat(), campaign_id)
-                )
-                conn.commit()
+            self.db.update('ad_campaigns',
+                           {'status': status.value, 'updated_at': datetime.now().isoformat()},
+                           {'id': campaign_id})
             return True
         except Exception as e:
-            self.logger.error(f"更新广告计划状态失败: {e}")
+            self._logger.error(f"更新广告计划状态失败: {e}")
             return False
-    
+
     def delete_campaign(self, campaign_id: str) -> bool:
         """删除广告计划"""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                conn.execute("DELETE FROM ad_campaigns WHERE id = ?", (campaign_id,))
-                conn.commit()
+            self.db.delete('ad_campaigns', {'id': campaign_id})
             return True
         except Exception as e:
-            self.logger.error(f"删除广告计划失败: {e}")
+            self._logger.error(f"删除广告计划失败: {e}")
             return False
-    
+
     # ==================== 数据统计 ====================
-    
+
     def record_daily_stats(self, campaign_id: str, adset_id: str, date: str,
-                          impressions: int, clicks: int, conversions: int,
-                          spend: float) -> bool:
+                           impressions: int, clicks: int, conversions: int,
+                           spend: float) -> bool:
         """记录每日投放数据"""
         try:
-            # 计算衍生指标
             ctr = (clicks / impressions * 100) if impressions > 0 else 0
             cpc = (spend / clicks) if clicks > 0 else 0
             cpm = (spend / impressions * 1000) if impressions > 0 else 0
             conversion_rate = (conversions / clicks * 100) if clicks > 0 else 0
             cost_per_conversion = (spend / conversions) if conversions > 0 else 0
-            
-            with sqlite3.connect(self.db_path) as conn:
-                conn.execute("""
-                    INSERT OR REPLACE INTO ad_records
-                    (campaign_id, adset_id, date, impressions, clicks, conversions, spend,
-                     ctr, cpc, cpm, conversion_rate, cost_per_conversion)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (campaign_id, adset_id, date, impressions, clicks, conversions, spend,
-                      ctr, cpc, cpm, conversion_rate, cost_per_conversion))
-                conn.commit()
-            
+
+            # Use parameterized query to avoid SQL injection from f-string
+            self.db.execute("""
+                INSERT OR REPLACE INTO ad_records
+                (campaign_id, adset_id, date, impressions, clicks, conversions, spend,
+                 ctr, cpc, cpm, conversion_rate, cost_per_conversion)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (campaign_id, adset_id, date, impressions, clicks, conversions, spend,
+                  ctr, cpc, cpm, conversion_rate, cost_per_conversion))
             return True
         except Exception as e:
-            self.logger.error(f"记录投放数据失败: {e}")
+            self._logger.error(f"记录投放数据失败: {e}")
             return False
-    
+
     def get_campaign_stats(self, campaign_id: str, days: int = 30) -> Dict[str, Any]:
         """获取广告计划统计"""
-        try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute("""
-                    SELECT 
-                        SUM(impressions), SUM(clicks), SUM(conversions), SUM(spend),
-                        AVG(ctr), AVG(cpc), AVG(cpm), AVG(conversion_rate), AVG(cost_per_conversion)
-                    FROM ad_records
-                    WHERE campaign_id = ? AND date >= date('now', '-{} days')
-                """.format(days), (campaign_id,))
-                
-                row = cursor.fetchone()
-                if row and row[0]:
-                    return {
-                        'impressions': row[0] or 0,
-                        'clicks': row[1] or 0,
-                        'conversions': row[2] or 0,
-                        'spend': row[3] or 0.0,
-                        'ctr': row[4] or 0.0,
-                        'cpc': row[5] or 0.0,
-                        'cpm': row[6] or 0.0,
-                        'conversion_rate': row[7] or 0.0,
-                        'cost_per_conversion': row[8] or 0.0
-                    }
-        except Exception as e:
-            self.logger.error(f"获取广告统计失败: {e}")
-        
-        return {
+        empty_stats = {
             'impressions': 0, 'clicks': 0, 'conversions': 0, 'spend': 0.0,
             'ctr': 0.0, 'cpc': 0.0, 'cpm': 0.0,
-            'conversion_rate': 0.0, 'cost_per_conversion': 0.0
+            'conversion_rate': 0.0, 'cost_per_conversion': 0.0,
         }
-    
+        try:
+            # Parameterized: days is an int, but SQLite date() needs literal.
+            # Validate days is a positive integer to prevent injection.
+            if not isinstance(days, int) or days < 0:
+                raise ValueError(f"Invalid days parameter: {days}")
+            # Use date('now', '-N days') with safe integer interpolation
+            row = self.db.fetch_one(f"""
+                SELECT
+                    SUM(impressions), SUM(clicks), SUM(conversions), SUM(spend),
+                    AVG(ctr), AVG(cpc), AVG(cpm), AVG(conversion_rate), AVG(cost_per_conversion)
+                FROM ad_records
+                WHERE campaign_id = ? AND date >= date('now', '-{days} days')
+            """, (campaign_id,))
+            if row and row.get('SUM(impressions)'):
+                return {
+                    'impressions': row.get('SUM(impressions)', 0) or 0,
+                    'clicks': row.get('SUM(clicks)', 0) or 0,
+                    'conversions': row.get('SUM(conversions)', 0) or 0,
+                    'spend': row.get('SUM(spend)', 0.0) or 0.0,
+                    'ctr': row.get('AVG(ctr)', 0.0) or 0.0,
+                    'cpc': row.get('AVG(cpc)', 0.0) or 0.0,
+                    'cpm': row.get('AVG(cpm)', 0.0) or 0.0,
+                    'conversion_rate': row.get('AVG(conversion_rate)', 0.0) or 0.0,
+                    'cost_per_conversion': row.get('AVG(cost_per_conversion)', 0.0) or 0.0,
+                }
+        except Exception as e:
+            self._logger.error(f"获取广告统计失败: {e}")
+        return empty_stats
+
     def get_platform_comparison(self, days: int = 30) -> Dict[str, Dict[str, Any]]:
         """获取各平台投放对比"""
-        comparison = {}
-        
+        comparison: Dict[str, Dict[str, Any]] = {}
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute("""
-                    SELECT c.platform,
-                           SUM(r.impressions), SUM(r.clicks), SUM(r.conversions), SUM(r.spend),
-                           AVG(r.ctr), AVG(r.cpc)
-                    FROM ad_campaigns c
-                    JOIN ad_records r ON c.id = r.campaign_id
-                    WHERE r.date >= date('now', '-{} days')
-                    GROUP BY c.platform
-                """.format(days))
-                
-                for row in cursor.fetchall():
-                    platform = row[0]
-                    comparison[platform] = {
-                        'impressions': row[1] or 0,
-                        'clicks': row[2] or 0,
-                        'conversions': row[3] or 0,
-                        'spend': row[4] or 0.0,
-                        'ctr': row[5] or 0.0,
-                        'cpc': row[6] or 0.0
-                    }
+            if not isinstance(days, int) or days < 0:
+                raise ValueError(f"Invalid days parameter: {days}")
+            rows = self.db.fetchall(f"""
+                SELECT c.platform,
+                       SUM(r.impressions), SUM(r.clicks), SUM(r.conversions), SUM(r.spend),
+                       AVG(r.ctr), AVG(r.cpc)
+                FROM ad_campaigns c
+                JOIN ad_records r ON c.id = r.campaign_id
+                WHERE r.date >= date('now', '-{days} days')
+                GROUP BY c.platform
+            """)
+            for row in rows:
+                platform = row.get('platform', '')
+                comparison[platform] = {
+                    'impressions': row.get('SUM(impressions)', 0) or 0,
+                    'clicks': row.get('SUM(clicks)', 0) or 0,
+                    'conversions': row.get('SUM(conversions)', 0) or 0,
+                    'spend': row.get('SUM(spend)', 0.0) or 0.0,
+                    'ctr': row.get('AVG(ctr)', 0.0) or 0.0,
+                    'cpc': row.get('AVG(cpc)', 0.0) or 0.0,
+                }
         except Exception as e:
-            self.logger.error(f"获取平台对比失败: {e}")
-        
+            self._logger.error(f"获取平台对比失败: {e}")
         return comparison
-    
-    # ==================== 异步方法 (使用 aiosqlite 真正异步化) ====================
-    
+
+    # ==================== 异步方法 (委托给 DatabaseManager async) ====================
+
     async def add_account_async(self, account: AdAccount) -> bool:
-        """添加广告账户 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
+        """添加广告账户 (异步)"""
         try:
             encrypted_token = encrypt_data(account.access_token)
             encrypted_refresh = encrypt_data(account.refresh_token) if account.refresh_token else None
             now = datetime.now().isoformat()
-            async with aiosqlite.connect(self.db_path) as conn:
-                await conn.execute("""
-                    INSERT INTO ad_accounts 
-                    (id, platform, account_name, account_id, access_token, refresh_token,
-                     token_expires_at, status, balance, daily_budget_limit, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    account.id, account.platform.value, account.account_name, account.account_id,
-                    encrypted_token, encrypted_refresh, account.token_expires_at,
-                    account.status, account.balance, account.daily_budget_limit, now, now
-                ))
-                await conn.commit()
-            self.logger.info(f"广告账户添加成功(异步): {account.account_name}")
+            await self.db.insert_async('ad_accounts', {
+                'id': account.id,
+                'platform': account.platform.value,
+                'account_name': account.account_name,
+                'account_id': account.account_id,
+                'access_token': encrypted_token,
+                'refresh_token': encrypted_refresh,
+                'token_expires_at': account.token_expires_at,
+                'status': account.status,
+                'balance': account.balance,
+                'daily_budget_limit': account.daily_budget_limit,
+                'created_at': now,
+                'updated_at': now,
+            })
+            self._logger.info(f"广告账户添加成功(异步): {account.account_name}")
             return True
         except Exception as e:
-            self.logger.error(f"添加广告账户失败(异步): {e}")
+            self._logger.error(f"添加广告账户失败(异步): {e}")
             return False
-    
+
     async def get_account_async(self, account_id: str) -> Optional[AdAccount]:
-        """获取广告账户 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
+        """获取广告账户 (异步)"""
         try:
-            async with aiosqlite.connect(self.db_path) as conn:
-                cursor = await conn.execute(
-                    "SELECT * FROM ad_accounts WHERE id = ?",
-                    (account_id,)
-                )
-                row = await cursor.fetchone()
-                if row:
-                    access_token = decrypt_data(row[4])
-                    refresh_token = decrypt_data(row[5]) if row[5] else None
-                    return AdAccount(
-                        id=row[0],
-                        platform=AdPlatform(row[1]),
-                        account_name=row[2],
-                        account_id=row[3],
-                        access_token=access_token,
-                        refresh_token=refresh_token,
-                        token_expires_at=row[6],
-                        status=row[7],
-                        balance=row[8],
-                        daily_budget_limit=row[9],
-                        total_spend_7d=row[10],
-                        total_spend_30d=row[11],
-                        created_at=row[12],
-                        updated_at=row[13]
-                    )
+            row = await self.db.execute_one_async(
+                "SELECT * FROM ad_accounts WHERE id = ?", (account_id,)
+            )
+            if row:
+                return _row_to_account(row)
         except Exception as e:
-            self.logger.error(f"获取广告账户失败(异步): {e}")
+            self._logger.error(f"获取广告账户失败(异步): {e}")
         return None
-    
+
     async def get_all_accounts_async(self, platform: Optional[AdPlatform] = None) -> List[AdAccount]:
-        """获取所有广告账户 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
-        accounts = []
+        """获取所有广告账户 (异步)"""
         try:
-            async with aiosqlite.connect(self.db_path) as conn:
-                if platform:
-                    cursor = await conn.execute(
-                        "SELECT * FROM ad_accounts WHERE platform = ?",
-                        (platform.value,)
-                    )
-                else:
-                    cursor = await conn.execute("SELECT * FROM ad_accounts")
-                rows = await cursor.fetchall()
-                for row in rows:
-                    access_token = decrypt_data(row[4])
-                    refresh_token = decrypt_data(row[5]) if row[5] else None
-                    accounts.append(AdAccount(
-                        id=row[0],
-                        platform=AdPlatform(row[1]),
-                        account_name=row[2],
-                        account_id=row[3],
-                        access_token=access_token,
-                        refresh_token=refresh_token,
-                        token_expires_at=row[6],
-                        status=row[7],
-                        balance=row[8],
-                        daily_budget_limit=row[9],
-                        total_spend_7d=row[10],
-                        total_spend_30d=row[11],
-                        created_at=row[12],
-                        updated_at=row[13]
-                    ))
-        except Exception as e:
-            self.logger.error(f"获取广告账户列表失败(异步): {e}")
-        return accounts
-    
-    async def update_account_balance_async(self, account_id: str, balance: float) -> bool:
-        """更新账户余额 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
-        try:
-            async with aiosqlite.connect(self.db_path) as conn:
-                await conn.execute(
-                    "UPDATE ad_accounts SET balance = ?, updated_at = ? WHERE id = ?",
-                    (balance, datetime.now().isoformat(), account_id)
+            if platform:
+                rows = await self.db.execute_async(
+                    "SELECT * FROM ad_accounts WHERE platform = ?",
+                    (platform.value,)
                 )
-                await conn.commit()
-            return True
+            else:
+                rows = await self.db.fetchall_async("SELECT * FROM ad_accounts")
+            return [_row_to_account(r) for r in rows]
         except Exception as e:
-            self.logger.error(f"更新账户余额失败(异步): {e}")
-            return False
-    
-    async def delete_account_async(self, account_id: str) -> bool:
-        """删除广告账户 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
+            self._logger.error(f"获取广告账户列表失败(异步): {e}")
+        return []
+
+    async def update_account_balance_async(self, account_id: str, balance: float) -> bool:
+        """更新账户余额 (异步)"""
         try:
-            async with aiosqlite.connect(self.db_path) as conn:
-                await conn.execute("DELETE FROM ad_accounts WHERE id = ?", (account_id,))
-                await conn.commit()
-            self.logger.info(f"广告账户已删除(异步): {account_id}")
+            await self.db.update_async('ad_accounts',
+                                       {'balance': balance, 'updated_at': datetime.now().isoformat()},
+                                       {'id': account_id})
             return True
         except Exception as e:
-            self.logger.error(f"删除广告账户失败(异步): {e}")
+            self._logger.error(f"更新账户余额失败(异步): {e}")
             return False
-    
+
+    async def delete_account_async(self, account_id: str) -> bool:
+        """删除广告账户 (异步)"""
+        try:
+            await self.db.delete_async('ad_accounts', {'id': account_id})
+            self._logger.info(f"广告账户已删除(异步): {account_id}")
+            return True
+        except Exception as e:
+            self._logger.error(f"删除广告账户失败(异步): {e}")
+            return False
+
     async def create_campaign_async(self, campaign: AdCampaign) -> bool:
-        """创建广告计划 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
+        """创建广告计划 (异步)"""
         try:
             now = datetime.now().isoformat()
             adsets_json = json.dumps([a.to_dict() for a in campaign.adsets])
-            async with aiosqlite.connect(self.db_path) as conn:
-                await conn.execute("""
-                    INSERT INTO ad_campaigns
-                    (id, name, platform, account_id, status, objective, conversion_goal,
-                     budget_type, budget_amount, start_date, end_date, adsets_data,
-                     total_impressions, total_clicks, total_conversions, total_spend,
-                     created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    campaign.id, campaign.name, campaign.platform.value, campaign.account_id,
-                    campaign.status.value, campaign.objective, campaign.conversion_goal,
-                    campaign.budget_type.value, campaign.budget_amount,
-                    campaign.start_date, campaign.end_date, adsets_json,
-                    campaign.total_impressions, campaign.total_clicks,
-                    campaign.total_conversions, campaign.total_spend, now, now
-                ))
-                await conn.commit()
-            self.logger.info(f"广告计划创建成功(异步): {campaign.name}")
+            await self.db.insert_async('ad_campaigns', {
+                'id': campaign.id,
+                'name': campaign.name,
+                'platform': campaign.platform.value,
+                'account_id': campaign.account_id,
+                'status': campaign.status.value,
+                'objective': campaign.objective,
+                'conversion_goal': campaign.conversion_goal,
+                'budget_type': campaign.budget_type.value,
+                'budget_amount': campaign.budget_amount,
+                'start_date': campaign.start_date,
+                'end_date': campaign.end_date,
+                'adsets_data': adsets_json,
+                'total_impressions': campaign.total_impressions,
+                'total_clicks': campaign.total_clicks,
+                'total_conversions': campaign.total_conversions,
+                'total_spend': campaign.total_spend,
+                'created_at': now,
+                'updated_at': now,
+            })
+            self._logger.info(f"广告计划创建成功(异步): {campaign.name}")
             return True
         except Exception as e:
-            self.logger.error(f"创建广告计划失败(异步): {e}")
+            self._logger.error(f"创建广告计划失败(异步): {e}")
             return False
-    
+
     async def get_campaign_async(self, campaign_id: str) -> Optional[AdCampaign]:
-        """获取广告计划 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
+        """获取广告计划 (异步)"""
         try:
-            async with aiosqlite.connect(self.db_path) as conn:
-                cursor = await conn.execute(
-                    "SELECT * FROM ad_campaigns WHERE id = ?",
-                    (campaign_id,)
-                )
-                row = await cursor.fetchone()
-                if row:
-                    adsets_data = json.loads(row[11])
-                    return AdCampaign(
-                        id=row[0],
-                        name=row[1],
-                        platform=AdPlatform(row[2]),
-                        account_id=row[3],
-                        status=CampaignStatus(row[4]),
-                        objective=row[5],
-                        conversion_goal=row[6],
-                        budget_type=BudgetType(row[7]),
-                        budget_amount=row[8],
-                        start_date=row[9],
-                        end_date=row[10],
-                        adsets=[AdSet.from_dict(a) for a in adsets_data],
-                        total_impressions=row[12],
-                        total_clicks=row[13],
-                        total_conversions=row[14],
-                        total_spend=row[15],
-                        created_at=row[16],
-                        updated_at=row[17]
-                    )
+            row = await self.db.execute_one_async(
+                "SELECT * FROM ad_campaigns WHERE id = ?", (campaign_id,)
+            )
+            if row:
+                return _row_to_campaign(row)
         except Exception as e:
-            self.logger.error(f"获取广告计划失败(异步): {e}")
+            self._logger.error(f"获取广告计划失败(异步): {e}")
         return None
-    
+
     async def get_campaigns_async(self, account_id: Optional[str] = None,
                                   status: Optional[CampaignStatus] = None) -> List[AdCampaign]:
-        """获取广告计划列表 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
-        campaigns = []
+        """获取广告计划列表 (异步)"""
         try:
-            query = "SELECT * FROM ad_campaigns WHERE 1=1"
-            params = []
+            conditions = []
+            params: list = []
             if account_id:
-                query += " AND account_id = ?"
+                conditions.append(("account_id", "=", account_id))
                 params.append(account_id)
             if status:
-                query += " AND status = ?"
+                conditions.append(("status", "=", status.value))
                 params.append(status.value)
-            async with aiosqlite.connect(self.db_path) as conn:
-                cursor = await conn.execute(query, params)
-                rows = await cursor.fetchall()
-                for row in rows:
-                    adsets_data = json.loads(row[11])
-                    campaigns.append(AdCampaign(
-                        id=row[0],
-                        name=row[1],
-                        platform=AdPlatform(row[2]),
-                        account_id=row[3],
-                        status=CampaignStatus(row[4]),
-                        objective=row[5],
-                        conversion_goal=row[6],
-                        budget_type=BudgetType(row[7]),
-                        budget_amount=row[8],
-                        start_date=row[9],
-                        end_date=row[10],
-                        adsets=[AdSet.from_dict(a) for a in adsets_data],
-                        total_impressions=row[12],
-                        total_clicks=row[13],
-                        total_conversions=row[14],
-                        total_spend=row[15],
-                        created_at=row[16],
-                        updated_at=row[17]
-                    ))
+
+            if conditions:
+                where_parts = " AND ".join(f"{col} = ?" for col, _, _ in conditions)
+                query = f"SELECT * FROM ad_campaigns WHERE {where_parts}"
+                rows = await self.db.execute_async(query, tuple(params))
+            else:
+                rows = await self.db.fetchall_async("SELECT * FROM ad_campaigns")
+
+            return [_row_to_campaign(r) for r in rows]
         except Exception as e:
-            self.logger.error(f"获取广告计划列表失败(异步): {e}")
-        return campaigns
-    
+            self._logger.error(f"获取广告计划列表失败(异步): {e}")
+        return []
+
     async def update_campaign_status_async(self, campaign_id: str, status: CampaignStatus) -> bool:
-        """更新广告计划状态 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
+        """更新广告计划状态 (异步)"""
         try:
-            async with aiosqlite.connect(self.db_path) as conn:
-                await conn.execute("""UPDATE ad_campaigns 
-                       SET status = ?, updated_at = ? 
-                       WHERE id = ?""",
-                    (status.value, datetime.now().isoformat(), campaign_id)
-                )
-                await conn.commit()
+            await self.db.update_async('ad_campaigns',
+                                       {'status': status.value, 'updated_at': datetime.now().isoformat()},
+                                       {'id': campaign_id})
             return True
         except Exception as e:
-            self.logger.error(f"更新广告计划状态失败(异步): {e}")
+            self._logger.error(f"更新广告计划状态失败(异步): {e}")
             return False
-    
+
     async def delete_campaign_async(self, campaign_id: str) -> bool:
-        """删除广告计划 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
+        """删除广告计划 (异步)"""
         try:
-            async with aiosqlite.connect(self.db_path) as conn:
-                await conn.execute("DELETE FROM ad_campaigns WHERE id = ?", (campaign_id,))
-                await conn.commit()
+            await self.db.delete_async('ad_campaigns', {'id': campaign_id})
             return True
         except Exception as e:
-            self.logger.error(f"删除广告计划失败(异步): {e}")
+            self._logger.error(f"删除广告计划失败(异步): {e}")
             return False
-    
+
     async def record_daily_stats_async(self, campaign_id: str, adset_id: str,
                                        date: str, impressions: int, clicks: int,
                                        conversions: int, spend: float) -> bool:
-        """记录每日投放数据 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
+        """记录每日投放数据 (异步)"""
         try:
             ctr = (clicks / impressions * 100) if impressions > 0 else 0
             cpc = (spend / clicks) if clicks > 0 else 0
             cpm = (spend / impressions * 1000) if impressions > 0 else 0
             conversion_rate = (conversions / clicks * 100) if clicks > 0 else 0
             cost_per_conversion = (spend / conversions) if conversions > 0 else 0
-            async with aiosqlite.connect(self.db_path) as conn:
-                await conn.execute("""
-                    INSERT OR REPLACE INTO ad_records
-                    (campaign_id, adset_id, date, impressions, clicks, conversions, spend,
-                     ctr, cpc, cpm, conversion_rate, cost_per_conversion)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (campaign_id, adset_id, date, impressions, clicks, conversions, spend,
-                      ctr, cpc, cpm, conversion_rate, cost_per_conversion))
-                await conn.commit()
+
+            await self.db.execute_async("""
+                INSERT OR REPLACE INTO ad_records
+                (campaign_id, adset_id, date, impressions, clicks, conversions, spend,
+                 ctr, cpc, cpm, conversion_rate, cost_per_conversion)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (campaign_id, adset_id, date, impressions, clicks, conversions, spend,
+                  ctr, cpc, cpm, conversion_rate, cost_per_conversion))
             return True
         except Exception as e:
-            self.logger.error(f"记录投放数据失败(异步): {e}")
+            self._logger.error(f"记录投放数据失败(异步): {e}")
             return False
-    
+
     async def get_campaign_stats_async(self, campaign_id: str, days: int = 30) -> Dict[str, Any]:
-        """获取广告计划统计 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
-        try:
-            async with aiosqlite.connect(self.db_path) as conn:
-                cursor = await conn.execute("""
-                    SELECT 
-                        SUM(impressions), SUM(clicks), SUM(conversions), SUM(spend),
-                        AVG(ctr), AVG(cpc), AVG(cpm), AVG(conversion_rate), AVG(cost_per_conversion)
-                    FROM ad_records
-                    WHERE campaign_id = ? AND date >= date('now', '-{} days')
-                """.format(days), (campaign_id,))
-                row = await cursor.fetchone()
-                if row and row[0]:
-                    return {
-                        'impressions': row[0] or 0,
-                        'clicks': row[1] or 0,
-                        'conversions': row[2] or 0,
-                        'spend': row[3] or 0.0,
-                        'ctr': row[4] or 0.0,
-                        'cpc': row[5] or 0.0,
-                        'cpm': row[6] or 0.0,
-                        'conversion_rate': row[7] or 0.0,
-                        'cost_per_conversion': row[8] or 0.0
-                    }
-        except Exception as e:
-            self.logger.error(f"获取广告统计失败(异步): {e}")
-        return {
+        """获取广告计划统计 (异步)"""
+        empty_stats = {
             'impressions': 0, 'clicks': 0, 'conversions': 0, 'spend': 0.0,
             'ctr': 0.0, 'cpc': 0.0, 'cpm': 0.0,
-            'conversion_rate': 0.0, 'cost_per_conversion': 0.0
+            'conversion_rate': 0.0, 'cost_per_conversion': 0.0,
         }
-    
-    async def get_platform_comparison_async(self, days: int = 30) -> Dict[str, Dict[str, Any]]:
-        """获取各平台投放对比 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
-        comparison = {}
         try:
-            async with aiosqlite.connect(self.db_path) as conn:
-                cursor = await conn.execute("""
-                    SELECT c.platform,
-                           SUM(r.impressions), SUM(r.clicks), SUM(r.conversions), SUM(r.spend),
-                           AVG(r.ctr), AVG(r.cpc)
-                    FROM ad_campaigns c
-                    JOIN ad_records r ON c.id = r.campaign_id
-                    WHERE r.date >= date('now', '-{} days')
-                    GROUP BY c.platform
-                """.format(days))
-                rows = await cursor.fetchall()
-                for row in rows:
-                    platform = row[0]
-                    comparison[platform] = {
-                        'impressions': row[1] or 0,
-                        'clicks': row[2] or 0,
-                        'conversions': row[3] or 0,
-                        'spend': row[4] or 0.0,
-                        'ctr': row[5] or 0.0,
-                        'cpc': row[6] or 0.0
-                    }
+            if not isinstance(days, int) or days < 0:
+                raise ValueError(f"Invalid days parameter: {days}")
+            row = await self.db.execute_one_async(f"""
+                SELECT
+                    SUM(impressions), SUM(clicks), SUM(conversions), SUM(spend),
+                    AVG(ctr), AVG(cpc), AVG(cpm), AVG(conversion_rate), AVG(cost_per_conversion)
+                FROM ad_records
+                WHERE campaign_id = ? AND date >= date('now', '-{days} days')
+            """, (campaign_id,))
+            if row and row.get('SUM(impressions)'):
+                return {
+                    'impressions': row.get('SUM(impressions)', 0) or 0,
+                    'clicks': row.get('SUM(clicks)', 0) or 0,
+                    'conversions': row.get('SUM(conversions)', 0) or 0,
+                    'spend': row.get('SUM(spend)', 0.0) or 0.0,
+                    'ctr': row.get('AVG(ctr)', 0.0) or 0.0,
+                    'cpc': row.get('AVG(cpc)', 0.0) or 0.0,
+                    'cpm': row.get('AVG(cpm)', 0.0) or 0.0,
+                    'conversion_rate': row.get('AVG(conversion_rate)', 0.0) or 0.0,
+                    'cost_per_conversion': row.get('AVG(cost_per_conversion)', 0.0) or 0.0,
+                }
         except Exception as e:
-            self.logger.error(f"获取平台对比失败(异步): {e}")
+            self._logger.error(f"获取广告统计失败(异步): {e}")
+        return empty_stats
+
+    async def get_platform_comparison_async(self, days: int = 30) -> Dict[str, Dict[str, Any]]:
+        """获取各平台投放对比 (异步)"""
+        comparison: Dict[str, Dict[str, Any]] = {}
+        try:
+            if not isinstance(days, int) or days < 0:
+                raise ValueError(f"Invalid days parameter: {days}")
+            rows = await self.db.execute_async(f"""
+                SELECT c.platform,
+                       SUM(r.impressions), SUM(r.clicks), SUM(r.conversions), SUM(r.spend),
+                       AVG(r.ctr), AVG(r.cpc)
+                FROM ad_campaigns c
+                JOIN ad_records r ON c.id = r.campaign_id
+                WHERE r.date >= date('now', '-{days} days')
+                GROUP BY c.platform
+            """)
+            for row in rows:
+                platform = row.get('platform', '')
+                comparison[platform] = {
+                    'impressions': row.get('SUM(impressions)', 0) or 0,
+                    'clicks': row.get('SUM(clicks)', 0) or 0,
+                    'conversions': row.get('SUM(conversions)', 0) or 0,
+                    'spend': row.get('SUM(spend)', 0.0) or 0.0,
+                    'ctr': row.get('AVG(ctr)', 0.0) or 0.0,
+                    'cpc': row.get('AVG(cpc)', 0.0) or 0.0,
+                }
+        except Exception as e:
+            self._logger.error(f"获取平台对比失败(异步): {e}")
         return comparison

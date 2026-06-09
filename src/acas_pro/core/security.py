@@ -131,44 +131,176 @@ class PasswordHasher:
 
 
 class TokenBlacklist:
-    """JWT token blacklist for revocation support"""
-    
-    # In-memory blacklist: jti -> expiry timestamp
+    """
+    JWT token blacklist for revocation support.
+
+    Storage backend selection (auto):
+      1. Redis  – if REDIS_URL is set and connection succeeds
+      2. DB    – if DatabaseManager is available (persistent, cross-process)
+      3. Memory – fallback for development / testing
+
+    The DB backend creates a ``token_blacklist`` table on first use.
+    """
+
+    # In-memory fallback: jti -> expiry timestamp
     _blacklist: Dict[str, float] = {}
     _lock = None  # Thread lock for thread safety
-    
+    _backend: Optional[str] = None  # 'redis' | 'db' | 'memory'
+    _redis_client = None
+    _REDIS_PREFIX = "acas:token_bl:"
+
+    # ------------------------------------------------------------------
+    # Backend detection
+    # ------------------------------------------------------------------
+
     @classmethod
-    def _get_lock(cls) -> None:
+    def _detect_backend(cls) -> str:
+        """Detect the best available storage backend."""
+        # 1. Try Redis
+        redis_url = os.environ.get('REDIS_URL')
+        if redis_url:
+            try:
+                import redis as _redis
+                client = _redis.from_url(
+                    redis_url,
+                    decode_responses=True,
+                    socket_connect_timeout=2,
+                    socket_timeout=2,
+                )
+                client.ping()
+                cls._redis_client = client
+                cls._backend = 'redis'
+                logger.info("TokenBlacklist: using Redis backend")
+                return 'redis'
+            except Exception as e:
+                logger.warning(f"TokenBlacklist: Redis unavailable ({e}), trying DB")
+
+        # 2. Try DatabaseManager
+        try:
+            from .database import get_db
+            db = get_db()
+            # token_blacklist table is managed by core/schema.py
+            cls._backend = 'db'
+            logger.info("TokenBlacklist: using DB backend")
+            return 'db'
+        except Exception as e:
+            logger.warning(f"TokenBlacklist: DB unavailable ({e}), falling back to memory")
+
+        # 3. Memory fallback
+        cls._backend = 'memory'
+        logger.warning("TokenBlacklist: using in-memory backend (tokens lost on restart)")
+        return 'memory'
+
+    @classmethod
+    def _get_backend(cls) -> str:
+        if cls._backend is None:
+            cls._detect_backend()
+        return cls._backend
+
+    # ------------------------------------------------------------------
+    # Lock helper (used only by memory backend)
+    # ------------------------------------------------------------------
+
+    @classmethod
+    def _get_lock(cls):
         """Get or create thread lock"""
         if cls._lock is None:
             import threading
             cls._lock = threading.Lock()
         return cls._lock
-    
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
     @classmethod
     def add(cls, jti: str, expires_at: datetime) -> None:
         """Add token jti to blacklist"""
-        with cls._get_lock():
-            cls._blacklist[jti] = expires_at.timestamp()
-            logger.info(f"Token revoked: jti={jti[:16]}...")
-            # Cleanup expired entries
-            cls._cleanup()
-    
+        exp_ts = expires_at.timestamp()
+        backend = cls._get_backend()
+
+        if backend == 'redis':
+            ttl = max(int(exp_ts - time.time()), 1)
+            cls._redis_client.setex(f"{cls._REDIS_PREFIX}{jti}", ttl, "1")
+            logger.info(f"Token revoked (redis): jti={jti[:16]}...")
+
+        elif backend == 'db':
+            try:
+                from .database import get_db
+                db = get_db()
+                db.execute(
+                    "INSERT OR REPLACE INTO token_blacklist (jti, expires_at) VALUES (?, ?)",
+                    (jti, exp_ts)
+                )
+                logger.info(f"Token revoked (db): jti={jti[:16]}...")
+                cls._cleanup_db(db)
+            except Exception as e:
+                logger.error(f"TokenBlacklist DB write failed: {e}")
+                # Fallback to memory so the revoke is not lost
+                with cls._get_lock():
+                    cls._blacklist[jti] = exp_ts
+
+        else:  # memory
+            with cls._get_lock():
+                cls._blacklist[jti] = exp_ts
+                logger.info(f"Token revoked (memory): jti={jti[:16]}...")
+                cls._cleanup()
+
     @classmethod
     def is_revoked(cls, jti: str) -> bool:
         """Check if token jti is revoked"""
+        backend = cls._get_backend()
+
+        if backend == 'redis':
+            return bool(cls._redis_client.exists(f"{cls._REDIS_PREFIX}{jti}"))
+
+        if backend == 'db':
+            try:
+                from .database import get_db
+                db = get_db()
+                row = db.fetchone(
+                    "SELECT 1 FROM token_blacklist WHERE jti = ? AND expires_at > ?",
+                    (jti, time.time())
+                )
+                return row is not None
+            except Exception as e:
+                logger.error(f"TokenBlacklist DB read failed: {e}")
+                # Check in-memory fallback as well
+                with cls._get_lock():
+                    return jti in cls._blacklist
+
+        # memory
         with cls._get_lock():
             return jti in cls._blacklist
-    
+
+    # ------------------------------------------------------------------
+    # Cleanup helpers
+    # ------------------------------------------------------------------
+
     @classmethod
     def _cleanup(cls) -> None:
-        """Remove expired entries from blacklist"""
+        """Remove expired entries from in-memory blacklist"""
         now = time.time()
         expired = [jti for jti, exp in cls._blacklist.items() if exp < now]
         for jti in expired:
             del cls._blacklist[jti]
         if expired:
-            logger.debug(f"Cleaned {len(expired)} expired blacklist entries")
+            logger.debug(f"Cleaned {len(expired)} expired blacklist entries (memory)")
+
+    @classmethod
+    def _cleanup_db(cls, db) -> None:
+        """Remove expired entries from DB blacklist"""
+        try:
+            db.execute("DELETE FROM token_blacklist WHERE expires_at < ?", (time.time(),))
+        except Exception as e:
+            logger.debug(f"TokenBlacklist DB cleanup skipped: {e}")
+
+    @classmethod
+    def reset(cls) -> None:
+        """Reset all backends (for testing)."""
+        cls._blacklist.clear()
+        cls._backend = None
+        cls._redis_client = None
 
 
 class JWTManager:
@@ -595,7 +727,19 @@ class CryptoManager:
                     salt = secrets.token_hex(16).encode('utf-8')
                     dev_salt_file.parent.mkdir(parents=True, exist_ok=True)
                     dev_salt_file.write_text(salt.decode('utf-8'))
-                    os.chmod(dev_salt_file, 0o600)
+                    # Restrict file permissions: Unix chmod + Windows ACL
+                    if os.name == 'nt':
+                        try:
+                            import subprocess
+                            subprocess.run(
+                                ['icacls', str(dev_salt_file), '/inheritance:r', '/grant:r',
+                                 f'{os.environ.get("USERNAME", "%USERNAME%")}:R'],
+                                check=True, capture_output=True, timeout=5
+                            )
+                        except Exception:
+                            pass  # Best effort on Windows
+                    else:
+                        os.chmod(dev_salt_file, 0o600)
                     logger.warning(
                         f"ACAS_ENCRYPTION_SALT not set — using persistent dev salt: {dev_salt_file}. "
                         "Set ACAS_ENCRYPTION_SALT in .env for production."

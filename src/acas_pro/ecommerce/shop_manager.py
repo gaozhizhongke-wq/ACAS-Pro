@@ -45,7 +45,7 @@ class ShopCredentials:
     access_token: Optional[str] = None
     refresh_token: Optional[str] = None
     expires_at: Optional[str] = None
-    
+
     def is_expired(self) -> bool:
         """检查token是否过期"""
         if not self.expires_at:
@@ -69,7 +69,7 @@ class ShopStats:
     visitors_today: int = 0
     conversion_rate: float = 0.0
     rating: float = 5.0
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             'total_products': self.total_products,
@@ -90,38 +90,38 @@ class Shop:
     name: str
     platform: ShopPlatform
     status: ShopStatus
-    
+
     # 店铺信息
     shop_id_on_platform: str = ""           # 平台侧店铺ID
     shop_url: Optional[str] = None
     logo_url: Optional[str] = None
     description: str = ""
-    
+
     # 联系信息
     contact_name: Optional[str] = None
     contact_phone: Optional[str] = None
     contact_email: Optional[str] = None
-    
+
     # 经营信息
     main_category: str = ""                 # 主营类目
     business_license: Optional[str] = None  # 营业执照号
-    
-    # 凭证（加密存储）
+
+    # 凭证(加密存储)
     credentials: ShopCredentials = field(default_factory=ShopCredentials)
-    
+
     # 统计数据
     stats: ShopStats = field(default_factory=ShopStats)
-    
+
     # 设置
     auto_sync: bool = True                  # 自动同步
-    sync_interval: int = 15                 # 同步间隔（分钟）
-    
+    sync_interval: int = 15                 # 同步间隔(分钟)
+
     # 元数据
     created_at: str = field(default_factory=lambda: datetime.now().isoformat())
     updated_at: str = field(default_factory=lambda: datetime.now().isoformat())
     owner_id: Optional[str] = None
     last_sync_at: Optional[str] = None
-    
+
     def to_dict(self) -> Dict[str, Any]:
         return {
             'id': self.id,
@@ -149,7 +149,7 @@ class Shop:
 
 class ShopManager:
     """店铺管理器"""
-    
+
     # 平台配置
     PLATFORM_CONFIG = {
         ShopPlatform.DOUYIN_SHOP: {
@@ -201,59 +201,15 @@ class ShopManager:
             'scopes': ['product', 'order', 'delivery'],
         },
     }
-    
+
     def __init__(self):
         self.db = DatabaseManager()
 
-    def _get_db(self) -> None:
-        """获取数据库连接（兼容方法）"""
+    # Tables managed by core/schema.py - do not add CREATE TABLE here
+
+    def _get_db(self) -> DatabaseManager:
         return self.db
-        self._init_database()
-    
-    def _init_database(self) -> None:
-        """初始化数据库表"""
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS shops (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                platform TEXT NOT NULL,
-                status TEXT NOT NULL,
-                shop_id_on_platform TEXT,
-                shop_url TEXT,
-                logo_url TEXT,
-                description TEXT,
-                contact_name TEXT,
-                contact_phone TEXT,
-                contact_email TEXT,
-                main_category TEXT,
-                business_license TEXT,
-                credentials TEXT,
-                auto_sync INTEGER DEFAULT 1,
-                sync_interval INTEGER DEFAULT 15,
-                created_at TEXT,
-                updated_at TEXT,
-                owner_id TEXT,
-                last_sync_at TEXT
-            )
-        """)
-        
-        # 店铺统计表
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS shop_stats (
-                shop_id TEXT PRIMARY KEY,
-                total_products INTEGER DEFAULT 0,
-                total_orders_today INTEGER DEFAULT 0,
-                total_orders_month INTEGER DEFAULT 0,
-                revenue_today REAL DEFAULT 0.0,
-                revenue_month REAL DEFAULT 0.0,
-                visitors_today INTEGER DEFAULT 0,
-                conversion_rate REAL DEFAULT 0.0,
-                rating REAL DEFAULT 5.0,
-                updated_at TEXT,
-                FOREIGN KEY (shop_id) REFERENCES shops(id)
-            )
-        """)
-    
+
     def create_shop(
         self,
         name: str,
@@ -265,7 +221,7 @@ class ShopManager:
     ) -> Optional[Shop]:
         """创建店铺"""
         shop_id = f"shop_{datetime.now().strftime('%Y%m%d%H%M%S')}"
-        
+
         shop = Shop(
             id=shop_id,
             name=name,
@@ -276,16 +232,16 @@ class ShopManager:
             credentials=ShopCredentials(**credentials),
             **kwargs
         )
-        
+
         # 保存到数据库
         self._save_shop(shop)
-        
+
         # 初始化统计
         self._init_shop_stats(shop_id)
-        
+
         logger.info(f"Created shop: {shop_id} ({name})")
         return shop
-    
+
     def _save_shop(self, shop: Shop) -> None:
         """保存店铺"""
         self.db.execute("""
@@ -305,7 +261,7 @@ class ShopManager:
             int(shop.auto_sync), shop.sync_interval,
             shop.created_at, shop.updated_at, shop.owner_id, shop.last_sync_at
         ))
-    
+
     def _init_shop_stats(self, shop_id: str) -> None:
         """初始化店铺统计"""
         self.db.execute("""
@@ -313,14 +269,14 @@ class ShopManager:
                 shop_id, updated_at
             ) VALUES (?, ?)
         """, (shop_id, datetime.now().isoformat()))
-    
+
     def get_shop(self, shop_id: str) -> Optional[Shop]:
         """获取店铺"""
         row = self.db.fetchone("SELECT * FROM shops WHERE id = ?", (shop_id,))
         if row:
             return self._row_to_shop(row)
         return None
-    
+
     def get_shops_by_owner(self, owner_id: str) -> List[Shop]:
         """获取用户的所有店铺"""
         rows = self.db.fetchall(
@@ -328,7 +284,7 @@ class ShopManager:
             (owner_id,)
         )
         return [self._row_to_shop(row) for row in rows]
-    
+
     def get_shops_by_platform(self, platform: ShopPlatform) -> List[Shop]:
         """按平台获取店铺"""
         rows = self.db.fetchall(
@@ -336,7 +292,7 @@ class ShopManager:
             (platform.value,)
         )
         return [self._row_to_shop(row) for row in rows]
-    
+
     def _row_to_shop(self, row: Dict[str, Any]) -> Shop:
         """数据库行转店铺对象"""
         try:
@@ -351,7 +307,7 @@ class ShopManager:
                 creds_data = {}
         except (json.JSONDecodeError, TypeError):
             creds_data = {}
-        
+
         # 获取统计 (过滤出 ShopStats 字段)
         stats_row = self.db.fetchone(
             "SELECT * FROM shop_stats WHERE shop_id = ?",
@@ -365,18 +321,18 @@ class ShopManager:
             stats = ShopStats(**filtered)
         else:
             stats = ShopStats()
-        
+
         # 解析 platform 和 status 枚举
         try:
             platform = ShopPlatform(row['platform'])
         except (ValueError, TypeError):
             platform = ShopPlatform.DOUYIN_SHOP  # 默认值
-        
+
         try:
             status = ShopStatus(row['status'])
         except (ValueError, TypeError):
             status = ShopStatus.ACTIVE  # 默认值
-        
+
         return Shop(
             id=row['id'],
             name=row['name'],
@@ -400,44 +356,44 @@ class ShopManager:
             owner_id=row['owner_id'],
             last_sync_at=row['last_sync_at'],
         )
-    
+
     def update_shop(self, shop_id: str, updates: Dict[str, Any]) -> bool:
         """更新店铺"""
         shop = self.get_shop(shop_id)
         if not shop:
             return False
-        
+
         for key, value in updates.items():
             if hasattr(shop, key):
                 setattr(shop, key, value)
-        
+
         shop.updated_at = datetime.now().isoformat()
         self._save_shop(shop)
-        
+
         return True
-    
+
     def delete_shop(self, shop_id: str) -> bool:
         """删除店铺"""
         self.db.execute("DELETE FROM shop_stats WHERE shop_id = ?", (shop_id,))
         self.db.execute("DELETE FROM shops WHERE id = ?", (shop_id,))
         logger.info(f"Deleted shop: {shop_id}")
         return True
-    
+
     def get_authorization_url(self, platform: ShopPlatform, redirect_uri: str) -> str:
         """获取平台授权URL"""
         config = self.PLATFORM_CONFIG.get(platform, {})
         auth_url = config.get('auth_url', '')
-        
-        # 构建授权URL（各平台参数不同，这里简化）
+
+        # 构建授权URL(各平台参数不同,这里简化)
         params = {
             'response_type': 'code',
             'redirect_uri': redirect_uri,
             'scope': ','.join(config.get('scopes', [])),
         }
-        
+
         # 实际实现需要根据各平台OAuth文档
         return auth_url
-    
+
     def handle_authorization_callback(
         self,
         platform: ShopPlatform,
@@ -445,7 +401,7 @@ class ShopManager:
         state: str
     ) -> Dict[str, Any]:
         """处理授权回调
-        
+
         各平台OAuth流程:
         - 抖音小店: https://openapi-fxg.jinritemai.com/auth/inner/token
         - 快手小店: https://v2.kwaixiaodian.com/oauth/refreshToken
@@ -458,11 +414,11 @@ class ShopManager:
                 'success': False,
                 'error': f'Unsupported platform: {platform.value}',
             }
-        
+
         # 尝试通过API客户端换取token
         creds = PlatformCredentials()
         client = create_platform_client(platform.value, creds)
-        
+
         if client:
             # 需要先配置app_key/app_secret才能换取token
             if not client.is_configured:
@@ -476,7 +432,7 @@ class ShopManager:
                     'required': ['app_key', 'app_secret'],
                     'auth_url': platform_config.get('auth_url', ''),
                 }
-            
+
             # 用授权码换取token
             token_result = client.exchange_token(code)
             if 'error' in token_result:
@@ -485,7 +441,7 @@ class ShopManager:
                     'success': False,
                     'error': f'Token exchange failed: {token_result["error"]}',
                 }
-            
+
             # 创建或更新店铺
             shop_id = f"shop_{platform.value}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
             logger.info(
@@ -497,8 +453,8 @@ class ShopManager:
                 'platform': platform.value,
                 'token_data': token_result,
             }
-        
-        # 不支持API的平台（如拼多多、京东等），返回手动配置引导
+
+        # 不支持API的平台(如拼多多、京东等),返回手动配置引导
         shop_id = f"shop_{platform.value}_{datetime.now().strftime('%Y%m%d%H%M%S')}"
         return {
             'success': True,
@@ -508,25 +464,25 @@ class ShopManager:
             'auth_url': platform_config.get('auth_url', ''),
             'requires_manual_config': True,
         }
-    
+
     def sync_shop_data(self, shop_id: str) -> bool:
         """同步店铺数据
-        
+
         同步内容包括:
         1. 商品列表 (product listing)
-        2. 订单数据 (order data) 
+        2. 订单数据 (order data)
         3. 店铺统计 (shop statistics)
-        
-        优先调用平台API同步，如API未配置则回退到本地数据。
+
+        优先调用平台API同步,如API未配置则回退到本地数据。
         """
         shop = self.get_shop(shop_id)
         if not shop:
             return False
-        
+
         # 尝试通过API客户端同步
         creds = self._get_platform_credentials(shop)
         client = create_platform_client(shop.platform.value, creds)
-        
+
         if client and client.is_authenticated:
             try:
                 # 同步商品
@@ -536,7 +492,7 @@ class ShopManager:
                         f"[ShopManager] Synced {product_result.created} products "
                         f"from {shop.platform.value}"
                     )
-                
+
                 # 同步订单
                 order_result = client.sync_orders()
                 if order_result.success:
@@ -544,7 +500,7 @@ class ShopManager:
                         f"[ShopManager] Synced {order_result.created} orders "
                         f"from {shop.platform.value}"
                     )
-                
+
                 # 同步库存
                 inventory_result = client.sync_inventory()
                 if inventory_result.success:
@@ -565,17 +521,17 @@ class ShopManager:
             logger.info(
                 f"[ShopManager] No API client for {shop.platform.value}, using local data"
             )
-        
+
         # 更新同步时间戳
         shop.last_sync_at = datetime.now().isoformat()
         self._save_shop(shop)
-        
+
         # 更新统计数据
         self._refresh_shop_stats(shop_id)
-        
+
         logger.info(f"[ShopManager] Synced shop data: {shop_id}")
         return True
-    
+
     def get_shop_analytics(
         self,
         shop_id: str,
@@ -583,12 +539,12 @@ class ShopManager:
         end_date: str
     ) -> Dict[str, Any]:
         """获取店铺分析数据
-        
+
         数据来源:
         1. 本地订单数据库 (订单数、收入)
         2. 平台API (访客数、转化率、流量来源)
-        
-        当前版本基于本地数据，平台API数据需要授权后获取。
+
+        当前版本基于本地数据,平台API数据需要授权后获取。
         """
         shop = self.get_shop(shop_id)
         if not shop:
@@ -597,7 +553,7 @@ class ShopManager:
                 'error': 'Shop not found',
                 'period': {'start': start_date, 'end': end_date},
             }
-        
+
         # 从订单表获取统计
         from .order_manager import OrderManager, OrderStatus, PaymentStatus
         order_mgr = OrderManager()
@@ -607,10 +563,10 @@ class ShopManager:
             end_date=end_date,
             limit=10000
         )
-        
+
         paid_orders = [o for o in orders if o.payment_status == PaymentStatus.PAID]
         total_revenue = sum(o.total_amount for o in paid_orders)
-        
+
         # 按日分组
         daily_stats = {}
         for order in orders:
@@ -620,7 +576,7 @@ class ShopManager:
             daily_stats[day]['orders'] += 1
             if order.payment_status == PaymentStatus.PAID:
                 daily_stats[day]['revenue'] += order.total_amount
-        
+
         return {
             'shop_id': shop_id,
             'shop_name': shop.name,
@@ -636,7 +592,7 @@ class ShopManager:
             'top_products': [],  # 需要商品分析
             'traffic_sources': [],  # 需要平台API
         }
-    
+
     def get_platform_list(self) -> List[Dict[str, Any]]:
         """获取支持的平台列表"""
         return [
@@ -647,18 +603,18 @@ class ShopManager:
             }
             for platform, config in self.PLATFORM_CONFIG.items()
         ]
-    
+
     def batch_sync(self, owner_id: str) -> Dict[str, Any]:
         """批量同步用户所有店铺"""
         shops = self.get_shops_by_owner(owner_id)
-        
+
         results = {
             'total': len(shops),
             'success': 0,
             'failed': 0,
             'details': [],
         }
-        
+
         for shop in shops:
             if shop.auto_sync:
                 try:
@@ -678,9 +634,9 @@ class ShopManager:
                         'status': 'failed',
                         'error': str(e),
                     })
-        
+
         return results
-    
+
     def _get_platform_credentials(self, shop) -> PlatformCredentials:
         """从店铺数据中提取平台API凭证"""
         creds_data = {}
@@ -696,7 +652,7 @@ class ShopManager:
                     creds_data = shop.credentials
             except (json.JSONDecodeError, TypeError):
                 creds_data = {}
-        
+
         return PlatformCredentials(
             app_key=creds_data.get('app_key', ''),
             app_secret=creds_data.get('app_secret', ''),

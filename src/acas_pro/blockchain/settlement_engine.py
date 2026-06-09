@@ -123,6 +123,9 @@ class SettlementRecord:
         return hashlib.sha256(data_str.encode()).hexdigest()
 
 
+# Tables managed by core/schema.py — do not add CREATE TABLE here
+
+
 class SettlementEngine:
     """结算引擎"""
     
@@ -164,47 +167,6 @@ class SettlementEngine:
     
     def __init__(self):
         self.db = DatabaseManager()
-        self._init_database()
-    
-    def _init_database(self) -> None:
-        """初始化数据库表"""
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS settlements (
-                id TEXT PRIMARY KEY,
-                settlement_type TEXT NOT NULL,
-                source_id TEXT NOT NULL,
-                source_type TEXT,
-                total_amount REAL NOT NULL,
-                currency TEXT DEFAULT 'CNY',
-                parties TEXT,
-                distribution TEXT,
-                status TEXT DEFAULT 'pending',
-                blockchain_tx_hash TEXT,
-                block_number INTEGER,
-                confirmed_at TEXT,
-                created_at TEXT,
-                settled_at TEXT,
-                description TEXT,
-                metadata TEXT
-            )
-        """)
-        
-        # 结算明细表
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS settlement_details (
-                id TEXT PRIMARY KEY,
-                settlement_id TEXT NOT NULL,
-                party_id TEXT NOT NULL,
-                party_type TEXT,
-                amount REAL NOT NULL,
-                wallet_address TEXT,
-                tx_hash TEXT,
-                status TEXT DEFAULT 'pending',
-                created_at TEXT,
-                completed_at TEXT,
-                FOREIGN KEY (settlement_id) REFERENCES settlements(id)
-            )
-        """)
     
     def create_settlement(
         self,

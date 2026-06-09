@@ -72,8 +72,7 @@ def _configure_app(app) -> None:
         if env_name in ('production', 'prod'):
             raise ValueError(
                 "SECRET_KEY must be set in production! "
-                "Add SECRET_KEY=<your-secret> to .env file. "
-                "Generate one: python -c \"import secrets; print(secrets.token_urlsafe(48))\""
+                "Set the SECRET_KEY environment variable in your deployment config."
             )
         # In non-prod: raise instead of generating ephemeral key so sessions survive restarts
         # and misconfiguration is caught early.
@@ -83,8 +82,7 @@ def _configure_app(app) -> None:
         )
         raise ValueError(
             "SECRET_KEY must be configured even in development! "
-            "Add SECRET_KEY=<your-secret> to .env file. "
-            "Generate one: python -c \"import secrets; print(secrets.token_urlsafe(48))\""
+            "Set the SECRET_KEY environment variable in your deployment config."
         )
     app.secret_key = _secret
 
@@ -134,10 +132,14 @@ def _register_auth_middleware(app) -> None:
 
         # 3. All other routes REQUIRE authentication
         auth_header = request.headers.get('Authorization', '')
-        if not auth_header.startswith('Bearer '):
-            return jsonify({'error': 'Authentication required'}), 401
+        if auth_header.startswith('Bearer '):
+            token = auth_header[7:].strip()
+        else:
+            # Also check cookie (set by login flow)
+            token = request.cookies.get('access_token', '')
 
-        token = auth_header[7:]
+        if not token:
+            return jsonify({'error': 'Authentication required'}), 401
         payload = verify_token(token)
         if not payload:
             return jsonify({'error': 'Invalid or expired token'}), 401

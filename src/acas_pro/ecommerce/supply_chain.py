@@ -131,68 +131,9 @@ class SupplyChainManager:
     
     def __init__(self):
         self.db = DatabaseManager()
-        self._init_database()
+        # Tables managed by core/schema.py — do not add CREATE TABLE here
     
-    def _init_database(self) -> None:
-        """初始化数据库表"""
-        # 供应商表
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS suppliers (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                contact_person TEXT,
-                contact_phone TEXT,
-                contact_email TEXT,
-                company_name TEXT,
-                business_license TEXT,
-                address TEXT,
-                main_products TEXT,
-                supply_categories TEXT,
-                rating REAL DEFAULT 5.0,
-                cooperation_count INTEGER DEFAULT 0,
-                status TEXT DEFAULT 'active',
-                payment_terms TEXT,
-                created_at TEXT,
-                owner_id TEXT,
-                notes TEXT
-            )
-        """)
-        
-        # 库存同步表
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS inventory_syncs (
-                id TEXT PRIMARY KEY,
-                product_id TEXT NOT NULL,
-                shop_id TEXT NOT NULL,
-                supplier_id TEXT,
-                quantity_before INTEGER,
-                quantity_after INTEGER,
-                quantity_changed INTEGER,
-                status TEXT,
-                error_message TEXT,
-                synced_at TEXT,
-                source TEXT
-            )
-        """)
-        
-        # 采购订单表
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS purchase_orders (
-                id TEXT PRIMARY KEY,
-                supplier_id TEXT NOT NULL,
-                items TEXT,
-                subtotal REAL DEFAULT 0.0,
-                shipping_fee REAL DEFAULT 0.0,
-                total_amount REAL DEFAULT 0.0,
-                status TEXT DEFAULT 'pending',
-                created_at TEXT,
-                expected_delivery TEXT,
-                delivered_at TEXT,
-                notes TEXT
-            )
-        """)
-    
-    # ========== 供应商管理 ==========
+
     
     def create_supplier(
         self,

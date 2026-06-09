@@ -4,22 +4,19 @@
 """
 
 import json
-import sqlite3
-from datetime import datetime
 import asyncio
-from typing import Dict, List, Optional, Any, Set
+from datetime import datetime
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, asdict
 from enum import Enum
 
-try:
-    import aiosqlite
-    _HAS_AIOSQLITE = True
-except ImportError:
-    _HAS_AIOSQLITE = False
-
-from ..core.config import config
+from ..core.database import DatabaseManager
 from ..core.logging import logger
 
+
+# ============================================================================
+# Data Models
+# ============================================================================
 
 class AudienceType(Enum):
     """人群类型"""
@@ -42,7 +39,7 @@ class AgeRange:
     """年龄范围"""
     min_age: int = 18
     max_age: int = 65
-    
+
     def to_dict(self) -> Dict[str, int]:
         return {'min_age': self.min_age, 'max_age': self.max_age}
 
@@ -50,11 +47,11 @@ class AgeRange:
 @dataclass
 class GeoTargeting:
     """地域定向"""
-    provinces: List[str] = None        # 省份列表
-    cities: List[str] = None           # 城市列表
-    exclude_regions: List[str] = None  # 排除地区
-    radius_targeting: Optional[Dict[str, Any]] = None  # 半径定向
-    
+    provinces: List[str] = None
+    cities: List[str] = None
+    exclude_regions: List[str] = None
+    radius_targeting: Optional[Dict[str, Any]] = None
+
     def __post_init__(self) -> None:
         if self.provinces is None:
             self.provinces = []
@@ -67,12 +64,12 @@ class GeoTargeting:
 @dataclass
 class DeviceTargeting:
     """设备定向"""
-    device_types: List[str] = None     # mobile, tablet, desktop
-    os_types: List[str] = None         # ios, android, windows
-    network_types: List[str] = None    # wifi, 4g, 5g
-    brands: List[str] = None           # 手机品牌
-    price_ranges: List[str] = None     # 手机价位段
-    
+    device_types: List[str] = None
+    os_types: List[str] = None
+    network_types: List[str] = None
+    brands: List[str] = None
+    price_ranges: List[str] = None
+
     def __post_init__(self) -> None:
         if self.device_types is None:
             self.device_types = ['mobile']
@@ -92,32 +89,27 @@ class AudienceSegment:
     id: str
     name: str
     type: AudienceType
-    
-    # 基础属性
+
     gender: Gender = Gender.ALL
     age_range: AgeRange = None
     geo_targeting: GeoTargeting = None
     device_targeting: DeviceTargeting = None
-    
-    # 高级定向
-    interests: List[str] = None        # 兴趣标签
-    behaviors: List[str] = None        # 行为标签
-    custom_tags: List[str] = None      # 自定义标签
-    
-    # Lookalike设置
-    source_audience_id: Optional[str] = None  # 源人群ID
-    lookalike_ratio: Optional[float] = None   # 相似度比例
-    
-    # 预估规模
+
+    interests: List[str] = None
+    behaviors: List[str] = None
+    custom_tags: List[str] = None
+
+    source_audience_id: Optional[str] = None
+    lookalike_ratio: Optional[float] = None
+
     estimated_size: int = 0
     estimated_daily_impressions: int = 0
-    
-    # 状态
-    status: str = "active"             # active, paused, expired
-    
+
+    status: str = "active"
+
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
-    
+
     def __post_init__(self) -> None:
         if self.age_range is None:
             self.age_range = AgeRange()
@@ -131,13 +123,13 @@ class AudienceSegment:
             self.behaviors = []
         if self.custom_tags is None:
             self.custom_tags = []
-    
+
     def to_dict(self) -> Dict[str, Any]:
         data = asdict(self)
         data['type'] = self.type.value
         data['gender'] = self.gender.value
         return data
-    
+
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> 'AudienceSegment':
         data['type'] = AudienceType(data['type'])
@@ -148,9 +140,40 @@ class AudienceSegment:
         return cls(**data)
 
 
+# ============================================================================
+# Helper: DB row → AudienceSegment
+# ============================================================================
+
+def _row_to_segment(row: Dict[str, Any]) -> AudienceSegment:
+    """Convert a DatabaseManager row dict to an AudienceSegment."""
+    return AudienceSegment(
+        id=row['id'],
+        name=row['name'],
+        type=AudienceType(row['type']),
+        gender=Gender(row.get('gender', 'all')),
+        age_range=AgeRange(**json.loads(row['age_range'])) if row.get('age_range') else AgeRange(),
+        geo_targeting=GeoTargeting(**json.loads(row['geo_targeting'])) if row.get('geo_targeting') else GeoTargeting(),
+        device_targeting=DeviceTargeting(**json.loads(row['device_targeting'])) if row.get('device_targeting') else DeviceTargeting(),
+        interests=json.loads(row['interests']) if row.get('interests') else [],
+        behaviors=json.loads(row['behaviors']) if row.get('behaviors') else [],
+        custom_tags=json.loads(row['custom_tags']) if row.get('custom_tags') else [],
+        source_audience_id=row.get('source_audience_id'),
+        lookalike_ratio=row.get('lookalike_ratio'),
+        estimated_size=row.get('estimated_size', 0) or 0,
+        estimated_daily_impressions=row.get('estimated_daily_impressions', 0) or 0,
+        status=row.get('status', 'active'),
+        created_at=row.get('created_at'),
+        updated_at=row.get('updated_at'),
+    )
+
+
+# ============================================================================
+# AudienceTargeting
+# ============================================================================
+
 class AudienceTargeting:
-    """人群定向管理器"""
-    
+    """人群定向管理器 — backed by DatabaseManager singleton."""
+
     # 预定义兴趣标签库
     INTEREST_CATEGORIES = {
         '电商购物': ['淘宝', '京东', '拼多多', '网购', '优惠', '折扣', '秒杀'],
@@ -164,262 +187,156 @@ class AudienceTargeting:
         '金融理财': ['理财', '基金', '股票', '保险', '信用卡', '贷款'],
         '汽车': ['汽车', '二手车', '新能源车', '保养', '车险', '驾驶']
     }
-    
-    # 预定义行为标签库
+
     BEHAVIOR_CATEGORIES = {
         '购买行为': ['最近购买', '高频购买', '大额消费', '复购用户', '首单用户'],
         '互动行为': ['点赞', '评论', '分享', '收藏', '关注', '私信'],
         '浏览行为': ['深度浏览', '多次浏览', '加购未买', '对比商品', '查看评价'],
         '应用行为': ['活跃用户', '新注册用户', '流失风险', '付费用户', 'VIP用户']
     }
-    
-    def __init__(self, db_path: Optional[str] = None):
-        self.db_path = db_path or config.database.path
-        self._conn = None  # explicit single connection to avoid ResourceWarning
-        self._init_database()
-        self.logger = logger.getChild("audience_targeting")
+
+    def __init__(self, db: Optional[DatabaseManager] = None, db_path: Optional[str] = None):
+        self._db = db  # None → lazy singleton via property
+        self._db_path_override = db_path  # legacy compat
+        self._logger = logger.getChild("audience_targeting")
+        # Tables managed by core/schema.py — do not add CREATE/ALTER TABLE here
+
+    # ── Lazy DatabaseManager access ─────────────────────────────────
+
+    @property
+    def db(self) -> DatabaseManager:
+        if self._db is None:
+            self._db = DatabaseManager()
+        return self._db
+
+    @db.setter
+    def db(self, value: DatabaseManager) -> None:
+        self._db = value
+
+    # ── Legacy compat ───────────────────────────────────────────────
+
+    @property
+    def db_path(self) -> str:
+        """Legacy compat — returns DatabaseManager's db_path."""
+        return getattr(self.db, '_db_path', '')
 
     def close(self) -> None:
-        """Close the managed database connection."""
-        if self._conn is not None:
-            try:
-                self._conn.close()
-            except Exception as e:
-                logger.debug("audience_targeting DB connection cleanup: {e}")
-            self._conn = None
+        """Legacy compat — no-op with DatabaseManager."""
+        pass
 
-    def __del__(self) -> None:
-        self.close()
-
-    def _init_database(self) -> None:
-        """初始化数据库表"""
-        self._conn = sqlite3.connect(self.db_path)
-        conn = self._conn
-        conn.execute("""
-            CREATE TABLE IF NOT EXISTS audience_segments (
-                id TEXT PRIMARY KEY,
-                name TEXT NOT NULL,
-                type TEXT NOT NULL,
-                gender TEXT DEFAULT 'all',
-                age_range TEXT NOT NULL,
-                geo_targeting TEXT NOT NULL,
-                device_targeting TEXT NOT NULL,
-                interests TEXT,
-                behaviors TEXT,
-                custom_tags TEXT,
-                source_audience_id TEXT,
-                lookalike_ratio REAL,
-                estimated_size INTEGER DEFAULT 0,
-                estimated_daily_impressions INTEGER DEFAULT 0,
-                status TEXT DEFAULT 'active',
-                created_at TEXT NOT NULL,
-                updated_at TEXT NOT NULL
-            )
-        """)
-        conn.commit()
-        conn.close()
-        self._conn = None
+    # ── CRUD (sync) ────────────────────────────────────────────────
 
     def create_segment(self, segment: AudienceSegment) -> bool:
         """创建人群包"""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                now = datetime.now().isoformat()
-                conn.execute("""
-                    INSERT INTO audience_segments
-                    (id, name, type, gender, age_range, geo_targeting, device_targeting,
-                     interests, behaviors, custom_tags, source_audience_id, lookalike_ratio,
-                     estimated_size, estimated_daily_impressions, status, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    segment.id, segment.name, segment.type.value, segment.gender.value,
-                    json.dumps(segment.age_range.to_dict()),
-                    json.dumps(segment.geo_targeting.__dict__),
-                    json.dumps(segment.device_targeting.__dict__),
-                    json.dumps(segment.interests),
-                    json.dumps(segment.behaviors),
-                    json.dumps(segment.custom_tags),
-                    segment.source_audience_id,
-                    segment.lookalike_ratio,
-                    segment.estimated_size,
-                    segment.estimated_daily_impressions,
-                    segment.status, now, now
-                ))
-                conn.commit()
-            
-            self.logger.info(f"人群包创建成功: {segment.name}")
+            now = datetime.now().isoformat()
+            self.db.insert('audience_segments', {
+                'id': segment.id,
+                'name': segment.name,
+                'type': segment.type.value,
+                'gender': segment.gender.value,
+                'age_range': json.dumps(segment.age_range.to_dict()),
+                'geo_targeting': json.dumps(asdict(segment.geo_targeting)),
+                'device_targeting': json.dumps(asdict(segment.device_targeting)),
+                'interests': json.dumps(segment.interests),
+                'behaviors': json.dumps(segment.behaviors),
+                'custom_tags': json.dumps(segment.custom_tags),
+                'source_audience_id': segment.source_audience_id,
+                'lookalike_ratio': segment.lookalike_ratio,
+                'estimated_size': segment.estimated_size,
+                'estimated_daily_impressions': segment.estimated_daily_impressions,
+                'status': segment.status,
+                'created_at': now,
+                'updated_at': now,
+            })
+            self._logger.info(f"人群包创建成功: {segment.name}")
             return True
         except Exception as e:
-            self.logger.error(f"创建人群包失败: {e}")
+            self._logger.error(f"创建人群包失败: {e}")
             return False
-    
+
     def get_segment(self, segment_id: str) -> Optional[AudienceSegment]:
         """获取人群包"""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                cursor = conn.execute(
-                    "SELECT * FROM audience_segments WHERE id = ?",
-                    (segment_id,)
-                )
-                row = cursor.fetchone()
-                
-                if row:
-                    return AudienceSegment(
-                        id=row[0],
-                        name=row[1],
-                        type=AudienceType(row[2]),
-                        gender=Gender(row[3]),
-                        age_range=AgeRange(**json.loads(row[4])),
-                        geo_targeting=GeoTargeting(**json.loads(row[5])),
-                        device_targeting=DeviceTargeting(**json.loads(row[6])),
-                        interests=json.loads(row[7]) if row[7] else [],
-                        behaviors=json.loads(row[8]) if row[8] else [],
-                        custom_tags=json.loads(row[9]) if row[9] else [],
-                        source_audience_id=row[10],
-                        lookalike_ratio=row[11],
-                        estimated_size=row[12],
-                        estimated_daily_impressions=row[13],
-                        status=row[14],
-                        created_at=row[15],
-                        updated_at=row[16]
-                    )
+            row = self.db.fetch_one(
+                "SELECT * FROM audience_segments WHERE id = ?",
+                (segment_id,)
+            )
+            if row:
+                return _row_to_segment(row)
         except Exception as e:
-            self.logger.error(f"获取人群包失败: {e}")
-        
+            self._logger.error(f"获取人群包失败: {e}")
         return None
-    
+
     def get_segments(self, type: Optional[AudienceType] = None,
-                    status: Optional[str] = None) -> List[AudienceSegment]:
+                     status: Optional[str] = None) -> List[AudienceSegment]:
         """获取人群包列表"""
-        segments = []
-        
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                query = "SELECT * FROM audience_segments WHERE 1=1"
-                params = []
-                
-                if type:
-                    query += " AND type = ?"
-                    params.append(type.value)
-                if status:
-                    query += " AND status = ?"
-                    params.append(status)
-                
-                cursor = conn.execute(query, params)
-                
-                for row in cursor.fetchall():
-                    segments.append(AudienceSegment(
-                        id=row[0],
-                        name=row[1],
-                        type=AudienceType(row[2]),
-                        gender=Gender(row[3]),
-                        age_range=AgeRange(**json.loads(row[4])),
-                        geo_targeting=GeoTargeting(**json.loads(row[5])),
-                        device_targeting=DeviceTargeting(**json.loads(row[6])),
-                        interests=json.loads(row[7]) if row[7] else [],
-                        behaviors=json.loads(row[8]) if row[8] else [],
-                        custom_tags=json.loads(row[9]) if row[9] else [],
-                        source_audience_id=row[10],
-                        lookalike_ratio=row[11],
-                        estimated_size=row[12],
-                        estimated_daily_impressions=row[13],
-                        status=row[14],
-                        created_at=row[15],
-                        updated_at=row[16]
-                    ))
+            query = "SELECT * FROM audience_segments WHERE 1=1"
+            params: list = []
+
+            if type:
+                query += " AND type = ?"
+                params.append(type.value)
+            if status:
+                query += " AND status = ?"
+                params.append(status)
+
+            rows = self.db.fetchall(query, tuple(params) if params else None)
+            return [_row_to_segment(r) for r in rows]
         except Exception as e:
-            self.logger.error(f"获取人群包列表失败: {e}")
-        
-        return segments
-    
+            self._logger.error(f"获取人群包列表失败: {e}")
+            return []
+
     def update_segment(self, segment_id: str, updates: Dict[str, Any]) -> bool:
         """更新人群包"""
         try:
-            allowed_fields = ['name', 'status', 'estimated_size', 
-                            'estimated_daily_impressions']
-            
-            set_clause = []
-            params = []
-            
-            for field, value in updates.items():
-                if field in allowed_fields:
-                    set_clause.append(f"{field} = ?")
-                    params.append(value)
-            
-            if not set_clause:
+            allowed_fields = {'name', 'status', 'estimated_size',
+                              'estimated_daily_impressions'}
+            data = {k: v for k, v in updates.items() if k in allowed_fields}
+            if not data:
                 return False
-            
-            set_clause.append("updated_at = ?")
-            params.append(datetime.now().isoformat())
-            params.append(segment_id)
-            
-            with sqlite3.connect(self.db_path) as conn:
-                conn.execute(
-                    f"UPDATE audience_segments SET {', '.join(set_clause)} WHERE id = ?",
-                    params
-                )
-                conn.commit()
-            
+            data['updated_at'] = datetime.now().isoformat()
+            self.db.update('audience_segments', data, {'id': segment_id})
             return True
         except Exception as e:
-            self.logger.error(f"更新人群包失败: {e}")
+            self._logger.error(f"更新人群包失败: {e}")
             return False
-    
+
     def delete_segment(self, segment_id: str) -> bool:
         """删除人群包"""
         try:
-            with sqlite3.connect(self.db_path) as conn:
-                conn.execute("DELETE FROM audience_segments WHERE id = ?", (segment_id,))
-                conn.commit()
+            self.db.delete('audience_segments', {'id': segment_id})
             return True
         except Exception as e:
-            self.logger.error(f"删除人群包失败: {e}")
+            self._logger.error(f"删除人群包失败: {e}")
             return False
-    
+
+    # ── Estimation & recommendation (pure logic, no DB) ────────────
+
     def estimate_audience_size(self, segment: AudienceSegment) -> Dict[str, Any]:
-        """
-        预估人群规模
-        
-        这是一个简化模型，实际应该调用平台API获取真实预估
-        """
-        # 基础人群规模（假设）
-        base_size = 10000000  # 1000万基础用户
-        
-        # 年龄系数
+        """预估人群规模（简化模型）"""
+        base_size = 10000000
+
         age_coverage = (segment.age_range.max_age - segment.age_range.min_age) / 47
-        
-        # 地域系数
+
         if segment.geo_targeting.provinces:
             geo_coverage = len(segment.geo_targeting.provinces) / 34 * 0.8
         elif segment.geo_targeting.cities:
             geo_coverage = len(segment.geo_targeting.cities) / 300 * 0.6
         else:
             geo_coverage = 1.0
-        
-        # 性别系数
+
         gender_coverage = 0.5 if segment.gender != Gender.ALL else 1.0
-        
-        # 兴趣系数
-        if segment.interests:
-            interest_coverage = min(1.0, len(segment.interests) * 0.1)
-        else:
-            interest_coverage = 1.0
-        
-        # 行为系数
-        if segment.behaviors:
-            behavior_coverage = min(1.0, len(segment.behaviors) * 0.15)
-        else:
-            behavior_coverage = 1.0
-        
-        # 计算预估规模
+        interest_coverage = min(1.0, len(segment.interests) * 0.1) if segment.interests else 1.0
+        behavior_coverage = min(1.0, len(segment.behaviors) * 0.15) if segment.behaviors else 1.0
+
         estimated_size = int(
-            base_size * age_coverage * geo_coverage * gender_coverage * 
+            base_size * age_coverage * geo_coverage * gender_coverage *
             interest_coverage * behavior_coverage
         )
-        
-        # 日曝光预估（假设日活20%，人均曝光5次）
         estimated_daily_impressions = int(estimated_size * 0.2 * 5)
-        
+
         return {
             'estimated_size': estimated_size,
             'estimated_daily_impressions': estimated_daily_impressions,
@@ -431,23 +348,15 @@ class AudienceTargeting:
                 'behavior': round(behavior_coverage, 3)
             }
         }
-    
+
     def create_lookalike(self, source_segment_id: str, name: str,
-                        ratio: float = 0.01) -> Optional[AudienceSegment]:
-        """
-        创建相似人群包
-        
-        Args:
-            source_segment_id: 源人群包ID
-            name: 新人群包名称
-            ratio: 相似度比例 (0.001-0.1)
-        """
+                         ratio: float = 0.01) -> Optional[AudienceSegment]:
+        """创建相似人群包"""
         source = self.get_segment(source_segment_id)
         if not source:
-            self.logger.error(f"源人群包不存在: {source_segment_id}")
+            self._logger.error(f"源人群包不存在: {source_segment_id}")
             return None
-        
-        # 创建Lookalike人群包
+
         lookalike = AudienceSegment(
             id=f"lookalike_{datetime.now().strftime('%Y%m%d%H%M%S')}",
             name=name,
@@ -461,30 +370,21 @@ class AudienceTargeting:
             estimated_size=int(source.estimated_size * (1 + ratio * 10)),
             estimated_daily_impressions=int(source.estimated_daily_impressions * (1 + ratio * 5))
         )
-        
+
         if self.create_segment(lookalike):
-            self.logger.info(f"相似人群包创建成功: {name}")
+            self._logger.info(f"相似人群包创建成功: {name}")
             return lookalike
-        
         return None
-    
+
     def get_interest_categories(self) -> Dict[str, List[str]]:
-        """获取兴趣分类"""
         return self.INTEREST_CATEGORIES.copy()
-    
+
     def get_behavior_categories(self) -> Dict[str, List[str]]:
-        """获取行为分类"""
         return self.BEHAVIOR_CATEGORIES.copy()
-    
+
     def get_recommended_targeting(self, product_category: str,
-                                 target_platform: str) -> Dict[str, Any]:
-        """
-        获取推荐定向配置
-        
-        Args:
-            product_category: 产品类目
-            target_platform: 目标平台
-        """
+                                  target_platform: str) -> Dict[str, Any]:
+        """获取推荐定向配置"""
         recommendations = {
             '美妆': {
                 'interests': ['美妆护肤', '电商购物'],
@@ -517,203 +417,110 @@ class AudienceTargeting:
                 'age_range': {'min_age': 18, 'max_age': 50}
             }
         }
-        
         return recommendations.get(product_category, {
             'interests': ['电商购物'],
             'behaviors': ['活跃用户'],
             'gender': 'all',
             'age_range': {'min_age': 18, 'max_age': 65}
         })
-    
-    # ==================== 异步方法 ====================
-    
-    async def create_segment_async(self, segment: 'AudienceSegment') -> bool:
-        """创建人群包 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
+
+    # ── Async CRUD ──────────────────────────────────────────────────
+
+    async def create_segment_async(self, segment: AudienceSegment) -> bool:
+        """创建人群包 (异步)"""
         try:
             now = datetime.now().isoformat()
-            async with aiosqlite.connect(self.db_path) as conn:
-                await conn.execute("""
-                    INSERT INTO audience_segments
-                    (id, name, type, gender, age_range, geo_targeting, device_targeting,
-                     interests, behaviors, custom_tags, source_audience_id, lookalike_ratio,
-                     estimated_size, estimated_daily_impressions, status, created_at, updated_at)
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                """, (
-                    segment.id, segment.name, segment.type.value, segment.gender.value,
-                    json.dumps(segment.age_range.to_dict()),
-                    json.dumps(segment.geo_targeting.__dict__),
-                    json.dumps(segment.device_targeting.__dict__),
-                    json.dumps(segment.interests),
-                    json.dumps(segment.behaviors),
-                    json.dumps(segment.custom_tags),
-                    segment.source_audience_id,
-                    segment.lookalike_ratio,
-                    segment.estimated_size,
-                    segment.estimated_daily_impressions,
-                    segment.status, now, now
-                ))
-                await conn.commit()
-            
-            self.logger.info(f"人群包创建成功(异步): {segment.name}")
+            await self.db.insert_async('audience_segments', {
+                'id': segment.id,
+                'name': segment.name,
+                'type': segment.type.value,
+                'gender': segment.gender.value,
+                'age_range': json.dumps(segment.age_range.to_dict()),
+                'geo_targeting': json.dumps(asdict(segment.geo_targeting)),
+                'device_targeting': json.dumps(asdict(segment.device_targeting)),
+                'interests': json.dumps(segment.interests),
+                'behaviors': json.dumps(segment.behaviors),
+                'custom_tags': json.dumps(segment.custom_tags),
+                'source_audience_id': segment.source_audience_id,
+                'lookalike_ratio': segment.lookalike_ratio,
+                'estimated_size': segment.estimated_size,
+                'estimated_daily_impressions': segment.estimated_daily_impressions,
+                'status': segment.status,
+                'created_at': now,
+                'updated_at': now,
+            })
+            self._logger.info(f"人群包创建成功(异步): {segment.name}")
             return True
         except Exception as e:
-            self.logger.error(f"创建人群包失败(异步): {e}")
+            self._logger.error(f"创建人群包失败(异步): {e}")
             return False
-    
-    async def get_segment_async(self, segment_id: str) -> 'Optional[AudienceSegment]':
-        """获取人群包 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
+
+    async def get_segment_async(self, segment_id: str) -> Optional[AudienceSegment]:
+        """获取人群包 (异步)"""
         try:
-            async with aiosqlite.connect(self.db_path) as conn:
-                cursor = await conn.execute(
-                    "SELECT * FROM audience_segments WHERE id = ?",
-                    (segment_id,)
-                )
-                row = await cursor.fetchone()
-                
-                if row:
-                    return AudienceSegment(
-                        id=row[0],
-                        name=row[1],
-                        type=AudienceType(row[2]),
-                        gender=Gender(row[3]),
-                        age_range=AgeRange(**json.loads(row[4])),
-                        geo_targeting=GeoTargeting(**json.loads(row[5])),
-                        device_targeting=DeviceTargeting(**json.loads(row[6])),
-                        interests=json.loads(row[7]) if row[7] else [],
-                        behaviors=json.loads(row[8]) if row[8] else [],
-                        custom_tags=json.loads(row[9]) if row[9] else [],
-                        source_audience_id=row[10],
-                        lookalike_ratio=row[11],
-                        estimated_size=row[12],
-                        estimated_daily_impressions=row[13],
-                        status=row[14],
-                        created_at=row[15],
-                        updated_at=row[16]
-                    )
+            row = await self.db.execute_one_async(
+                "SELECT * FROM audience_segments WHERE id = ?",
+                (segment_id,)
+            )
+            if row:
+                return _row_to_segment(row)
         except Exception as e:
-            self.logger.error(f"获取人群包失败(异步): {e}")
-        
+            self._logger.error(f"获取人群包失败(异步): {e}")
         return None
-    
-    async def get_segments_async(self, type=None, status=None) -> None:
-        """获取人群包列表 (真正异步)
-        
-        Args:
-            type: 人群类型过滤 (AudienceType)
-            status: 状态过滤 (active/paused/expired)
-        """
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
-        segments = []
-        
+
+    async def get_segments_async(self, type=None, status=None) -> List[AudienceSegment]:
+        """获取人群包列表 (异步)"""
         try:
-            async with aiosqlite.connect(self.db_path) as conn:
-                query = "SELECT * FROM audience_segments WHERE 1=1"
-                params = []
-                
-                if type:
-                    query += " AND type = ?"
-                    params.append(type.value)
-                if status:
-                    query += " AND status = ?"
-                    params.append(status)
-                
-                cursor = await conn.execute(query, params)
-                rows = await cursor.fetchall()
-                
-                for row in rows:
-                    segments.append(AudienceSegment(
-                        id=row[0],
-                        name=row[1],
-                        type=AudienceType(row[2]),
-                        gender=Gender(row[3]),
-                        age_range=AgeRange(**json.loads(row[4])),
-                        geo_targeting=GeoTargeting(**json.loads(row[5])),
-                        device_targeting=DeviceTargeting(**json.loads(row[6])),
-                        interests=json.loads(row[7]) if row[7] else [],
-                        behaviors=json.loads(row[8]) if row[8] else [],
-                        custom_tags=json.loads(row[9]) if row[9] else [],
-                        source_audience_id=row[10],
-                        lookalike_ratio=row[11],
-                        estimated_size=row[12],
-                        estimated_daily_impressions=row[13],
-                        status=row[14],
-                        created_at=row[15],
-                        updated_at=row[16]
-                    ))
+            query = "SELECT * FROM audience_segments WHERE 1=1"
+            params: list = []
+            if type:
+                query += " AND type = ?"
+                params.append(type.value)
+            if status:
+                query += " AND status = ?"
+                params.append(status)
+            rows = await self.db.fetchall_async(query, tuple(params) if params else None)
+            return [_row_to_segment(r) for r in rows]
         except Exception as e:
-            self.logger.error(f"获取人群包列表失败(异步): {e}")
-        
-        return segments
-    
+            self._logger.error(f"获取人群包列表失败(异步): {e}")
+            return []
+
     async def update_segment_async(self, segment_id: str, updates: dict) -> bool:
-        """更新人群包 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
+        """更新人群包 (异步)"""
         try:
-            allowed_fields = ['name', 'status', 'estimated_size', 
-                            'estimated_daily_impressions']
-            
-            set_clause = []
-            params = []
-            
-            for field, value in updates.items():
-                if field in allowed_fields:
-                    set_clause.append(f"{field} = ?")
-                    params.append(value)
-            
-            if not set_clause:
+            allowed_fields = {'name', 'status', 'estimated_size',
+                              'estimated_daily_impressions'}
+            data = {k: v for k, v in updates.items() if k in allowed_fields}
+            if not data:
                 return False
-            
-            set_clause.append("updated_at = ?")
-            params.append(datetime.now().isoformat())
-            params.append(segment_id)
-            
-            async with aiosqlite.connect(self.db_path) as conn:
-                await conn.execute(
-                    f"UPDATE audience_segments SET {', '.join(set_clause)} WHERE id = ?",
-                    params
-                )
-                await conn.commit()
-            
+            data['updated_at'] = datetime.now().isoformat()
+            await self.db.update_async('audience_segments', data, {'id': segment_id})
             return True
         except Exception as e:
-            self.logger.error(f"更新人群包失败(异步): {e}")
+            self._logger.error(f"更新人群包失败(异步): {e}")
             return False
-    
+
     async def delete_segment_async(self, segment_id: str) -> bool:
-        """删除人群包 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
+        """删除人群包 (异步)"""
         try:
-            async with aiosqlite.connect(self.db_path) as conn:
-                await conn.execute("DELETE FROM audience_segments WHERE id = ?", (segment_id,))
-                await conn.commit()
+            await self.db.delete_async('audience_segments', {'id': segment_id})
             return True
         except Exception as e:
-            self.logger.error(f"删除人群包失败(异步): {e}")
+            self._logger.error(f"删除人群包失败(异步): {e}")
             return False
-    
-    async def estimate_audience_size_async(self, segment: 'AudienceSegment') -> dict:
+
+    async def estimate_audience_size_async(self, segment: AudienceSegment) -> dict:
         """估算人群规模 (异步)"""
         return await asyncio.to_thread(self.estimate_audience_size, segment)
-    
+
     async def create_lookalike_async(self, source_segment_id: str, name: str,
-                                      ratio: float = 0.01):
-        """创建相似人群 (真正异步)"""
-        if not _HAS_AIOSQLITE:
-            raise RuntimeError("aiosqlite not installed")
-        
+                                      ratio: float = 0.01) -> Optional[AudienceSegment]:
+        """创建相似人群 (异步)"""
         source = await self.get_segment_async(source_segment_id)
         if not source:
-            self.logger.error(f"源人群包不存在: {source_segment_id}")
+            self._logger.error(f"源人群包不存在: {source_segment_id}")
             return None
-        
-        # 创建Lookalike人群包
+
         lookalike = AudienceSegment(
             id=f"lookalike_{datetime.now().strftime('%Y%m%d%H%M%S')}",
             name=name,
@@ -727,10 +534,8 @@ class AudienceTargeting:
             estimated_size=int(source.estimated_size * (1 + ratio * 10)),
             estimated_daily_impressions=int(source.estimated_daily_impressions * (1 + ratio * 5))
         )
-        
-        if await self.create_segment_async(lookalike):
-            self.logger.info(f"相似人群包创建成功(异步): {name}")
-            return lookalike
-        
-        return None
 
+        if await self.create_segment_async(lookalike):
+            self._logger.info(f"相似人群包创建成功(异步): {name}")
+            return lookalike
+        return None

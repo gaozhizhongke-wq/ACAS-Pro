@@ -135,36 +135,9 @@ class OrderManager:
     
     def __init__(self):
         self.db = DatabaseManager()
-        self._init_database()
+        # Tables managed by core/schema.py — do not add CREATE TABLE here
     
-    def _init_database(self) -> None:
-        """初始化数据库表"""
-        self.db.execute("""
-            CREATE TABLE IF NOT EXISTS orders (
-                id TEXT PRIMARY KEY,
-                platform_order_id TEXT NOT NULL,
-                platform TEXT NOT NULL,
-                items TEXT,
-                subtotal REAL DEFAULT 0.0,
-                shipping_fee REAL DEFAULT 0.0,
-                discount REAL DEFAULT 0.0,
-                tax REAL DEFAULT 0.0,
-                total_amount REAL DEFAULT 0.0,
-                status TEXT DEFAULT 'pending_payment',
-                payment_status TEXT DEFAULT 'unpaid',
-                shipping_address TEXT,
-                logistics TEXT,
-                buyer_id TEXT,
-                buyer_nickname TEXT,
-                buyer_message TEXT,
-                created_at TEXT,
-                paid_at TEXT,
-                shipped_at TEXT,
-                completed_at TEXT,
-                shop_id TEXT,
-                seller_note TEXT
-            )
-        """)
+
     
     def create_order(
         self,

@@ -158,8 +158,9 @@ class TestProductManager:
             return ProductManager()
     
     def test_init(self, manager, mock_db):
-        """Test initialization"""
-        mock_db.execute.assert_called()
+        """Test initialization - schema now centralized in core/schema.py"""
+        # No DB execute calls during init; tables managed by core/schema.py
+        assert manager.db is mock_db
     
     def test_create_product(self, manager, mock_db):
         """Test create product"""
