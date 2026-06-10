@@ -66,11 +66,11 @@ class PublishTask:
     title: str = ""
     description: str = ""
     tags: List[str] = field(default_factory=list)
-    cover_image: str = None
+    cover_image: Optional[str] = None
     
     # 发布配置
     platforms: List[PlatformConfig] = field(default_factory=list)
-    scheduled_time: datetime = None
+    scheduled_time: Optional[datetime] = None
     
     # 状态
     status: PublishStatus = PublishStatus.PENDING
@@ -78,7 +78,7 @@ class PublishTask:
     
     # 时间戳
     created_at: datetime = field(default_factory=datetime.now)
-    published_at: datetime = None
+    published_at: Optional[datetime] = None
     
     # 重试
     retry_count: int = 0
@@ -186,7 +186,7 @@ class PublishManager:
         description: str = "",
         tags: List[str] = None,
         platforms: List[str] = None,
-        scheduled_time: datetime = None
+        scheduled_time: Optional[datetime] = None
     ) -> PublishTask:
         """创建发布任务"""
         task = PublishTask(
@@ -402,7 +402,7 @@ class PublishManager:
         title: str,
         description: str,
         tags: List[str],
-        cover_image: str = None
+        cover_image: Optional[str] = None
     ) -> dict:
         """
         发布到指定平台
@@ -512,3 +512,4 @@ class PublishManager:
         except Exception as e:
             logger.error(f"Failed to delete task: {e}")
             return False
+

@@ -468,7 +468,7 @@ class LLMClient:
                         tools: Optional[List[Dict]] = None,
                         **kwargs) -> LLMResponse:
         """Send chat completion request (async)"""
-        return await self._provider.chat_async(messages, tools, **kwargs)
+        return await self._provider.chat_async(messages, tools, **kwargs)  # type: ignore[attr-defined]
     
     def stream_chat(self, messages: List[LLMMessage],
                     tools: Optional[List[Dict]] = None,

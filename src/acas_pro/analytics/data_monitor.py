@@ -99,7 +99,7 @@ class DataMonitor:
         account_id: str,
         value: float,
         content_id: str = None,
-        timestamp: datetime = None
+        timestamp: Optional[datetime] = None
     ):
         """记录指标数据"""
         if timestamp is None:
@@ -201,7 +201,7 @@ class DataMonitor:
         period_start: datetime,
         period_end: datetime,
         platform: str = None,
-        account_id: str = None
+        account_id: Optional[str] = None
     ) -> PerformanceReport:
         """生成绩效报告"""
         report = PerformanceReport(
@@ -345,7 +345,7 @@ class DataMonitor:
         severity: str = "warning",
         platform: str = None,
         account_id: str = None,
-        content_id: str = None
+        content_id: Optional[str] = None
     ):
         """创建预警"""
         self.db.execute("""
@@ -381,3 +381,4 @@ class DataMonitor:
             SET acknowledged = 1, acknowledged_at = CURRENT_TIMESTAMP, acknowledged_by = ?
             WHERE id = ?
         """, (user, alert_id))
+

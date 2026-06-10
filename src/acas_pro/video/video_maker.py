@@ -53,7 +53,7 @@ class VideoClip:
     opacity: float = 1.0       # 透明度
     
     # 文字参数
-    text_content: str = None
+    text_content: Optional[str] = None
     text_style: dict = None    # 字体/颜色/大小等
     
     # 特效参数
@@ -89,12 +89,12 @@ class VideoProject:
     clips: List[VideoClip] = field(default_factory=list)
     
     # 音频
-    background_music: str = None
+    background_music: Optional[str] = None
     voice_over: str = None      # 配音文件
     
     # 状态
     status: VideoStatus = VideoStatus.DRAFT
-    output_path: str = None
+    output_path: Optional[str] = None
     
     # 平台适配
     target_platform: str = "douyin"  # douyin/xiaohongshu/kuaishou等
@@ -529,3 +529,4 @@ class VideoMaker:
         
         self._save_project(new_project)
         return new_project
+

@@ -22,7 +22,7 @@ class Conversation:
     messages: List[LLMMessage] = field(default_factory=list)
     created_at: float = field(default_factory=time.time)
     updated_at: float = field(default_factory=time.time)
-    metadata: Dict[str, any] = field(default_factory=dict)
+    metadata: Dict[str, Any] = field(default_factory=dict)
     
     def add_message(self, role: str, content: str, **kwargs) -> None:
         """Add a message to conversation"""

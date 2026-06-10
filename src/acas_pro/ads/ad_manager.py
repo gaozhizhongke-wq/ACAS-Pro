@@ -135,7 +135,7 @@ class AdCampaign:
     end_date: Optional[str] = None
     
     # 广告组
-    adsets: List[AdSet] = None
+    adsets: Optional[List[AdSet]] = None
     # 统计
     total_impressions: int = 0
     total_clicks: int = 0
@@ -803,3 +803,4 @@ class AdManager:
         except Exception as e:
             self._logger.error(f"获取平台对比失败(异步): {e}")
         return comparison
+

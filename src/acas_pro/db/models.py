@@ -16,7 +16,7 @@ from sqlalchemy.sql import func
 
 from acas_pro.core.config import config
 
-Base = declarative_base()
+Base: type = declarative_base()  # type: ignore[valid-type]
 
 
 class User(Base):

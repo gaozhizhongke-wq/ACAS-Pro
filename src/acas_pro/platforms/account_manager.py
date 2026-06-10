@@ -74,7 +74,7 @@ class PlatformAccount:
     phase: AccountPhase = AccountPhase.WARMUP
     
     # 分组标签
-    tags: List[str] = None
+    tags: Optional[List[str]] = None
     region: Optional[str] = None
     category: Optional[str] = None
     
@@ -84,8 +84,8 @@ class PlatformAccount:
     violation_count: int = 0
     
     # 时间戳
-    created_at: datetime = None
-    updated_at: datetime = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     last_login_at: Optional[datetime] = None
     
     def __post_init__(self) -> None:
@@ -353,7 +353,7 @@ class AccountManager:
         self,
         account_id: str,
         status: AccountStatus,
-        reason: str = None
+        reason: Optional[str] = None
     ):
         """更新账号状态"""
         self.db.execute("""
@@ -406,7 +406,7 @@ class AccountManager:
         device_info: str = None,
         location: str = None,
         success: bool = True,
-        error_message: str = None
+        error_message: Optional[str] = None
     ):
         """记录登录日志"""
         self.db.execute("""
@@ -469,3 +469,4 @@ class AccountManager:
         self.db.execute("DELETE FROM account_login_logs WHERE account_id = ?", (account_id,))
         
         logger.info(f"Deleted account: {account_id}")
+

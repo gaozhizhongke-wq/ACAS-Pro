@@ -27,7 +27,7 @@ class RSSArticle:
     source_url: str
     published_at: datetime
     language: str = "zh"
-    tags: List[str] = None
+    tags: Optional[List[str]] = None
     
     def __post_init__(self) -> None:
         if self.tags is None:
@@ -287,3 +287,4 @@ if __name__ == "__main__":
 
 # Alias for backward compatibility
 RSSCollectorV2 = RSSCollector
+

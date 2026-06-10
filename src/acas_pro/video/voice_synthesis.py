@@ -108,7 +108,7 @@ class VoiceSynthesizer:
         speed: float = 1.0,
         pitch: float = 1.0,
         volume: float = 1.0,
-        emotion: str = None
+        emotion: Optional[str] = None
     ) -> Optional[str]:
         """
         合成语音
@@ -295,3 +295,4 @@ class VoiceSynthesizer:
         except Exception as e:
             logger.error(f"Failed to delete task: {e}")
             return False
+

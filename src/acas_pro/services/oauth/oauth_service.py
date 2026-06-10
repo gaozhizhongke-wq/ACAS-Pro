@@ -174,7 +174,7 @@ class QQOAuth(OAuthProvider):
             url = f"{self.TOKEN_URL}?{urllib.parse.urlencode(params)}"
             if _HAS_AIOHTTP:
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(url, timeout=10) as resp:
+                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=10)) as resp:
                         data = urllib.parse.parse_qs(await resp.text())
             else:
                 data = await asyncio.to_thread(self._blocking_get_token, params)
@@ -322,6 +322,7 @@ class OAuthService:
     """OAuth服务管理"""
     
     def __init__(self, oauth_config):
+        self._cfg = oauth_config
         self._providers: Dict[str, OAuthProvider] = {
             "qq": QQOAuth(oauth_config),
             "wechat": WeChatOAuth(oauth_config)
@@ -359,7 +360,7 @@ class OAuthService:
             return None
         
         # Step 2: Get user info using access_token and openid from token response
-        user_info = provider_obj.get_user_info(token_resp.access_token, token_resp.openid)
+        user_info = provider_obj.get_user_info(token_resp.access_token, token_resp.openid or "")
         if not user_info:
             logger.error(f"Failed to get user info for {provider}")
             return None

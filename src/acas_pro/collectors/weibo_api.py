@@ -33,7 +33,7 @@ class WeiboPost:
     comments_count: int
     attitudes_count: int
     source: str
-    pics: List[str] = None
+    pics: Optional[List[str]] = None
     
     def __post_init__(self) -> None:
         if self.pics is None:
@@ -278,3 +278,4 @@ if __name__ == "__main__":
     logger.info(f"[WeiboCollector] Hot topics: {len(topics)}")
     for topic in topics[:5]:
         logger.info(f"[WeiboCollector]   #{topic['rank']} {topic['topic']} (热度: {topic['heat']})")
+

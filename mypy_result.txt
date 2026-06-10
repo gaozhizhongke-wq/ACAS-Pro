@@ -1,0 +1,924 @@
+src\acas_pro\web\api_spec.py: note: In function "swagger_ui":
+src\acas_pro\web\api_spec.py:184:5: error: No return value expected  [return-value]
+src\acas_pro\web\api_spec.py: note: In function "register_api_docs":
+src\acas_pro\web\api_spec.py:201:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\web\api_spec.py:208:13: error: No return value expected  [return-value]
+src\acas_pro\web\api_spec.py:210:9: error: No return value expected  [return-value]
+src\acas_pro\web\routes\metrics.py:18:1: error: Need type annotation for "_metrics" (hint: "_metrics: dict[<type>, <type>] = ...")  [var-annotated]
+src\acas_pro\publisher\blockchain_publisher.py: note: In class "BlockchainPublisher":
+src\acas_pro\publisher\blockchain_publisher.py:23:54: error: Incompatible default for parameter "metadata" (default has type "None", parameter has type "dict[Any, Any]")  [assignment]
+src\acas_pro\publisher\blockchain_publisher.py:23:54: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\publisher\blockchain_publisher.py:23:54: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\ml\timesfm_v2.py: note: In member "predict" of class "TimesFMV2":
+src\acas_pro\ml\timesfm_v2.py:4:9: error: No return value expected  [return-value]
+src\acas_pro\ml\timesfm.py: note: In member "forecast" of class "TimesFMv2Model":
+src\acas_pro\ml\timesfm.py:37:5: error: Signature of "forecast" incompatible with supertype "TimesFMModel"  [override]
+src\acas_pro\ml\timesfm.py:37:5: note:      Superclass:
+src\acas_pro\ml\timesfm.py:37:5: note:          def forecast(self, history: list[float], horizon: int = ..., freq: str = ...) -> list[float]
+src\acas_pro\ml\timesfm.py:37:5: note:      Subclass:
+src\acas_pro\ml\timesfm.py:37:5: note:          def forecast(self, history: list[float], horizon: int = ..., **kwargs: Any) -> list[float]
+src\acas_pro\ml\forecast.py: note: In member "predict" of class "Forecast":
+src\acas_pro\ml\forecast.py:4:9: error: No return value expected  [return-value]
+src\acas_pro\i18n\translations.py: note: In member "__init__" of class "_Translations":
+src\acas_pro\i18n\translations.py:10:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\i18n\translations.py: note: In member "available_languages" of class "_Translations":
+src\acas_pro\i18n\translations.py:32:9: error: No return value expected  [return-value]
+src\acas_pro\collectors\video_processor.py: note: In member "process" of class "VideoProcessor":
+src\acas_pro\collectors\video_processor.py:4:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\collectors\utils.py: note: In member "util" of class "Utils":
+src\acas_pro\collectors\utils.py:4:9: error: No return value expected  [return-value]
+src\acas_pro\collectors\text_cleaner.py: note: In member "clean" of class "TextCleaner":
+src\acas_pro\collectors\text_cleaner.py:4:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\collectors\sentiment_analyzer.py: note: In member "analyze" of class "SentimentAnalyzer":
+src\acas_pro\collectors\sentiment_analyzer.py:4:9: error: No return value expected  [return-value]
+src\acas_pro\collectors\nlp_processor.py: note: In member "process" of class "NLPProcessor":
+src\acas_pro\collectors\nlp_processor.py:4:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\collectors\kuaishou_collector.py: note: In member "collect" of class "KuaishouCollector":
+src\acas_pro\collectors\kuaishou_collector.py:4:9: error: No return value expected  [return-value]
+src\acas_pro\collectors\image_processor.py: note: In member "process" of class "ImageProcessor":
+src\acas_pro\collectors\image_processor.py:4:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\collectors\helpers.py: note: In member "helper" of class "Helpers":
+src\acas_pro\collectors\helpers.py:4:9: error: No return value expected  [return-value]
+src\acas_pro\collectors\data_processor.py: note: In member "process" of class "DataProcessor":
+src\acas_pro\collectors\data_processor.py:4:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\collectors\content_processor.py: note: In member "process" of class "ContentProcessor":
+src\acas_pro\collectors\content_processor.py:4:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\collectors\collector_manager.py: note: In member "manage" of class "CollectorManager":
+src\acas_pro\collectors\collector_manager.py:4:9: error: No return value expected  [return-value]
+src\acas_pro\collectors\base_collector.py: note: In member "collect" of class "BaseCollector":
+src\acas_pro\collectors\base_collector.py:4:9: error: No return value expected  [return-value]
+src\acas_pro\blockchain\secrets_metrics.py: note: In member "__init__" of class "SecretsMetrics":
+src\acas_pro\blockchain\secrets_metrics.py:8:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\blockchain\secrets_metrics.py: note: In class "SecretsMetrics":
+src\acas_pro\blockchain\secrets_metrics.py:10:66: error: Incompatible default for parameter "tags" (default has type "None", parameter has type "dict[Any, Any]")  [assignment]
+src\acas_pro\blockchain\secrets_metrics.py:10:66: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\blockchain\secrets_metrics.py:10:66: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\blockchain\secrets_metrics.py: note: In member "get" of class "SecretsMetrics":
+src\acas_pro\blockchain\secrets_metrics.py:14:9: error: Returning Any from function declared to return "float"  [no-any-return]
+src\acas_pro\monitoring\metrics.py:19:5: error: Name "Counter" already defined (possibly by an import)  [no-redef]
+src\acas_pro\monitoring\metrics.py:23:5: error: Name "Histogram" already defined (possibly by an import)  [no-redef]
+src\acas_pro\monitoring\metrics.py:30:5: error: Name "Gauge" already defined (possibly by an import)  [no-redef]
+src\acas_pro\monitoring\metrics.py:36:5: error: Name "Info" already defined (possibly by an import)  [no-redef]
+src\acas_pro\monitoring\metrics.py: note: In function "init_app":
+src\acas_pro\monitoring\metrics.py:120:13: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\monitoring\metrics.py: note: In function "monitor_llm":
+src\acas_pro\monitoring\metrics.py:136:17: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\monitoring\metrics.py:138:17: error: Name "logger" is not defined  [name-defined]
+src\acas_pro\monitoring\metrics.py:150:9: error: No return value expected  [return-value]
+src\acas_pro\monitoring\metrics.py:151:5: error: No return value expected  [return-value]
+src\acas_pro\monitoring\metrics.py: note: In function "get_metrics":
+src\acas_pro\monitoring\metrics.py:156:5: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\ui\logic\report_logic.py: note: In member "get_report_summary" of class "ReportLogic":
+src\acas_pro\ui\logic\report_logic.py:206:9: error: Need type annotation for "by_type" (hint: "by_type: dict[<type>, <type>] = ...")  [var-annotated]
+src\acas_pro\ui\logic\product_logic.py: note: In class "ProductLogic":
+src\acas_pro\ui\logic\product_logic.py:47:61: error: Incompatible default for parameter "tags" (default has type "None", parameter has type "list[str]")  [assignment]
+src\acas_pro\ui\logic\product_logic.py:47:61: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\ui\logic\product_logic.py:47:61: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\ui\logic\product_logic.py: note: In member "get_category_summary" of class "ProductLogic":
+src\acas_pro\ui\logic\product_logic.py:141:9: error: Need type annotation for "summary" (hint: "summary: dict[<type>, <type>] = ...")  [var-annotated]
+src\acas_pro\ui\logic\inventory_logic.py: note: In member "__init__" of class "InventoryLogic":
+src\acas_pro\ui\logic\inventory_logic.py:45:5: error: The return type of "__init__" must be None  [misc]
+src\acas_pro\ui\logic\dashboard_logic.py: note: In member "__init__" of class "DashboardLogic":
+src\acas_pro\ui\logic\dashboard_logic.py:183:5: error: The return type of "__init__" must be None  [misc]
+src\acas_pro\ui\logic\customer_logic.py: note: In class "CustomerLogic":
+src\acas_pro\ui\logic\customer_logic.py:69:42: error: Incompatible default for parameter "tags" (default has type "None", parameter has type "list[str]")  [assignment]
+src\acas_pro\ui\logic\customer_logic.py:69:42: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\ui\logic\customer_logic.py:69:42: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\monitoring\metrics_monitor.py: note: In member "__init__" of class "MetricsMonitor":
+src\acas_pro\monitoring\metrics_monitor.py:12:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\monitoring\metrics_monitor.py:13:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\monitoring\metrics_monitor.py:14:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\monitoring\health_monitor.py: note: In member "__init__" of class "HealthMonitor":
+src\acas_pro\monitoring\health_monitor.py:11:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\core\di_container.py: note: In member "__init__" of class "DIContainer":
+src\acas_pro\core\di_container.py:31:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\core\di_container.py:32:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\core\di_container.py: note: In member "resolve" of class "DIContainer":
+src\acas_pro\core\di_container.py:52:17: error: Returning Any from function declared to return "T"  [no-any-return]
+src\acas_pro\core\di_container.py:59:17: error: Returning Any from function declared to return "T"  [no-any-return]
+src\acas_pro\core\di_container.py: note: In function "inject":
+src\acas_pro\core\di_container.py:110:13: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\llm\gemini_engine.py: note: In class "GeminiEngine":
+src\acas_pro\llm\gemini_engine.py:147:54: error: Incompatible default for parameter "system" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\llm\gemini_engine.py:147:54: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\llm\gemini_engine.py:147:54: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\llm\gemini_engine.py: note: In member "quick_chat" of class "GeminiEngine":
+src\acas_pro\llm\gemini_engine.py:155:9: error: Returning Any from function declared to return "str"  [no-any-return]
+src\acas_pro\llm\gemini_engine.py: note: At top level:
+src\acas_pro\llm\gemini_engine.py:181:20: error: Incompatible default for parameter "api_key" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\llm\gemini_engine.py:181:20: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\llm\gemini_engine.py:181:20: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\llm\gemini_engine.py: note: In function "create_gemini_engine":
+src\acas_pro\llm\gemini_engine.py:185:15: error: Incompatible types in assignment (expression has type "str | None", variable has type "str")  [assignment]
+src\acas_pro\llm\claude_engine.py: note: In class "ClaudeEngine":
+src\acas_pro\llm\claude_engine.py:147:54: error: Incompatible default for parameter "system" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\llm\claude_engine.py:147:54: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\llm\claude_engine.py:147:54: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\llm\claude_engine.py: note: In member "quick_chat" of class "ClaudeEngine":
+src\acas_pro\llm\claude_engine.py:155:9: error: Returning Any from function declared to return "str"  [no-any-return]
+src\acas_pro\llm\claude_engine.py: note: At top level:
+src\acas_pro\llm\claude_engine.py:182:20: error: Incompatible default for parameter "api_key" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\llm\claude_engine.py:182:20: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\llm\claude_engine.py:182:20: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\llm\claude_engine.py: note: In function "create_claude_engine":
+src\acas_pro\llm\claude_engine.py:186:15: error: Incompatible types in assignment (expression has type "str | None", variable has type "str")  [assignment]
+src\acas_pro\i18n\translator.py: note: In member "__init__" of class "Translator":
+src\acas_pro\i18n\translator.py:20:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\i18n\translator.py: note: In member "get_language" of class "Translator":
+src\acas_pro\i18n\translator.py:45:9: error: Returning Any from function declared to return "str"  [no-any-return]
+src\acas_pro\core\security_headers.py: note: In function "init_app":
+src\acas_pro\core\security_headers.py:97:13: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\core\security_headers.py: note: In function "require_https":
+src\acas_pro\core\security_headers.py:177:13: error: No return value expected  [return-value]
+src\acas_pro\core\security_headers.py:178:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\core\security_headers.py:179:5: error: No return value expected  [return-value]
+src\acas_pro\core\security_headers.py: note: In function "rate_limit_by_ip":
+src\acas_pro\core\security_headers.py:209:17: error: No return value expected  [return-value]
+src\acas_pro\core\security_headers.py:212:13: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\core\security_headers.py:213:9: error: No return value expected  [return-value]
+src\acas_pro\core\security_headers.py:214:5: error: No return value expected  [return-value]
+src\acas_pro\db\models.py: note: In function "get_engine":
+src\acas_pro\db\models.py:239:17: error: Item "None" of "object | None" has no attribute "database"  [union-attr]
+src\acas_pro\db\models.py:244:5: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\db\models.py: note: In function "init_database":
+src\acas_pro\db\models.py:249:14: error: "get_engine" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\db\models.py:250:5: error: "type" has no attribute "metadata"  [attr-defined]
+src\acas_pro\db\models.py: note: In function "get_session":
+src\acas_pro\db\models.py:256:14: error: "get_engine" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\core\logging.py: note: In member "redact" of class "PIIRedactor":
+src\acas_pro\core\logging.py:44:31: error: Incompatible types in assignment (expression has type "dict[str, Any]", target has type "str")  [assignment]
+src\acas_pro\core\logging.py:46:31: error: Incompatible types in assignment (expression has type "list[dict[str, Any] | Any]", target has type "str")  [assignment]
+src\acas_pro\core\logging.py: note: In function "setup_logging":
+src\acas_pro\core\logging.py:145:5: error: No return value expected  [return-value]
+src\acas_pro\core\logging.py: note: In member "__init__" of class "AuditLogger":
+src\acas_pro\core\logging.py:156:5: error: The return type of "__init__" must be None  [misc]
+src\acas_pro\core\logging.py: note: In class "AuditLogger":
+src\acas_pro\core\logging.py:161:31: error: Incompatible default for parameter "ip_address" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\core\logging.py:161:31: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\core\logging.py:161:31: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\core\logging.py: note: In member "log" of class "AuditLogger":
+src\acas_pro\core\logging.py:182:27: error: Incompatible types in assignment (expression has type "DatabaseManager", variable has type "None")  [assignment]
+src\acas_pro\core\logging.py:184:13: error: "None" has no attribute "insert"  [attr-defined]
+src\acas_pro\core\database.py: note: In member "__new__" of class "DatabaseManager":
+src\acas_pro\core\database.py:113:21: error: Cannot determine type of "_initialized"  [has-type]
+src\acas_pro\core\database.py: note: In member "__init__" of class "DatabaseManager":
+src\acas_pro\core\database.py:116:5: error: The return type of "__init__" must be None  [misc]
+src\acas_pro\core\database.py:121:12: error: Cannot determine type of "_initialized"  [has-type]
+src\acas_pro\core\database.py: note: In member "_init_postgres" of class "DatabaseManager":
+src\acas_pro\core\database.py:172:27: error: Incompatible types in assignment (expression has type "None", variable has type "_local")  [assignment]
+src\acas_pro\core\database.py:175:20: error: "None" has no attribute "getconn"  [attr-defined]
+src\acas_pro\core\database.py:183:17: error: "None" has no attribute "putconn"  [attr-defined]
+src\acas_pro\core\database.py: note: In member "__del__" of class "DatabaseManager":
+src\acas_pro\core\database.py:249:13: error: Name "logger" is not defined  [name-defined]
+src\acas_pro\core\database.py: note: In member "close" of class "DatabaseManager":
+src\acas_pro\core\database.py:257:17: error: Name "logger" is not defined  [name-defined]
+src\acas_pro\core\database.py: note: In member "transaction" of class "DatabaseManager":
+src\acas_pro\core\database.py:291:20: error: "None" has no attribute "getconn"  [attr-defined]
+src\acas_pro\core\database.py:304:17: error: "None" has no attribute "putconn"  [attr-defined]
+src\acas_pro\core\database.py: note: In class "DatabaseManager":
+src\acas_pro\core\database.py:347:51: error: Incompatible default for parameter "params" (default has type "None", parameter has type "tuple[Any, ...]")  [assignment]
+src\acas_pro\core\database.py:347:51: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\core\database.py:347:51: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\core\database.py: note: In member "execute" of class "DatabaseManager":
+src\acas_pro\core\database.py:363:20: error: "None" has no attribute "getconn"  [attr-defined]
+src\acas_pro\core\database.py:394:17: error: "None" has no attribute "putconn"  [attr-defined]
+src\acas_pro\core\database.py: note: In class "DatabaseManager":
+src\acas_pro\core\database.py:402:55: error: Incompatible default for parameter "params" (default has type "None", parameter has type "tuple[Any, ...]")  [assignment]
+src\acas_pro\core\database.py:402:55: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\core\database.py:402:55: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\core\database.py:408:52: error: Incompatible default for parameter "params" (default has type "None", parameter has type "tuple[Any, ...]")  [assignment]
+src\acas_pro\core\database.py:408:52: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\core\database.py:408:52: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\core\database.py:412:53: error: Incompatible default for parameter "params" (default has type "None", parameter has type "tuple[Any, ...]")  [assignment]
+src\acas_pro\core\database.py:412:53: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\core\database.py:412:53: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\core\database.py:416:52: error: Incompatible default for parameter "params" (default has type "None", parameter has type "tuple[Any, ...]")  [assignment]
+src\acas_pro\core\database.py:416:52: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\core\database.py:416:52: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\core\database.py: note: In member "insert" of class "DatabaseManager":
+src\acas_pro\core\database.py:429:20: error: Incompatible return value type (got "Any | None", expected "str")  [return-value]
+src\acas_pro\core\database.py: note: In class "DatabaseManager":
+src\acas_pro\core\database.py:583:63: error: Incompatible default for parameter "params" (default has type "None", parameter has type "tuple[Any, ...]")  [assignment]
+src\acas_pro\core\database.py:583:63: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\core\database.py:583:63: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\core\database.py:597:67: error: Incompatible default for parameter "params" (default has type "None", parameter has type "tuple[Any, ...]")  [assignment]
+src\acas_pro\core\database.py:597:67: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\core\database.py:597:67: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\core\database.py:665:64: error: Incompatible default for parameter "params" (default has type "None", parameter has type "tuple[Any, ...]")  [assignment]
+src\acas_pro\core\database.py:665:64: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\core\database.py:665:64: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\core\database.py:669:64: error: Incompatible default for parameter "params" (default has type "None", parameter has type "tuple[Any, ...]")  [assignment]
+src\acas_pro\core\database.py:669:64: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\core\database.py:669:64: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\core\database.py: note: In function "reset_db":
+src\acas_pro\core\database.py:721:13: error: "None" has no attribute "dispose"  [attr-defined]
+src\acas_pro\core\database.py:723:13: error: Name "logger" is not defined  [name-defined]
+src\acas_pro\web\middleware.py: note: In function "validate_json":
+src\acas_pro\web\middleware.py:145:12: error: Incompatible return value type (got "Callable[[Any], Any]", expected "bool")  [return-value]
+src\acas_pro\web\routes\dashboard_stats.py: note: In function "dashboard_stats":
+src\acas_pro\web\routes\dashboard_stats.py:78:32: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\routes\dashboard_stats.py:79:33: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\routes\dashboard_stats.py:80:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\web\routes\dashboard_stats.py:83:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\web\routes\dashboard_stats.py:86:28: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\routes\dashboard_stats.py:87:29: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\routes\dashboard_stats.py: note: In function "list_festivals":
+src\acas_pro\web\routes\dashboard_stats.py:99:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\web\routes\dashboard_stats.py:102:9: error: No return value expected  [return-value]
+src\acas_pro\web\routes\dashboard_stats.py: note: In function "list_products":
+src\acas_pro\web\routes\dashboard_stats.py:113:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\web\routes\dashboard_stats.py:116:9: error: No return value expected  [return-value]
+src\acas_pro\web\routes\dashboard_stats.py: note: In function "low_stock_products":
+src\acas_pro\web\routes\dashboard_stats.py:130:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\web\routes\dashboard_stats.py:133:9: error: No return value expected  [return-value]
+src\acas_pro\web\routes\dashboard_stats.py: note: In function "list_accounts":
+src\acas_pro\web\routes\dashboard_stats.py:145:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\web\routes\dashboard_stats.py:148:9: error: No return value expected  [return-value]
+src\acas_pro\web\routes\dashboard_stats.py: note: In function "forecast_daily":
+src\acas_pro\web\routes\dashboard_stats.py:163:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\web\routes\dashboard_stats.py:166:9: error: No return value expected  [return-value]
+src\acas_pro\sentiment\analyzer.py: note: In class "SentimentAnalyzer":
+src\acas_pro\sentiment\analyzer.py:144:49: error: Incompatible default for parameter "context" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\sentiment\analyzer.py:144:49: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\sentiment\analyzer.py:144:49: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\sentiment\analyzer.py: note: In member "_extract_aspects" of class "SentimentAnalyzer":
+src\acas_pro\sentiment\analyzer.py:286:25: error: Incompatible types in assignment (expression has type "float", variable has type "int")  [assignment]
+src\acas_pro\publisher\publish_manager.py: note: In class "PublishManager":
+src\acas_pro\publisher\publish_manager.py:176:48: error: Incompatible default for parameter "db" (default has type "None", parameter has type "DatabaseManager")  [assignment]
+src\acas_pro\publisher\publish_manager.py:176:48: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\publisher\publish_manager.py:176:48: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\publisher\publish_manager.py:187:27: error: Incompatible default for parameter "tags" (default has type "None", parameter has type "list[str]")  [assignment]
+src\acas_pro\publisher\publish_manager.py:187:27: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\publisher\publish_manager.py:187:27: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\publisher\publish_manager.py:188:32: error: Incompatible default for parameter "platforms" (default has type "None", parameter has type "list[str]")  [assignment]
+src\acas_pro\publisher\publish_manager.py:188:32: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\publisher\publish_manager.py:188:32: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\publisher\publish_manager.py: note: In member "adapt_content_for_platform" of class "PublishManager":
+src\acas_pro\publisher\publish_manager.py:276:20: error: Function "builtins.any" is not valid as a type  [valid-type]
+src\acas_pro\publisher\publish_manager.py:276:20: note: Perhaps you meant "typing.Any" instead of "any"?
+src\acas_pro\publisher\publish_manager.py:288:31: error: Invalid index type "slice[None, object, None]" for "str"; expected type "SupportsIndex | slice[SupportsIndex | None, SupportsIndex | None, SupportsIndex | None]"  [index]
+src\acas_pro\publisher\publish_manager.py:288:58: error: Unsupported operand types for < ("int" and "object")  [operator]
+src\acas_pro\publisher\publish_manager.py:291:36: error: Invalid index type "slice[None, object, None]" for "str"; expected type "SupportsIndex | slice[SupportsIndex | None, SupportsIndex | None, SupportsIndex | None]"  [index]
+src\acas_pro\publisher\publish_manager.py:294:29: error: Invalid index type "slice[None, object, None]" for "list[str]"; expected type "slice[SupportsIndex | None, SupportsIndex | None, SupportsIndex | None]"  [index]
+src\acas_pro\publisher\publish_manager.py: note: In class "PublishManager":
+src\acas_pro\publisher\publish_manager.py:472:33: error: Incompatible default for parameter "status" (default has type "None", parameter has type "PublishStatus")  [assignment]
+src\acas_pro\publisher\publish_manager.py:472:33: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\publisher\publish_manager.py:472:33: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\publisher\publish_manager.py:473:25: error: Incompatible default for parameter "platform" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\publisher\publish_manager.py:473:25: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\publisher\publish_manager.py:473:25: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\publisher\publish_manager.py: note: In member "list_tasks" of class "PublishManager":
+src\acas_pro\publisher\publish_manager.py:485:23: error: Argument 1 to "append" of "list" has incompatible type "int"; expected "str"  [arg-type]
+src\acas_pro\ml\timesfm_wrapper.py: note: In member "predict" of class "TimesFMWrapper":
+src\acas_pro\ml\timesfm_wrapper.py:6:9: error: No return value expected  [return-value]
+src\acas_pro\ml\sklearn_wrapper.py: note: In member "predict" of class "SklearnWrapper":
+src\acas_pro\ml\sklearn_wrapper.py:6:9: error: No return value expected  [return-value]
+src\acas_pro\ml\prophet_wrapper.py: note: In member "predict" of class "ProphetWrapper":
+src\acas_pro\ml\prophet_wrapper.py:6:9: error: No return value expected  [return-value]
+src\acas_pro\metrics\brand_reputation.py: note: In member "to_dict" of class "ReputationScore":
+src\acas_pro\metrics\brand_reputation.py:76:30: error: Item "None" of "datetime | None" has no attribute "isoformat"  [union-attr]
+src\acas_pro\metrics\brand_reputation.py: note: In member "__init__" of class "BrandReputationCalculator":
+src\acas_pro\metrics\brand_reputation.py:137:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\metrics\brand_reputation.py: note: In member "calculate" of class "BrandReputationCalculator":
+src\acas_pro\metrics\brand_reputation.py:159:9: error: Need type annotation for "sentiment_counts"  [var-annotated]
+src\acas_pro\metrics\brand_reputation.py:181:13: error: Incompatible types in assignment (expression has type "float", variable has type "int")  [assignment]
+src\acas_pro\metrics\brand_reputation.py:182:13: error: Incompatible types in assignment (expression has type "float", variable has type "int")  [assignment]
+src\acas_pro\metrics\brand_reputation.py: note: In member "calculate_trend" of class "BrandReputationCalculator":
+src\acas_pro\metrics\brand_reputation.py:322:25: error: Item "None" of "datetime | None" has no attribute "isoformat"  [union-attr]
+src\acas_pro\metrics\brand_reputation.py: note: In member "get_summary" of class "BrandReputationCalculator":
+src\acas_pro\metrics\brand_reputation.py:405:22: error: No overload variant of "get" of "dict" matches argument types "str", "str"  [call-overload]
+src\acas_pro\metrics\brand_reputation.py:405:22: note: Possible overload variants:
+src\acas_pro\metrics\brand_reputation.py:405:22: note:     def get(self, Never, None = ..., /) -> None
+src\acas_pro\metrics\brand_reputation.py:405:22: note:     def get(self, Never, Never, /) -> Never
+src\acas_pro\metrics\brand_reputation.py:405:22: note:     def [_T] get(self, Never, _T, /) -> _T
+src\acas_pro\metrics\brand_reputation.py:405:27: error: Argument 1 to "dict" has incompatible type "list[tuple[int, str, str]]"; expected "Iterable[tuple[Never, Never]]"  [arg-type]
+src\acas_pro\content\script_generator.py: note: In class "ScriptGenerator":
+src\acas_pro\content\script_generator.py:192:48: error: Incompatible default for parameter "db" (default has type "None", parameter has type "DatabaseManager")  [assignment]
+src\acas_pro\content\script_generator.py:192:48: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\content\script_generator.py:192:48: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\content\script_generator.py: note: In member "_analyze_intent" of class "ScriptGenerator":
+src\acas_pro\content\script_generator.py:281:33: error: Incompatible types in assignment (expression has type "str", target has type "None")  [assignment]
+src\acas_pro\content\script_generator.py:283:33: error: Incompatible types in assignment (expression has type "str", target has type "None")  [assignment]
+src\acas_pro\content\script_generator.py:285:32: error: Incompatible types in assignment (expression has type "str", target has type "None")  [assignment]
+src\acas_pro\cache\manager.py: note: In member "__init__" of class "CacheManager":
+src\acas_pro\cache\manager.py:30:9: error: Need type annotation for "_memory_cache" (hint: "_memory_cache: dict[<type>, <type>] = ...")  [var-annotated]
+src\acas_pro\cache\manager.py: note: In function "cached":
+src\acas_pro\cache\manager.py:136:17: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\cache\manager.py:145:13: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\cache\manager.py:148:9: error: "_Wrapped[[VarArg(Any), KwArg(Any)], Any, [VarArg(Any), KwArg(Any)], None]" has no attribute "cache_clear"  [attr-defined]
+src\acas_pro\cache\manager.py:149:9: error: "_Wrapped[[VarArg(Any), KwArg(Any)], Any, [VarArg(Any), KwArg(Any)], None]" has no attribute "cache_key"  [attr-defined]
+src\acas_pro\cache\manager.py:152:5: error: No return value expected  [return-value]
+src\acas_pro\blockchain\settlement_engine.py: note: In member "create_from_template" of class "SettlementEngine":
+src\acas_pro\blockchain\settlement_engine.py:224:28: error: "Collection[str]" has no attribute "get"  [attr-defined]
+src\acas_pro\blockchain\settlement_engine.py:227:34: error: "Collection[str]" has no attribute "get"  [attr-defined]
+src\acas_pro\blockchain\settlement_engine.py: note: In member "execute_settlement" of class "SettlementEngine":
+src\acas_pro\blockchain\settlement_engine.py:370:17: error: "object" has no attribute "append"  [attr-defined]
+src\acas_pro\blockchain\settlement_engine.py:379:37: error: Value of type "object" is not indexable  [index]
+src\acas_pro\blockchain\settlement_engine.py: note: In member "get_settlement_statistics" of class "SettlementEngine":
+src\acas_pro\blockchain\settlement_engine.py:427:9: error: Need type annotation for "by_type" (hint: "by_type: dict[<type>, <type>] = ...")  [var-annotated]
+src\acas_pro\analytics\festival_calendar.py: note: In class "Festival":
+src\acas_pro\analytics\festival_calendar.py:56:26: error: Incompatible types in assignment (expression has type "None", variable has type "str")  [assignment]
+src\acas_pro\analytics\festival_calendar.py:64:25: error: Incompatible types in assignment (expression has type "None", variable has type "list[str]")  [assignment]
+src\acas_pro\analytics\festival_calendar.py:65:27: error: Incompatible types in assignment (expression has type "None", variable has type "list[str]")  [assignment]
+src\acas_pro\analytics\festival_calendar.py:66:25: error: Incompatible types in assignment (expression has type "None", variable has type "str")  [assignment]
+src\acas_pro\analytics\festival_calendar.py:67:25: error: Incompatible types in assignment (expression has type "None", variable has type "str")  [assignment]
+src\acas_pro\analytics\festival_calendar.py: note: In class "FestivalCalendar":
+src\acas_pro\analytics\festival_calendar.py:276:48: error: Incompatible default for parameter "db" (default has type "None", parameter has type "DatabaseManager")  [assignment]
+src\acas_pro\analytics\festival_calendar.py:276:48: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\analytics\festival_calendar.py:276:48: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\analytics\festival_calendar.py: note: In function "_row_to_festival":
+src\acas_pro\analytics\festival_calendar.py:319:17: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\analytics\festival_calendar.py:320:13: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\analytics\festival_calendar.py:323:17: error: No return value expected  [return-value]
+src\acas_pro\analytics\festival_calendar.py:325:17: error: No return value expected  [return-value]
+src\acas_pro\analytics\festival_calendar.py:326:13: error: No return value expected  [return-value]
+src\acas_pro\analytics\festival_calendar.py: note: In member "_row_to_festival" of class "FestivalCalendar":
+src\acas_pro\analytics\festival_calendar.py:332:45: error: "_json_loads" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\analytics\festival_calendar.py:332:45: error: "None" has no attribute "__iter__" (not iterable)  [attr-defined]
+src\acas_pro\analytics\festival_calendar.py:341:20: error: "_json_loads" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\analytics\festival_calendar.py:341:20: error: Argument "themes" to "Festival" has incompatible type "None"; expected "list[str]"  [arg-type]
+src\acas_pro\analytics\festival_calendar.py:342:22: error: "_json_loads" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\analytics\festival_calendar.py:342:22: error: Argument "keywords" to "Festival" has incompatible type "None"; expected "list[str]"  [arg-type]
+src\acas_pro\analytics\festival_calendar.py:346:24: error: "_parse_dt" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\analytics\festival_calendar.py: note: In class "FestivalCalendar":
+src\acas_pro\analytics\festival_calendar.py:351:39: error: Incompatible default for parameter "festival_type" (default has type "None", parameter has type "FestivalType")  [assignment]
+src\acas_pro\analytics\festival_calendar.py:351:39: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\analytics\festival_calendar.py:351:39: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\analytics\festival_calendar.py:352:30: error: Incompatible default for parameter "market" (default has type "None", parameter has type "MarketType")  [assignment]
+src\acas_pro\analytics\festival_calendar.py:352:30: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\analytics\festival_calendar.py:352:30: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\analytics\festival_calendar.py: note: In member "list_festivals" of class "FestivalCalendar":
+src\acas_pro\analytics\festival_calendar.py:367:40: error: Argument 2 to "fetchall" of "DatabaseManager" has incompatible type "list[str]"; expected "tuple[Any, ...]"  [arg-type]
+src\acas_pro\analytics\festival_calendar.py: note: In member "get_upcoming_festivals" of class "FestivalCalendar":
+src\acas_pro\analytics\festival_calendar.py:385:48: error: Argument "market" to "list_festivals" of "FestivalCalendar" has incompatible type "MarketType | None"; expected "MarketType"  [arg-type]
+src\acas_pro\analytics\festival_calendar.py: note: In class "FestivalCalendar":
+src\acas_pro\analytics\festival_calendar.py:409:36: error: Incompatible default for parameter "content_types" (default has type "None", parameter has type "list[str]")  [assignment]
+src\acas_pro\analytics\festival_calendar.py:409:36: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\analytics\festival_calendar.py:409:36: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\analytics\festival_calendar.py:449:23: error: Incompatible default for parameter "status" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\analytics\festival_calendar.py:449:23: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\analytics\festival_calendar.py:449:23: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\analytics\festival_calendar.py: note: In member "get_marketing_plans" of class "FestivalCalendar":
+src\acas_pro\analytics\festival_calendar.py:465:40: error: Argument 2 to "fetchall" of "DatabaseManager" has incompatible type "list[str]"; expected "tuple[Any, ...]"  [arg-type]
+src\acas_pro\analytics\festival_calendar.py: note: In function "get_marketing_plans":
+src\acas_pro\analytics\festival_calendar.py:469:17: error: No return value expected  [return-value]
+src\acas_pro\analytics\festival_calendar.py:471:17: error: No return value expected  [return-value]
+src\acas_pro\analytics\festival_calendar.py:472:13: error: No return value expected  [return-value]
+src\acas_pro\analytics\festival_calendar.py: note: In member "get_marketing_plans" of class "FestivalCalendar":
+src\acas_pro\analytics\festival_calendar.py:480:28: error: "_parse_dt" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\analytics\festival_calendar.py:480:28: error: Argument "start_date" to "MarketingPlan" has incompatible type "None"; expected "datetime"  [arg-type]
+src\acas_pro\analytics\festival_calendar.py:481:26: error: "_parse_dt" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\analytics\festival_calendar.py:481:26: error: Argument "end_date" to "MarketingPlan" has incompatible type "None"; expected "datetime"  [arg-type]
+src\acas_pro\analytics\festival_calendar.py:488:28: error: "_parse_dt" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\analytics\data_monitor.py: note: In class "DataMonitor":
+src\acas_pro\analytics\data_monitor.py:92:48: error: Incompatible default for parameter "db" (default has type "None", parameter has type "DatabaseManager")  [assignment]
+src\acas_pro\analytics\data_monitor.py:92:48: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\analytics\data_monitor.py:92:48: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\analytics\data_monitor.py:101:27: error: Incompatible default for parameter "content_id" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\analytics\data_monitor.py:101:27: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\analytics\data_monitor.py:101:27: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\analytics\data_monitor.py:116:25: error: Incompatible default for parameter "platform" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\analytics\data_monitor.py:116:25: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\analytics\data_monitor.py:116:25: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\analytics\data_monitor.py:117:27: error: Incompatible default for parameter "account_id" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\analytics\data_monitor.py:117:27: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\analytics\data_monitor.py:117:27: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\analytics\data_monitor.py:118:32: error: Incompatible default for parameter "start_time" (default has type "None", parameter has type "datetime")  [assignment]
+src\acas_pro\analytics\data_monitor.py:118:32: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\analytics\data_monitor.py:118:32: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\analytics\data_monitor.py:119:30: error: Incompatible default for parameter "end_time" (default has type "None", parameter has type "datetime")  [assignment]
+src\acas_pro\analytics\data_monitor.py:119:30: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\analytics\data_monitor.py:119:30: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\analytics\data_monitor.py: note: In member "get_metrics" of class "DataMonitor":
+src\acas_pro\analytics\data_monitor.py:142:23: error: Argument 1 to "append" of "list" has incompatible type "int"; expected "str"  [arg-type]
+src\acas_pro\analytics\data_monitor.py:144:40: error: Argument 2 to "fetchall" of "DatabaseManager" has incompatible type "list[str]"; expected "tuple[Any, ...]"  [arg-type]
+src\acas_pro\analytics\data_monitor.py: note: In member "aggregate_daily" of class "DataMonitor":
+src\acas_pro\analytics\data_monitor.py:190:17: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+src\acas_pro\analytics\data_monitor.py:191:17: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+src\acas_pro\analytics\data_monitor.py:192:17: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+src\acas_pro\analytics\data_monitor.py:193:17: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+src\acas_pro\analytics\data_monitor.py:194:17: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+src\acas_pro\analytics\data_monitor.py:195:17: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+src\acas_pro\analytics\data_monitor.py:196:19: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+src\acas_pro\analytics\data_monitor.py: note: In class "DataMonitor":
+src\acas_pro\analytics\data_monitor.py:203:25: error: Incompatible default for parameter "platform" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\analytics\data_monitor.py:203:25: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\analytics\data_monitor.py:203:25: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\analytics\data_monitor.py: note: In member "generate_report" of class "DataMonitor":
+src\acas_pro\analytics\data_monitor.py:250:14: error: Argument 2 to "fetchone" of "DatabaseManager" has incompatible type "list[str]"; expected "tuple[Any, ...]"  [arg-type]
+src\acas_pro\analytics\data_monitor.py:290:14: error: Argument 2 to "fetchone" of "DatabaseManager" has incompatible type "list[str]"; expected "tuple[Any, ...]"  [arg-type]
+src\acas_pro\analytics\data_monitor.py: note: In member "check_anomalies" of class "DataMonitor":
+src\acas_pro\analytics\data_monitor.py:301:9: error: Need type annotation for "alerts" (hint: "alerts: list[<type>] = ...")  [var-annotated]
+src\acas_pro\analytics\data_monitor.py: note: In class "DataMonitor":
+src\acas_pro\analytics\data_monitor.py:346:25: error: Incompatible default for parameter "platform" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\analytics\data_monitor.py:346:25: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\analytics\data_monitor.py:346:25: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\analytics\data_monitor.py:347:27: error: Incompatible default for parameter "account_id" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\analytics\data_monitor.py:347:27: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\analytics\data_monitor.py:347:27: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\analytics\data_monitor.py:361:25: error: Incompatible default for parameter "severity" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\analytics\data_monitor.py:361:25: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\analytics\data_monitor.py:361:25: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\analytics\data_monitor.py: note: In member "get_alerts" of class "DataMonitor":
+src\acas_pro\analytics\data_monitor.py:370:27: error: Argument 1 to "append" of "list" has incompatible type "str"; expected "bool"  [arg-type]
+src\acas_pro\analytics\data_monitor.py:373:23: error: Argument 1 to "append" of "list" has incompatible type "int"; expected "bool"  [arg-type]
+src\acas_pro\analytics\data_monitor.py:375:40: error: Argument 2 to "fetchall" of "DatabaseManager" has incompatible type "list[bool]"; expected "tuple[Any, ...]"  [arg-type]
+src\acas_pro\advanced_analytics\smart_decider.py: note: In member "__init__" of class "SmartDecider":
+src\acas_pro\advanced_analytics\smart_decider.py:102:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\advanced_analytics\smart_decider.py:105:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\advanced_analytics\smart_decider.py: note: In function "decision_history":
+src\acas_pro\advanced_analytics\smart_decider.py:109:9: error: No return value expected  [return-value]
+src\acas_pro\advanced_analytics\recommendation_engine.py: note: In member "recommend" of class "RecommendationEngine":
+src\acas_pro\advanced_analytics\recommendation_engine.py:6:9: error: No return value expected  [return-value]
+src\acas_pro\advanced_analytics\forecast_engine.py: note: In member "forecast" of class "ForecastEngine":
+src\acas_pro\advanced_analytics\forecast_engine.py:6:9: error: No return value expected  [return-value]
+src\acas_pro\advanced_analytics\customer_segmentation.py: note: In member "segment" of class "CustomerSegmentation":
+src\acas_pro\advanced_analytics\customer_segmentation.py:6:9: error: No return value expected  [return-value]
+src\acas_pro\advanced_analytics\attribution_engine.py: note: In member "_group_by_journey" of class "AttributionEngine":
+src\acas_pro\advanced_analytics\attribution_engine.py:222:9: error: Need type annotation for "journeys" (hint: "journeys: dict[<type>, <type>] = ...")  [var-annotated]
+src\acas_pro\advanced_analytics\attribution_engine.py: note: In member "_analyze_paths" of class "AttributionEngine":
+src\acas_pro\advanced_analytics\attribution_engine.py:513:13: error: Unsupported operand types for + ("object" and "int")  [operator]
+src\acas_pro\advanced_analytics\attribution_engine.py:514:13: error: Unsupported operand types for + ("object" and "float")  [operator]
+src\acas_pro\advanced_analytics\attribution_engine.py:514:13: error: Unsupported operand types for + ("object" and "Literal[0]")  [operator]
+src\acas_pro\advanced_analytics\attribution_engine.py:514:13: note: Right operand is of type "float | Literal[0]"
+src\acas_pro\advanced_analytics\attribution_engine.py:518:24: error: Argument "key" to "sort" of "list" has incompatible type "Callable[[dict[str, object]], object]"; expected "Callable[[dict[str, object]], SupportsDunderLT[Any] | SupportsDunderGT[Any]]"  [arg-type]
+src\acas_pro\advanced_analytics\attribution_engine.py: note: In function "_analyze_paths":
+src\acas_pro\advanced_analytics\attribution_engine.py:518:34: error: Incompatible return value type (got "object", expected "SupportsDunderLT[Any] | SupportsDunderGT[Any]")  [return-value]
+src\acas_pro\advanced_analytics\anomaly_detector.py: note: In member "detect" of class "AnomalyDetector":
+src\acas_pro\advanced_analytics\anomaly_detector.py:6:9: error: No return value expected  [return-value]
+src\acas_pro\ads\bidding_engine.py: note: In member "calculate_bid" of class "BiddingEngine":
+src\acas_pro\ads\bidding_engine.py:133:27: error: Item "None" of "list[BidAdjustment] | None" has no attribute "__iter__" (not iterable)  [union-attr]
+src\acas_pro\ads\bidding_engine.py: note: In member "optimize_bidding" of class "BiddingEngine":
+src\acas_pro\ads\bidding_engine.py:215:25: error: Item "None" of "list[BidAdjustment] | None" has no attribute "copy"  [union-attr]
+src\acas_pro\ads\bidding_engine.py:235:13: error: Item "None" of "list[BidAdjustment] | None" has no attribute "append"  [union-attr]
+src\acas_pro\sentiment\news_engine.py: note: In member "__init__" of class "MarketIntelligenceEngine":
+src\acas_pro\sentiment\news_engine.py:146:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\sentiment\news_engine.py:147:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\sentiment\news_engine.py: note: In member "_generate_sample_data" of class "MarketIntelligenceEngine":
+src\acas_pro\sentiment\news_engine.py:279:23: error: Argument "title" to "NewsArticle" has incompatible type "object"; expected "str"  [arg-type]
+src\acas_pro\sentiment\news_engine.py:280:25: error: Argument "content" to "NewsArticle" has incompatible type "object"; expected "str"  [arg-type]
+src\acas_pro\sentiment\news_engine.py:281:25: error: Value of type "object" is not indexable  [index]
+src\acas_pro\sentiment\news_engine.py:284:26: error: Argument "category" to "NewsArticle" has incompatible type "object"; expected "NewsCategory"  [arg-type]
+src\acas_pro\sentiment\news_engine.py:290:26: error: Argument "keywords" to "NewsArticle" has incompatible type "object"; expected "list[str]"  [arg-type]
+src\acas_pro\sentiment\news_engine.py: note: In member "detect_risks" of class "MarketIntelligenceEngine":
+src\acas_pro\sentiment\news_engine.py:301:27: error: Need type annotation for "pattern_matches"  [var-annotated]
+src\acas_pro\sentiment\news_engine.py:307:45: error: "object" has no attribute "__iter__"; maybe "__dir__" or "__str__"? (not iterable)  [attr-defined]
+src\acas_pro\sentiment\news_engine.py:323:27: error: Argument "level" to "RiskAlert" has incompatible type "object"; expected "RiskLevel"  [arg-type]
+src\acas_pro\sentiment\news_engine.py:326:30: error: Argument "category" to "RiskAlert" has incompatible type "object"; expected "str"  [arg-type]
+src\acas_pro\sentiment\news_engine.py: note: In member "get_sentiment_summary" of class "MarketIntelligenceEngine":
+src\acas_pro\sentiment\news_engine.py:400:17: error: Incompatible types in assignment (expression has type "float", variable has type "int")  [assignment]
+src\acas_pro\collectors\rss_collector.py: note: In class "RSSCollector":
+src\acas_pro\collectors\rss_collector.py:85:57: error: Incompatible default for parameter "custom_sources" (default has type "None", parameter has type "dict[str, str]")  [assignment]
+src\acas_pro\collectors\rss_collector.py:85:57: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\collectors\rss_collector.py:85:57: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\collectors\rss_collector.py:102:30: error: Incompatible default for parameter "sources" (default has type "None", parameter has type "list[str]")  [assignment]
+src\acas_pro\collectors\rss_collector.py:102:30: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\collectors\rss_collector.py:102:30: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\collectors\rss_collector.py: note: In member "_deduplicate" of class "RSSCollector":
+src\acas_pro\collectors\rss_collector.py:243:9: error: Need type annotation for "seen_titles" (hint: "seen_titles: set[<type>] = ...")  [var-annotated]
+src\acas_pro\update\updater.py: note: In function "_compare_versions":
+src\acas_pro\update\updater.py:121:13: error: No return value expected  [return-value]
+src\acas_pro\update\updater.py: note: In member "_compare_versions" of class "UpdateChecker":
+src\acas_pro\update\updater.py:123:18: error: "parse" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\update\updater.py:124:21: error: No overload variant of "zip" matches argument types "None", "None"  [call-overload]
+src\acas_pro\update\updater.py:124:21: note: Possible overload variants:
+src\acas_pro\update\updater.py:124:21: note:     def [_T_co] zip(*, strict: bool = ...) -> zip[Any]
+src\acas_pro\update\updater.py:124:21: note:     def [_T_co, _T1] zip(Iterable[_T1], /, *, strict: bool = ...) -> zip[tuple[_T1]]
+src\acas_pro\update\updater.py:124:21: note:     def [_T_co, _T1, _T2] zip(Iterable[_T1], Iterable[_T2], /, *, strict: bool = ...) -> zip[tuple[_T1, _T2]]
+src\acas_pro\update\updater.py:124:21: note:     def [_T_co, _T1, _T2, _T3] zip(Iterable[_T1], Iterable[_T2], Iterable[_T3], /, *, strict: bool = ...) -> zip[tuple[_T1, _T2, _T3]]
+src\acas_pro\update\updater.py:124:21: note:     def [_T_co, _T1, _T2, _T3, _T4] zip(Iterable[_T1], Iterable[_T2], Iterable[_T3], Iterable[_T4], /, *, strict: bool = ...) -> zip[tuple[_T1, _T2, _T3, _T4]]
+src\acas_pro\update\updater.py:124:21: note:     def [_T_co, _T1, _T2, _T3, _T4, _T5] zip(Iterable[_T1], Iterable[_T2], Iterable[_T3], Iterable[_T4], Iterable[_T5], /, *, strict: bool = ...) -> zip[tuple[_T1, _T2, _T3, _T4, _T5]]
+src\acas_pro\update\updater.py:124:21: note:     def [_T_co] zip(Iterable[Any], Iterable[Any], Iterable[Any], Iterable[Any], Iterable[Any], Iterable[Any], /, *iterables: Iterable[Any], strict: bool = ...) -> zip[tuple[Any, ...]]
+src\acas_pro\update\updater.py:126:17: error: Returning Any from function declared to return "int"  [no-any-return]
+src\acas_pro\update\updater.py:127:20: error: Argument 1 to "len" has incompatible type "None"; expected "Sized"  [arg-type]
+src\acas_pro\services\oauth\oauth_service.py: note: In member "get_openid" of class "QQOAuth":
+src\acas_pro\services\oauth\oauth_service.py:131:17: error: Returning Any from function declared to return "str | None"  [no-any-return]
+src\acas_pro\services\oauth\oauth_service.py: note: In member "get_user_info" of class "QQOAuth":
+src\acas_pro\services\oauth\oauth_service.py:139:22: error: Incompatible types in assignment (expression has type "str | None", variable has type "str")  [assignment]
+src\acas_pro\services\oauth\oauth_service.py: note: In member "__init__" of class "OAuthService":
+src\acas_pro\services\oauth\oauth_service.py:326:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\llm\llm_client.py: note: In member "_make_request" of class "BaseLLMProvider":
+src\acas_pro\llm\llm_client.py:151:17: error: Returning Any from function declared to return "dict[Any, Any]"  [no-any-return]
+src\acas_pro\llm\llm_client.py: note: In member "_make_request_async" of class "BaseLLMProvider":
+src\acas_pro\llm\llm_client.py:169:21: error: Returning Any from function declared to return "dict[Any, Any]"  [no-any-return]
+src\acas_pro\llm\llm_client.py: note: In member "_format_message" of class "OpenAIProvider":
+src\acas_pro\llm\llm_client.py:280:36: error: Incompatible types in assignment (expression has type "list[dict[Any, Any]]", target has type "str")  [assignment]
+src\acas_pro\llm\llm_client.py: note: In member "_create_provider" of class "LLMClient":
+src\acas_pro\llm\llm_client.py:459:9: error: Returning Any from function declared to return "BaseLLMProvider"  [no-any-return]
+src\acas_pro\llm\llm_client.py: note: In member "chat_async" of class "LLMClient":
+src\acas_pro\llm\llm_client.py:471:9: error: Returning Any from function declared to return "LLMResponse"  [no-any-return]
+src\acas_pro\llm\llm_client.py:471:9: note: Error code "no-any-return" not covered by "type: ignore[attr-defined]" comment
+src\acas_pro\ecommerce\platform_api_base.py: note: In member "_get_session" of class "PlatformAPIClient":
+src\acas_pro\ecommerce\platform_api_base.py:140:29: error: Incompatible types in assignment (expression has type "Session", variable has type "None")  [assignment]
+src\acas_pro\ecommerce\platform_api_base.py:141:13: error: "None" has no attribute "headers"  [attr-defined]
+src\acas_pro\ecommerce\platform_api_base.py: note: In member "_get_async_client" of class "PlatformAPIClient":
+src\acas_pro\ecommerce\platform_api_base.py:149:12: error: Cannot determine type of "_async_client"  [has-type]
+src\acas_pro\ecommerce\platform_api_base.py:159:9: error: Returning Any from function declared to return "None"  [no-any-return]
+src\acas_pro\ecommerce\platform_api_base.py: note: In member "request" of class "PlatformAPIClient":
+src\acas_pro\ecommerce\platform_api_base.py:194:27: error: "_get_session" of "PlatformAPIClient" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\ecommerce\platform_api_base.py:197:28: error: "None" has no attribute "get"  [attr-defined]
+src\acas_pro\ecommerce\platform_api_base.py:204:28: error: "None" has no attribute "post"  [attr-defined]
+src\acas_pro\ecommerce\platform_api_base.py:234:17: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+src\acas_pro\ecommerce\platform_api_base.py: note: In member "request_async" of class "PlatformAPIClient":
+src\acas_pro\ecommerce\platform_api_base.py:268:20: error: Name "UnauthorizedError" is not defined  [name-defined]
+src\acas_pro\ecommerce\platform_api_base.py:277:28: error: "PlatformAPIClient" has no attribute "RETRY_BASE_DELAY"; maybe "RETRY_DELAY"?  [attr-defined]
+src\acas_pro\ecommerce\platform_api_base.py:277:74: error: "PlatformAPIClient" has no attribute "RETRY_MAX_DELAY"; maybe "RETRY_DELAY"?  [attr-defined]
+src\acas_pro\ecommerce\platform_api_base.py:289:30: error: Incompatible types in assignment (expression has type "Exception", variable has type "APIError | None")  [assignment]
+src\acas_pro\ecommerce\platform_api_base.py:291:32: error: "PlatformAPIClient" has no attribute "RETRY_BASE_DELAY"; maybe "RETRY_DELAY"?  [attr-defined]
+src\acas_pro\ecommerce\platform_api_base.py:291:78: error: "PlatformAPIClient" has no attribute "RETRY_MAX_DELAY"; maybe "RETRY_DELAY"?  [attr-defined]
+src\acas_pro\ecommerce\platform_api_base.py: note: In member "_do_request_async" of class "PlatformAPIClient":
+src\acas_pro\ecommerce\platform_api_base.py:313:18: error: "_get_async_client" of "PlatformAPIClient" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\ecommerce\platform_api_base.py:317:30: error: "None" has no attribute "get"  [attr-defined]
+src\acas_pro\ecommerce\platform_api_base.py:319:30: error: "None" has no attribute "post"  [attr-defined]
+src\acas_pro\ecommerce\platform_api_base.py:343:13: error: Returning Any from function declared to return "dict[Any, Any]"  [no-any-return]
+src\acas_pro\core\async_utils.py: note: In function "run_in_thread":
+src\acas_pro\core\async_utils.py:17:38: error: Name "threading.ThreadPoolExecutor" is not defined  [name-defined]
+src\acas_pro\core\async_utils.py:34:57: error: Argument 2 to "run_in_executor" of "AbstractEventLoop" has incompatible type "Callable[[], T]"; expected "Callable[[], None]"  [arg-type]
+src\acas_pro\core\async_utils.py:35:16: error: Incompatible return value type (got "_Wrapped[[VarArg(Any), KwArg(Any)], T, [VarArg(Any), KwArg(Any)], Coroutine[Any, Any, None]]", expected "Callable[..., Coroutine[Any, Any, T]]")  [return-value]
+src\acas_pro\core\async_utils.py:35:16: note: "_Wrapped[[VarArg(Any), KwArg(Any)], T, [VarArg(Any), KwArg(Any)], Coroutine[Any, Any, None]].__call__" has type "def __call__(self, *args: Any, **kwargs: Any) -> Coroutine[Any, Any, None]"
+src\acas_pro\core\async_utils.py:36:5: error: No return value expected  [return-value]
+src\acas_pro\core\async_utils.py: note: In function "asyncify":
+src\acas_pro\core\async_utils.py:68:53: error: Argument 2 to "run_in_executor" of "AbstractEventLoop" has incompatible type "Callable[[], T]"; expected "Callable[[], None]"  [arg-type]
+src\acas_pro\core\async_utils.py: note: In member "asyncify" of class "AsyncIOMixin":
+src\acas_pro\core\async_utils.py:69:16: error: Incompatible return value type (got "_Wrapped[[VarArg(Any), KwArg(Any)], T, [Any, VarArg(Any), KwArg(Any)], Coroutine[Any, Any, None]]", expected "Callable[..., Coroutine[Any, Any, T]]")  [return-value]
+src\acas_pro\core\async_utils.py:69:16: note: "_Wrapped[[VarArg(Any), KwArg(Any)], T, [Any, VarArg(Any), KwArg(Any)], Coroutine[Any, Any, None]].__call__" has type "def __call__(self: Any, *args: Any, **kwargs: Any) -> Coroutine[Any, Any, None]"
+src\acas_pro\core\async_utils.py: note: In function "async_http_get":
+src\acas_pro\core\async_utils.py:102:13: error: Returning Any from function declared to return "dict[Any, Any]"  [no-any-return]
+src\acas_pro\core\async_utils.py: note: In function "async_http_post":
+src\acas_pro\core\async_utils.py:126:13: error: Returning Any from function declared to return "dict[Any, Any]"  [no-any-return]
+src\acas_pro\content\trend_monitor.py: note: In class "TrendItem":
+src\acas_pro\content\trend_monitor.py:59:29: error: Incompatible types in assignment (expression has type "None", variable has type "list[str]")  [assignment]
+src\acas_pro\content\trend_monitor.py:61:30: error: Incompatible types in assignment (expression has type "None", variable has type "list[str]")  [assignment]
+src\acas_pro\content\trend_monitor.py: note: In class "TrendMonitor":
+src\acas_pro\content\trend_monitor.py:94:48: error: Incompatible default for parameter "db" (default has type "None", parameter has type "DatabaseManager")  [assignment]
+src\acas_pro\content\trend_monitor.py:94:48: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\content\trend_monitor.py:94:48: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\content\trend_monitor.py: note: In member "__init__" of class "TrendMonitor":
+src\acas_pro\content\trend_monitor.py:98:32: error: Need type annotation for "_callback_queue"  [var-annotated]
+src\acas_pro\content\trend_monitor.py: note: In member "start_monitoring" of class "TrendMonitor":
+src\acas_pro\content\trend_monitor.py:148:32: error: Incompatible types in assignment (expression has type "Thread", variable has type "None")  [assignment]
+src\acas_pro\content\trend_monitor.py:149:9: error: "None" has no attribute "start"  [attr-defined]
+src\acas_pro\content\trend_monitor.py: note: In member "_monitor_loop_async" of class "TrendMonitor":
+src\acas_pro\content\trend_monitor.py:162:19: error: "TrendMonitor" has no attribute "_stop_event"  [attr-defined]
+src\acas_pro\content\trend_monitor.py:164:29: error: "TrendMonitor" has no attribute "_platforms"  [attr-defined]
+src\acas_pro\content\trend_monitor.py:166:49: error: "TrendMonitor" has no attribute "_interval"  [attr-defined]
+src\acas_pro\content\trend_monitor.py:171:25: error: "TrendMonitor" has no attribute "_last_fetch"; maybe "_simulate_fetch"?  [attr-defined]
+src\acas_pro\content\trend_monitor.py: note: In member "_monitor_loop" of class "TrendMonitor":
+src\acas_pro\content\trend_monitor.py:188:59: error: Unsupported operand types for >= ("float" and "object")  [operator]
+src\acas_pro\content\trend_monitor.py:191:48: error: Incompatible types in assignment (expression has type "float", target has type "int")  [assignment]
+src\acas_pro\content\trend_monitor.py: note: In member "get_trending_items" of class "TrendMonitor":
+src\acas_pro\content\trend_monitor.py:300:40: error: Argument 2 to "fetchall" of "DatabaseManager" has incompatible type "list[object]"; expected "tuple[Any, ...]"  [arg-type]
+src\acas_pro\content\trend_monitor.py: note: In member "get_trend_report" of class "TrendMonitor":
+src\acas_pro\content\trend_monitor.py:333:9: error: Need type annotation for "tag_counts" (hint: "tag_counts: dict[<type>, <type>] = ...")  [var-annotated]
+src\acas_pro\content\trend_monitor.py:344:9: error: Need type annotation for "type_dist" (hint: "type_dist: dict[<type>, <type>] = ...")  [var-annotated]
+src\acas_pro\collectors\weibo_api.py: note: In class "WeiboCollector":
+src\acas_pro\collectors\weibo_api.py:72:39: error: Incompatible default for parameter "app_key" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\collectors\weibo_api.py:72:39: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\collectors\weibo_api.py:72:39: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\collectors\weibo_api.py:72:63: error: Incompatible default for parameter "app_secret" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\collectors\weibo_api.py:72:89: error: Incompatible default for parameter "access_token" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\collectors\weibo_api.py: note: In member "search" of class "WeiboCollector":
+src\acas_pro\collectors\weibo_api.py:128:53: error: Argument "params" to "get" of "Session" has incompatible type "dict[str, object]"; expected "SupportsItems[str | bytes | int | float, str | bytes | int | float | Iterable[str | bytes | int | float] | None] | tuple[str | bytes | int | float, str | bytes | int | float | Iterable[str | bytes | int | float] | None] | Iterable[tuple[str | bytes | int | float, str | bytes | int | float | Iterable[str | bytes | int | float] | None]] | str | bytes | None"  [arg-type]
+src\acas_pro\collectors\weibo_api.py: note: In member "get_user_timeline" of class "WeiboCollector":
+src\acas_pro\collectors\weibo_api.py:210:53: error: Argument "params" to "get" of "Session" has incompatible type "dict[str, object]"; expected "SupportsItems[str | bytes | int | float, str | bytes | int | float | Iterable[str | bytes | int | float] | None] | tuple[str | bytes | int | float, str | bytes | int | float | Iterable[str | bytes | int | float] | None] | Iterable[tuple[str | bytes | int | float, str | bytes | int | float | Iterable[str | bytes | int | float] | None]] | str | bytes | None"  [arg-type]
+src\acas_pro\collectors\weibo_api.py: note: In member "_check_rate_limit" of class "WeiboCollector":
+src\acas_pro\collectors\weibo_api.py:259:39: error: Incompatible types in assignment (expression has type "float", variable has type "int")  [assignment]
+src\acas_pro\collectors\weibo_api.py:266:39: error: Incompatible types in assignment (expression has type "float", variable has type "int")  [assignment]
+src\acas_pro\alert\notifier.py: note: In member "__init__" of class "AlertNotifier":
+src\acas_pro\alert\notifier.py:97:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\alert\notifier.py:98:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\alert\notifier.py: note: In member "send" of class "AlertNotifier":
+src\acas_pro\alert\notifier.py:116:27: error: "_get_handler" of "AlertNotifier" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\alert\notifier.py: note: In member "_get_handler" of class "AlertNotifier":
+src\acas_pro\alert\notifier.py:155:9: error: No return value expected  [return-value]
+src\acas_pro\alert\notifier.py: note: In member "_send_webhook_async" of class "AlertNotifier":
+src\acas_pro\alert\notifier.py:251:21: error: Returning Any from function declared to return "bool"  [no-any-return]
+src\acas_pro\alert\notifier.py: note: In class "AlertNotifier":
+src\acas_pro\alert\notifier.py:269:57: error: Incompatible default for parameter "channel" (default has type "None", parameter has type "AlertChannel")  [assignment]
+src\acas_pro\alert\notifier.py:269:57: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\alert\notifier.py:269:57: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\alert\notifier.py: note: In member "send_critical_alert" of class "AlertNotifier":
+src\acas_pro\alert\notifier.py:312:9: error: No return value expected  [return-value]
+src\acas_pro\alert\notifier.py: note: In member "send_urgent_alert" of class "AlertNotifier":
+src\acas_pro\alert\notifier.py:316:9: error: No return value expected  [return-value]
+src\acas_pro\alert\notifier.py: note: In class "AlertNotifier":
+src\acas_pro\alert\notifier.py:319:42: error: Incompatible default for parameter "channels" (default has type "None", parameter has type "list[Any]")  [assignment]
+src\acas_pro\alert\notifier.py:319:42: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\alert\notifier.py:319:42: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\alert\notifier.py: note: In member "send_async" of class "AlertNotifier":
+src\acas_pro\alert\notifier.py:337:31: error: "_get_handler" of "AlertNotifier" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\ads\audience_targeting.py: note: In member "create_segment" of class "AudienceTargeting":
+src\acas_pro\ads\audience_targeting.py:238:41: error: Item "None" of "AgeRange | None" has no attribute "to_dict"  [union-attr]
+src\acas_pro\ads\audience_targeting.py:239:52: error: Argument 1 to "asdict" has incompatible type "GeoTargeting | None"; expected "DataclassInstance"  [arg-type]
+src\acas_pro\ads\audience_targeting.py:240:55: error: Argument 1 to "asdict" has incompatible type "DeviceTargeting | None"; expected "DataclassInstance"  [arg-type]
+src\acas_pro\ads\audience_targeting.py: note: In member "get_segments" of class "AudienceTargeting":
+src\acas_pro\ads\audience_targeting.py:285:44: error: Argument 2 to "fetchall" of "DatabaseManager" has incompatible type "tuple[Any, ...] | None"; expected "tuple[Any, ...]"  [arg-type]
+src\acas_pro\ads\audience_targeting.py: note: In member "estimate_audience_size" of class "AudienceTargeting":
+src\acas_pro\ads\audience_targeting.py:321:25: error: Item "None" of "AgeRange | None" has no attribute "max_age"  [union-attr]
+src\acas_pro\ads\audience_targeting.py:321:53: error: Item "None" of "AgeRange | None" has no attribute "min_age"  [union-attr]
+src\acas_pro\ads\audience_targeting.py:323:12: error: Item "None" of "GeoTargeting | None" has no attribute "provinces"  [union-attr]
+src\acas_pro\ads\audience_targeting.py:324:32: error: Item "None" of "GeoTargeting | None" has no attribute "provinces"  [union-attr]
+src\acas_pro\ads\audience_targeting.py:325:14: error: Item "None" of "GeoTargeting | None" has no attribute "cities"  [union-attr]
+src\acas_pro\ads\audience_targeting.py:326:32: error: Item "None" of "GeoTargeting | None" has no attribute "cities"  [union-attr]
+src\acas_pro\ads\audience_targeting.py: note: In member "create_segment_async" of class "AudienceTargeting":
+src\acas_pro\ads\audience_targeting.py:438:41: error: Item "None" of "AgeRange | None" has no attribute "to_dict"  [union-attr]
+src\acas_pro\ads\audience_targeting.py:439:52: error: Argument 1 to "asdict" has incompatible type "GeoTargeting | None"; expected "DataclassInstance"  [arg-type]
+src\acas_pro\ads\audience_targeting.py:440:55: error: Argument 1 to "asdict" has incompatible type "DeviceTargeting | None"; expected "DataclassInstance"  [arg-type]
+src\acas_pro\ads\audience_targeting.py: note: In member "get_segments_async" of class "AudienceTargeting":
+src\acas_pro\ads\audience_targeting.py:482:56: error: Argument 2 to "fetchall_async" of "DatabaseManager" has incompatible type "tuple[Any, ...] | None"; expected "tuple[Any, ...]"  [arg-type]
+src\acas_pro\web\health.py: note: In member "__init__" of class "HealthChecker":
+src\acas_pro\web\health.py:37:27: error: Name "Callable" is not defined; did you mean "callable"?  [name-defined]
+src\acas_pro\web\health.py:37:27: note: Did you forget to import it from "typing"? (Suggestion: "from typing import Callable")
+src\acas_pro\web\health.py: note: In member "check_all" of class "HealthChecker":
+src\acas_pro\web\health.py:75:24: error: Item "None" of "object | None" has no attribute "version"  [union-attr]
+src\acas_pro\web\health.py:76:28: error: Item "None" of "object | None" has no attribute "environment"  [union-attr]
+src\acas_pro\web\health.py: note: In member "_check_database" of class "HealthChecker":
+src\acas_pro\web\health.py:104:38: error: Item "None" of "object | None" has no attribute "database"  [union-attr]
+src\acas_pro\web\health.py: note: In member "_check_config" of class "HealthChecker":
+src\acas_pro\web\health.py:128:16: error: Item "None" of "object | None" has no attribute "security"  [union-attr]
+src\acas_pro\web\health.py:131:12: error: Item "None" of "object | None" has no attribute "environment"  [union-attr]
+src\acas_pro\web\health.py:132:16: error: Item "None" of "object | None" has no attribute "security"  [union-attr]
+src\acas_pro\web\health.py: note: In member "_check_disk_space" of class "HealthChecker":
+src\acas_pro\web\health.py:159:24: error: Item "None" of "object | None" has no attribute "data_dir"  [union-attr]
+src\acas_pro\web\health.py: note: In member "_check_llm" of class "HealthChecker":
+src\acas_pro\web\health.py:202:20: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\health.py:211:20: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\health.py:225:42: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\health.py:226:29: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\health.py:227:27: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\health.py:228:30: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\health.py:243:59: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\health.py:247:45: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\health.py:248:42: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\health.py:262:45: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\health.py:286:41: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\routes\llm.py: note: In function "create_llm_client":
+src\acas_pro\web\routes\llm.py:31:11: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\routes\llm.py:40:18: error: Argument "api_base" to "LLMConfig" has incompatible type "Any | None"; expected "str"  [arg-type]
+src\acas_pro\web\routes\llm.py: note: In function "save_llm_config":
+src\acas_pro\web\routes\llm.py:61:5: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\routes\llm.py:62:5: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\routes\llm.py:64:9: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\routes\llm.py:66:9: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\web\routes\llm.py:67:5: error: Item "None" of "object | None" has no attribute "llm"  [union-attr]
+src\acas_pro\llm\tools.py: note: In member "__init__" of class "ToolRegistry":
+src\acas_pro\llm\tools.py:44:9: note: By default the bodies of untyped functions are not checked, consider using --check-untyped-defs  [annotation-unchecked]
+src\acas_pro\llm\tools.py: note: In class "ACASTools":
+src\acas_pro\llm\tools.py:391:49: error: Incompatible default for parameter "historical_data" (default has type "None", parameter has type "list[Any]")  [assignment]
+src\acas_pro\llm\tools.py:391:49: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\llm\tools.py:391:49: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\llm\tools.py: note: In member "_inventory_optimize" of class "ACASTools":
+src\acas_pro\llm\tools.py:436:13: error: Returning Any from function declared to return "dict[Any, Any]"  [no-any-return]
+src\acas_pro\llm\tools.py: note: In class "ACASTools":
+src\acas_pro\llm\tools.py:493:42: error: Incompatible default for parameter "keywords" (default has type "None", parameter has type "list[Any]")  [assignment]
+src\acas_pro\llm\tools.py:493:42: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\llm\tools.py:493:42: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\llm\tools.py: note: In member "_content_create" of class "ACASTools":
+src\acas_pro\llm\tools.py:507:26: error: "_get_llm_config" of "ACASTools" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\llm\tools.py: note: In member "_trend_monitor" of class "ACASTools":
+src\acas_pro\llm\tools.py:565:13: error: Returning Any from function declared to return "dict[Any, Any]"  [no-any-return]
+src\acas_pro\llm\tools.py: note: In class "ACASTools":
+src\acas_pro\llm\tools.py:609:72: error: Incompatible default for parameter "target_audience" (default has type "None", parameter has type "dict[Any, Any]")  [assignment]
+src\acas_pro\llm\tools.py:609:72: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\llm\tools.py:609:72: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\llm\tools.py:631:43: error: Incompatible default for parameter "filters" (default has type "None", parameter has type "dict[Any, Any]")  [assignment]
+src\acas_pro\llm\tools.py:631:43: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\llm\tools.py:631:43: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\llm\tools.py:658:37: error: Incompatible default for parameter "filters" (default has type "None", parameter has type "dict[Any, Any]")  [assignment]
+src\acas_pro\llm\tools.py:658:37: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\llm\tools.py:658:37: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\llm\tools.py:673:47: error: Incompatible default for parameter "month" (default has type "None", parameter has type "int")  [assignment]
+src\acas_pro\llm\tools.py:673:47: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\llm\tools.py:673:47: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\llm\tools.py: note: In member "_get_llm_config" of class "ACASTools":
+src\acas_pro\llm\tools.py:720:17: error: No return value expected  [return-value]
+src\acas_pro\llm\conversation.py: note: In class "Conversation":
+src\acas_pro\llm\conversation.py:25:25: error: Name "Any" is not defined  [name-defined]
+src\acas_pro\llm\conversation.py:25:25: note: Did you forget to import it from "typing"? (Suggestion: "from typing import Any")
+src\acas_pro\llm\conversation.py: note: In member "get_context_window" of class "Conversation":
+src\acas_pro\llm\conversation.py:37:9: error: Need type annotation for "result" (hint: "result: list[<type>] = ...")  [var-annotated]
+src\acas_pro\llm\conversation.py: note: In class "ConversationManager":
+src\acas_pro\llm\conversation.py:97:44: error: Incompatible default for parameter "storage_path" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\llm\conversation.py:97:44: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\llm\conversation.py:97:44: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\llm\conversation.py:107:62: error: Incompatible default for parameter "id" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\llm\conversation.py:107:62: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\llm\conversation.py:107:62: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\llm\conversation.py: note: In member "list_conversations" of class "ConversationManager":
+src\acas_pro\llm\conversation.py:161:17: error: Name "logger" is not defined  [name-defined]
+src\acas_pro\llm\conversation.py: note: In member "search_conversations" of class "ConversationManager":
+src\acas_pro\llm\conversation.py:217:17: error: Name "logger" is not defined  [name-defined]
+src\acas_pro\llm\conversation.py: note: In member "_load_conversation" of class "ConversationManager":
+src\acas_pro\llm\conversation.py:239:13: error: Name "logger" is not defined  [name-defined]
+src\acas_pro\llm\agent_engine.py: note: In member "__init__" of class "AgentEngine":
+src\acas_pro\llm\agent_engine.py:108:63: error: Name "ToolRegistry" is not defined  [name-defined]
+src\acas_pro\llm\agent_engine.py: note: In class "AgentEngine":
+src\acas_pro\llm\agent_engine.py:251:88: error: Incompatible default for parameter "callback" (default has type "None", parameter has type "Callable[[AgentResult], None]")  [assignment]
+src\acas_pro\llm\agent_engine.py:251:88: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\llm\agent_engine.py:251:88: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\llm\agent_engine.py: note: In member "execute_async" of class "AgentEngine":
+src\acas_pro\llm\agent_engine.py:255:20: error: Missing positional argument "id" in call to "AgentTask"  [call-arg]
+src\acas_pro\llm\agent_engine.py: note: In function "execute_async":
+src\acas_pro\llm\agent_engine.py:260:20: error: Function "callback" could always be true in boolean context  [truthy-function]
+src\acas_pro\llm\agent_engine.py:263:17: error: Name "logger" is not defined  [name-defined]
+src\acas_pro\llm\agent_engine.py: note: In member "_get_tools_schema" of class "AgentEngine":
+src\acas_pro\llm\agent_engine.py:308:13: error: Returning Any from function declared to return "list[dict[Any, Any]]"  [no-any-return]
+src\acas_pro\llm\agent_engine.py: note: In member "__init__" of class "AgentOrchestrator":
+src\acas_pro\llm\agent_engine.py:326:63: error: Name "ToolRegistry" is not defined  [name-defined]
+src\acas_pro\llm\agent_engine.py: note: In class "AgentOrchestrator":
+src\acas_pro\llm\agent_engine.py:344:79: error: Incompatible default for parameter "agent_ids" (default has type "None", parameter has type "list[str]")  [assignment]
+src\acas_pro\llm\agent_engine.py:344:79: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\llm\agent_engine.py:344:79: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\llm\agent_engine.py:345:52: error: Incompatible default for parameter "timeout_per_task" (default has type "None", parameter has type "float")  [assignment]
+src\acas_pro\llm\agent_engine.py:345:52: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\llm\agent_engine.py:345:52: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\llm\agent_engine.py: note: In member "execute_pipeline" of class "AgentOrchestrator":
+src\acas_pro\llm\agent_engine.py:380:9: error: Need type annotation for "results" (hint: "results: list[<type>] = ...")  [var-annotated]
+src\acas_pro\llm\agent_engine.py:381:9: error: Need type annotation for "context" (hint: "context: dict[<type>, <type>] = ...")  [var-annotated]
+src\acas_pro\ecommerce\xiaohongshu_shop_api.py: note: In member "_do_refresh_token" of class "XiaohongshuShopClient":
+src\acas_pro\ecommerce\xiaohongshu_shop_api.py:77:9: error: Returning Any from function declared to return "str | None"  [no-any-return]
+src\acas_pro\ecommerce\xiaohongshu_shop_api.py: note: In member "sync_orders" of class "XiaohongshuShopClient":
+src\acas_pro\ecommerce\xiaohongshu_shop_api.py:96:32: error: Incompatible types in assignment (expression has type "str", target has type "int")  [assignment]
+src\acas_pro\ecommerce\xiaohongshu_shop_api.py:98:30: error: Incompatible types in assignment (expression has type "str", target has type "int")  [assignment]
+src\acas_pro\ecommerce\xiaohongshu_shop_api.py: note: In member "update_product_status" of class "XiaohongshuShopClient":
+src\acas_pro\ecommerce\xiaohongshu_shop_api.py:165:13: error: Returning Any from function declared to return "bool"  [no-any-return]
+src\acas_pro\ecommerce\xiaohongshu_shop_api.py: note: In member "get_logistics_info" of class "XiaohongshuShopClient":
+src\acas_pro\ecommerce\xiaohongshu_shop_api.py:182:13: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+src\acas_pro\ecommerce\taobao_shop_api.py: note: In member "_do_refresh_token" of class "TaobaoShopClient":
+src\acas_pro\ecommerce\taobao_shop_api.py:87:9: error: Returning Any from function declared to return "str | None"  [no-any-return]
+src\acas_pro\ecommerce\kuaishou_shop_api.py: note: In member "_do_refresh_token" of class "KuaishouShopClient":
+src\acas_pro\ecommerce\kuaishou_shop_api.py:81:9: error: Returning Any from function declared to return "str | None"  [no-any-return]
+src\acas_pro\ecommerce\kuaishou_shop_api.py: note: In member "sync_orders" of class "KuaishouShopClient":
+src\acas_pro\ecommerce\kuaishou_shop_api.py:100:33: error: Incompatible types in assignment (expression has type "str", target has type "int")  [assignment]
+src\acas_pro\ecommerce\kuaishou_shop_api.py:102:31: error: Incompatible types in assignment (expression has type "str", target has type "int")  [assignment]
+src\acas_pro\ecommerce\kuaishou_shop_api.py: note: In member "update_product_status" of class "KuaishouShopClient":
+src\acas_pro\ecommerce\kuaishou_shop_api.py:169:13: error: Returning Any from function declared to return "bool"  [no-any-return]
+src\acas_pro\ecommerce\kuaishou_shop_api.py: note: In member "get_logistics_info" of class "KuaishouShopClient":
+src\acas_pro\ecommerce\kuaishou_shop_api.py:186:13: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+src\acas_pro\ecommerce\douyin_shop_api.py: note: In member "_do_refresh_token" of class "DouyinShopClient":
+src\acas_pro\ecommerce\douyin_shop_api.py:90:9: error: Returning Any from function declared to return "str | None"  [no-any-return]
+src\acas_pro\ecommerce\douyin_shop_api.py: note: In member "sync_orders" of class "DouyinShopClient":
+src\acas_pro\ecommerce\douyin_shop_api.py:112:33: error: Incompatible types in assignment (expression has type "str", target has type "int")  [assignment]
+src\acas_pro\ecommerce\douyin_shop_api.py:114:31: error: Incompatible types in assignment (expression has type "str", target has type "int")  [assignment]
+src\acas_pro\ecommerce\douyin_shop_api.py: note: In member "update_product_status" of class "DouyinShopClient":
+src\acas_pro\ecommerce\douyin_shop_api.py:211:13: error: Returning Any from function declared to return "bool"  [no-any-return]
+src\acas_pro\ecommerce\douyin_shop_api.py: note: In member "get_logistics_info" of class "DouyinShopClient":
+src\acas_pro\ecommerce\douyin_shop_api.py:228:13: error: Returning Any from function declared to return "dict[str, Any]"  [no-any-return]
+src\acas_pro\ml\timesfm_engine.py: note: In member "_load_statsforecast_status" of class "TimesFMEngine":
+src\acas_pro\ml\timesfm_engine.py:140:17: error: Returning Any from function declared to return "bool"  [no-any-return]
+src\acas_pro\ml\timesfm_engine.py: note: In member "forecast" of class "TimesFMEngine":
+src\acas_pro\ml\timesfm_engine.py:234:29: error: Value of type "Any | None" is not indexable  [index]
+src\acas_pro\ml\timesfm_engine.py:235:29: error: Value of type "Any | None" is not indexable  [index]
+src\acas_pro\ml\timesfm_engine.py: note: In member "_detect_seasonality" of class "TimesFMEngine":
+src\acas_pro\ml\timesfm_engine.py:279:22: error: Need type annotation for "dow_values"  [var-annotated]
+src\acas_pro\web\routes\health.py: note: In function "health_check":
+src\acas_pro\web\routes\health.py:15:9: error: No return value expected  [return-value]
+src\acas_pro\web\routes\health.py:17:9: error: No return value expected  [return-value]
+src\acas_pro\web\routes\health.py:19:9: error: No return value expected  [return-value]
+src\acas_pro\web\routes\__init__.py:2:1: error: Module "acas_pro.web.routes.auth" has no attribute "bp"  [attr-defined]
+src\acas_pro\ecommerce\platform_api_factory.py: note: In function "create_platform_client":
+src\acas_pro\ecommerce\platform_api_factory.py:48:14: error: Cannot instantiate abstract class "PlatformAPIClient" with abstract attributes "get_logistics_info", "sync_inventory", "sync_orders", "sync_products" and "update_product_status"  [abstract]
+src\acas_pro\ml\inventory_optimizer.py: note: In member "optimize_inventory" of class "InventoryOptimizer":
+src\acas_pro\ml\inventory_optimizer.py:99:41: error: Argument 1 to "get" of "dict" has incompatible type "Any | None"; expected "str"  [arg-type]
+src\acas_pro\ml\inventory_optimizer.py: note: In member "assess_stockout_risks" of class "InventoryOptimizer":
+src\acas_pro\ml\inventory_optimizer.py:224:44: error: Argument 1 to "get" of "dict" has incompatible type "Any | None"; expected "str"  [arg-type]
+src\acas_pro\ml\inventory_optimizer.py:232:17: error: Incompatible types in assignment (expression has type "float", variable has type "int")  [assignment]
+src\acas_pro\ml\inventory_optimizer.py:239:32: error: Argument "product_id" to "StockoutRisk" has incompatible type "Any | None"; expected "str"  [arg-type]
+src\acas_pro\ml\inventory_optimizer.py:276:32: error: Argument "product_id" to "StockoutRisk" has incompatible type "Any | None"; expected "str"  [arg-type]
+src\acas_pro\web\__init__.py: note: In function "create_app":
+src\acas_pro\web\__init__.py:36:28: error: Item "None" of "object | None" has no attribute "validate"  [union-attr]
+src\acas_pro\web\__init__.py: note: In function "_configure_app":
+src\acas_pro\web\__init__.py:69:44: error: Item "None" of "object | None" has no attribute "security"  [union-attr]
+src\acas_pro\web\__init__.py:90:8: error: Item "None" of "object | None" has no attribute "environment"  [union-attr]
+src\acas_pro\web\__init__.py: note: In function "_register_auth_middleware":
+src\acas_pro\web\__init__.py:97:5: error: Module "acas_pro.web.routes.auth" has no attribute "verify_token"  [attr-defined]
+src\acas_pro\web\__init__.py:142:13: error: No return value expected  [return-value]
+src\acas_pro\web\__init__.py:145:13: error: No return value expected  [return-value]
+src\acas_pro\web\__init__.py: note: In function "_register_blueprints":
+src\acas_pro\web\__init__.py:169:28: error: Module has no attribute "bp"  [attr-defined]
+src\acas_pro\web\__init__.py: note: In function "_register_error_handlers":
+src\acas_pro\web\__init__.py:204:13: error: No return value expected  [return-value]
+src\acas_pro\web\__init__.py:208:13: error: No return value expected  [return-value]
+src\acas_pro\web\__init__.py:209:9: error: No return value expected  [return-value]
+src\acas_pro\web\__init__.py:213:12: error: "_is_api_request" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\web\__init__.py:234:13: error: No return value expected  [return-value]
+src\acas_pro\ecommerce\shop_manager.py: note: In member "_get_db" of class "ShopManager":
+src\acas_pro\ecommerce\shop_manager.py:211:9: error: Returning Any from function declared to return "DatabaseManager"  [no-any-return]
+src\acas_pro\ecommerce\shop_manager.py: note: In member "_row_to_shop" of class "ShopManager":
+src\acas_pro\ecommerce\shop_manager.py:301:17: error: Need type annotation for "creds_data" (hint: "creds_data: dict[<type>, <type>] = ...")  [var-annotated]
+src\acas_pro\ecommerce\shop_manager.py: note: In member "get_authorization_url" of class "ShopManager":
+src\acas_pro\ecommerce\shop_manager.py:395:16: error: Incompatible return value type (got "Sequence[str]", expected "str")  [return-value]
+src\acas_pro\ecommerce\shop_manager.py: note: In member "handle_authorization_callback" of class "ShopManager":
+src\acas_pro\ecommerce\shop_manager.py:437:28: error: "PlatformAPIClient" has no attribute "exchange_token"  [attr-defined]
+src\acas_pro\ecommerce\shop_manager.py: note: In member "get_shop_analytics" of class "ShopManager":
+src\acas_pro\ecommerce\shop_manager.py:576:13: error: Unsupported operand types for + ("object" and "int")  [operator]
+src\acas_pro\ecommerce\shop_manager.py:578:17: error: Unsupported operand types for + ("object" and "float")  [operator]
+src\acas_pro\ecommerce\shop_manager.py: note: In member "batch_sync" of class "ShopManager":
+src\acas_pro\ecommerce\shop_manager.py:622:21: error: Unsupported operand types for + ("object" and "int")  [operator]
+src\acas_pro\ecommerce\shop_manager.py:623:21: error: "object" has no attribute "append"  [attr-defined]
+src\acas_pro\ecommerce\shop_manager.py:630:21: error: Unsupported operand types for + ("object" and "int")  [operator]
+src\acas_pro\ecommerce\shop_manager.py:631:21: error: "object" has no attribute "append"  [attr-defined]
+src\acas_pro\ecommerce\shop_manager.py: note: In member "_refresh_shop_stats" of class "ShopManager":
+src\acas_pro\ecommerce\shop_manager.py:691:21: error: Name "shop" is not defined  [name-defined]
+src\acas_pro\ecommerce\shop_manager.py:692:21: error: Name "shop" is not defined  [name-defined]
+src\acas_pro\ecommerce\shop_manager.py:693:32: error: Name "shop" is not defined  [name-defined]
+src\acas_pro\ecommerce\shop_manager.py:694:21: error: Name "shop" is not defined  [name-defined]
+src\acas_pro\ecommerce\shop_manager.py:697:13: error: No return value expected  [return-value]
+src\acas_pro\ecommerce\shop_manager.py:700:13: error: No return value expected  [return-value]
+src\acas_pro\ecommerce\order_manager.py: note: In member "get_orders_by_shop" of class "OrderManager":
+src\acas_pro\ecommerce\order_manager.py:224:23: error: Argument 1 to "append" of "list" has incompatible type "int"; expected "str"  [arg-type]
+src\acas_pro\ecommerce\order_manager.py: note: In member "sync_orders_from_platform" of class "OrderManager":
+src\acas_pro\ecommerce\order_manager.py:377:9: error: Need type annotation for "updated_orders" (hint: "updated_orders: list[<type>] = ...")  [var-annotated]
+src\acas_pro\ecommerce\product_manager.py: note: In member "batch_sync_to_platform" of class "ProductManager":
+src\acas_pro\ecommerce\product_manager.py:413:17: error: Unsupported operand types for + ("object" and "int")  [operator]
+src\acas_pro\ecommerce\product_manager.py:415:17: error: Unsupported operand types for + ("object" and "int")  [operator]
+src\acas_pro\ecommerce\product_manager.py:416:13: error: "object" has no attribute "append"  [attr-defined]
+src\acas_pro\ecommerce\product_manager.py: note: In class "ProductManager":
+src\acas_pro\ecommerce\product_manager.py:423:55: error: Incompatible default for parameter "filters" (default has type "None", parameter has type "dict[str, Any]")  [assignment]
+src\acas_pro\ecommerce\product_manager.py:423:55: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\ecommerce\product_manager.py:423:55: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\ecommerce\supply_chain.py: note: In member "_sync_to_platforms" of class "SupplyChainManager":
+src\acas_pro\ecommerce\supply_chain.py:306:24: error: "_get_shop_manager" of "SupplyChainManager" does not return a value (it only ever returns None)  [func-returns-value]
+src\acas_pro\ecommerce\supply_chain.py: note: In member "_get_shop_manager" of class "SupplyChainManager":
+src\acas_pro\ecommerce\supply_chain.py:569:9: error: No return value expected  [return-value]
+src\acas_pro\ecommerce\supply_chain.py: note: In member "_query_local_tracking" of class "SupplyChainManager":
+src\acas_pro\ecommerce\supply_chain.py:574:18: error: "SupplyChainManager" has no attribute "_get_db"  [attr-defined]
+src\acas_pro\ecommerce\supply_chain.py: note: In member "get_supplier_async" of class "SupplyChainManager":
+src\acas_pro\ecommerce\supply_chain.py:770:40: error: Argument 1 to "to_thread" has incompatible type "Callable[[str], Supplier | None]"; expected "Callable[[str], None]"  [arg-type]
+src\acas_pro\ecommerce\supply_chain.py: note: In member "get_suppliers_by_owner_async" of class "SupplyChainManager":
+src\acas_pro\ecommerce\supply_chain.py:774:40: error: Argument 1 to "to_thread" has incompatible type "Callable[[str], list[Supplier]]"; expected "Callable[[str], None]"  [arg-type]
+src\acas_pro\ecommerce\supply_chain.py: note: In member "get_low_stock_alerts_async" of class "SupplyChainManager":
+src\acas_pro\ecommerce\supply_chain.py:778:40: error: Argument 1 to "to_thread" has incompatible type "Callable[[str], list[dict[str, Any]]]"; expected "Callable[[str], None]"  [arg-type]
+src\acas_pro\core\security.py: note: In member "_get_db" of class "SessionManager":
+src\acas_pro\core\security.py:477:23: error: Incompatible types in assignment (expression has type "DatabaseManager", variable has type "None")  [assignment]
+src\acas_pro\core\security.py: note: In member "create_session" of class "SessionManager":
+src\acas_pro\core\security.py:513:20: error: Incompatible return value type (got "None", expected "str")  [return-value]
+src\acas_pro\core\security.py:520:24: error: Argument "ip_address" to "log" of "AuditLogger" has incompatible type "str | None"; expected "str"  [arg-type]
+src\acas_pro\core\security.py: note: In class "RateLimiter":
+src\acas_pro\core\security.py:596:6: error: Argument 1 to "contextmanager" has incompatible type "Callable[[RateLimiter], None]"; expected "Callable[[RateLimiter], Iterator[Never]]"  [arg-type]
+src\acas_pro\core\security.py: note: In member "_atomic" of class "RateLimiter":
+src\acas_pro\core\security.py:597: error: The return type of a generator function should be "Generator" or one of its supertypes  [misc]
+src\acas_pro\core\security.py: note: In function "_get_rate_limiter":
+src\acas_pro\core\security.py:961:38: error: Argument 2 to "_get_lazy" has incompatible type "None"; expected "type"  [arg-type]
+src\acas_pro\services\user_service.py: note: In member "__init__" of class "UserService":
+src\acas_pro\services\user_service.py:116:5: error: The return type of "__init__" must be None  [misc]
+src\acas_pro\services\user_service.py: note: In class "UserService":
+src\acas_pro\services\user_service.py:191:68: error: Incompatible default for parameter "ip_address" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\services\user_service.py:191:68: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\services\user_service.py:191:68: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\services\user_service.py: note: In member "login_guest" of class "UserService":
+src\acas_pro\services\user_service.py:323:16: error: Incompatible return value type (got "UserProfile | None", expected "UserProfile")  [return-value]
+src\acas_pro\platforms\account_manager.py: note: In class "AccountManager":
+src\acas_pro\platforms\account_manager.py:138:46: error: Incompatible default for parameter "db" (default has type "None", parameter has type "DatabaseManager")  [assignment]
+src\acas_pro\platforms\account_manager.py:138:46: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\platforms\account_manager.py:138:46: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\platforms\account_manager.py:138:79: error: Incompatible default for parameter "security" (default has type "None", parameter has type "SessionManager")  [assignment]
+src\acas_pro\platforms\account_manager.py:150:30: error: Incompatible default for parameter "refresh_token" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\platforms\account_manager.py:150:30: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\platforms\account_manager.py:150:30: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\platforms\account_manager.py: note: In member "add_account" of class "AccountManager":
+src\acas_pro\platforms\account_manager.py:167:27: error: "SessionManager" has no attribute "encrypt"  [attr-defined]
+src\acas_pro\platforms\account_manager.py:168:29: error: "SessionManager" has no attribute "encrypt"  [attr-defined]
+src\acas_pro\platforms\account_manager.py:179:27: error: Argument "refresh_token" to "PlatformAccount" has incompatible type "Any | None"; expected "str"  [arg-type]
+src\acas_pro\platforms\account_manager.py: note: In member "_save_account" of class "AccountManager":
+src\acas_pro\platforms\account_manager.py:218:13: error: Item "None" of "datetime | None" has no attribute "isoformat"  [union-attr]
+src\acas_pro\platforms\account_manager.py:219:13: error: Item "None" of "datetime | None" has no attribute "isoformat"  [union-attr]
+src\acas_pro\platforms\account_manager.py: note: In member "_row_to_account" of class "AccountManager":
+src\acas_pro\platforms\account_manager.py:245:30: error: Argument "token_expires_at" to "PlatformAccount" has incompatible type "datetime | None"; expected "datetime"  [arg-type]
+src\acas_pro\platforms\account_manager.py: note: In member "list_accounts" of class "AccountManager":
+src\acas_pro\platforms\account_manager.py:296:40: error: Argument 2 to "fetchall" of "DatabaseManager" has incompatible type "list[str]"; expected "tuple[Any, ...]"  [arg-type]
+src\acas_pro\platforms\account_manager.py:309:24: error: Unsupported right operand type for in ("list[str] | None")  [operator]
+src\acas_pro\platforms\account_manager.py: note: In member "update_account_stats" of class "AccountManager":
+src\acas_pro\platforms\account_manager.py:347:23: error: Argument 1 to "append" of "list" has incompatible type "str"; expected "int"  [arg-type]
+src\acas_pro\platforms\account_manager.py:349:32: error: Argument 2 to "execute" of "DatabaseManager" has incompatible type "list[int]"; expected "tuple[Any, ...]"  [arg-type]
+src\acas_pro\platforms\account_manager.py: note: In member "refresh_token" of class "AccountManager":
+src\acas_pro\platforms\account_manager.py:378:27: error: "SessionManager" has no attribute "encrypt"  [attr-defined]
+src\acas_pro\platforms\account_manager.py: note: In member "get_access_token" of class "AccountManager":
+src\acas_pro\platforms\account_manager.py:400:9: error: Returning Any from function declared to return "str | None"  [no-any-return]
+src\acas_pro\platforms\account_manager.py:400:16: error: "SessionManager" has no attribute "decrypt"  [attr-defined]
+src\acas_pro\platforms\account_manager.py: note: In class "AccountManager":
+src\acas_pro\platforms\account_manager.py:405:27: error: Incompatible default for parameter "ip_address" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\platforms\account_manager.py:405:27: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\platforms\account_manager.py:405:27: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\platforms\account_manager.py:406:28: error: Incompatible default for parameter "device_info" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\platforms\account_manager.py:406:28: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\platforms\account_manager.py:406:28: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\platforms\account_manager.py:407:25: error: Incompatible default for parameter "location" (default has type "None", parameter has type "str")  [assignment]
+src\acas_pro\platforms\account_manager.py:407:25: note: PEP 484 prohibits implicit Optional. Accordingly, mypy has changed its default to no_implicit_optional=True
+src\acas_pro\platforms\account_manager.py:407:25: note: Use https://github.com/hauntsaninja/no_implicit_optional to automatically upgrade your codebase
+src\acas_pro\platforms\account_manager.py: note: In member "get_account_summary" of class "AccountManager":
+src\acas_pro\platforms\account_manager.py:457:31: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+src\acas_pro\platforms\account_manager.py:458:32: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+src\acas_pro\platforms\account_manager.py:459:35: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+src\acas_pro\platforms\account_manager.py:460:32: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+src\acas_pro\platforms\account_manager.py:461:30: error: Value of type "dict[Any, Any] | None" is not indexable  [index]
+src\acas_pro\blockchain\wallet_manager.py: note: In member "get_transactions" of class "WalletManager":
+src\acas_pro\blockchain\wallet_manager.py:397:23: error: Argument 1 to "append" of "list" has incompatible type "int"; expected "str"  [arg-type]
+src\acas_pro\blockchain\wallet_manager.py: note: In member "get_balance_summary" of class "WalletManager":
+src\acas_pro\blockchain\wallet_manager.py:426:9: error: Need type annotation for "summary" (hint: "summary: dict[<type>, <type>] = ...")  [var-annotated]
+src\acas_pro\ads\ad_manager.py: note: In member "to_dict" of class "AdCampaign":
+src\acas_pro\ads\ad_manager.py:153:48: error: Item "None" of "list[AdSet] | None" has no attribute "__iter__" (not iterable)  [union-attr]
+src\acas_pro\ads\ad_manager.py: note: In member "create_campaign" of class "AdManager":
+src\acas_pro\ads\ad_manager.py:379:60: error: Item "None" of "list[AdSet] | None" has no attribute "__iter__" (not iterable)  [union-attr]
+src\acas_pro\ads\ad_manager.py: note: In member "create_campaign_async" of class "AdManager":
+src\acas_pro\ads\ad_manager.py:636:60: error: Item "None" of "list[AdSet] | None" has no attribute "__iter__" (not iterable)  [union-attr]

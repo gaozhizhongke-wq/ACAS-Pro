@@ -161,12 +161,12 @@ class AppConfig:
     debug: bool = False
     environment: Environment = Environment.DEVELOPMENT
     
-    database: DatabaseConfig = None
-    security: SecurityConfig = None
-    ml: MLConfig = None
-    ui: UIConfig = None
-    llm: LLMConfig = None
-    oauth: OAuthConfig = None
+    database: Optional[DatabaseConfig] = None
+    security: Optional[SecurityConfig] = None
+    ml: Optional[MLConfig] = None
+    ui: Optional[UIConfig] = None
+    llm: Optional[LLMConfig] = None
+    oauth: Optional[OAuthConfig] = None
     
     def __post_init__(self) -> Any:
         # ACAS_ENV always takes precedence over any other configuration
@@ -210,7 +210,7 @@ class AppConfig:
         missing = []
         
         # Check SECRET_KEY
-        if not self.security.secret_key or len(self.security.secret_key) < 32:
+        if not self.security or not self.security.secret_key or len(self.security.secret_key) < 32:
             missing.append("SECRET_KEY (must be >= 32 chars)")
         
         # Check JWT_SECRET
@@ -236,15 +236,15 @@ class AppConfig:
         errors = []
         
         # Validate database
-        if self.database.type not in ['sqlite', 'postgresql']:
+        if self.database and self.database.type not in ['sqlite', 'postgresql']:
             errors.append(f"Invalid database type: {self.database.type}")
         
         # Validate security
-        if not self.security.secret_key:
+        if not self.security or not self.security.secret_key:
             errors.append("SECRET_KEY is required")
         
         # Validate LLM
-        if self.llm.enabled and not self.llm.api_key:
+        if self.llm and self.llm.enabled and not self.llm.api_key:
             errors.append("LLM API key is required when LLM is enabled")
         
         return len(errors) == 0, errors
@@ -336,9 +336,9 @@ def reset_config() -> None:
 # Implemented as a module-level lazy accessor via __getattr__
 # to avoid import-time side effects while maintaining backward compatibility.
 
-def __getattr__(name) -> None:
+def __getattr__(name: str) -> Optional[object]:
     if name == 'config':
-        return get_config()
+        return get_config()  # type: ignore[return-value]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
@@ -346,3 +346,4 @@ def __getattr__(name) -> None:
 def config_func() -> AppConfig:
     """Backward-compatible lazy config accessor - returns global singleton"""
     return get_config()
+

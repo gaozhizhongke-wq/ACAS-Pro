@@ -47,9 +47,9 @@ class AgeRange:
 @dataclass
 class GeoTargeting:
     """地域定向"""
-    provinces: List[str] = None
-    cities: List[str] = None
-    exclude_regions: List[str] = None
+    provinces: Optional[List[str]] = None
+    cities: Optional[List[str]] = None
+    exclude_regions: Optional[List[str]] = None
     radius_targeting: Optional[Dict[str, Any]] = None
 
     def __post_init__(self) -> None:
@@ -64,11 +64,11 @@ class GeoTargeting:
 @dataclass
 class DeviceTargeting:
     """设备定向"""
-    device_types: List[str] = None
-    os_types: List[str] = None
-    network_types: List[str] = None
-    brands: List[str] = None
-    price_ranges: List[str] = None
+    device_types: Optional[List[str]] = None
+    os_types: Optional[List[str]] = None
+    network_types: Optional[List[str]] = None
+    brands: Optional[List[str]] = None
+    price_ranges: Optional[List[str]] = None
 
     def __post_init__(self) -> None:
         if self.device_types is None:
@@ -91,13 +91,13 @@ class AudienceSegment:
     type: AudienceType
 
     gender: Gender = Gender.ALL
-    age_range: AgeRange = None
-    geo_targeting: GeoTargeting = None
-    device_targeting: DeviceTargeting = None
+    age_range: Optional[AgeRange] = None
+    geo_targeting: Optional[GeoTargeting] = None
+    device_targeting: Optional[DeviceTargeting] = None
 
-    interests: List[str] = None
-    behaviors: List[str] = None
-    custom_tags: List[str] = None
+    interests: Optional[List[str]] = None
+    behaviors: Optional[List[str]] = None
+    custom_tags: Optional[List[str]] = None
 
     source_audience_id: Optional[str] = None
     lookalike_ratio: Optional[float] = None
@@ -539,3 +539,4 @@ class AudienceTargeting:
             self._logger.info(f"相似人群包创建成功(异步): {name}")
             return lookalike
         return None
+

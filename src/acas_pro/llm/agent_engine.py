@@ -58,7 +58,7 @@ class AgentAction:
     content: str = ""
     tool_name: str = ""
     tool_args: Dict[str, Any] = field(default_factory=dict)
-    result: Any = None
+    result: Optional[Any] = None
     reasoning: str = ""
     timestamp: float = field(default_factory=time.time)
 
@@ -398,3 +398,4 @@ class AgentOrchestrator:
                 break
         
         return results
+

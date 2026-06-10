@@ -69,9 +69,9 @@ def _init_metrics() -> None:
 
 
 @bp.route('', methods=['GET'])
-def metrics() -> None:
+def metrics() -> Response:
     """Expose Prometheus metrics."""
     if not _HAS_PROMETHEUS:
         return Response('prometheus_client not installed', status=503, mimetype='text/plain')
     _init_metrics()
-    return Response(generate_latest(_registry), mimetype=CONTENT_TYPE_LATEST)
+    return Response(generate_latest(_registry), mimetype=CONTENT_TYPE_LATEST)  # type: ignore[arg-type]

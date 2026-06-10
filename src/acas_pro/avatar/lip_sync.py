@@ -35,7 +35,7 @@ class VisemeFrame:
     
     # 视位权重 (Viseme weights)
     # 标准视位: A, E, I, O, U, M, B, P, F, V, S, Z, etc.
-    visemes: Dict[str, float] = None
+    visemes: Optional[Dict[str, float]] = None
     
     # 嘴部开合度 (0-1)
     jaw_open: float = 0.0
@@ -420,3 +420,4 @@ class LipSyncEngine:
         processing_rate = 0.5  # 处理速度倍数
         
         return base_time + audio_duration * processing_rate
+

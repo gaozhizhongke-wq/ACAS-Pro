@@ -43,7 +43,7 @@ class ContentTemplate:
     platform: Platform
     duration: int
     style: ContentStyle = ContentStyle.CASUAL
-    tags: List[str] = None
+    tags: Optional[List[str]] = None
 
 
 @dataclass
@@ -179,3 +179,4 @@ class ContentCreationLogic:
     def _generate_script_content(self, topic: str, style: ContentStyle, duration: int) -> str:
         """Generate script content"""
         return f"关于{topic}的{style.value}内容，时长{duration}秒"
+

@@ -49,7 +49,7 @@ class BiddingConfig:
     min_bid: Optional[float] = None    # 最低出价限制
     target_cpa: Optional[float] = None # 目标CPA
     target_roi: Optional[float] = None # 目标ROI
-    adjustments: List[BidAdjustment] = None
+    adjustments: Optional[List[BidAdjustment]] = None
     
     def __post_init__(self) -> None:
         if self.adjustments is None:
@@ -345,3 +345,4 @@ class BiddingEngine:
             })
         
         return results
+

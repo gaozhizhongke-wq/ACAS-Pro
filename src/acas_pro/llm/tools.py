@@ -20,7 +20,7 @@ class ToolDefinition:
     name: str
     description: str
     parameters: Dict[str, Any]  # JSON Schema
-    function: Callable = None
+    function: Optional[Callable] = None
     
     def to_schema(self) -> Dict:
         """Convert to OpenAI tool schema"""
@@ -730,3 +730,4 @@ class ACASTools:
             import logging
             logging.debug(f"{type(e).__name__}: {e}")
         return None
+

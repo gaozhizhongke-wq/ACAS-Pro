@@ -34,7 +34,7 @@ class HealthChecker:
     """Comprehensive health checker for ACAS Pro"""
     
     def __init__(self) -> Any:
-        self.checks: List[callable] = [
+        self.checks: List[Callable[..., Any]] = [
             self._check_database,
             self._check_config,
             self._check_disk_space,

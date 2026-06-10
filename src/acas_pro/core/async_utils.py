@@ -9,6 +9,7 @@ import asyncio
 from typing import Callable, Any, Optional, TypeVar, Coroutine
 from functools import wraps
 import threading
+from concurrent.futures import ThreadPoolExecutor  # noqa: F401  # type: ignore[name-defined]
 
 T = TypeVar('T')
 

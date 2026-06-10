@@ -68,7 +68,7 @@ class Festival:
     
     # 状态
     is_active: bool = True
-    created_at: datetime = None
+    created_at: Optional[datetime] = None
     
     def __post_init__(self) -> None:
         if self.themes is None:
@@ -103,7 +103,7 @@ class MarketingPlan:
     
     # 状态
     status: str = "draft"  # draft, active, completed, cancelled
-    created_at: datetime = None
+    created_at: Optional[datetime] = None
     
     def __post_init__(self) -> None:
         if self.created_at is None:
@@ -376,7 +376,7 @@ class FestivalCalendar:
     def get_upcoming_festivals(
         self,
         days: int = 30,
-        market: MarketType = None
+        market: Optional[MarketType] = None
     ) -> List[Festival]:
         """获取即将到来的节日"""
         today = datetime.now()
@@ -447,7 +447,7 @@ class FestivalCalendar:
     def get_marketing_plans(
         self,
         status: str = None,
-        festival_id: str = None
+        festival_id: Optional[str] = None
     ) -> List[MarketingPlan]:
         """获取营销计划列表"""
         query = "SELECT * FROM marketing_plans WHERE 1=1"
@@ -510,3 +510,4 @@ class FestivalCalendar:
                 f"{festival.name}限定",
             ]
         }
+

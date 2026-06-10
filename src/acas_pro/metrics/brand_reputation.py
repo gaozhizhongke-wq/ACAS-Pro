@@ -53,7 +53,7 @@ class ReputationScore:
     trend: str  # improving, stable, declining
     platform_breakdown: Dict[str, float] = field(default_factory=dict)
     category_breakdown: Dict[str, float] = field(default_factory=dict)
-    calculated_at: datetime = None
+    calculated_at: Optional[datetime] = None
     
     def __post_init__(self) -> None:
         if self.calculated_at is None:
@@ -140,7 +140,7 @@ class BrandReputationCalculator:
     def calculate(
         self,
         articles: List[SentimentArticle],
-        previous_score: float = None
+        previous_score: Optional[float] = None
     ) -> ReputationScore:
         """
         Calculate brand reputation score
@@ -468,3 +468,4 @@ if __name__ == "__main__":
     
     score = reputation_calculator.calculate(sample_articles)
     logger.info(f"[BrandReputation] {reputation_calculator.get_summary(score)}")
+
