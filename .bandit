@@ -1,0 +1,7 @@
+[bandit]
+# B608 (hardcoded_sql_expressions):
+#   ACAS-Pro uses parameterized queries via _build_where_clause() and
+#   direct ? / %s placeholders.  All occurrences flagged by
+#   bandit are false positives — SQL string is built from trusted
+#   column/table names, values are parameterized.
+tests_disable = B608

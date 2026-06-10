@@ -8,6 +8,7 @@ import json
 import hashlib
 import urllib.request
 import urllib.error
+import urllib.parse
 from pathlib import Path
 from typing import Optional, Tuple, Callable, Awaitable
 from dataclasses import dataclass
@@ -19,6 +20,17 @@ try:
     _HAS_AIOHTTP = True
 except ImportError:
     _HAS_AIOHTTP = False
+
+def _safe_urlopen(req, **kwargs):
+    """Validate URL scheme before opening (http/https only)."""
+    url = req.full_url if hasattr(req, 'full_url') else str(req)
+    scheme = urllib.parse.urlparse(url).scheme
+    if scheme not in ('http', 'https'):
+        raise ValueError(
+            f"Unsupported URL scheme: {scheme!r} (only http/https allowed)"
+        )
+    return urllib.request.urlopen(req, **kwargs)  # nosec B310  # validated scheme above
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -53,7 +65,7 @@ class UpdateChecker:
                 self.VERSION_FILE,
                 headers={"User-Agent": f"ACAS-Pro/{self.current_version}"}
             )
-            with urllib.request.urlopen(req, timeout=10) as response:
+            with _safe_urlopen(req, timeout=10) as response:
                 data = json.loads(response.read().decode("utf-8"))
 
             latest = data.get("latest_version", self.current_version)
@@ -131,7 +143,7 @@ class UpdateChecker:
                 headers={"User-Agent": f"ACAS-Pro/{self.current_version}"}
             )
 
-            with urllib.request.urlopen(req, timeout=30) as response:
+            with _safe_urlopen(req, timeout=30) as response:
                 total = int(response.headers.get("Content-Length", 0))
                 downloaded = 0
                 chunk_size = 8192

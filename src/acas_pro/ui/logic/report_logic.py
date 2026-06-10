@@ -10,6 +10,7 @@ from typing import List, Dict, Optional, Any
 from datetime import datetime, timedelta
 from enum import Enum
 import json
+import tempfile
 
 
 class ReportType(Enum):
@@ -177,16 +178,16 @@ class ReportLogic:
         report.format = format
         
         if format == ReportFormat.JSON:
-            file_path = f"/tmp/report_{report_id}.json"
+            file_path = f"{tempfile.gettempdir()}/report_{report_id}.json"
             # In real implementation, write to file
             report.file_path = file_path
             return file_path
         elif format == ReportFormat.CSV:
-            file_path = f"/tmp/report_{report_id}.csv"
+            file_path = f"{tempfile.gettempdir()}/report_{report_id}.csv"
             report.file_path = file_path
             return file_path
         else:
-            file_path = f"/tmp/report_{report_id}.{format.value}"
+            file_path = f"{tempfile.gettempdir()}/report_{report_id}.{format.value}"
             report.file_path = file_path
             return file_path
     

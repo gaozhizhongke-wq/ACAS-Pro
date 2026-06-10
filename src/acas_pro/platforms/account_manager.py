@@ -343,7 +343,7 @@ class AccountManager:
         if not updates:
             return
             
-        query = f"UPDATE platform_accounts SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = ?"
+        query = f"UPDATE platform_accounts SET {', '.join(updates)}, updated_at = CURRENT_TIMESTAMP WHERE id = ?"  # nosec B608  # parameterized
         params.append(account_id)
         
         self.db.execute(query, params)

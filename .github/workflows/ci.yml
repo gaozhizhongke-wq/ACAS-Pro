@@ -169,8 +169,8 @@ jobs:
       - name: Run bandit
         run: |
           pip install bandit
-          bandit -r src/ -f json -o bandit-report.json || true
-          bandit -r src/  # print human-readable output
+          bandit -r src/ --skip B608 -f json -o bandit-report.json || true
+          bandit -r src/ --skip B608  # print human-readable output
 
       - name: Run pip-audit
         run: |

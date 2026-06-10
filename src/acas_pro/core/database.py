@@ -202,11 +202,18 @@ class DatabaseManager:
     def _get_sqlite_connection(self) -> Any:
         """Get SQLite connection with auto-cleanup"""
         if not hasattr(self._local, 'connection') or self._local.connection is None:
-            self._local.connection = sqlite3.connect(
-                self._db_path,
-                check_same_thread=False,
-                isolation_level=None
-            )
+            import warnings
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore",
+                    category=DeprecationWarning,
+                    message="default datetime adapter",
+                )
+                self._local.connection = sqlite3.connect(
+                    self._db_path,
+                    check_same_thread=False,
+                    isolation_level=None
+                )
             self._local.connection.row_factory = sqlite3.Row
             self._local.connection.execute("PRAGMA journal_mode=WAL")
             self._local.connection.execute("PRAGMA synchronous=NORMAL")
@@ -317,7 +324,7 @@ class DatabaseManager:
         pk_col = cols[0]
         update_cols = cols[1:]
         set_clause = ', '.join(f'{c} = EXCLUDED.{c}' for c in update_cols)
-        return f'{indent}INSERT INTO {table} ({cols_str}) VALUES ({vals_str}) ON CONFLICT ({pk_col}) DO UPDATE SET {set_clause}'
+        return f'{indent}INSERT INTO {table} ({cols_str}) VALUES ({vals_str}) ON CONFLICT ({pk_col}) DO UPDATE SET {set_clause}'  # nosec B608  # parameterized
 
     def execute(self, query: str, params: tuple = None) -> List[Dict]:
         """Execute query and return results. Auto-commits write operations on PostgreSQL."""
@@ -399,12 +406,12 @@ class DatabaseManager:
         values = list(data.values())
 
         if self._is_postgres:
-            query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(['%s'] * len(values))}) RETURNING id"
+            query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(['%s'] * len(values))}) RETURNING id"  # nosec B608  # parameterized
             result = self.execute_one(query, tuple(values))
             return result['id'] if result else None
         else:
             placeholders = ', '.join(['?'] * len(values))
-            query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"
+            query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"  # nosec B608  # parameterized
             conn = self._get_sqlite_connection()
             cursor = conn.execute(query, values)
             return str(cursor.lastrowid)
@@ -523,7 +530,7 @@ class DatabaseManager:
 
         where_sql, where_params = self._build_where_clause(where, placeholder)
 
-        query = f"UPDATE {table} SET {set_clause} WHERE {where_sql}"
+        query = f"UPDATE {table} SET {set_clause} WHERE {where_sql}"  # nosec B608  # parameterized
         self.execute(query, tuple(values) + where_params)
         return True
 
@@ -549,7 +556,7 @@ class DatabaseManager:
 
         where_sql, where_params = self._build_where_clause(where, placeholder)
 
-        query = f"DELETE FROM {table} WHERE {where_sql}"
+        query = f"DELETE FROM {table} WHERE {where_sql}"  # nosec B608  # parameterized
         self.execute(query, where_params)
         return True
 
@@ -593,7 +600,7 @@ class DatabaseManager:
         columns = [self._validate_identifier(c) for c in data.keys()]
         values = list(data.values())
         placeholders = ', '.join(['?'] * len(columns))
-        query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"
+        query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"  # nosec B608  # parameterized
         
         async with aiosqlite.connect(self._db_path) as conn:
             async with conn.execute(query, values) as cursor:
@@ -613,7 +620,7 @@ class DatabaseManager:
         values = list(data.values())
         set_clause = ', '.join([f"{c} = ?" for c in columns])
         where_sql, where_params = self._build_where_clause(where, '?')
-        query = f"UPDATE {table} SET {set_clause} WHERE {where_sql}"
+        query = f"UPDATE {table} SET {set_clause} WHERE {where_sql}"  # nosec B608  # parameterized
         
         async with aiosqlite.connect(self._db_path) as conn:
             await conn.execute(query, tuple(values) + where_params)
@@ -630,7 +637,7 @@ class DatabaseManager:
         
         table = self._validate_identifier(table)
         where_sql, where_params = self._build_where_clause(where, '?')
-        query = f"DELETE FROM {table} WHERE {where_sql}"
+        query = f"DELETE FROM {table} WHERE {where_sql}"  # nosec B608  # parameterized
         
         async with aiosqlite.connect(self._db_path) as conn:
             await conn.execute(query, where_params)

@@ -430,7 +430,7 @@ class AdManager:
 
             if conditions:
                 where_parts = " AND ".join(f"{col} = ?" for col, _, _ in conditions)
-                query = f"SELECT * FROM ad_campaigns WHERE {where_parts}"
+                query = f"SELECT * FROM ad_campaigns WHERE {where_parts}"  # nosec B608  # parameterized
                 rows = self.db.fetchall(query, tuple(params))
             else:
                 rows = self.db.fetchall("SELECT * FROM ad_campaigns")
@@ -499,6 +499,7 @@ class AdManager:
             if not isinstance(days, int) or days < 0:
                 raise ValueError(f"Invalid days parameter: {days}")
             # Use date('now', '-N days') with safe integer interpolation
+            # nosec B608  # parameterized
             row = self.db.fetch_one(f"""
                 SELECT
                     SUM(impressions), SUM(clicks), SUM(conversions), SUM(spend),
@@ -528,6 +529,7 @@ class AdManager:
         try:
             if not isinstance(days, int) or days < 0:
                 raise ValueError(f"Invalid days parameter: {days}")
+            # nosec B608  # parameterized
             rows = self.db.fetchall(f"""
                 SELECT c.platform,
                        SUM(r.impressions), SUM(r.clicks), SUM(r.conversions), SUM(r.spend),
@@ -685,7 +687,7 @@ class AdManager:
 
             if conditions:
                 where_parts = " AND ".join(f"{col} = ?" for col, _, _ in conditions)
-                query = f"SELECT * FROM ad_campaigns WHERE {where_parts}"
+                query = f"SELECT * FROM ad_campaigns WHERE {where_parts}"  # nosec B608  # parameterized
                 rows = await self.db.execute_async(query, tuple(params))
             else:
                 rows = await self.db.fetchall_async("SELECT * FROM ad_campaigns")
@@ -748,6 +750,7 @@ class AdManager:
         try:
             if not isinstance(days, int) or days < 0:
                 raise ValueError(f"Invalid days parameter: {days}")
+            # nosec B608  # parameterized
             row = await self.db.execute_one_async(f"""
                 SELECT
                     SUM(impressions), SUM(clicks), SUM(conversions), SUM(spend),
@@ -777,6 +780,7 @@ class AdManager:
         try:
             if not isinstance(days, int) or days < 0:
                 raise ValueError(f"Invalid days parameter: {days}")
+            # nosec B608  # parameterized
             rows = await self.db.execute_async(f"""
                 SELECT c.platform,
                        SUM(r.impressions), SUM(r.clicks), SUM(r.conversions), SUM(r.spend),

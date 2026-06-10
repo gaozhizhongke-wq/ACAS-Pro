@@ -98,7 +98,7 @@ class QQOAuth(OAuthProvider):
         }
         try:
             url = f"{self.TOKEN_URL}?{urllib.parse.urlencode(params)}"
-            with urllib.request.urlopen(url, timeout=10) as response:
+            with urllib.request.urlopen(url, timeout=10) as response:  # nosec B310  # hardcoded platform URL
                 data = urllib.parse.parse_qs(response.read().decode())
                 access_token = data.get("access_token", [None])[0]
                 if not access_token:
@@ -122,7 +122,7 @@ class QQOAuth(OAuthProvider):
         """获取QQ的openid"""
         try:
             url = f"{self.OPENID_URL}?access_token={access_token}"
-            with urllib.request.urlopen(url, timeout=10) as response:
+            with urllib.request.urlopen(url, timeout=10) as response:  # nosec B310  # hardcoded platform URL
                 text = response.read().decode()
                 # Parse JSONP response
                 if "callback" in text:
@@ -147,7 +147,7 @@ class QQOAuth(OAuthProvider):
                 "openid": openid
             }
             url = f"{self.USER_INFO_URL}?{urllib.parse.urlencode(params)}"
-            with urllib.request.urlopen(url, timeout=10) as response:
+            with urllib.request.urlopen(url, timeout=10) as response:  # nosec B310  # hardcoded platform URL
                 data = json.loads(response.read().decode())
             
             return OAuthUserInfo(
@@ -194,7 +194,7 @@ class QQOAuth(OAuthProvider):
     def _blocking_get_token(self, params: dict) -> dict:
         """Blocking helper for token (used as fallback)"""
         url = f"{self.TOKEN_URL}?{urllib.parse.urlencode(params)}"
-        with urllib.request.urlopen(url, timeout=10) as response:
+        with urllib.request.urlopen(url, timeout=10) as response:  # nosec B310  # hardcoded platform URL
             return urllib.parse.parse_qs(response.read().decode())
 
 
@@ -238,7 +238,7 @@ class WeChatOAuth(OAuthProvider):
         }
         try:
             url = f"{self.TOKEN_URL}?{urllib.parse.urlencode(params)}"
-            with urllib.request.urlopen(url, timeout=10) as response:
+            with urllib.request.urlopen(url, timeout=10) as response:  # nosec B310  # hardcoded platform URL
                 data = json.loads(response.read().decode())
                 
             # Check for error response from WeChat
@@ -286,7 +286,7 @@ class WeChatOAuth(OAuthProvider):
                 "openid": openid  # Use the openid from token response
             }
             url = f"{self.USER_INFO_URL}?{urllib.parse.urlencode(params)}"
-            with urllib.request.urlopen(url, timeout=10) as response:
+            with urllib.request.urlopen(url, timeout=10) as response:  # nosec B310  # hardcoded platform URL
                 data = json.loads(response.read().decode())
             
             # Check for WeChat API errors
@@ -380,7 +380,7 @@ class OAuthService:
                 "refresh_token": refresh_token
             }
             url = f"{WeChatOAuth.REFRESH_URL}?{urllib.parse.urlencode(params)}"
-            with urllib.request.urlopen(url, timeout=10) as response:
+            with urllib.request.urlopen(url, timeout=10) as response:  # nosec B310  # hardcoded platform URL
                 data = json.loads(response.read().decode())
             
             if "errcode" in data and data["errcode"] != 0:

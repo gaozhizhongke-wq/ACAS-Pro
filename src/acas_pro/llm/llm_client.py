@@ -16,6 +16,7 @@ from typing import List, Dict, Optional, Callable, Any, AsyncIterator
 from enum import Enum
 import urllib.request
 import urllib.error
+import urllib.parse
 
 # Try importing aiohttp for async HTTP
 try:
@@ -23,6 +24,17 @@ try:
     _HAS_AIOHTTP = True
 except ImportError:
     _HAS_AIOHTTP = False
+
+
+def _safe_urlopen(req, **kwargs):
+    """Validate URL scheme before opening (http/https only)."""
+    url = req.full_url if hasattr(req, 'full_url') else str(req)
+    scheme = urllib.parse.urlparse(url).scheme
+    if scheme not in ('http', 'https'):
+        raise ValueError(
+            f"Unsupported URL scheme: {scheme!r} (only http/https allowed)"
+        )
+    return urllib.request.urlopen(req, **kwargs)  # nosec B310  # validated scheme above
 
 
 class LLMProvider(Enum):
@@ -135,7 +147,7 @@ class BaseLLMProvider(ABC):
             method='POST'
         )
         try:
-            with urllib.request.urlopen(req, timeout=120) as response:
+            with _safe_urlopen(req, timeout=120) as response:
                 return json.loads(response.read().decode('utf-8'))
         except urllib.error.HTTPError as e:
             error_body = e.read().decode('utf-8')

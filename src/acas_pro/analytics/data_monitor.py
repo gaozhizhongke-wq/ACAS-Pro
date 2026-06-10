@@ -234,6 +234,7 @@ class DataMonitor:
             where_clause = "date BETWEEN ? AND ? AND platform = ? AND account_id = ?"
             
         # 汇总数据
+        # nosec B608  # parameterized
         result = self.db.fetchone(f"""
             SELECT 
                 SUM(views) as total_views,
@@ -281,6 +282,7 @@ class DataMonitor:
         else:
             prev_where = "date BETWEEN ? AND ?"
         
+        # nosec B608  # parameterized
         prev_result = self.db.fetchone(f"""
             SELECT SUM(views) as views, SUM(revenue) as revenue
             FROM daily_metrics
