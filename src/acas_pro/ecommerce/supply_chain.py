@@ -617,10 +617,11 @@ class SupplyChainManager:
             import json as json_module
             data = json_module.dumps(request_data, ensure_ascii=False)
             
-            # MD5签名
+            # MD5签名（平台API强制要求，不可升级）
             sign_data = data + api_key
             import hashlib
-            sign = hashlib.md5(sign_data.encode('utf-8')).hexdigest()
+            # nosec B303: MD5 required by logistics platform API.
+            sign = hashlib.md5(sign_data.encode('utf-8'), usedforsecurity=False).hexdigest()
             
             params = {
                 'RequestData': data,
@@ -679,7 +680,8 @@ class SupplyChainManager:
             
             data = json.dumps(request_data, ensure_ascii=False)
             sign_data = data + api_key
-            sign = hashlib.md5(sign_data.encode('utf-8')).hexdigest()
+            # nosec B303: MD5 required by logistics platform API.
+            sign = hashlib.md5(sign_data.encode('utf-8'), usedforsecurity=False).hexdigest()
             
             params = {
                 'RequestData': data,

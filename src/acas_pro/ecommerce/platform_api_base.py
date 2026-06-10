@@ -118,7 +118,8 @@ class PlatformAPIClient(ABC):
         """
         sorted_keys = sorted(params.keys())
         sign_str = secret + ''.join(f'{k}{params[k]}' for k in sorted_keys) + secret
-        return hashlib.md5(sign_str.encode('utf-8')).hexdigest().upper()
+        # nosec B303: MD5 required by platform API spec for signing; cannot upgrade.
+        return hashlib.md5(sign_str.encode('utf-8'), usedforsecurity=False).hexdigest().upper()
     
     def sign_hmac_sha256(self, params: Dict[str, Any], secret: str) -> str:
         """HMAC-SHA256签名（抖音小店通用）"""

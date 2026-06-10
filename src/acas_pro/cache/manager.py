@@ -155,7 +155,7 @@ def cached(ttl: int = 300, key_prefix: str = "") -> None:
 def _generate_cache_key(prefix: str, func_name: str, args: tuple, kwargs: dict) -> str:
     """生成缓存key"""
     key_data = f"{prefix}:{func_name}:{args}:{sorted(kwargs.items())}"
-    return f"acas:{prefix}:{func_name}:{hashlib.md5(key_data.encode()).hexdigest()}"
+    return f"acas:{prefix}:{func_name}:{hashlib.md5(key_data.encode(), usedforsecurity=False).hexdigest()}"
 
 
 # 常用缓存模式
