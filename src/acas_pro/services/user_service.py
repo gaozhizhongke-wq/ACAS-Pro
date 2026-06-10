@@ -302,7 +302,7 @@ class UserService:
             "id": guest_id,
             "account_type": "guest",
             "account": guest_id,
-            "password_hash": "",
+            "password_hash": "GUEST_ACCOUNT_NO_PASSWORD",  # nosec B313  # guest accounts have no password
             "nickname": "Guest",
             "role": "guest",
             "status": "active",

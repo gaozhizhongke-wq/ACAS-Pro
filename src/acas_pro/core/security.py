@@ -736,8 +736,9 @@ class CryptoManager:
                                  f'{os.environ.get("USERNAME", "%USERNAME%")}:R'],
                                 check=True, capture_output=True, timeout=5
                             )
-                        except Exception:
-                            pass  # Best effort on Windows
+                        except Exception as e:
+                            # nosec B110  # Best effort Windows ACL - do not fail on permission errors
+                            logger.debug(f"icacls permission hardening skipped: {e}")
                     else:
                         os.chmod(dev_salt_file, 0o600)
                     logger.warning(

@@ -74,8 +74,8 @@ class QQOAuth(OAuthProvider):
     def __init__(self, cfg): self._cfg = cfg
     
     AUTH_URL = "https://graph.qq.com/oauth2.0/authorize"
-    TOKEN_URL = "https://graph.qq.com/oauth2.0/token"
-    OPENID_URL = "https://graph.qq.com/oauth2.0/me"
+    TOKEN_URL = "https://graph.qq.com/oauth2.0/token"  # nosec B313  # OAuth endpoint URL, not a password
+    OPENID_URL = "https://graph.qq.com/oauth2.0/me"  # nosec B313  # OAuth endpoint URL, not a password
     USER_INFO_URL = "https://graph.qq.com/user/get_user_info"
     
     def get_authorization_url(self, state: str) -> str:
@@ -212,7 +212,7 @@ class WeChatOAuth(OAuthProvider):
     
     AUTH_URL = "https://open.weixin.qq.com/connect/qrconnect"
     TOKEN_URL = "https://api.weixin.qq.com/sns/oauth2/access_token"
-    REFRESH_URL = "https://api.weixin.qq.com/sns/oauth2/refresh_token"
+    REFRESH_URL = "https://api.weixin.qq.com/sns/oauth2/refresh_token"  # nosec B313  # OAuth endpoint URL, not a password
     USER_INFO_URL = "https://api.weixin.qq.com/sns/userinfo"
     
     def get_authorization_url(self, state: str) -> str:

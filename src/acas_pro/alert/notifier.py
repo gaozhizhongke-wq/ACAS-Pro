@@ -300,6 +300,7 @@ class AlertNotifier:
 
     def configure_email(self, smtp_host: str = "", smtp_port: int = 587,
                         smtp_user: str = "", smtp_password: str = ""):
+        # nosec B313  # default empty, caller must set real password
         self.smtp_host = smtp_host
         self.smtp_port = smtp_port
         self.smtp_user = smtp_user
