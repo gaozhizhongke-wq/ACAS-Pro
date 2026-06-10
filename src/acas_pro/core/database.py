@@ -11,8 +11,26 @@ import json
 import sqlite3
 import threading
 import sys
-from datetime import datetime
+from datetime import date, datetime as _datetime, time
 from pathlib import Path
+import uuid
+
+
+# Register adapters explicitly to avoid deprecated default adapter warning in Python 3.12+.
+# sqlite3 built-in adapters for date/datetime/time/uuid are deprecated, but
+# explicitly registering them via register_adapter() is the recommended upgrade path.
+def _register_sqlite3_adapters() -> None:
+    """Register SQLite3 adapters for Python types (Python 3.12+ compatible)."""
+    try:
+        sqlite3.register_adapter(date, lambda d: d.isoformat())
+        sqlite3.register_adapter(_datetime, lambda dt: dt.isoformat())
+        sqlite3.register_adapter(time, lambda t: t.isoformat())
+        sqlite3.register_adapter(uuid.UUID, lambda u: u.hex)
+    except (ImportError, AttributeError, TypeError):
+        pass  # older Python or types not available
+
+
+_register_sqlite3_adapters()
 from typing import List, Dict, Optional, Any, Callable, Union, Sequence
 from contextlib import contextmanager
 from dataclasses import asdict
