@@ -61,9 +61,9 @@ class JWTAuthManager:
     
     def __init__(self):
         # 从环境变量获取密钥
-        self.secret_key = os.environ.get('JWT_SECRET_KEY')
+        self.secret_key = os.environ.get('ACAS_JWT_SECRET') or os.environ.get('JWT_SECRET')
         if not self.secret_key:
-            logger.warning("JWT_SECRET_KEY not set, using random key (DO NOT USE IN PRODUCTION)")
+            logger.warning("ACAS_JWT_SECRET not set, using random key (DO NOT USE IN PRODUCTION)")
             self.secret_key = secrets.token_urlsafe(32)
         
         self.algorithm = 'HS256'
