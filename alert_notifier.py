@@ -2,7 +2,6 @@
 """ACAS Pro - 告警通知发送器
 支持: 飞书/钉钉/企业微信 Webhook
 """
-import json
 import hmac
 import hashlib
 import base64
@@ -158,7 +157,6 @@ class AlertNotifier:
 # ============================================
 if __name__ == "__main__":
     import argparse
-    import os
     
     parser = argparse.ArgumentParser(description="ACAS Pro 告警通知")
     parser.add_argument("--platform", choices=["feishu", "dingtalk", "wecom"], required=True)

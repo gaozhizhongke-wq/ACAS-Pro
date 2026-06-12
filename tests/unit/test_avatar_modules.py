@@ -3,7 +3,7 @@
 """Unit tests for avatar modules."""
 
 import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import pytest
 
 
@@ -238,7 +238,7 @@ class TestAvatarEngine:
 
     def test_digital_avatar(self):
         from acas_pro.avatar.avatar_engine import DigitalAvatar, AvatarType, AvatarStyle, AvatarGender, AvatarAgeGroup
-        at_list = list(AvatarType); as_list = list(AvatarStyle); ag_list = list(AvatarGender); aag_list = list(AvatarAgeGroup)
+        at_list = list(AvatarType); as_list = list(AvatarStyle); ag_list = list(AvatarGender); aag_list = list(AvatarAgeGroup)  # noqa: E702
         da = DigitalAvatar(
             id="avatar_01", name="Test Avatar",
             type=at_list[0], style=as_list[0],

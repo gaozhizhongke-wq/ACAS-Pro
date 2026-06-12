@@ -4,7 +4,6 @@
 
 from unittest.mock import MagicMock, patch
 import sys
-import pytest
 
 if 'numpy' not in sys.modules:
     sys.modules['numpy'] = MagicMock()

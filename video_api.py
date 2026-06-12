@@ -9,7 +9,6 @@ ACAS Pro 视频剪辑 API 服务
 """
 
 import os
-import sys
 import re
 import subprocess
 import tempfile
@@ -50,7 +49,7 @@ def find_ffmpeg():
                                   capture_output=True, text=True, timeout=5)
             if result.returncode == 0:
                 return path
-        except:
+        except Exception:
             continue
     return None
 

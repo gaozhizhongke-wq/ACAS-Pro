@@ -1,5 +1,3 @@
-import pytest
-import uuid
 from datetime import datetime, timedelta
 from acas_pro.ui.logic.campaign_logic import (
     CampaignLogic, Campaign, CampaignStatus, CampaignType
@@ -276,7 +274,7 @@ class TestListProducts:
 
     def test_list_by_status(self):
         logic = ProductLogic()
-        p = logic.create_product('A', 'D', price=10.0, stock=0)
+        p = logic.create_product('A', 'D', price=10.0, stock=0)  # noqa: F841
         logic.create_product('B', 'D', price=20.0, stock=5)
         result = logic.list_products(status=ProductStatus.OUT_OF_STOCK)
         assert len(result) == 1

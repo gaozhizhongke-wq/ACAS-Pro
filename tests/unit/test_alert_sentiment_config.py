@@ -3,10 +3,7 @@
 """Unit tests for alert/notifier, collectors/weibo_api, content/trend_monitor,
 sentiment/analyzer, update/updater, and core/config."""
 
-from datetime import datetime
 from unittest.mock import MagicMock, patch
-import sys
-import pytest
 # ============================================================
 # ALERT / NOTIFIER
 # ============================================================
@@ -146,7 +143,7 @@ class TestUpdateInfo:
         from acas_pro.update.updater import UpdateInfo
         info = UpdateInfo(version="2.0.0", release_date="2026-01-01", download_url="http://x.com/v2", sha256="abc123", changelog="New features", mandatory=False)
         assert info.version == "2.0.0"
-        assert info.mandatory == False
+        assert info.mandatory == False  # noqa: E712
 
 class TestUpdateChecker:
     def test_init(self):

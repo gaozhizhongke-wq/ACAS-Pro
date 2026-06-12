@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import subprocess, sys
+import subprocess
+import sys
 
 result = subprocess.run(
     [sys.executable, "-m", "mypy", "src/", "--ignore-missing-imports", "--no-error-summary"],

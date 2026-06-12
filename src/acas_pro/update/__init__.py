@@ -3,4 +3,4 @@
 
 from .updater import UpdateChecker, check_for_updates, download_update
 
-__all__ = ['UpdateChecker', 'check_for_updates', 'download_update']
+__all__ = ["UpdateChecker", "check_for_updates", "download_update"]

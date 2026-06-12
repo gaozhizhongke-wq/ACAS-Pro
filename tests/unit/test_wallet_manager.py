@@ -2,8 +2,7 @@
 """Tests for blockchain/wallet_manager.py"""
 
 import pytest
-from unittest.mock import MagicMock, patch, PropertyMock
-from dataclasses import dataclass
+from unittest.mock import MagicMock, patch
 
 from acas_pro.blockchain.wallet_manager import (
     WalletManager,

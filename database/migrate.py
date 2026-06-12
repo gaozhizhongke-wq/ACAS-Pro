@@ -7,10 +7,9 @@ Enterprise-grade schema management
 
 import os
 import sys
-import json
 import hashlib
 from datetime import datetime, timezone
-from typing import List, Dict, Optional, Callable
+from typing import List, Dict, Optional
 from dataclasses import dataclass
 from enum import Enum
 import logging
@@ -294,7 +293,7 @@ COMMIT;
                 migration.status = MigrationStatus.ROLLED_BACK
                 rolled_back.append(migration)
                 
-                logger.info(f"✓ Rolled back")
+                logger.info("✓ Rolled back")
                 
             except Exception as e:
                 logger.error(f"✗ Rollback failed: {e}")

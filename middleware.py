@@ -14,7 +14,7 @@ from datetime import timezone
 
 from flask import request, g, jsonify
 
-from logger import api_logger, app_logger
+from logger import api_logger
 
 
 class RequestMiddleware:

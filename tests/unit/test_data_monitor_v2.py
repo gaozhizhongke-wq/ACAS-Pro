@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 """Tests for data_monitor_v2 module."""
 import sys
-from unittest.mock import MagicMock, patch
 
-import pytest
 
 sys.path.insert(0, 'src')
 
-from acas_pro.analytics.data_monitor_v2 import *
+from acas_pro.analytics.data_monitor_v2 import *  # noqa: F403
 
 
 class TestDataMonitor:

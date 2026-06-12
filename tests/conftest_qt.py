@@ -29,7 +29,7 @@ class MockWidget(metaclass=QtMockMeta):
     def addItem(self, *a): pass
     def addTab(self, *a): pass
     def addRow(self, *a): pass
-    def setLayout(self, l): self._layout = l
+    def setLayout(self, l): self._layout = l  # noqa: E741, F811
     def layout(self): return getattr(self, '_layout', MagicMock())
     def children(self): return []
     def findChild(self, *a): return None

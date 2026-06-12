@@ -28,8 +28,14 @@ class TestCreateAppIsolated:
                 else:
                     os.environ[key] = val
         
+        # Ensure mock_config has is_production() returning False for non-production tests
+        if mock_config is None:
+            mock_config = MagicMock()
+        mock_config.is_production.return_value = False
+        mock_config.enable_https = False
+        
         # Mock config before import
-        with patch('acas_pro.web.config', mock_config or MagicMock()):
+        with patch('acas_pro.web.config', mock_config):
             from acas_pro.web import create_app
             return create_app(test_config)
 
@@ -118,7 +124,8 @@ class TestConfigureAppIsolated:
         mock_config.environment = 'production'
         mock_config.database.type = 'sqlite'
         mock_config.llm.enabled = False
-        
+        mock_config.is_production.return_value = True
+
         with pytest.raises(ValueError, match='SECRET_KEY must be set in production'):
             TestCreateAppIsolated()._reload_and_test(
                 {'TESTING': True},

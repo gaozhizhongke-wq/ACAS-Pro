@@ -25,7 +25,7 @@ if env_path.exists():
                 os.environ[key.strip()] = value.strip().strip('"').strip("'")
 
 # Import Flask app
-from web_app import app
+from web_app import app  # noqa: E402
 
 # Validate production configuration
 def validate_production_config():
@@ -48,7 +48,7 @@ def validate_production_config():
             'test-secret-key',
         ]
         if secret_key.lower() in weak_keys or any(w in secret_key.lower() for w in weak_keys):
-            raise ValueError(f"FATAL: SECRET_KEY appears to be a default/weak key. Please generate a strong key.")
+            raise ValueError("FATAL: SECRET_KEY appears to be a default/weak key. Please generate a strong key.")
         
         print("✅ Production configuration validated")
     else:
@@ -66,7 +66,7 @@ if __name__ == "__main__":
     threads = int(os.environ.get('THREADS', '4'))
     connection_limit = int(os.environ.get('CONNECTION_LIMIT', '100'))
     
-    print(f"🚀 Starting ACAS Pro production server...")
+    print("🚀 Starting ACAS Pro production server...")
     print(f"   Host: {host}")
     print(f"   Port: {port}")
     print(f"   Threads: {threads}")

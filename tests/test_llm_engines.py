@@ -1,8 +1,6 @@
 """Tests for LLM engines (claude_engine, gemini_engine) - currently at 0%."""
 import sys
-from unittest.mock import MagicMock, patch, PropertyMock
-from dataclasses import dataclass
-from typing import List
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -20,7 +18,6 @@ class TestClaudeEngine:
         # Need base_engine
         if 'acas_pro.llm.base_engine' not in sys.modules:
             # Define base classes inline
-            from typing import Optional, Any, Iterator
             from dataclasses import dataclass, field
 
             @dataclass
@@ -204,7 +201,6 @@ class TestGeminiEngine:
 
         # Ensure base_engine exists
         if 'acas_pro.llm.base_engine' not in sys.modules:
-            from typing import Optional, Any, Iterator
             from dataclasses import dataclass, field
 
             @dataclass
@@ -356,4 +352,4 @@ class TestGeminiEngine:
 
 
 # Need os import for the test
-import os
+import os  # noqa: E402

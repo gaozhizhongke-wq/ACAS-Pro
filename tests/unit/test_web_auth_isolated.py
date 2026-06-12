@@ -1,10 +1,8 @@
 # -*- coding: utf-8 -*-
 """Isolated tests for web/__init__.py auth middleware."""
-import pytest
 import os
 import sys
 from unittest.mock import MagicMock, patch
-from flask import Flask
 
 
 class TestAuthMiddlewareIsolated:
@@ -26,12 +24,15 @@ class TestAuthMiddlewareIsolated:
         mock_config.validate.return_value = (True, [])
         mock_config.security.secret_key = secret_key
         mock_config.environment = env
+        mock_config.is_production.return_value = (env == 'production')
         mock_config.database.type = 'sqlite'
         mock_config.llm.enabled = False
         mock_config.version = '1.0.0'
         mock_config.data_dir = 'data'
         
-        with patch.dict('sys.modules', {'acas_pro.core.config': MagicMock(config=mock_config)}):
+        mock_cfg_module = MagicMock(config=mock_config)
+        mock_cfg_module.get_config.return_value = mock_config
+        with patch.dict('sys.modules', {'acas_pro.core.config': mock_cfg_module}):
             from acas_pro.web import create_app
             return create_app({'TESTING': True, 'SECRET_KEY': secret_key})
 
@@ -106,7 +107,9 @@ class TestBlueprintsIsolated:
         mock_config.version = '1.0.0'
         mock_config.data_dir = 'data'
         
-        with patch.dict('sys.modules', {'acas_pro.core.config': MagicMock(config=mock_config)}):
+        mock_cfg_module2 = MagicMock(config=mock_config)
+        mock_cfg_module2.get_config.return_value = mock_config
+        with patch.dict('sys.modules', {'acas_pro.core.config': mock_cfg_module2}):
             from acas_pro.web import create_app
             app = create_app({'TESTING': True})
             

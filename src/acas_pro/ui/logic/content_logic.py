@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """ACAS Pro - Content Logic Module"""
+
 from enum import Enum
 from dataclasses import dataclass
 from typing import List, Dict, Optional, Any
@@ -63,7 +64,9 @@ class ContentCreationLogic:
     def __init__(self) -> None:
         self._trends: List[TrendItem] = []
 
-    def fetch_trends(self, platform: Optional[Platform] = None, limit: int = 20) -> List[TrendItem]:
+    def fetch_trends(
+        self, platform: Optional[Platform] = None, limit: int = 20
+    ) -> List[TrendItem]:
         """Fetch trending content"""
         trends = self._generate_mock_trends(platform, limit)
         if platform:
@@ -102,20 +105,32 @@ class ContentCreationLogic:
             keywords=keywords or [topic],
         )
 
-    def get_templates(self, platform: Optional[Platform] = None) -> List[ContentTemplate]:
+    def get_templates(
+        self, platform: Optional[Platform] = None
+    ) -> List[ContentTemplate]:
         """Get content templates"""
         templates = [
             ContentTemplate(name="Product Demo", platform=Platform.DOUYIN, duration=60),
-            ContentTemplate(name="Lifestyle Vlog", platform=Platform.XIAOHONGSHU, duration=180),
-            ContentTemplate(name="Tutorial Series", platform=Platform.BILIBILI, duration=600),
+            ContentTemplate(
+                name="Lifestyle Vlog", platform=Platform.XIAOHONGSHU, duration=180
+            ),
+            ContentTemplate(
+                name="Tutorial Series", platform=Platform.BILIBILI, duration=600
+            ),
         ]
         if platform:
             templates = [t for t in templates if t.platform == platform]
         return templates
 
-    def optimize_script(self, script: GeneratedScript, target_platform: Platform) -> GeneratedScript:
+    def optimize_script(
+        self, script: GeneratedScript, target_platform: Platform
+    ) -> GeneratedScript:
         """Optimize script for target platform"""
-        max_durations = {Platform.DOUYIN: 60, Platform.KUAISHOU: 120, Platform.XIAOHONGSHU: 120}
+        max_durations = {
+            Platform.DOUYIN: 60,
+            Platform.KUAISHOU: 120,
+            Platform.XIAOHONGSHU: 120,
+        }
         max_duration = max_durations.get(target_platform, script.estimated_duration)
         duration = min(script.estimated_duration, max_duration)
         return GeneratedScript(
@@ -128,7 +143,9 @@ class ContentCreationLogic:
             keywords=script.keywords,
         )
 
-    def _generate_mock_trends(self, platform: Optional[Platform], limit: int) -> List[TrendItem]:
+    def _generate_mock_trends(
+        self, platform: Optional[Platform], limit: int
+    ) -> List[TrendItem]:
         """Generate mock trend data"""
         if len(self._trends) < limit:
             platforms = list(Platform)
@@ -137,7 +154,7 @@ class ContentCreationLogic:
                 self._trends.append(
                     TrendItem(
                         id=f"trend-{i}",
-                        title=f"趋势话题 #{i+1}",
+                        title=f"趋势话题 #{i + 1}",
                         author=f"user{i}",
                         platform=p,
                         views=100000 + i * 50000,
@@ -176,7 +193,8 @@ class ContentCreationLogic:
             "突出差异化特点",
         ]
 
-    def _generate_script_content(self, topic: str, style: ContentStyle, duration: int) -> str:
+    def _generate_script_content(
+        self, topic: str, style: ContentStyle, duration: int
+    ) -> str:
         """Generate script content"""
         return f"关于{topic}的{style.value}内容，时长{duration}秒"
-

@@ -2,20 +2,18 @@
 import sys
 sys.path.insert(0, 'src')
 
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from acas_pro.analytics.festival_calendar import (
     FestivalCalendar, Festival, MarketingPlan,
     FestivalType, MarketType
 )
 from acas_pro.analytics.data_monitor import (
-    DataMonitor, MetricData, MetricType,
+    DataMonitor, MetricType,
     PerformanceReport
 )
 from acas_pro.core.database import DatabaseManager
-from acas_pro.core.config import config
 
 
 class TestFestivalCalendar:
@@ -277,7 +275,7 @@ class TestDatabaseManager:
         db = DatabaseManager.__new__(DatabaseManager)
         assert callable(db.execute_one)
 
-    def test_execute(self):
+    def test_execute(self):  # noqa: F811
         db = DatabaseManager.__new__(DatabaseManager)
         assert callable(db.execute)
 

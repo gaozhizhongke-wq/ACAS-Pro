@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for health checker module."""
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from acas_pro.web.health import (
     HealthChecker, HealthStatus, HealthCheckResult,
     health_checker

@@ -11,10 +11,9 @@ import os
 import secrets
 import hashlib
 import hmac
-import base64
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict
 from pathlib import Path
 
 logger = logging.getLogger(__name__)

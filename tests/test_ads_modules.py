@@ -6,7 +6,6 @@ import pytest
 import tempfile
 import os
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
 
 # 导入被测模块
 from acas_pro.ads.ad_manager import (

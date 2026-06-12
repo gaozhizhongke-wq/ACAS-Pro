@@ -254,6 +254,15 @@ def _reset_lazy_singletons():
     import acas_pro.services.user_service as _us
     _us._reset_lazy()
 
+    # Reset audit_logger's db reference (may hold a polluted DatabaseManager)
+    import acas_pro.core.logging as _log
+    _log.audit_logger.db = None
+
+    # Reset DatabaseManager singleton to clean SQLite state
+    from acas_pro.core.database import get_db
+    _db = get_db()
+    _db.reset()
+
     # If jwt was fully replaced by a MagicMock, restore the real module
     if 'jwt' in sys.modules:
         import jwt as _jwt_check

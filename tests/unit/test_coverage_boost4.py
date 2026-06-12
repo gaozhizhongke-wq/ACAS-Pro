@@ -3,8 +3,7 @@
 import pytest
 import sys
 import os
-from unittest.mock import MagicMock, patch, PropertyMock
-import threading
+from unittest.mock import MagicMock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 

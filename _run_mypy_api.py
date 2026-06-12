@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-import mypy.api, pathlib
+import mypy.api
 r = mypy.api.run(["src/", "--ignore-missing-imports", "--no-error-summary"])
 open("mypy_result.txt", "w", encoding="utf-8").write(r[0])
 print(f"exit: {r[2]}")
-lines = [l for l in r[0].split("\n") if "error:" in l and "statsmodels" not in l]
+lines = [l for l in r[0].split("\n") if "error:" in l and "statsmodels" not in l]  # noqa: E741
 print(f"error lines: {len(lines)}")
 if lines:
     # Count by file
     by_file = {}
-    for l in lines:
+    for l in lines:  # noqa: E741
         parts = l.split(":")
         if len(parts) >= 2:
             fname = parts[0].replace("\\", "/").split("acas_pro/")[-1] if "acas_pro/" in parts[0] else parts[0]

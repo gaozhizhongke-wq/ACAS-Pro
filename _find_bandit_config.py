@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import pathlib, re
+import pathlib
 
 # Search bandit package for skips/nosec config handling
 d = pathlib.Path(r"C:\Users\HUAWEI\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\bandit")
@@ -19,7 +19,7 @@ for f in d.rglob("*.py"):
                         key = f.name + f":{i+1}"
                         if key not in found:
                             found[key] = line.strip()
-    except:
+    except:  # noqa: E722
         pass
 
 print("Config-related lines found in bandit:")

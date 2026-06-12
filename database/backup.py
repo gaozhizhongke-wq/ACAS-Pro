@@ -9,7 +9,6 @@ All Rights Reserved.
 
 import os
 import gzip
-import json
 import shutil
 import logging
 import subprocess
@@ -117,7 +116,7 @@ class BackupManager:
         if result.returncode != 0:
             raise RuntimeError(f"psql 恢复失败: {result.stderr.decode()}")
         
-        logger.info(f"PostgreSQL 恢复完成")
+        logger.info("PostgreSQL 恢复完成")
         return True
     
     def restore(self, backup_path: Path) -> bool:

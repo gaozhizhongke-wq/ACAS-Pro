@@ -9,13 +9,8 @@ fixture to prevent module deletion that would break our import-time _cfg() patch
 
 import pytest
 import os
-import json
-import time
-import jwt
-import secrets
 from datetime import datetime, timezone, timedelta
-from unittest.mock import patch, MagicMock, mock_open
-from pathlib import Path
+from unittest.mock import patch, MagicMock
 
 
 # ─── Shared mock config fixture ───
@@ -34,7 +29,7 @@ def mock_security_config():
         yield mock_config
 
 
-from acas_pro.core.security import (
+from acas_pro.core.security import (  # noqa: E402
     PasswordValidator, PasswordHasher, JWTManager, SessionManager,
     RateLimiter, CryptoManager, RedisRateLimiter,
     generate_csrf_token, validate_csrf_request,
@@ -228,7 +223,7 @@ class TestSessionManager:
 
     def test_revoke_session_error(self, mock_db, mock_security_config):
         sm = SessionManager()
-        mock_db.execute = MagicMock(side_effect=Exception("DB error"))
+        mock_db.execute = MagicMock(side_effect=RuntimeError("DB error"))
         sm.db = mock_db
         result = sm.revoke_session("token123")
         assert result is False

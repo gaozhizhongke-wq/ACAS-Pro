@@ -2,8 +2,7 @@
 """Tests for collectors modules"""
 
 import pytest
-from unittest.mock import MagicMock, patch, MagicMock
-from typing import List, Dict, Any
+from unittest.mock import patch
 
 
 class TestRSSCollectorV2:

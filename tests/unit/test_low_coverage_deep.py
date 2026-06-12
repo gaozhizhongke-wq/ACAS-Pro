@@ -26,7 +26,7 @@ class TestAdManagerDeep:
         return am
 
     def test_add_account(self):
-        from acas_pro.ads.ad_manager import AdAccount, AdPlatform
+        from acas_pro.ads.ad_manager import AdAccount
         am = self._make_am()
         am.db.execute.return_value = None
         acc = AdAccount(id="a1", platform="douyin", account_name="Test", account_id="da1", access_token="tok")

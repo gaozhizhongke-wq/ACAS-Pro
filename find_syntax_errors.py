@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import ast
-import sys
 
 filename = 'src/acas_pro/ui/logic/content_logic.py'
 with open(filename, 'r', encoding='utf-8', errors='replace') as f:

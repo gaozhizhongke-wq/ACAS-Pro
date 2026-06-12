@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-import subprocess, json, sys
+import subprocess
+import json
+import sys
 result = subprocess.run(
     [sys.executable, "-m", "bandit", "-r", "src/", "-ll", "--skip", "B608,B311", "-f", "json", "-q"],
     capture_output=True, text=True, cwd="."

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """More tests for analytics modules."""
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import sys
 
 if 'numpy' not in sys.modules:

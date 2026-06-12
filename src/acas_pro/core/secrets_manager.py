@@ -11,32 +11,31 @@ Development: Falls back to .env file or config.json (with warnings).
 import os
 import logging
 from typing import Optional
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 # Secrets that must NEVER be stored in config.json or .env in production
 _PRODUCTION_ENV_ONLY = {
-    'ACAS_JWT_SECRET',
-    'ACAS_ENCRYPTION_SALT',
-    'LLM_API_KEY',
-    'DEEPSEEK_API_KEY',
-    'ANTHROPIC_API_KEY',
-    'GOOGLE_API_KEY',
-    'DATABASE_PASSWORD',
-    'SECRET_KEY',
+    "ACAS_JWT_SECRET",
+    "ACAS_ENCRYPTION_SALT",
+    "LLM_API_KEY",
+    "DEEPSEEK_API_KEY",
+    "ANTHROPIC_API_KEY",
+    "GOOGLE_API_KEY",
+    "DATABASE_PASSWORD",
+    "SECRET_KEY",
 }
 
 # Map: logical secret name → environment variable name
 _SECRET_ENV_MAP = {
-    'jwt_secret': 'ACAS_JWT_SECRET',
-    'encryption_salt': 'ACAS_ENCRYPTION_SALT',
-    'llm_api_key': 'LLM_API_KEY',
-    'deepseek_api_key': 'DEEPSEEK_API_KEY',
-    'anthropic_api_key': 'ANTHROPIC_API_KEY',
-    'google_api_key': 'GOOGLE_API_KEY',
-    'database_password': 'DATABASE_PASSWORD',
-    'secret_key': 'SECRET_KEY',
+    "jwt_secret": "ACAS_JWT_SECRET",
+    "encryption_salt": "ACAS_ENCRYPTION_SALT",
+    "llm_api_key": "LLM_API_KEY",
+    "deepseek_api_key": "DEEPSEEK_API_KEY",
+    "anthropic_api_key": "ANTHROPIC_API_KEY",
+    "google_api_key": "GOOGLE_API_KEY",
+    "database_password": "DATABASE_PASSWORD",
+    "secret_key": "SECRET_KEY",
 }
 
 
@@ -104,7 +103,7 @@ class SecretsManager:
     def mask(self, value: str, visible: int = 4) -> str:
         """Mask a secret value for logging: sk-2f21...xxxx"""
         if not value or len(value) <= visible:
-            return '***'
+            return "***"
         return f"{value[:visible]}...{value[-visible:]}"
 
     def validate_production(self) -> list:
@@ -125,7 +124,7 @@ def get_secrets_manager(is_production: Optional[bool] = None) -> SecretsManager:
     global _instance
     if _instance is None:
         if is_production is None:
-            env = os.environ.get('ACAS_ENV', 'development').lower()
-            is_production = env == 'production'
+            env = os.environ.get("ACAS_ENV", "development").lower()
+            is_production = env == "production"
         _instance = SecretsManager(is_production=is_production)
     return _instance

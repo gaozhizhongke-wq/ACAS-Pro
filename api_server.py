@@ -12,7 +12,6 @@ All Rights Reserved.
 import os
 import sys
 import uuid
-import json
 import time
 import traceback
 from datetime import datetime
@@ -26,8 +25,7 @@ from flask_cors import CORS
 sys.path.insert(0, os.path.dirname(__file__))
 
 from config import get_config
-from database import get_db, Database
-from logger import app_logger, api_logger, log_execution
+from database import get_db
 from middleware import RequestMiddleware, SecurityHeaders, RateLimiter, metrics
 
 app = Flask(__name__)
@@ -415,12 +413,12 @@ def get_logs():
         limit = int(request.args.get('limit', 100))
         logs = db.get_logs(level=level, limit=limit)
         return success_response([{
-            "id": l.id,
-            "level": l.level,
-            "module": l.module,
-            "message": l.message,
-            "created_at": l.created_at.isoformat() if l.created_at else None
-        } for l in logs])
+            "id": log.id,
+            "level": log.level,
+            "module": log.module,
+            "message": log.message,
+            "created_at": log.created_at.isoformat() if log.created_at else None
+        } for log in logs])
     except Exception as e:
         return error_response(str(e), "DB_ERROR")
 
@@ -447,12 +445,12 @@ if __name__ == '__main__':
     print("=" * 60)
     print("ACAS Pro API Server v2.0 (Production)")
     print("=" * 60)
-    print(f"Database: SQLite (acas_pro.db)")
+    print("Database: SQLite (acas_pro.db)")
     print(f"LLM: {config.llm.provider} ({'enabled' if config.llm.enabled else 'disabled'})")
-    print(f"Auth: demo-token-2024")
+    print("Auth: demo-token-2024")
     print("-" * 60)
-    print(f"Health:  http://localhost:5000/health")
-    print(f"API:     http://localhost:5000/api/")
+    print("Health:  http://localhost:5000/health")
+    print("API:     http://localhost:5000/api/")
     print("=" * 60)
     
     app.run(host='0.0.0.0', port=5000, debug=False)

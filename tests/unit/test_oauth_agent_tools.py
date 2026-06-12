@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Tests for oauth_service, agent_engine, tools, weibo_collector, web routes."""
 
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 from datetime import datetime
 import sys
 import pytest

@@ -3,8 +3,6 @@
 
 import pytest
 from datetime import datetime, timedelta
-from dataclasses import dataclass
-from typing import List
 from unittest.mock import MagicMock, patch
 
 from acas_pro.analytics.festival_calendar import (

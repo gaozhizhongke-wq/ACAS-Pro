@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Fix common mypy type errors: dataclass Optional[] and return types."""
-import pathlib, re, sys
+import pathlib
+import re
 
 CWD = r"C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro"
 FIXES = []
@@ -14,7 +15,7 @@ def fix_file(fpath):
     new_lines = []
 
     for i, line in enumerate(lines):
-        orig_line = line
+        orig_line = line  # noqa: F841
         changed = False
 
         # Pattern 1: dataclass field = None without Optional
@@ -28,7 +29,7 @@ def fix_file(fpath):
                 # It's a field = None, should be Optional
                 line = f"{indent}{name}: Optional[{type_hint}] = None"
                 changes += 1
-                changed = True
+                changed = True  # noqa: F841
 
         # Pattern 2: property methods without return type
         # e.g. "    @property\n    def something(self)"  - no return type

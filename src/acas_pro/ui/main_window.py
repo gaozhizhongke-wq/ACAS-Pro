@@ -6,12 +6,18 @@ Enterprise-grade desktop application
 """
 
 from PySide6.QtWidgets import (
-    QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
-    QLabel, QPushButton, QStackedWidget, QFrame,
-    QScrollArea, QMessageBox
+    QMainWindow,
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QStackedWidget,
+    QFrame,
+    QScrollArea,
 )
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QFont, QIcon
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
 
 from ..core.config import config
 from ..core.logging import get_logger
@@ -39,7 +45,7 @@ COLORS = {
 
 class SidebarButton(QPushButton):
     """Custom sidebar navigation button"""
-    
+
     def __init__(self, text, icon="●", parent=None):
         super().__init__(parent)
         self.setText(f"  {icon}  {text}")
@@ -49,7 +55,7 @@ class SidebarButton(QPushButton):
         self.setStyleSheet(f"""
             QPushButton {{
                 background-color: transparent;
-                color: {COLORS['text2']};
+                color: {COLORS["text2"]};
                 border: none;
                 padding: 12px 16px;
                 text-align: left;
@@ -57,12 +63,12 @@ class SidebarButton(QPushButton):
                 border-radius: 8px;
             }}
             QPushButton:hover {{
-                color: {COLORS['accent']};
-                background-color: {COLORS['surface']};
+                color: {COLORS["accent"]};
+                background-color: {COLORS["surface"]};
             }}
             QPushButton:checked {{
                 color: #fff;
-                background-color: {COLORS['accent']};
+                background-color: {COLORS["accent"]};
                 font-weight: bold;
             }}
         """)
@@ -70,80 +76,84 @@ class SidebarButton(QPushButton):
 
 class MainWindow(QMainWindow):
     """ACAS Pro Main Window"""
-    
+
     def __init__(self):
         super().__init__()
         self.current_user = None
-        
+
         self._setup_styles()
         self._setup_ui()
-        
+
         # Show login dialog
         self._show_login_dialog()
-        
+
         logger.info("Main window initialized")
-    
+
     def _show_login_dialog(self) -> None:
         """显示登录对话框"""
         login_dialog = LoginDialog(self)
         login_dialog.login_success.connect(self._on_login_success)
-        
+
         if login_dialog.exec() != LoginDialog.Accepted:
             # 用户取消登录，退出应用
             self.close()
             return False
         return True
-    
+
     def _on_login_success(self, user_data) -> None:
         """登录成功回调"""
         self.current_user = user_data
-        self.setWindowTitle(f"{config.name} v{config.version} - {user_data.get('nickname', user_data.get('username', ''))}")
-        
+        self.setWindowTitle(
+            f"{config.name} v{config.version} - {user_data.get('nickname', user_data.get('username', ''))}"
+        )
+
         # 更新仪表盘欢迎信息
-        if hasattr(self, 'dashboard_page'):
-            self.dashboard_page.update_welcome(user_data.get('nickname', user_data.get('username', '')))
-        
+        if hasattr(self, "dashboard_page"):
+            self.dashboard_page.update_welcome(
+                user_data.get("nickname", user_data.get("username", ""))
+            )
+
         logger.info(f"User logged in: {user_data.get('username')}")
-    
+
     def _setup_styles(self) -> None:
         """Setup application styles"""
         self.setStyleSheet(f"""
             QMainWindow {{
-                background-color: {COLORS['bg']};
+                background-color: {COLORS["bg"]};
             }}
             QWidget {{
-                background-color: {COLORS['bg']};
-                color: {COLORS['text']};
+                background-color: {COLORS["bg"]};
+                color: {COLORS["text"]};
                 font-family: "{config.ui.font_family}";
                 font-size: {config.ui.font_size}pt;
             }}
             QLabel {{
-                color: {COLORS['text']};
+                color: {COLORS["text"]};
             }}
             QScrollArea {{
                 border: none;
             }}
         """)
-    
+
     def _setup_ui(self) -> None:
         """Setup user interface"""
         # Central widget
         central = QWidget()
         self.setCentralWidget(central)
-        
+
         # Main layout
         main_layout = QHBoxLayout(central)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
-        
+
         # Sidebar
         sidebar = self._create_sidebar()
         main_layout.addWidget(sidebar)
-        
+
         # Content area
         content = self._create_content()
         main_layout.addWidget(content, 1)
-    
+
     def _create_sidebar(self) -> None:
         """Create navigation sidebar with scrollable nav area"""
         sidebar = QFrame()
@@ -151,32 +161,36 @@ class MainWindow(QMainWindow):
         sidebar.setMinimumWidth(260)
         sidebar.setStyleSheet(f"""
             QFrame {{
-                background-color: {COLORS['card']};
-                border-right: 1px solid {COLORS['border']};
+                background-color: {COLORS["card"]};
+                border-right: 1px solid {COLORS["border"]};
             }}
         """)
-        
+
         layout = QVBoxLayout(sidebar)
         layout.setContentsMargins(20, 24, 20, 24)
         layout.setSpacing(12)
-        
+
         # Logo
         logo = QLabel(config.name)
         logo.setFont(QFont(config.ui.font_family, 24, QFont.Bold))
         logo.setStyleSheet(f"color: {COLORS['accent']}; padding-bottom: 8px;")
         layout.addWidget(logo)
-        
+
         subtitle = QLabel("企业版")
-        subtitle.setStyleSheet(f"color: {COLORS['text2']}; font-size: 12px; padding-bottom: 16px;")
+        subtitle.setStyleSheet(
+            f"color: {COLORS['text2']}; font-size: 12px; padding-bottom: 16px;"
+        )
         layout.addWidget(subtitle)
-        
+
         # Separator
         separator = QFrame()
         separator.setFrameShape(QFrame.HLine)
-        separator.setStyleSheet(f"background-color: {COLORS['border']}; max-height: 1px;")
+        separator.setStyleSheet(
+            f"background-color: {COLORS['border']}; max-height: 1px;"
+        )
         layout.addWidget(separator)
         layout.addSpacing(8)
-        
+
         # Scrollable navigation area
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -188,30 +202,30 @@ class MainWindow(QMainWindow):
                 background-color: transparent;
             }}
             QScrollBar:vertical {{
-                background-color: {COLORS['surface']};
+                background-color: {COLORS["surface"]};
                 width: 8px;
                 border-radius: 4px;
                 margin: 0px;
             }}
             QScrollBar::handle:vertical {{
-                background-color: {COLORS['border']};
+                background-color: {COLORS["border"]};
                 border-radius: 4px;
                 min-height: 32px;
             }}
             QScrollBar::handle:vertical:hover {{
-                background-color: {COLORS['accent']};
+                background-color: {COLORS["accent"]};
             }}
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
                 height: 0px;
             }}
         """)
-        
+
         # Navigation container
         nav_container = QWidget()
         nav_layout = QVBoxLayout(nav_container)
         nav_layout.setContentsMargins(0, 8, 0, 8)
         nav_layout.setSpacing(4)
-        
+
         # Navigation buttons
         self.nav_buttons = []
         nav_items = [
@@ -232,45 +246,47 @@ class MainWindow(QMainWindow):
             ("高级分析", "analytics"),
             ("系统设置", "settings"),
         ]
-        
+
         for text, nav_id in nav_items:
             btn = SidebarButton(text)
             btn.clicked.connect(lambda checked, nid=nav_id: self._navigate(nid))
             nav_layout.addWidget(btn)
             self.nav_buttons.append((btn, nav_id))
-        
+
         nav_layout.addStretch()
-        
+
         scroll_area.setWidget(nav_container)
         layout.addWidget(scroll_area, 1)
-        
+
         # User info (fixed at bottom)
         user = user_service.get_current()
         if user:
             user_label = QLabel(f"👤 {user.nickname}")
-            user_label.setStyleSheet(f"color: {COLORS['text2']}; font-size: 12px; padding: 8px;")
+            user_label.setStyleSheet(
+                f"color: {COLORS['text2']}; font-size: 12px; padding: 8px;"
+            )
             layout.addWidget(user_label)
         return sidebar
-    
+
     def _create_content(self) -> None:
         """Create content area"""
         content = QFrame()
         content.setStyleSheet(f"background-color: {COLORS['bg']};")
-        
+
         layout = QVBoxLayout(content)
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(0)
-        
+
         # Top bar
         top_bar = self._create_top_bar()
         layout.addWidget(top_bar)
-        
+
         # Store dashboard page reference for updates
         self.dashboard_page = None
-        
+
         # Content stack
         self.content_stack = QStackedWidget()
-        
+
         # Add pages
         from .pages.dashboard import DashboardPage
         from .pages.content_creation import ContentCreationPage
@@ -288,11 +304,11 @@ class MainWindow(QMainWindow):
         from .pages.advanced_analytics import AdvancedAnalyticsPage
         from .pages.settings import SettingsPage
         from .pages.llm_chat import LLMChatPage
-        
+
         # Create pages
         dashboard_page = DashboardPage()
         self.dashboard_page = dashboard_page
-        
+
         self.pages = {
             "dashboard": dashboard_page,
             "llm": LLMChatPage(),
@@ -311,59 +327,59 @@ class MainWindow(QMainWindow):
             "analytics": AdvancedAnalyticsPage(),
             "settings": SettingsPage(),
         }
-        
+
         for nav_id, page in self.pages.items():
             self.content_stack.addWidget(page)
-        
+
         layout.addWidget(self.content_stack, 1)
-        
+
         return content
-    
+
     def _create_top_bar(self) -> None:
         """Create top navigation bar"""
         top_bar = QFrame()
         top_bar.setMaximumHeight(64)
         top_bar.setStyleSheet(f"""
             QFrame {{
-                background-color: {COLORS['card']};
-                border-bottom: 1px solid {COLORS['border']};
+                background-color: {COLORS["card"]};
+                border-bottom: 1px solid {COLORS["border"]};
             }}
         """)
-        
+
         layout = QHBoxLayout(top_bar)
         layout.setContentsMargins(24, 0, 24, 0)
-        
+
         # Title
         self.page_title = QLabel("仪表盘")
         self.page_title.setFont(QFont(config.ui.font_family, 18, QFont.Bold))
         layout.addWidget(self.page_title)
-        
+
         layout.addStretch()
-        
+
         # Actions
         refresh_btn = QPushButton("🔄 刷新")
         refresh_btn.setStyleSheet(f"""
             QPushButton {{
-                background-color: {COLORS['surface']};
-                color: {COLORS['text']};
-                border: 1px solid {COLORS['border']};
+                background-color: {COLORS["surface"]};
+                color: {COLORS["text"]};
+                border: 1px solid {COLORS["border"]};
                 padding: 8px 16px;
                 border-radius: 6px;
             }}
             QPushButton:hover {{
-                border-color: {COLORS['accent']};
+                border-color: {COLORS["accent"]};
             }}
         """)
         layout.addWidget(refresh_btn)
-        
+
         return top_bar
-    
+
     def _navigate(self, nav_id) -> None:
         """Navigate to page"""
         # Update button states
         for btn, nid in self.nav_buttons:
             btn.setChecked(nid == nav_id)
-        
+
         # Update title
         titles = {
             "dashboard": "仪表盘",
@@ -384,13 +400,13 @@ class MainWindow(QMainWindow):
             "settings": "系统设置",
         }
         self.page_title.setText(titles.get(nav_id, nav_id.title()))
-        
+
         # Switch page
         page = self.pages.get(nav_id)
         if page:
             self.content_stack.setCurrentWidget(page)
             logger.info(f"Navigated to {nav_id}")
-    
+
     def closeEvent(self, event) -> None:
         """Handle window close"""
         logger.info("Application shutting down...")

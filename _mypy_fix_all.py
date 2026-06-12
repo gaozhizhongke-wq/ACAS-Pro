@@ -8,7 +8,8 @@ Strategy:
   4. Union[None, X] → Optional[X]
   5. type: ignore for external stubs (flask, pydantic, etc.)
 """
-import pathlib, re, sys
+import pathlib
+import re
 
 CWD = pathlib.Path(r"C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro")
 src = CWD / "src" / "acas_pro"

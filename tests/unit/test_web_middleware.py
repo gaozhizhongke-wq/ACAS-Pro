@@ -1,8 +1,8 @@
 import pytest
 import json
 import time
-from unittest.mock import patch, MagicMock
-from flask import Flask, request, jsonify, g
+from unittest.mock import patch
+from flask import Flask, jsonify, g
 
 
 @pytest.fixture
@@ -73,7 +73,7 @@ class TestErrorHandler:
         assert 'Authentication' in data['error'] or 'auth' in data['error'].lower()
 
     def test_internal_server_error_handler(self, app, client):
-        with patch('acas_pro.web.middleware.logger') as mock_logger:
+        with patch('acas_pro.web.middleware.logger') as mock_logger:  # noqa: F841
             with app.test_request_context('/test-internal-error'):
                 try:
                     response = client.get('/test-internal-error')

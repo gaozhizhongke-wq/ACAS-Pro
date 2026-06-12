@@ -3,7 +3,7 @@
 import pytest
 import json
 from flask import Flask, jsonify
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from acas_pro.web.middleware import (
     RequestContext, ErrorHandler, validate_json, require_fields

@@ -2,8 +2,7 @@
 """Additional tests for advanced_analytics modules"""
 
 import pytest
-from unittest.mock import MagicMock, patch
-from typing import List, Dict, Any
+from unittest.mock import patch
 
 
 class TestAttributionEngineExtended:

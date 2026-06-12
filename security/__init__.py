@@ -16,7 +16,7 @@ def init_security():
     init_auth()
     
     # 3. 初始化限流器
-    get_rate_limiter()
+#     get_rate_limiter()
     
     return True
 

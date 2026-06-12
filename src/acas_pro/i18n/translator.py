@@ -5,9 +5,10 @@ Multi-language support with JSON-based translations
 """
 
 import json
+import sqlite3
 import logging
 from pathlib import Path
-from typing import Dict, Optional, List, Any, Union
+from typing import Dict, Optional
 
 _locales_dir = Path(__file__).parent / "locales"
 
@@ -29,7 +30,7 @@ class Translator:
                 with open(lang_file, "r", encoding="utf-8") as f:
                     self._translations[lang] = json.load(f)
                 return True
-            except Exception as e:
+            except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
                 logging.warning(f"Failed to load language file {lang_file}: {e}")
         return False
 

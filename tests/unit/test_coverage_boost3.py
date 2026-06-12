@@ -154,7 +154,7 @@ class TestSecretsManagerCoverage:
         from acas_pro.core.secrets_manager import SecretsManager
         mgr = SecretsManager()
         mgr._is_production = True
-        result = mgr.get("NONEXISTENT_SECRET_KEY_FOR_TEST")
+        result = mgr.get("NONEXISTENT_SECRET_KEY_FOR_TEST")  # noqa: F841
         # Should hit error logging path at line 84 and return at line 98
 
     def test_get_with_fallback(self):
@@ -180,7 +180,8 @@ class TestUpdaterCoverage:
 
     def test_download_checksum_mismatch(self):
         from acas_pro.update.updater import UpdateChecker, UpdateInfo
-        import tempfile, os
+        import tempfile
+        import os
         checker = UpdateChecker()
         info = UpdateInfo(version="99.0.0", release_date="2026-01-01", download_url="http://x", sha256="0" * 64, changelog="")
         checker._update_info = info

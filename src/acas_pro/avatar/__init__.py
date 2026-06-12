@@ -8,14 +8,14 @@ from .gesture_generator import GestureGenerator, GestureType
 from .scene_adapter import SceneAdapter, SceneType
 
 __all__ = [
-    'AvatarEngine',
-    'DigitalAvatar',
-    'AvatarType',
-    'AvatarStyle',
-    'LipSyncEngine',
-    'LipSyncModel',
-    'GestureGenerator',
-    'GestureType',
-    'SceneAdapter',
-    'SceneType',
+    "AvatarEngine",
+    "DigitalAvatar",
+    "AvatarType",
+    "AvatarStyle",
+    "LipSyncEngine",
+    "LipSyncModel",
+    "GestureGenerator",
+    "GestureType",
+    "SceneAdapter",
+    "SceneType",
 ]

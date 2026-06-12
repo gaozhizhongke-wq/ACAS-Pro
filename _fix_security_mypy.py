@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Fix security.py __init__ return types and Optional parameters."""
-import pathlib, re
+import pathlib
+import re
 
 fpath = pathlib.Path(r"C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\src\acas_pro\core\security.py")
 text = fpath.read_text(encoding="utf-8-sig")

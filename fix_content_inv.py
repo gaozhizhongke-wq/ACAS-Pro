@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-import shutil
-import os
 
 # Fix content_logic.py
 with open('src/acas_pro/ui/logic/content_logic.py.bak', 'r', encoding='utf-8', errors='replace') as f:

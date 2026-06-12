@@ -1,6 +1,5 @@
 """Language detection utility."""
 
-from typing import Optional
 import re
 
 
@@ -8,10 +7,10 @@ class LangDetector:
     """Detect the language of a text string."""
 
     # Simplified patterns
-    _ZH_PATTERN = re.compile(r'[\u4e00-\u9fff]')
-    _JA_PATTERN = re.compile(r'[\u3040-\u309f\u30a0-\u30ff]')
-    _KO_PATTERN = re.compile(r'[\uac00-\ud7af]')
-    _RU_PATTERN = re.compile(r'[\u0400-\u04ff]')
+    _ZH_PATTERN = re.compile(r"[\u4e00-\u9fff]")
+    _JA_PATTERN = re.compile(r"[\u3040-\u309f\u30a0-\u30ff]")
+    _KO_PATTERN = re.compile(r"[\uac00-\ud7af]")
+    _RU_PATTERN = re.compile(r"[\u0400-\u04ff]")
 
     def detect(self, text: str) -> str:
         """Return ISO 639-1 language code."""

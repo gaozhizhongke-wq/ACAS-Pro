@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Fix remaining 19 mypy errors in security.py."""
-import pathlib, re
+import pathlib
 
 fpath = pathlib.Path(r"C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\src\acas_pro\core\security.py")
 text = fpath.read_text(encoding="utf-8-sig")

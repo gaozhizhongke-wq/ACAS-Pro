@@ -3,7 +3,6 @@
 """Tests for llm/tools.py"""
 
 import pytest
-from unittest.mock import MagicMock, patch
 from acas_pro.llm.tools import ToolDefinition, ToolRegistry, ACASTools
 
 

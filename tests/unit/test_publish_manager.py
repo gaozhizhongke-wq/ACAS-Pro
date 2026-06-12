@@ -2,10 +2,8 @@
 # -*- coding: utf-8 -*-
 """Unit tests for publisher/publish_manager.py dataclasses and enums."""
 
-from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import sys
-import pytest
 
 if 'numpy' not in sys.modules:
     sys.modules['numpy'] = MagicMock()
@@ -29,8 +27,8 @@ class TestPlatformConfig:
     def test_defaults(self):
         from acas_pro.publisher.publish_manager import PlatformConfig
         pc = PlatformConfig(platform="douyin", account_id="acc1")
-        assert pc.enabled == True
-        assert pc.auto_publish == False
+        assert pc.enabled == True  # noqa: E712
+        assert pc.auto_publish == False  # noqa: E712
         assert pc.best_time_start == 18
 
 class TestPublishTask:

@@ -104,7 +104,7 @@ def browser_context_args(flask_server):
 
 
 @pytest.fixture
-def authenticated_page(page: Page):
+def authenticated_page(page: Page):  # noqa: F821
     """Return a pre-authenticated page (for tests that need auth)."""
     # For now, just return the page (auth is handled by the app in testing mode)
     return page

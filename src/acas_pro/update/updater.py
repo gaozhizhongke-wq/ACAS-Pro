@@ -5,33 +5,36 @@ Check for updates, download, and install
 """
 
 import json
+import sqlite3
 import hashlib
+import logging
 import urllib.request
 import urllib.error
 import urllib.parse
 from pathlib import Path
-from typing import Optional, Tuple, Callable, Awaitable
+from typing import Optional, Tuple, Callable
 from dataclasses import dataclass
 import asyncio
 
 # Try importing aiohttp for async HTTP
 try:
     import aiohttp
+
     _HAS_AIOHTTP = True
 except ImportError:
     _HAS_AIOHTTP = False
 
+
 def _safe_urlopen(req, **kwargs):
     """Validate URL scheme before opening (http/https only)."""
-    url = req.full_url if hasattr(req, 'full_url') else str(req)
+    url = req.full_url if hasattr(req, "full_url") else str(req)
     scheme = urllib.parse.urlparse(url).scheme
-    if scheme not in ('http', 'https'):
+    if scheme not in ("http", "https"):
         raise ValueError(
             f"Unsupported URL scheme: {scheme!r} (only http/https allowed)"
         )
     return urllib.request.urlopen(req, **kwargs)  # nosec B310  # validated scheme above
 
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +42,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class UpdateInfo:
     """更新信息"""
+
     version: str
     release_date: str
     download_url: str
@@ -63,7 +67,7 @@ class UpdateChecker:
         try:
             req = urllib.request.Request(
                 self.VERSION_FILE,
-                headers={"User-Agent": f"ACAS-Pro/{self.current_version}"}
+                headers={"User-Agent": f"ACAS-Pro/{self.current_version}"},
             )
             with _safe_urlopen(req, timeout=10) as response:
                 data = json.loads(response.read().decode("utf-8"))
@@ -76,12 +80,20 @@ class UpdateChecker:
                     download_url=data.get("download_url", ""),
                     sha256=data.get("sha256", ""),
                     changelog=data.get("changelog", "Bug fixes and improvements"),
-                    mandatory=data.get("mandatory", False)
+                    mandatory=data.get("mandatory", False),
                 )
                 return True, self._update_info
             return False, None
 
-        except Exception as e:
+        except (
+            sqlite3.Error,
+            ValueError,
+            RuntimeError,
+            json.JSONDecodeError,
+            TypeError,
+            OSError,
+            urllib.error.URLError,
+        ) as e:
             logger.exception(f"Error in check: {e}")
             return False, None
 
@@ -90,7 +102,7 @@ class UpdateChecker:
         if not _HAS_AIOHTTP:
             # Fallback to threaded sync version
             return await asyncio.to_thread(self.check)
-        
+
         try:
             timeout = aiohttp.ClientTimeout(total=10)
             async with aiohttp.ClientSession(timeout=timeout) as session:
@@ -105,17 +117,25 @@ class UpdateChecker:
                     download_url=data.get("download_url", ""),
                     sha256=data.get("sha256", ""),
                     changelog=data.get("changelog", "Bug fixes and improvements"),
-                    mandatory=data.get("mandatory", False)
+                    mandatory=data.get("mandatory", False),
                 )
                 return True, self._update_info
             return False, None
 
-        except Exception as e:
+        except (
+            sqlite3.Error,
+            ValueError,
+            RuntimeError,
+            json.JSONDecodeError,
+            OSError,
+            urllib.error.URLError,
+        ) as e:
             logger.exception(f"Error in check_async: {e}")
             return False, None
 
     def _compare_versions(self, v1: str, v2: str) -> int:
         """比较版本号，返回 >0 表示 v1>v2"""
+
         def parse(v) -> None:
             parts = v.replace("v", "").split(".")
             return [int(p) for p in parts if p.isdigit()]
@@ -126,7 +146,9 @@ class UpdateChecker:
                 return a - b
         return len(p1) - len(p2)
 
-    def download(self, progress_callback: Optional[Callable[[int], None]] = None) -> Optional[Path]:
+    def download(
+        self, progress_callback: Optional[Callable[[int], None]] = None
+    ) -> Optional[Path]:
         """下载更新"""
         if not self._update_info:
             return None
@@ -140,7 +162,7 @@ class UpdateChecker:
 
             req = urllib.request.Request(
                 self._update_info.download_url,
-                headers={"User-Agent": f"ACAS-Pro/{self.current_version}"}
+                headers={"User-Agent": f"ACAS-Pro/{self.current_version}"},
             )
 
             with _safe_urlopen(req, timeout=30) as response:
@@ -167,7 +189,14 @@ class UpdateChecker:
 
             return filepath
 
-        except Exception as e:
+        except (
+            sqlite3.Error,
+            ValueError,
+            RuntimeError,
+            json.JSONDecodeError,
+            TypeError,
+            OSError,
+        ) as e:
             logger.exception(f"Error in download: {e}")
             return None
 
@@ -179,10 +208,14 @@ class UpdateChecker:
 # 全局实例
 _checker = UpdateChecker()
 
+
 def check_for_updates() -> Tuple[bool, Optional[UpdateInfo]]:
     """检查更新"""
     return _checker.check()
 
-def download_update(progress_callback: Optional[Callable[[int], None]] = None) -> Optional[Path]:
+
+def download_update(
+    progress_callback: Optional[Callable[[int], None]] = None,
+) -> Optional[Path]:
     """下载更新"""
     return _checker.download(progress_callback)

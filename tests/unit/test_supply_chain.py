@@ -2,9 +2,8 @@
 """Tests for ecommerce/supply_chain.py"""
 
 import pytest
-from datetime import datetime, timedelta
-from typing import List, Dict, Any
-from unittest.mock import MagicMock, patch, MagicMock
+from datetime import datetime
+from unittest.mock import patch, MagicMock
 
 from acas_pro.ecommerce.supply_chain import (
     SupplyChainManager,

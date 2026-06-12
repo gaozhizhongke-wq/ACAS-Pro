@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 """Tests for lip_sync module."""
 import sys
-from unittest.mock import MagicMock, patch
 
-import pytest
 
 sys.path.insert(0, 'src')
 
-from acas_pro.avatar.lip_sync import *
+from acas_pro.avatar.lip_sync import *  # noqa: F403
 
 
 class TestLipSync:

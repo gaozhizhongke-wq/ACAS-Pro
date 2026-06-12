@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Additional tests for SecretsManager to improve coverage"""
-import os
 import pytest
 from acas_pro.core.secrets_manager import SecretsManager, get_secrets_manager, _SECRET_ENV_MAP, _PRODUCTION_ENV_ONLY
 
@@ -12,7 +11,7 @@ class TestSecretsManagerCoverage:
         """Reset singleton before each test"""
         global _instance
         from acas_pro.core.secrets_manager import _instance
-        _instance = None
+        _instance = None  # noqa: F811
     
     def test_init_production(self):
         """Test initialization with production mode"""
@@ -188,7 +187,7 @@ class TestSecretsManagerEdgeCases:
         """Reset singleton before each test"""
         global _instance
         from acas_pro.core.secrets_manager import _instance
-        _instance = None
+        _instance = None  # noqa: F811
     
     def test_get_with_empty_string_env(self, monkeypatch):
         """Test getting secret when env var is empty string"""

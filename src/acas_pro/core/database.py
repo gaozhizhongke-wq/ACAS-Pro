@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 ACAS Pro - Unified Database Layer
@@ -14,6 +14,17 @@ import sys
 from datetime import date, datetime as _datetime, time
 from pathlib import Path
 import uuid
+from typing import List, Dict, Optional, Any, Union
+from contextlib import contextmanager
+from urllib.parse import urlparse
+from .logging import get_logger
+
+try:
+    import aiosqlite
+
+    _HAS_AIOSQLITE = True
+except ImportError:
+    _HAS_AIOSQLITE = False
 
 
 # Register adapters explicitly to avoid deprecated default adapter warning in Python 3.12+.
@@ -31,25 +42,16 @@ def _register_sqlite3_adapters() -> None:
 
 
 _register_sqlite3_adapters()
-from typing import List, Dict, Optional, Any, Callable, Union, Sequence
-from contextlib import contextmanager
-from dataclasses import asdict
-from urllib.parse import urlparse
 
-try:
-    import aiosqlite
-    _HAS_AIOSQLITE = True
-except ImportError:
-    _HAS_AIOSQLITE = False
-
-from .logging import get_logger
 
 # Lazy-loaded logger and config
 def _get_logger() -> Any:
     return get_logger(__name__)
 
+
 def _get_config() -> Any:
     from .config import get_config
+
     return get_config()
 
 
@@ -64,45 +66,141 @@ class DatabaseManager:
 
     # SQL injection whitelist for identifiers
     _VALID_IDENTIFIERS = {
-        'users', 'products', 'transactions', 'orders', 'inventory',
-        'accounts', 'campaigns', 'audience_segments', 'festival_calendar',
-        'content_templates', 'chat_history', 'audit_logs', 'api_keys',
-        'id', 'account', 'password_hash', 'email', 'phone', 'status',
-        'created_at', 'updated_at', 'name', 'type', 'value',
-        'user_id', 'product_id', 'order_id', 'amount', 'quantity',
-        'platform', 'content', 'metadata', 'timestamp', 'api_key',
-        'key_hash', 'permissions', 'expires_at', 'last_used_at',
+        "users",
+        "products",
+        "transactions",
+        "orders",
+        "inventory",
+        "accounts",
+        "campaigns",
+        "audience_segments",
+        "festival_calendar",
+        "content_templates",
+        "chat_history",
+        "audit_logs",
+        "api_keys",
+        "id",
+        "account",
+        "password_hash",
+        "email",
+        "phone",
+        "status",
+        "created_at",
+        "updated_at",
+        "name",
+        "type",
+        "value",
+        "user_id",
+        "product_id",
+        "order_id",
+        "amount",
+        "quantity",
+        "platform",
+        "content",
+        "metadata",
+        "timestamp",
+        "api_key",
+        "key_hash",
+        "permissions",
+        "expires_at",
+        "last_used_at",
         # Missing identifiers used by web_app.py queries
-        'stock_quantity', 'reorder_point', 'reorder_quantity',
-        'total_amount', 'revenue', 'deficit', 'low_stock',
-        'followers', 'engagement_rate', 'account_name', 'account_id',
-        'importance', 'month', 'day', 'duration_days', 'themes',
-        'keywords', 'is_active', 'festival_type',
+        "stock_quantity",
+        "reorder_point",
+        "reorder_quantity",
+        "total_amount",
+        "revenue",
+        "deficit",
+        "low_stock",
+        "followers",
+        "engagement_rate",
+        "account_name",
+        "account_id",
+        "importance",
+        "month",
+        "day",
+        "duration_days",
+        "themes",
+        "keywords",
+        "is_active",
+        "festival_type",
         # Missing identifiers used in actual database
-        'currency', 'metadata', 'last_login', 'login_count',
-        'failed_login_count', 'locked_until', 'password_hash', 'wallet_balance',
-        'wallet_currency', 'model_preference', 'account_type',
-        'reserved_quantity', 'warehouse_location', 'last_updated',
-        'campaign_id', 'criteria',
-        'template_content', 'variables', 'usage_count',
-        'session_id', 'tokens_used', 'action', 'resource_type',
-        'description', 'region', 'category', 'tags', 'price', 'cost',
-        'currency', 'shipping_address', 'start_date', 'end_date',
-        'targeting', 'budget', 'spent', 'avatar_url', 'balance',
-        'last_sync', 'content_count', 'total_views',
+        "currency",
+        "metadata",
+        "last_login",
+        "login_count",
+        "failed_login_count",
+        "locked_until",
+        "password_hash",
+        "wallet_balance",
+        "wallet_currency",
+        "model_preference",
+        "account_type",
+        "reserved_quantity",
+        "warehouse_location",
+        "last_updated",
+        "campaign_id",
+        "criteria",
+        "template_content",
+        "variables",
+        "usage_count",
+        "session_id",
+        "tokens_used",
+        "action",
+        "resource_type",
+        "description",
+        "region",
+        "category",
+        "tags",
+        "price",
+        "cost",
+        "currency",
+        "shipping_address",
+        "start_date",
+        "end_date",
+        "targeting",
+        "budget",
+        "spent",
+        "avatar_url",
+        "balance",
+        "last_sync",
+        "content_count",
+        "total_views",
         # Added for session management and audit logging
-        'sessions', 'audit_log', 'event_type', 'ip_address', 'severity',
+        "sessions",
+        "audit_log",
+        "event_type",
+        "ip_address",
+        "severity",
         # Added for ad_manager tables
-        'ad_accounts', 'ad_campaigns', 'ad_records',
-        'adset_id', 'adsets_data', 'impression_url', 'click_url',
-        'tracking_url', 'conversion_goal', 'budget_type', 'budget_amount',
-        'conversion_rate', 'cost_per_conversion', 'daily_budget_limit',
-        'total_spend_7d', 'total_spend_30d', 'total_impressions',
-        'total_clicks', 'total_conversions', 'total_spend',
-        'access_token', 'refresh_token', 'token_expires_at',
+        "ad_accounts",
+        "ad_campaigns",
+        "ad_records",
+        "adset_id",
+        "adsets_data",
+        "impression_url",
+        "click_url",
+        "tracking_url",
+        "conversion_goal",
+        "budget_type",
+        "budget_amount",
+        "conversion_rate",
+        "cost_per_conversion",
+        "daily_budget_limit",
+        "total_spend_7d",
+        "total_spend_30d",
+        "total_impressions",
+        "total_clicks",
+        "total_conversions",
+        "total_spend",
+        "access_token",
+        "refresh_token",
+        "token_expires_at",
         # Added for audience_targeting columns
-        'source_audience_id',
-        'lookalike_ratio', 'estimated_size', 'estimated_daily_impressions',
+        "source_audience_id",
+        "lookalike_ratio",
+        "estimated_size",
+        "estimated_daily_impressions",
     }
 
     def __new__(cls) -> Any:
@@ -120,8 +218,10 @@ class DatabaseManager:
         # defined at module scope (causing NameError in some import orders).
         if self._initialized:
             return
-        self._db_url = os.environ.get('DATABASE_URL', '')
-        self._is_postgres = 'postgresql' in self._db_url.lower() or 'postgres' in self._db_url.lower()
+        self._db_url = os.environ.get("DATABASE_URL", "")
+        self._is_postgres = (
+            "postgresql" in self._db_url.lower() or "postgres" in self._db_url.lower()
+        )
 
         if self._is_postgres:
             self._init_postgres()
@@ -131,30 +231,50 @@ class DatabaseManager:
             self._init_sqlite_db()
 
         self._initialized = True
-        _get_logger().info(f"DatabaseManager initialized ({'PostgreSQL' if self._is_postgres else 'SQLite'})")
+        _get_logger().info(
+            f"DatabaseManager initialized ({'PostgreSQL' if self._is_postgres else 'SQLite'})"
+        )
+
+    def reset(self) -> "DatabaseManager":
+        """Reset to clean SQLite state (used by test conftest between tests).
+
+        Closes any open connections, discards PostgreSQL pool if present,
+        and re-initializes in SQLite mode so subsequent tests start clean.
+        """
+        self.close()
+        self._initialized = False
+        self._is_postgres = False
+        self._pool = None
+        self._db_url = ""
+        self._init_sqlite()
+        self._init_sqlite_db()
+        self._initialized = True
+        _get_logger().info("DatabaseManager reset to SQLite mode")
 
     def _init_sqlite(self) -> Any:
         """Initialize SQLite backend"""
         cfg = _get_config()
-        self._db_path = cfg.database.path if hasattr(cfg, 'database') else 'data/acas.db'
+        self._db_path = (
+            cfg.database.path if hasattr(cfg, "database") else "data/acas.db"
+        )
         self._local = threading.local()
         self._pool = None
         # Ensure directory exists and set secure permissions
         Path(self._db_path).parent.mkdir(parents=True, exist_ok=True)
-        if sys.platform != 'win32':
+        if sys.platform != "win32":
             import stat
+
             os.chmod(Path(self._db_path).parent, stat.S_IRWXU)  # 0o700
         self._init_sqlite_db()
 
     def _init_postgres(self) -> Any:
         """Initialize PostgreSQL backend with connection pooling"""
         try:
-            import psycopg2
             from psycopg2.pool import ThreadedConnectionPool
             from psycopg2.extras import RealDictCursor
 
             conn_info = urlparse(self._db_url)
-            db_name = conn_info.path[1:] if conn_info.path else 'acas'
+            db_name = conn_info.path[1:] if conn_info.path else "acas"
 
             self._pool = ThreadedConnectionPool(
                 minconn=5,
@@ -167,7 +287,7 @@ class DatabaseManager:
                 cursor_factory=RealDictCursor,
                 # Connection settings for production
                 connect_timeout=10,
-                options='-c statement_timeout=30000'  # 30s query timeout
+                options="-c statement_timeout=30000",  # 30s query timeout
             )
             self._local = None  # Not used for PostgreSQL
 
@@ -176,19 +296,23 @@ class DatabaseManager:
             try:
                 cursor = conn.cursor()
                 cursor.execute("SELECT version()")
-                version = cursor.fetchone()['version']
+                version = cursor.fetchone()["version"]
                 _get_logger().info(f"PostgreSQL connected: {version}")
                 cursor.close()
             finally:
                 self._pool.putconn(conn)
 
         except ImportError:
-            _get_logger().warning("psycopg2 not installed, falling back to SQLite. Run: pip install psycopg2-binary")
+            _get_logger().warning(
+                "psycopg2 not installed, falling back to SQLite. Run: pip install psycopg2-binary"
+            )
             self._is_postgres = False
             self._init_sqlite()
             return
-        except Exception as e:
-            _get_logger().warning(f"PostgreSQL connection failed, falling back to SQLite: {e}")
+        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+            _get_logger().warning(
+                f"PostgreSQL connection failed, falling back to SQLite: {e}"
+            )
             self._is_postgres = False
             self._init_sqlite()
             return
@@ -209,8 +333,15 @@ class DatabaseManager:
                     cursor.execute(self._get_postgres_schema())
                     conn.commit()
                     _get_logger().info("PostgreSQL schema initialized")
-                except Exception as e:
-                    _get_logger().warning(f"PostgreSQL schema init (may already exist): {e}")
+                except (
+                    sqlite3.Error,
+                    ValueError,
+                    RuntimeError,
+                    json.JSONDecodeError,
+                ) as e:
+                    _get_logger().warning(
+                        f"PostgreSQL schema init (may already exist): {e}"
+                    )
                     conn.rollback()
                 finally:
                     cursor.close()
@@ -219,8 +350,9 @@ class DatabaseManager:
 
     def _get_sqlite_connection(self) -> Any:
         """Get SQLite connection with auto-cleanup"""
-        if not hasattr(self._local, 'connection') or self._local.connection is None:
+        if not hasattr(self._local, "connection") or self._local.connection is None:
             import warnings
+
             with warnings.catch_warnings():
                 warnings.filterwarnings(
                     "ignore",
@@ -228,33 +360,38 @@ class DatabaseManager:
                     message="default datetime adapter",
                 )
                 self._local.connection = sqlite3.connect(
-                    self._db_path,
-                    check_same_thread=False,
-                    isolation_level=None
+                    self._db_path, check_same_thread=False, isolation_level=None
                 )
             self._local.connection.row_factory = sqlite3.Row
             self._local.connection.execute("PRAGMA journal_mode=WAL")
             self._local.connection.execute("PRAGMA synchronous=NORMAL")
             # Set file permissions on first creation
-            if sys.platform != 'win32':
+            if sys.platform != "win32":
                 import stat
+
                 os.chmod(self._db_path, stat.S_IRUSR | stat.S_IWUSR)  # 0o600
         return self._local.connection
-    
+
     def __del__(self) -> None:
         """Close connection on garbage collection to avoid ResourceWarning."""
         try:
             self.close()
-        except Exception as e:
-            logger.debug(f"database GC cleanup: {e}")
+        except AttributeError:
+            pass  # __init__ may not have completed
+        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+            _get_logger().debug(f"database GC cleanup: {e}")
 
     def close(self) -> None:
         """Close database connections (call on shutdown)"""
-        if not self._is_postgres and hasattr(self._local, 'connection') and self._local.connection:
+        if (
+            not self._is_postgres
+            and hasattr(self._local, "connection")
+            and self._local.connection
+        ):
             try:
                 self._local.connection.close()
-            except Exception as e:
-                logger.debug(f"database connection close: {e}")
+            except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+                _get_logger().debug(f"database connection close: {e}")
             self._local.connection = None
         elif self._is_postgres and self._pool:
             self._pool.closeall()
@@ -262,6 +399,7 @@ class DatabaseManager:
     def _get_sqlite_schema(self) -> str:
         """SQLite schema — delegated to schema.py"""
         from .schema import SCHEMA_SQLITE, INDEXES_SQL
+
         return SCHEMA_SQLITE + INDEXES_SQL
 
     # NOTE: The original inline SQLite schema (13 core tables + 3 indexes)
@@ -271,6 +409,7 @@ class DatabaseManager:
     def _get_postgres_schema(self) -> str:
         """PostgreSQL schema — delegated to schema.py"""
         from .schema import SCHEMA_POSTGRES, INDEXES_SQL
+
         return SCHEMA_POSTGRES + INDEXES_SQL
 
     # NOTE: The original inline PostgreSQL schema has been migrated to
@@ -280,7 +419,7 @@ class DatabaseManager:
     def _validate_identifier(self, identifier: str) -> str:
         """Validate SQL identifier to prevent injection"""
         if identifier not in self._VALID_IDENTIFIERS:
-            if not identifier.replace('_', '').isalnum():
+            if not identifier.replace("_", "").isalnum():
                 raise ValueError(f"Invalid SQL identifier: {identifier}")
         return identifier
 
@@ -294,10 +433,12 @@ class DatabaseManager:
                 cursor.execute("BEGIN")
                 yield cursor
                 conn.commit()
-            except Exception as e:
+            except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
                 _get_logger().exception(f"SQLite transaction failed, rolling back: {e}")
                 conn.rollback()
-                _get_logger().error(f"Transaction rolled back due to: {type(e).__name__}: {e}")
+                _get_logger().error(
+                    f"Transaction rolled back due to: {type(e).__name__}: {e}"
+                )
                 raise
             finally:
                 cursor.close()
@@ -308,21 +449,25 @@ class DatabaseManager:
             try:
                 yield conn
                 conn.execute("COMMIT")
-            except Exception as e:
-                _get_logger().exception(f"PostgreSQL transaction failed, rolling back: {e}")
+            except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+                _get_logger().exception(
+                    f"PostgreSQL transaction failed, rolling back: {e}"
+                )
                 conn.execute("ROLLBACK")
-                _get_logger().error(f"Transaction rolled back due to: {type(e).__name__}: {e}")
+                _get_logger().error(
+                    f"Transaction rolled back due to: {type(e).__name__}: {e}"
+                )
                 raise
 
     @staticmethod
     def _translate_insert_or_replace(query: str) -> str:
         """Translate SQLite INSERT OR REPLACE to PostgreSQL INSERT ... ON CONFLICT DO UPDATE SET ..."""
-        import re
         # Match INSERT OR REPLACE INTO table (cols) VALUES (...)
         # Use balanced-parenthesis parsing for VALUES to handle datetime strings
         m = re.match(
-            r'(\s*)INSERT\s+OR\s+REPLACE\s+INTO\s+(\w+)\s*\(([^)]+)\)\s*VALUES\s*\(',
-            query, re.IGNORECASE | re.DOTALL
+            r"(\s*)INSERT\s+OR\s+REPLACE\s+INTO\s+(\w+)\s*\(([^)]+)\)\s*VALUES\s*\(",
+            query,
+            re.IGNORECASE | re.DOTALL,
         )
         if not m:
             return query  # fallback
@@ -332,44 +477,50 @@ class DatabaseManager:
         depth = 1
         i = vals_start
         while i < len(query) and depth > 0:
-            if query[i] == '(':
+            if query[i] == "(":
                 depth += 1
-            elif query[i] == ')':
+            elif query[i] == ")":
                 depth -= 1
             i += 1
-        vals_str = query[vals_start:i-1]
-        cols = [c.strip() for c in cols_str.split(',')]
+        vals_str = query[vals_start : i - 1]
+        cols = [c.strip() for c in cols_str.split(",")]
         pk_col = cols[0]
         update_cols = cols[1:]
-        set_clause = ', '.join(f'{c} = EXCLUDED.{c}' for c in update_cols)
-        return f'{indent}INSERT INTO {table} ({cols_str}) VALUES ({vals_str}) ON CONFLICT ({pk_col}) DO UPDATE SET {set_clause}'  # nosec B608  # parameterized
+        set_clause = ", ".join(f"{c} = EXCLUDED.{c}" for c in update_cols)
+        return f"{indent}INSERT INTO {table} ({cols_str}) VALUES ({vals_str}) ON CONFLICT ({pk_col}) DO UPDATE SET {set_clause}"  # nosec B608  # parameterized
 
     def execute(self, query: str, params: tuple = None) -> List[Dict]:
         """Execute query and return results. Auto-commits write operations on PostgreSQL."""
         if self._is_postgres:
             # Auto-translate SQLite ? placeholders to PostgreSQL %s
-            if '?' in query:
-                query = query.replace('?', '%s')
+            if "?" in query:
+                query = query.replace("?", "%s")
             # SQLite AUTOINCREMENT is invalid in PostgreSQL
-            if 'AUTOINCREMENT' in query:
-                query = query.replace('AUTOINCREMENT', '')
+            if "AUTOINCREMENT" in query:
+                query = query.replace("AUTOINCREMENT", "")
             # SQLite datetime('now') → PostgreSQL NOW()
             if "datetime('now')" in query:
-                query = query.replace("datetime('now')", 'NOW()')
+                query = query.replace("datetime('now')", "NOW()")
             # SQLite INSERT OR REPLACE → PostgreSQL INSERT ... ON CONFLICT DO UPDATE
-            if 'INSERT OR REPLACE' in query.upper():
-                import re
+            if "INSERT OR REPLACE" in query.upper():
                 query = self._translate_insert_or_replace(query)
             conn = self._pool.getconn()
             cursor = conn.cursor()
             try:
                 cursor.execute(query, params)
                 # Auto-commit for write operations (INSERT/UPDATE/DELETE)
-                is_write = query.strip().upper().startswith(('INSERT', 'UPDATE', 'DELETE', 'CREATE', 'ALTER', 'DROP'))
+                is_write = (
+                    query.strip()
+                    .upper()
+                    .startswith(
+                        ("INSERT", "UPDATE", "DELETE", "CREATE", "ALTER", "DROP")
+                    )
+                )
                 if is_write:
                     conn.commit()
                 if cursor.description:
                     import datetime as _dt
+
                     rows = []
                     for row in cursor.fetchall():
                         d = dict(row)
@@ -382,7 +533,7 @@ class DatabaseManager:
                             elif isinstance(v, _dt.time):
                                 d[k] = v.isoformat()
                             elif isinstance(v, (bytes, bytearray)):
-                                d[k] = v.decode('utf-8', errors='replace')
+                                d[k] = v.decode("utf-8", errors="replace")
                         rows.append(d)
                     return rows
                 return []
@@ -426,18 +577,19 @@ class DatabaseManager:
         if self._is_postgres:
             query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({', '.join(['%s'] * len(values))}) RETURNING id"  # nosec B608  # parameterized
             result = self.execute_one(query, tuple(values))
-            return result['id'] if result else None
+            return result["id"] if result else None
         else:
-            placeholders = ', '.join(['?'] * len(values))
-            query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"  # nosec B608  # parameterized
+            placeholders = ", ".join(["?"] * len(values))
+            query = (
+                f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"  # nosec B608  # parameterized
+            )
             conn = self._get_sqlite_connection()
             cursor = conn.execute(query, values)
             return str(cursor.lastrowid)
 
     @staticmethod
     def _build_where_clause(
-        conditions: Union[Dict[str, Any], List[tuple], None],
-        placeholder: str = '?'
+        conditions: Union[Dict[str, Any], List[tuple], None], placeholder: str = "?"
     ) -> tuple:
         """
         Build parameterized WHERE clause from structured conditions.
@@ -467,7 +619,7 @@ class DatabaseManager:
             for col, val in conditions.items():
                 # Validate column name
                 # (caller should validate, but defense-in-depth)
-                if not col.replace('_', '').isalnum():
+                if not col.replace("_", "").isalnum():
                     raise ValueError(f"Invalid WHERE column name: {col}")
                 clauses.append(f"{col} = {placeholder}")
                 params.append(val)
@@ -485,19 +637,19 @@ class DatabaseManager:
                         "Expected ('column', 'operator', value)."
                     )
                 col, op, val = cond
-                if not col.replace('_', '').isalnum():
+                if not col.replace("_", "").isalnum():
                     raise ValueError(f"Invalid WHERE column name: {col}")
                 # Whitelist allowed operators to prevent injection
-                allowed_ops = {'=', '!=', '<', '>', '<=', '>=', 'LIKE', 'IN', 'IS'}
+                allowed_ops = {"=", "!=", "<", ">", "<=", ">=", "LIKE", "IN", "IS"}
                 if op.upper() not in allowed_ops:
                     raise ValueError(
                         f"Invalid WHERE operator: {op}. "
                         f"Allowed: {', '.join(sorted(allowed_ops))}"
                     )
-                if op.upper() == 'IS':
+                if op.upper() == "IS":
                     # IS NULL / IS NOT NULL - no parameter
                     clauses.append(f"{col} IS {val}")
-                elif op.upper() == 'IN':
+                elif op.upper() == "IN":
                     # IN requires tuple value
                     if not isinstance(val, (list, tuple)):
                         raise ValueError("IN operator requires list/tuple value")
@@ -506,7 +658,7 @@ class DatabaseManager:
                             f"IN clause exceeds maximum of 1000 values "
                             f"(got {len(val)}). Use batched queries instead."
                         )
-                    in_placeholders = ', '.join([placeholder] * len(val))
+                    in_placeholders = ", ".join([placeholder] * len(val))
                     clauses.append(f"{col} IN ({in_placeholders})")
                     params.extend(val)
                 else:
@@ -519,8 +671,12 @@ class DatabaseManager:
             "Expected dict, list, or None."
         )
 
-    def update(self, table: str, data: Dict[str, Any],
-                 where: Union[Dict[str, Any], List[tuple], None] = None) -> bool:
+    def update(
+        self,
+        table: str,
+        data: Dict[str, Any],
+        where: Union[Dict[str, Any], List[tuple], None] = None,
+    ) -> bool:
         """
         Update records with structured WHERE conditions.
 
@@ -543,8 +699,8 @@ class DatabaseManager:
         columns = [self._validate_identifier(c) for c in data.keys()]
         values = list(data.values())
 
-        placeholder = '%s' if self._is_postgres else '?'
-        set_clause = ', '.join([f"{c} = {placeholder}" for c in columns])
+        placeholder = "%s" if self._is_postgres else "?"
+        set_clause = ", ".join([f"{c} = {placeholder}" for c in columns])
 
         where_sql, where_params = self._build_where_clause(where, placeholder)
 
@@ -552,7 +708,9 @@ class DatabaseManager:
         self.execute(query, tuple(values) + where_params)
         return True
 
-    def delete(self, table: str, where: Union[Dict[str, Any], List[tuple], None] = None) -> bool:
+    def delete(
+        self, table: str, where: Union[Dict[str, Any], List[tuple], None] = None
+    ) -> bool:
         """
         Delete records with structured WHERE conditions.
 
@@ -570,7 +728,7 @@ class DatabaseManager:
             db.delete("logs", [("created_at", "<", cutoff_date)])
         """
         table = self._validate_identifier(table)
-        placeholder = '%s' if self._is_postgres else '?'
+        placeholder = "%s" if self._is_postgres else "?"
 
         where_sql, where_params = self._build_where_clause(where, placeholder)
 
@@ -587,20 +745,22 @@ class DatabaseManager:
         if self._is_postgres:
             # Fallback to sync for PostgreSQL
             return self.execute(query, params)
-        
+
         async with aiosqlite.connect(self._db_path) as conn:
             conn.row_factory = sqlite3.Row
             async with conn.execute(query, params or ()) as cursor:
                 rows = await cursor.fetchall()
                 return [dict(row) for row in rows]
 
-    async def execute_one_async(self, query: str, params: tuple = None) -> Optional[Dict]:
+    async def execute_one_async(
+        self, query: str, params: tuple = None
+    ) -> Optional[Dict]:
         """Execute query and return first row asynchronously (SQLite only)"""
         if not _HAS_AIOSQLITE:
             raise RuntimeError("aiosqlite not installed")
         if self._is_postgres:
             return self.execute_one(query, params)
-        
+
         async with aiosqlite.connect(self._db_path) as conn:
             conn.row_factory = sqlite3.Row
             async with conn.execute(query, params or ()) as cursor:
@@ -613,50 +773,55 @@ class DatabaseManager:
             raise RuntimeError("aiosqlite not installed")
         if self._is_postgres:
             return self.insert(table, data)
-        
+
         table = self._validate_identifier(table)
         columns = [self._validate_identifier(c) for c in data.keys()]
         values = list(data.values())
-        placeholders = ', '.join(['?'] * len(columns))
+        placeholders = ", ".join(["?"] * len(columns))
         query = f"INSERT INTO {table} ({', '.join(columns)}) VALUES ({placeholders})"  # nosec B608  # parameterized
-        
+
         async with aiosqlite.connect(self._db_path) as conn:
             async with conn.execute(query, values) as cursor:
                 await conn.commit()
                 return str(cursor.lastrowid)
 
-    async def update_async(self, table: str, data: Dict[str, Any],
-                          where: Union[Dict[str, Any], List[tuple], None] = None) -> bool:
+    async def update_async(
+        self,
+        table: str,
+        data: Dict[str, Any],
+        where: Union[Dict[str, Any], List[tuple], None] = None,
+    ) -> bool:
         """Update records asynchronously (SQLite only)"""
         if not _HAS_AIOSQLITE:
             raise RuntimeError("aiosqlite not installed")
         if self._is_postgres:
             return self.update(table, data, where)
-        
+
         table = self._validate_identifier(table)
         columns = [self._validate_identifier(c) for c in data.keys()]
         values = list(data.values())
-        set_clause = ', '.join([f"{c} = ?" for c in columns])
-        where_sql, where_params = self._build_where_clause(where, '?')
+        set_clause = ", ".join([f"{c} = ?" for c in columns])
+        where_sql, where_params = self._build_where_clause(where, "?")
         query = f"UPDATE {table} SET {set_clause} WHERE {where_sql}"  # nosec B608  # parameterized
-        
+
         async with aiosqlite.connect(self._db_path) as conn:
             await conn.execute(query, tuple(values) + where_params)
             await conn.commit()
             return True
 
-    async def delete_async(self, table: str,
-                          where: Union[Dict[str, Any], List[tuple], None] = None) -> bool:
+    async def delete_async(
+        self, table: str, where: Union[Dict[str, Any], List[tuple], None] = None
+    ) -> bool:
         """Delete records asynchronously (SQLite only)"""
         if not _HAS_AIOSQLITE:
             raise RuntimeError("aiosqlite not installed")
         if self._is_postgres:
             return self.delete(table, where)
-        
+
         table = self._validate_identifier(table)
-        where_sql, where_params = self._build_where_clause(where, '?')
+        where_sql, where_params = self._build_where_clause(where, "?")
         query = f"DELETE FROM {table} WHERE {where_sql}"  # nosec B608  # parameterized
-        
+
         async with aiosqlite.connect(self._db_path) as conn:
             await conn.execute(query, where_params)
             await conn.commit()
@@ -676,32 +841,33 @@ class DatabaseManager:
             if self._is_postgres:
                 result = self.execute_one("SELECT version(), now()")
                 return {
-                    'status': 'healthy',
-                    'database': 'postgresql',
-                    'version': result['version'].split()[1] if result else 'unknown'
+                    "status": "healthy",
+                    "database": "postgresql",
+                    "version": result["version"].split()[1] if result else "unknown",
                 }
             else:
                 self.execute("SELECT 1")
                 return {
-                    'status': 'healthy',
-                    'database': 'sqlite',
-                    'path': str(self._db_path)
+                    "status": "healthy",
+                    "database": "sqlite",
+                    "path": str(self._db_path),
                 }
-        except Exception as e:
+        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
             _get_logger().error(f"Health check failed: {e}")
-            return {'status': 'unhealthy', 'error': str(e)}
+            return {"status": "unhealthy", "error": str(e)}
 
 
 # Lazy-loaded global instance
-_db_instance: Optional['DatabaseManager'] = None
+_db_instance: Optional["DatabaseManager"] = None
 
 
-def get_db() -> 'DatabaseManager':
+def get_db() -> "DatabaseManager":
     """Get database manager singleton (lazy-loaded, DI-aware)"""
     global _db_instance
     if _db_instance is None:
         # Try DI container first
         from .di_container import get_container
+
         container = get_container()
         if container.is_registered(DatabaseManager):
             _db_instance = container.resolve(DatabaseManager)
@@ -719,8 +885,8 @@ def reset_db() -> Any:
     if old is not None:
         try:
             old._pool.dispose()
-        except Exception as e:
-            logger.debug(f"connection pool dispose: {e}")
+        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+            _get_logger().debug(f"connection pool dispose: {e}")
 
 
 # Backward compatibility - deprecated, use get_db()

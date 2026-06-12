@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Drop empty audit_logs table"""
-import sys, os
+import sys
+import os
 sys.path.insert(0, 'src')
 os.chdir(r'C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro')
-from acas_pro.core.database import DatabaseManager
+from acas_pro.core.database import DatabaseManager  # noqa: E402
 db = DatabaseManager()
 
 # Check if audit_logs exists and is empty

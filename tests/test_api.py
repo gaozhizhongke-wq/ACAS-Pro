@@ -5,7 +5,6 @@ ACAS Pro - API Endpoint Tests
 """
 
 import pytest
-from unittest.mock import patch, MagicMock
 
 from acas_pro.core.config import get_config
 from acas_pro.core.security import jwt_manager

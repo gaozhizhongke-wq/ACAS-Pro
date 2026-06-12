@@ -2,7 +2,7 @@
 """Deep tests for security_v2, data_monitor, festival_calendar, llm/tools ACASTools."""
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from datetime import datetime, timedelta
 import sys
 
@@ -171,7 +171,8 @@ class TestSecurityV2_AppConfig:
         assert isinstance(valid, bool)
 
     def test_save_and_load(self):
-        import tempfile, os
+        import tempfile
+        import os
         from acas_pro.core.config import AppConfig
         cfg = AppConfig.load(None)
         with tempfile.NamedTemporaryFile(suffix='.json', delete=False, mode='w') as f:

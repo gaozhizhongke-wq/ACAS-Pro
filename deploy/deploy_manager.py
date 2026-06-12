@@ -10,14 +10,12 @@
 
 import json
 import os
-import sys
 import time
-import shutil
 import logging
 import subprocess
 import platform
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -156,8 +154,8 @@ class DeployManager:
 
         # 备份数据库
         rc, out, err = self._run_cmd(
-            f'python -c "from dr.backup_manager import BackupManager; '
-            f'm=BackupManager(); r=m.backup_database(); print(r.id)"',
+            'python -c "from dr.backup_manager import BackupManager; '
+            'm=BackupManager(); r=m.backup_database(); print(r.id)"',
             timeout=300
         )
         if rc == 0:

@@ -3,7 +3,6 @@
 
 import pytest
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
 from unittest.mock import MagicMock, patch
 
 from acas_pro.ecommerce.shop_manager import (

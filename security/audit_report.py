@@ -12,10 +12,9 @@ import os
 import re
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
-from dataclasses import dataclass, field
+from typing import List
+from dataclasses import dataclass
 from enum import Enum
-from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
@@ -230,8 +229,8 @@ class SecurityScanner:
             "",
             "## 摘要",
             "",
-            f"| 级别 | 数量 |",
-            f"|------|------|",
+            "| 级别 | 数量 |",
+            "|------|------|",
         ]
         for sev in ["critical", "high", "medium", "low", "info"]:
             icon = {"critical": "🔴", "high": "🟠", "medium": "🟡", "low": "🔵", "info": "⚪"}[sev]

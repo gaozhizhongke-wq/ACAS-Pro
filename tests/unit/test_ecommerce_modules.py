@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 """Unit tests for ecommerce modules (order, product, shop managers)."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import sys
-import pytest
 
 if 'numpy' not in sys.modules:
     sys.modules['numpy'] = MagicMock()
@@ -46,7 +45,7 @@ class TestLogisticsInfo:
 
 class TestOrder:
     def test_create(self):
-        from acas_pro.ecommerce.order_manager import Order, OrderStatus
+        from acas_pro.ecommerce.order_manager import Order
         order = Order(id="o1", platform_order_id="po1", platform="douyin", items=[], subtotal=100.0, shipping_fee=10.0)
         assert order.id == "o1"
 

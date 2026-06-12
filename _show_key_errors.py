@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 text = open("mypy_result.txt", encoding="utf-8").read()
-errors = [l for l in text.splitlines() if ": error:" in l and "statsmodels" not in l]
+errors = [l for l in text.splitlines() if ": error:" in l and "statsmodels" not in l]  # noqa: E741
 
 TARGET = {
     "core/security.py": 26,
@@ -18,11 +18,11 @@ TARGET = {
 }
 
 for fname, _ in sorted(TARGET.items(), key=lambda x: -x[1]):
-    file_errors = [l for l in errors if fname in l]
+    file_errors = [l for l in errors if fname in l]  # noqa: E741
     if not file_errors:
         continue
     print(f"\n=== {fname} ({len(file_errors)} errors) ===")
-    for l in file_errors[:12]:
+    for l in file_errors[:12]:  # noqa: E741
         parts = l.split("[")
         if len(parts) > 1:
             code = parts[-1].split("]")[0].strip()

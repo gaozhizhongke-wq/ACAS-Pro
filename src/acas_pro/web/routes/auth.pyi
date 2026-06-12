@@ -1,5 +1,6 @@
 """Type stubs for Flask auth routes."""
-from typing import Dict, Optional, Tuple, Any, Union
+
+from typing import Tuple, Any, Union
 from flask import Response, Request
 
 #: Flask request object (injected by Flask at runtime)

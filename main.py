@@ -13,14 +13,14 @@ src_path = os.path.join(os.path.dirname(__file__), 'src')
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
 
-from PySide6.QtWidgets import QApplication
-from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont
+from PySide6.QtWidgets import QApplication  # noqa: E402
+from PySide6.QtCore import Qt  # noqa: E402
+from PySide6.QtGui import QFont  # noqa: E402
 
-from acas_pro.core.config import config
-from acas_pro.core.logging import setup_logging, get_logger
-from acas_pro.core.database import db
-from acas_pro.ui.main_window import MainWindow
+from acas_pro.core.config import config  # noqa: E402
+from acas_pro.core.logging import setup_logging, get_logger  # noqa: E402
+from acas_pro.core.database import db  # noqa: E402
+from acas_pro.ui.main_window import MainWindow  # noqa: E402
 
 logger = get_logger(__name__)
 

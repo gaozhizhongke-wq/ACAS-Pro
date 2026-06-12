@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 """Tests for trend_monitor module."""
 import sys
-from unittest.mock import MagicMock, patch
 
-import pytest
 
 sys.path.insert(0, 'src')
 
-from acas_pro.content.trend_monitor import *
+from acas_pro.content.trend_monitor import *  # noqa: F403
 
 
 class TestTrendMonitor:

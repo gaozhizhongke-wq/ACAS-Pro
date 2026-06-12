@@ -2,9 +2,6 @@
 """Tests for content/script_generator.py"""
 
 import pytest
-from datetime import datetime, timedelta
-from dataclasses import dataclass
-from typing import List
 from unittest.mock import MagicMock, patch
 
 from acas_pro.content.script_generator import (

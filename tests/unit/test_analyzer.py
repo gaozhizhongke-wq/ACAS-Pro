@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 """Tests for analyzer module."""
 import sys
-from unittest.mock import MagicMock, patch
 
-import pytest
 
 sys.path.insert(0, 'src')
 
-from acas_pro.sentiment.analyzer import *
+from acas_pro.sentiment.analyzer import *  # noqa: F403
 
 
 class TestSentimentAnalyzer:

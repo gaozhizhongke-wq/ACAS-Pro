@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 """Tests for ad_manager module."""
 import sys
-from unittest.mock import MagicMock, patch
 
-import pytest
 
 sys.path.insert(0, 'src')
 
-from acas_pro.ads.ad_manager import *
+from acas_pro.ads.ad_manager import *  # noqa: F403
 
 
 class TestAdManager:

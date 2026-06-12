@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Deep tests for weibo_api, news_engine, and trend_monitor to boost coverage."""
 
-import pytest
 from unittest.mock import MagicMock, patch
 import sys
 from datetime import datetime, timezone

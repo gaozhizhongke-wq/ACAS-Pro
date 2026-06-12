@@ -1,11 +1,13 @@
 """Xiaohongshu Collector - Stub implementation."""
+
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List
 
 
 @dataclass
 class XiaohongshuPost:
     """Xiaohongshu post data structure."""
+
     id: str
     title: str
     author: str
@@ -18,14 +20,14 @@ class XiaohongshuPost:
 
 class XiaohongshuCollector:
     """Xiaohongshu content collector - Stub implementation."""
-    
+
     def __init__(self, api_key: str = "", **kwargs):
         self.api_key = api_key
-    
+
     def collect(self, keyword: str, limit: int = 100) -> List[XiaohongshuPost]:
         """Collect posts by keyword."""
         return []
-    
+
     def get_trending(self) -> List[XiaohongshuPost]:
         """Get trending posts."""
         return []

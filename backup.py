@@ -5,12 +5,11 @@ ACAS Pro 数据备份系统
 支持：自动备份、压缩、清理旧备份
 """
 
-import os
 import sys
 import gzip
 import shutil
 import sqlite3
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import List, Optional
 

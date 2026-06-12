@@ -2,9 +2,6 @@
 # -*- coding: utf-8 -*-
 """Tests for platforms/account_manager.py"""
 
-import pytest
-from datetime import datetime
-from unittest.mock import MagicMock, patch
 from acas_pro.platforms.account_manager import AccountManager, Platform, AccountStatus, AccountPhase
 
 

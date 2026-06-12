@@ -5,7 +5,6 @@ ACAS Pro - Multi-Factor Authentication (MFA)
 TOTP and SMS-based 2FA
 """
 
-import os
 import pyotp
 import qrcode
 import io

@@ -8,12 +8,9 @@ import pytest
 import json
 import tempfile
 import shutil
-from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch
 
 from acas_pro.llm.conversation import Conversation, ConversationManager
-from acas_pro.llm.llm_client import LLMMessage
 
 
 class TestConversation:

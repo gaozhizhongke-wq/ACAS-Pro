@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Verify core data initialization"""
-import sys, os
+import sys
+import os
 sys.path.insert(0, 'src')
 os.chdir(r'C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro')
 
-from acas_pro.core.database import DatabaseManager
-from datetime import datetime, timezone
+from acas_pro.core.database import DatabaseManager  # noqa: E402
+from datetime import datetime, timezone  # noqa: E402
 
 db = DatabaseManager()
 

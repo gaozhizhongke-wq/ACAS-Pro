@@ -3,9 +3,7 @@
 """Tests for services/user_service.py"""
 
 import pytest
-from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch, PropertyMock
-from acas_pro.services.user_service import UserService
+from unittest.mock import MagicMock
 
 
 class MockDB:

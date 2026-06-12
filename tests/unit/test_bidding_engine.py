@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 """Tests for ads/bidding_engine.py"""
 
-import pytest
-from datetime import datetime
 from acas_pro.ads.bidding_engine import (
     BiddingStrategy, BidAdjustmentRule, BidAdjustment, BiddingConfig, BiddingEngine
 )

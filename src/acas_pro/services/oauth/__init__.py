@@ -3,4 +3,4 @@
 
 from .oauth_service import OAuthService, QQOAuth, WeChatOAuth
 
-__all__ = ['OAuthService', 'QQOAuth', 'WeChatOAuth']
+__all__ = ["OAuthService", "QQOAuth", "WeChatOAuth"]

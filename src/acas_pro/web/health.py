@@ -2,9 +2,10 @@
 
 Comprehensive health checking for production monitoring.
 """
+
 import time
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Callable, Dict, List
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -32,7 +33,7 @@ class HealthCheckResult:
 
 class HealthChecker:
     """Comprehensive health checker for ACAS Pro"""
-    
+
     def __init__(self) -> Any:
         self.checks: List[Callable[..., Any]] = [
             self._check_database,
@@ -40,27 +41,29 @@ class HealthChecker:
             self._check_disk_space,
             self._check_llm,
         ]
-    
+
     def check_all(self) -> Dict:
         """Run all health checks"""
         start_time = time.time()
         results = []
-        
+
         for check in self.checks:
             try:
                 result = check()
                 results.append(result)
             except Exception as e:
                 logger.error(f"Health check {check.__name__} failed: {e}")
-                results.append(HealthCheckResult(
-                    name=check.__name__.replace('_check_', ''),
-                    status=HealthStatus.UNHEALTHY,
-                    response_time_ms=0,
-                    message=f"Check failed: {str(e)}"
-                ))
-        
+                results.append(
+                    HealthCheckResult(
+                        name=check.__name__.replace("_check_", ""),
+                        status=HealthStatus.UNHEALTHY,
+                        response_time_ms=0,
+                        message=f"Check failed: {str(e)}",
+                    )
+                )
+
         total_time = (time.time() - start_time) * 1000
-        
+
         # Determine overall status
         if any(r.status == HealthStatus.UNHEALTHY for r in results):
             overall = HealthStatus.UNHEALTHY
@@ -68,25 +71,25 @@ class HealthChecker:
             overall = HealthStatus.DEGRADED
         else:
             overall = HealthStatus.HEALTHY
-        
+
         return {
-            'status': overall.value,
-            'timestamp': datetime.now(timezone.utc).isoformat(),
-            'version': config.version,
-            'environment': config.environment,
-            'response_time_ms': round(total_time, 2),
-            'checks': [
+            "status": overall.value,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "version": config.version,
+            "environment": config.environment,
+            "response_time_ms": round(total_time, 2),
+            "checks": [
                 {
-                    'name': r.name,
-                    'status': r.status.value,
-                    'response_time_ms': r.response_time_ms,
-                    'message': r.message,
-                    'details': r.details
+                    "name": r.name,
+                    "status": r.status.value,
+                    "response_time_ms": r.response_time_ms,
+                    "message": r.message,
+                    "details": r.details,
                 }
                 for r in results
-            ]
+            ],
         }
-    
+
     def _check_database(self) -> HealthCheckResult:
         """Check database connectivity"""
         start = time.time()
@@ -94,106 +97,108 @@ class HealthChecker:
             db = DatabaseManager()
             # Try a simple query
             result = db.execute_one("SELECT 1 as health_check")
-            
-            if result and result.get('health_check') == 1:
+
+            if result and result.get("health_check") == 1:
                 return HealthCheckResult(
-                    name='database',
+                    name="database",
                     status=HealthStatus.HEALTHY,
                     response_time_ms=(time.time() - start) * 1000,
-                    message='Database connection OK',
-                    details={'type': config.database.type}
+                    message="Database connection OK",
+                    details={"type": config.database.type},
                 )
             else:
                 return HealthCheckResult(
-                    name='database',
+                    name="database",
                     status=HealthStatus.UNHEALTHY,
                     response_time_ms=(time.time() - start) * 1000,
-                    message='Database query returned unexpected result'
+                    message="Database query returned unexpected result",
                 )
         except Exception as e:
             logger.exception(f"Error in _check_database: {e}")
             return HealthCheckResult(
-                name='database',
+                name="database",
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=(time.time() - start) * 1000,
-                message=f'Database connection failed: {str(e)}'
+                message=f"Database connection failed: {str(e)}",
             )
-    
+
     def _check_config(self) -> HealthCheckResult:
         """Check configuration validity"""
         start = time.time()
         issues = []
-        
+
         # Check critical config values
         if not config.security.secret_key or len(config.security.secret_key) < 32:
-            issues.append('SECRET_KEY too short or not set')
-        
-        if config.environment == 'production':
-            if config.security.secret_key in ('acas-pro-secret-key-change-me', 'dev-key-change-in-production'):
-                issues.append('Using default SECRET_KEY in production')
-        
+            issues.append("SECRET_KEY too short or not set")
+
+        if config.environment == "production":
+            if config.security.secret_key in (
+                "acas-pro-secret-key-change-me",
+                "dev-key-change-in-production",
+            ):
+                issues.append("Using default SECRET_KEY in production")
+
         if issues:
             return HealthCheckResult(
-                name='configuration',
+                name="configuration",
                 status=HealthStatus.DEGRADED,
                 response_time_ms=(time.time() - start) * 1000,
-                message='Configuration issues detected',
-                details={'issues': issues}
+                message="Configuration issues detected",
+                details={"issues": issues},
             )
-        
+
         return HealthCheckResult(
-            name='configuration',
+            name="configuration",
             status=HealthStatus.HEALTHY,
             response_time_ms=(time.time() - start) * 1000,
-            message='Configuration valid'
+            message="Configuration valid",
         )
-    
+
     def _check_disk_space(self) -> HealthCheckResult:
         """Check available disk space"""
         start = time.time()
         try:
             import shutil
             import os
-            
+
             # Check data directory
-            data_dir = config.data_dir or 'data'
+            data_dir = config.data_dir or "data"
             os.makedirs(data_dir, exist_ok=True)
-            
+
             stat = shutil.disk_usage(data_dir)
             free_gb = stat.free / (1024**3)
             total_gb = stat.total / (1024**3)
             used_percent = (stat.used / stat.total) * 100
-            
+
             if free_gb < 1:  # Less than 1GB free
                 status = HealthStatus.UNHEALTHY
-                message = f'Critical: Only {free_gb:.2f}GB free'
+                message = f"Critical: Only {free_gb:.2f}GB free"
             elif free_gb < 5:  # Less than 5GB free
                 status = HealthStatus.DEGRADED
-                message = f'Warning: Only {free_gb:.2f}GB free'
+                message = f"Warning: Only {free_gb:.2f}GB free"
             else:
                 status = HealthStatus.HEALTHY
-                message = f'Disk space OK: {free_gb:.2f}GB free'
-            
+                message = f"Disk space OK: {free_gb:.2f}GB free"
+
             return HealthCheckResult(
-                name='disk_space',
+                name="disk_space",
                 status=status,
                 response_time_ms=(time.time() - start) * 1000,
                 message=message,
                 details={
-                    'free_gb': round(free_gb, 2),
-                    'total_gb': round(total_gb, 2),
-                    'used_percent': round(used_percent, 2)
-                }
+                    "free_gb": round(free_gb, 2),
+                    "total_gb": round(total_gb, 2),
+                    "used_percent": round(used_percent, 2),
+                },
             )
         except Exception as e:
             logger.exception(f"Error in _check_disk_space: {e}")
             return HealthCheckResult(
-                name='disk_space',
+                name="disk_space",
                 status=HealthStatus.DEGRADED,
                 response_time_ms=(time.time() - start) * 1000,
-                message=f'Disk check failed: {str(e)}'
+                message=f"Disk check failed: {str(e)}",
             )
-
 
     def _check_llm(self) -> HealthCheckResult:
         """Check LLM service availability with actual API connectivity test"""
@@ -201,111 +206,116 @@ class HealthChecker:
         try:
             if not config.llm.enabled:
                 return HealthCheckResult(
-                    name='llm',
+                    name="llm",
                     status=HealthStatus.DEGRADED,
                     response_time_ms=(time.time() - start) * 1000,
-                    message='LLM is disabled',
-                    details={'enabled': False}
+                    message="LLM is disabled",
+                    details={"enabled": False},
                 )
-            
+
             if not config.llm.api_key:
                 return HealthCheckResult(
-                    name='llm',
+                    name="llm",
                     status=HealthStatus.DEGRADED,
                     response_time_ms=(time.time() - start) * 1000,
-                    message='LLM API key not configured',
-                    details={'enabled': True, 'api_key_set': False}
+                    message="LLM API key not configured",
+                    details={"enabled": True, "api_key_set": False},
                 )
-            
+
             # Try to import and test LLM client
             try:
-                from acas_pro.llm.llm_client import LLMClient, LLMProvider, LLMConfig as ClientConfig, LLMMessage
-                
+                from acas_pro.llm.llm_client import (
+                    LLMClient,
+                    LLMProvider,
+                    LLMConfig as ClientConfig,
+                    LLMMessage,
+                )
+
                 llm_config = ClientConfig(
                     provider=LLMProvider(config.llm.provider),
                     api_key=config.llm.api_key,
                     model=config.llm.model,
-                    api_base=config.llm.base_url
+                    api_base=config.llm.base_url,
                 )
-                
+
                 client = LLMClient(llm_config)
-                
+
                 # Make actual API call to verify connectivity
                 try:
-                    messages = [LLMMessage(role='user', content='Hi')]
+                    messages = [LLMMessage(role="user", content="Hi")]
                     response = client.chat(messages, max_tokens=5)
-                    
+
                     if response and response.content:
                         return HealthCheckResult(
-                            name='llm',
+                            name="llm",
                             status=HealthStatus.HEALTHY,
                             response_time_ms=(time.time() - start) * 1000,
-                            message=f'LLM API connected: {config.llm.provider}/{config.llm.model}',
+                            message=f"LLM API connected: {config.llm.provider}/{config.llm.model}",
                             details={
-                                'enabled': True,
-                                'api_key_set': True,
-                                'provider': config.llm.provider,
-                                'model': config.llm.model,
-                                'api_connected': True,
-                                'latency_ms': round((time.time() - start) * 1000, 2)
-                            }
+                                "enabled": True,
+                                "api_key_set": True,
+                                "provider": config.llm.provider,
+                                "model": config.llm.model,
+                                "api_connected": True,
+                                "latency_ms": round((time.time() - start) * 1000, 2),
+                            },
                         )
                     else:
                         return HealthCheckResult(
-                            name='llm',
+                            name="llm",
                             status=HealthStatus.DEGRADED,
                             response_time_ms=(time.time() - start) * 1000,
-                            message='LLM API returned empty response',
+                            message="LLM API returned empty response",
                             details={
-                                'enabled': True,
-                                'api_key_set': True,
-                                'provider': config.llm.provider,
-                                'api_connected': False
-                            }
+                                "enabled": True,
+                                "api_key_set": True,
+                                "provider": config.llm.provider,
+                                "api_connected": False,
+                            },
                         )
                 except Exception as api_e:
                     error_msg = str(api_e)
-                    if '401' in error_msg or 'Unauthorized' in error_msg:
+                    if "401" in error_msg or "Unauthorized" in error_msg:
                         status = HealthStatus.UNHEALTHY
-                        message = 'LLM API key invalid or expired'
-                    elif '429' in error_msg or 'Too Many Requests' in error_msg:
+                        message = "LLM API key invalid or expired"
+                    elif "429" in error_msg or "Too Many Requests" in error_msg:
                         status = HealthStatus.DEGRADED
-                        message = 'LLM API rate limited'
+                        message = "LLM API rate limited"
                     else:
                         status = HealthStatus.DEGRADED
-                        message = f'LLM API connectivity issue: {error_msg[:100]}'
-                    
+                        message = f"LLM API connectivity issue: {error_msg[:100]}"
+
                     return HealthCheckResult(
-                        name='llm',
+                        name="llm",
                         status=status,
                         response_time_ms=(time.time() - start) * 1000,
                         message=message,
                         details={
-                            'enabled': True,
-                            'api_key_set': True,
-                            'provider': config.llm.provider,
-                            'api_connected': False,
-                            'error': error_msg[:200]
-                        }
+                            "enabled": True,
+                            "api_key_set": True,
+                            "provider": config.llm.provider,
+                            "api_connected": False,
+                            "error": error_msg[:200],
+                        },
                     )
-                    
+
             except ImportError as e:
                 return HealthCheckResult(
-                    name='llm',
+                    name="llm",
                     status=HealthStatus.DEGRADED,
                     response_time_ms=(time.time() - start) * 1000,
-                    message=f'LLM client import failed: {str(e)}',
-                    details={'enabled': True, 'api_key_set': True}
+                    message=f"LLM client import failed: {str(e)}",
+                    details={"enabled": True, "api_key_set": True},
                 )
-                
+
         except Exception as e:
             logger.exception(f"Error in _check_llm: {e}")
             return HealthCheckResult(
-                name='llm',
+                name="llm",
                 status=HealthStatus.UNHEALTHY,
                 response_time_ms=(time.time() - start) * 1000,
-                message=f'LLM check failed: {str(e)}',
-                details={'enabled': True, 'module_error': True}
+                message=f"LLM check failed: {str(e)}",
+                details={"enabled": True, "module_error": True},
             )
 
 

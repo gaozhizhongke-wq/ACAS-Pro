@@ -1,4 +1,5 @@
-import os, re, sys
+import os
+import re
 
 issues = []
 target_dirs = ['src']
@@ -28,7 +29,7 @@ for d in target_dirs:
                                 if any(safe in line for safe in safe_patterns):
                                     continue
                                 issues.append((fpath, lineno, line.rstrip()))
-            except Exception as e:
+            except Exception:
                 pass
 
 print(f'Found {len(issues)} potential hardcoded credential lines:')

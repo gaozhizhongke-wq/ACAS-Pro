@@ -2,7 +2,6 @@
 """Tests for voice_synthesis.py to boost coverage."""
 import pytest
 from unittest.mock import patch, MagicMock
-import os
 
 
 class TestVoiceSynthesizer:
@@ -24,7 +23,7 @@ class TestVoiceSynthesizer:
         assert all(v.id for v in voices)
 
     def test_list_voices_filtered(self, synth):
-        from acas_pro.video.voice_synthesis import Language, VoiceStyle
+        from acas_pro.video.voice_synthesis import Language
         voices = synth.list_voices(language=Language.CN)
         assert all(v.language == Language.CN for v in voices)
 

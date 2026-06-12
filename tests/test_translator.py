@@ -5,7 +5,7 @@ ACAS Pro - Translator Tests
 """
 
 import pytest
-from unittest.mock import Mock, patch, mock_open
+from unittest.mock import Mock, patch
 
 from acas_pro.i18n.translator import Translator, t, set_language, get_language, available_languages
 

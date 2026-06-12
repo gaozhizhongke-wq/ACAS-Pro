@@ -3,7 +3,7 @@
 """Unit tests for video modules (voice_synthesis, video_maker)."""
 
 import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import pytest
 
 

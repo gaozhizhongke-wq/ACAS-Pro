@@ -33,7 +33,7 @@ class TestDatabaseManager:
         DatabaseManager._instance = None
         try:
             os.unlink(db_path)
-        except:
+        except:  # noqa: E722
             pass
     
     def test_database_connection(self, db):

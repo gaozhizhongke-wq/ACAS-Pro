@@ -3,10 +3,11 @@
 """Final coverage boost - targeted tests for high-impact uncovered modules."""
 
 import sys
-from unittest.mock import MagicMock, patch, PropertyMock
+from unittest.mock import MagicMock, patch
 from datetime import datetime, timezone, timedelta
 import json
-import urllib.request, urllib.error
+import urllib.request
+import urllib.error
 
 import pytest
 
@@ -18,7 +19,7 @@ for _mod in ['numpy', 'torch', 'statsforecast', 'pandas']:
         m = MagicMock()
         sys.modules[_mod] = m
 
-import sys as _sys
+import sys as _sys  # noqa: E402
 _sys.path.insert(0, 'src')
 
 
@@ -84,7 +85,7 @@ class TestTimesFMEngineCore:
     def test_calculate_trend_stable(self):
         from acas_pro.ml.timesfm_engine import TimesFMEngine
         engine = TimesFMEngine.__new__(TimesFMEngine)
-        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1
+        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1  # noqa: E702
         # Values identical -> no change
         values = [100.0] * 14
         trend = engine._calculate_trend(values)
@@ -94,7 +95,7 @@ class TestTimesFMEngineCore:
     def test_calculate_trend_up(self):
         from acas_pro.ml.timesfm_engine import TimesFMEngine
         engine = TimesFMEngine.__new__(TimesFMEngine)
-        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1
+        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1  # noqa: E702
         # Second half clearly higher
         values = [100.0] * 7 + [200.0] * 7
         trend = engine._calculate_trend(values)
@@ -103,7 +104,7 @@ class TestTimesFMEngineCore:
     def test_calculate_trend_down(self):
         from acas_pro.ml.timesfm_engine import TimesFMEngine
         engine = TimesFMEngine.__new__(TimesFMEngine)
-        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1
+        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1  # noqa: E702
         values = [200.0] * 7 + [80.0] * 7
         trend = engine._calculate_trend(values)
         assert trend["direction"] == "down"
@@ -111,7 +112,7 @@ class TestTimesFMEngineCore:
     def test_calculate_trend_insufficient_data(self):
         from acas_pro.ml.timesfm_engine import TimesFMEngine
         engine = TimesFMEngine.__new__(TimesFMEngine)
-        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1
+        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1  # noqa: E702
         trend = engine._calculate_trend([100.0, 110.0])
         assert trend["direction"] == "stable"
 
@@ -134,7 +135,7 @@ class TestTimesFMEngineCore:
     def test_holt_winters_no_seasonality(self):
         from acas_pro.ml.timesfm_engine import TimesFMEngine
         engine = TimesFMEngine.__new__(TimesFMEngine)
-        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1
+        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1  # noqa: E702
         engine.season_length = 7
         values = [100.0, 105.0, 110.0, 115.0, 120.0, 125.0, 130.0] * 3
         forecast = engine._holt_winters_forecast(values, horizon=7, use_seasonality=False)
@@ -144,7 +145,7 @@ class TestTimesFMEngineCore:
     def test_holt_winters_with_seasonality(self):
         from acas_pro.ml.timesfm_engine import TimesFMEngine
         engine = TimesFMEngine.__new__(TimesFMEngine)
-        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1
+        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1  # noqa: E702
         engine.season_length = 7
         values = [100.0, 105.0, 110.0, 115.0, 120.0, 125.0, 130.0] * 3
         forecast = engine._holt_winters_forecast(values, horizon=14, use_seasonality=True)
@@ -169,7 +170,7 @@ class TestTimesFMEngineCore:
         from acas_pro.ml.timesfm_engine import TimesFMEngine
         engine = TimesFMEngine.__new__(TimesFMEngine)
         engine.MODEL_VERSION = "acas-pro-2.0-statsforecast"
-        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1
+        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1  # noqa: E702
         data = [(datetime.now(timezone.utc), 200.0)]
         result = engine._generate_fallback_forecast("p1", data, horizon_days=5)
         assert result.trend_direction == "stable"
@@ -180,7 +181,7 @@ class TestTimesFMEngineCore:
         from acas_pro.ml.timesfm_engine import TimesFMEngine
         engine = TimesFMEngine.__new__(TimesFMEngine)
         engine.MODEL_VERSION = "acas-pro-2.0-statsforecast"
-        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1
+        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1  # noqa: E702
         result = engine._generate_fallback_forecast("p2", [], horizon_days=3)
         assert len(result.forecast) == 3
         assert result.forecast[0].value == 100
@@ -190,7 +191,7 @@ class TestTimesFMEngineCore:
         engine = TimesFMEngine.__new__(TimesFMEngine)
         engine.statsforecast_ok = True
         engine.MODEL_VERSION = "acas-pro-2.0-statsforecast"
-        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1
+        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1  # noqa: E702
         engine.season_length = 7
         data = [(datetime.now(timezone.utc), 100.0)]
         result = engine.forecast("p1", data, horizon_days=3)
@@ -202,7 +203,7 @@ class TestTimesFMEngineCore:
         engine = TimesFMEngine.__new__(TimesFMEngine)
         engine.statsforecast_ok = True  # Try statsforecast first
         engine.MODEL_VERSION = "acas-pro-2.0-statsforecast"
-        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1
+        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1  # noqa: E702
         engine.season_length = 7
         # Mock _try_statsforecast to return None (forces HW fallback)
         with patch('acas_pro.ml.timesfm_engine._try_statsforecast', return_value=None):
@@ -217,7 +218,7 @@ class TestTimesFMEngineCore:
         engine = TimesFMEngine.__new__(TimesFMEngine)
         engine.statsforecast_ok = True
         engine.MODEL_VERSION = "acas-pro-2.0-statsforecast"
-        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1
+        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1  # noqa: E702
         engine.season_length = 7
         sf_result = {
             "values": [100.0, 105.0, 110.0],
@@ -236,7 +237,7 @@ class TestTimesFMEngineCore:
         engine = TimesFMEngine.__new__(TimesFMEngine)
         engine.statsforecast_ok = True
         engine.MODEL_VERSION = "acas-pro-2.0-statsforecast"
-        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1
+        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1  # noqa: E702
         engine.season_length = 7
         with patch('acas_pro.ml.timesfm_engine._try_statsforecast', return_value=None):
             data = [(datetime.now(timezone.utc) - timedelta(days=i), float(100 + i % 5))
@@ -247,16 +248,16 @@ class TestTimesFMEngineCore:
     def test_load_statsforecast_status_file_missing(self):
         from acas_pro.ml.timesfm_engine import TimesFMEngine
         engine = TimesFMEngine.__new__(TimesFMEngine)
-        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1
+        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1  # noqa: E702
         engine.season_length = 7
         with patch.object(TimesFMEngine, '_STATUS_FILE', property(lambda self: MagicMock(exists=lambda: False))):
-            result = engine._load_statsforecast_status()
+            result = engine._load_statsforecast_status()  # noqa: F841
             # Default is True when file doesn't exist
 
     def test_save_statsforecast_status_read_error(self):
         from acas_pro.ml.timesfm_engine import TimesFMEngine
         engine = TimesFMEngine.__new__(TimesFMEngine)
-        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1
+        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1  # noqa: E702
         engine.season_length = 7
         # Should not raise even if saving fails
         engine._save_statsforecast_status(False)
@@ -264,7 +265,7 @@ class TestTimesFMEngineCore:
     def test_load_statsforecast_status_unavailable_retry(self):
         from acas_pro.ml.timesfm_engine import TimesFMEngine
         engine = TimesFMEngine.__new__(TimesFMEngine)
-        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1
+        engine.alpha = 0.3; engine.beta = 0.1; engine.gamma = 0.1  # noqa: E702
         engine.season_length = 7
         # Simulate file with unavailable=True but last_failure > 24h ago
         old_timestamp = (datetime.now(timezone.utc) - timedelta(hours=25)).isoformat()
@@ -341,7 +342,7 @@ class TestInventoryOptimizerCore:
 
     def test_assess_stockout_risks_no_stockout(self):
         from acas_pro.ml.inventory_optimizer import InventoryOptimizer
-        from acas_pro.ml.timesfm_engine import ForecastPoint, ForecastResult
+        from acas_pro.ml.timesfm_engine import ForecastResult
         opt = InventoryOptimizer()
         opt.lead_time_days = 7
 
@@ -355,7 +356,7 @@ class TestInventoryOptimizerCore:
 
     def test_assess_stockout_risks_critical(self):
         from acas_pro.ml.inventory_optimizer import InventoryOptimizer
-        from acas_pro.ml.timesfm_engine import ForecastPoint, ForecastResult
+        from acas_pro.ml.timesfm_engine import ForecastResult
         opt = InventoryOptimizer()
 
         mock_forecast = MagicMock(spec=ForecastResult)
@@ -368,7 +369,7 @@ class TestInventoryOptimizerCore:
 
     def test_assess_stockout_risks_high(self):
         from acas_pro.ml.inventory_optimizer import InventoryOptimizer
-        from acas_pro.ml.timesfm_engine import ForecastPoint, ForecastResult
+        from acas_pro.ml.timesfm_engine import ForecastResult
         opt = InventoryOptimizer()
 
         mock_forecast = MagicMock(spec=ForecastResult)
@@ -498,7 +499,7 @@ class TestPublishManagerMethods:
         assert result is False
 
     def test_publish_already_published(self):
-        from acas_pro.publisher.publish_manager import PublishManager, PublishStatus, ContentType
+        from acas_pro.publisher.publish_manager import PublishManager, PublishStatus
         mgr = PublishManager.__new__(PublishManager)
         mgr.db = MagicMock()
         already_pub = MagicMock()
@@ -508,7 +509,7 @@ class TestPublishManagerMethods:
         assert result is False
 
     def test_publish_scheduled_future(self):
-        from acas_pro.publisher.publish_manager import PublishManager, PublishStatus, ContentType
+        from acas_pro.publisher.publish_manager import PublishManager, PublishStatus
         mgr = PublishManager.__new__(PublishManager)
         mgr.db = MagicMock()
         mgr._save_task = MagicMock()
@@ -523,7 +524,7 @@ class TestPublishManagerMethods:
 
     def test_publish_immediate_success(self):
         from acas_pro.publisher.publish_manager import (
-            PublishManager, PublishStatus, ContentType, PlatformConfig
+            PublishManager, PublishStatus, PlatformConfig
         )
         mgr = PublishManager.__new__(PublishManager)
         mgr.db = MagicMock()
@@ -547,7 +548,7 @@ class TestPublishManagerMethods:
 
     def test_publish_partial_failure(self):
         from acas_pro.publisher.publish_manager import (
-            PublishManager, PublishStatus, ContentType, PlatformConfig
+            PublishManager, PublishStatus, PlatformConfig
         )
         mgr = PublishManager.__new__(PublishManager)
         mgr.db = MagicMock()
@@ -643,7 +644,7 @@ class TestPublishManagerMethods:
         mgr = PublishManager.__new__(PublishManager)
         mgr.db = MagicMock()
         mgr.list_tasks = MagicMock(return_value=[])
-        result = mgr.get_pending_tasks()
+        result = mgr.get_pending_tasks()  # noqa: F841
         mgr.list_tasks.assert_called_once()
         mgr.list_tasks.assert_called_with(status=PublishStatus.PENDING)
 
@@ -702,7 +703,7 @@ class TestKuaishouShopClient:
         assert "timestamp" in params
 
     def test_sync_orders_not_authenticated(self):
-        from acas_pro.ecommerce.kuaishou_shop_api import KuaishouShopClient, SyncResult
+        from acas_pro.ecommerce.kuaishou_shop_api import KuaishouShopClient
         from acas_pro.ecommerce.platform_api_base import PlatformCredentials
         creds = PlatformCredentials(app_key="k", app_secret="s", access_token="", refresh_token="")
         client = KuaishouShopClient(creds)
@@ -1205,7 +1206,7 @@ class TestReportLogic:
         assert summary["by_type"] == {}
 
     def test_get_report_summary_with_reports(self):
-        from acas_pro.ui.logic.report_logic import ReportLogic, ReportType
+        from acas_pro.ui.logic.report_logic import ReportLogic
         logic = ReportLogic()
         logic.generate_sales_report(datetime.now(), datetime.now())
         logic.generate_customer_report()

@@ -11,35 +11,38 @@ from functools import wraps
 import threading
 from concurrent.futures import ThreadPoolExecutor  # noqa: F401  # type: ignore[name-defined]
 
-T = TypeVar('T')
+T = TypeVar("T")
 
 
 def run_in_thread(executor: Optional[threading.ThreadPoolExecutor] = None) -> None:
     """
     Decorator to run blocking sync functions in a thread pool.
-    
+
     Usage:
         @run_in_thread()
         def blocking_io_operation():
             # sync code here
             pass
-        
+
         # In async context:
         result = await blocking_io_operation()
     """
+
     def decorator(func: Callable[..., T]) -> Callable[..., Coroutine[Any, Any, T]]:
         @wraps(func)
         async def wrapper(*args, **kwargs) -> None:
             loop = asyncio.get_event_loop()
             return await loop.run_in_executor(executor, lambda: func(*args, **kwargs))
+
         return wrapper
+
     return decorator
 
 
 async def run_sync_async(sync_func: Callable[..., T], *args, **kwargs) -> T:
     """
     Run a synchronous function in a thread pool.
-    
+
     Usage:
         result = await run_sync_async(blocking_http_call, url)
     """
@@ -50,22 +53,29 @@ async def run_sync_async(sync_func: Callable[..., T], *args, **kwargs) -> T:
 class AsyncIOMixin:
     """
     Mixin to add async versions of common IO operations.
-    
+
     Usage:
         class MyClient(AsyncIOMixin):
             def fetch_sync(self, url):
                 # sync HTTP call
                 pass
-            
+
             async_fetch = asyncify(fetch_sync)
     """
+
     @staticmethod
-    def asyncify(sync_method: Callable[..., T]) -> Callable[..., Coroutine[Any, Any, T]]:
+    def asyncify(
+        sync_method: Callable[..., T],
+    ) -> Callable[..., Coroutine[Any, Any, T]]:
         """Convert a sync method to async using run_in_executor"""
+
         @wraps(sync_method)
         async def wrapper(self, *args, **kwargs) -> None:
             loop = asyncio.get_event_loop()
-            return await loop.run_in_executor(None, lambda: sync_method(self, *args, **kwargs))
+            return await loop.run_in_executor(
+                None, lambda: sync_method(self, *args, **kwargs)
+            )
+
         return wrapper
 
 
@@ -75,18 +85,20 @@ class AsyncIOMixin:
 _aiohttp_available = False
 try:
     import aiohttp
+
     _aiohttp_available = True
 except ImportError:
     pass
 
 
-async def async_http_get(url: str, headers: Optional[dict] = None, 
-                          timeout: int = 30) -> dict:
+async def async_http_get(
+    url: str, headers: Optional[dict] = None, timeout: int = 30
+) -> dict:
     """
     Async HTTP GET request.
-    
+
     Requires aiohttp to be installed: pip install aiohttp
-    
+
     Returns:
         JSON response as dict
     """
@@ -95,22 +107,25 @@ async def async_http_get(url: str, headers: Optional[dict] = None,
             "aiohttp not installed. Install with: pip install aiohttp "
             "or use run_sync_async(urllib_request, ...)"
         )
-    
+
     timeout_obj = aiohttp.ClientTimeout(total=timeout)
     async with aiohttp.ClientSession(timeout=timeout_obj) as session:
         async with session.get(url, headers=headers or {}) as response:
             return await response.json()
 
 
-async def async_http_post(url: str, data: Optional[dict] = None, 
-                          json: Optional[dict] = None,
-                          headers: Optional[dict] = None,
-                          timeout: int = 30) -> dict:
+async def async_http_post(
+    url: str,
+    data: Optional[dict] = None,
+    json: Optional[dict] = None,
+    headers: Optional[dict] = None,
+    timeout: int = 30,
+) -> dict:
     """
     Async HTTP POST request.
-    
+
     Requires aiohttp to be installed: pip install aiohttp
-    
+
     Returns:
         JSON response as dict
     """
@@ -119,8 +134,10 @@ async def async_http_post(url: str, data: Optional[dict] = None,
             "aiohttp not installed. Install with: pip install aiohttp "
             "or use run_sync_async(urllib_request, ...)"
         )
-    
+
     timeout_obj = aiohttp.ClientTimeout(total=timeout)
     async with aiohttp.ClientSession(timeout=timeout_obj) as session:
-        async with session.post(url, data=data, json=json, headers=headers or {}) as response:
+        async with session.post(
+            url, data=data, json=json, headers=headers or {}
+        ) as response:
             return await response.json()

@@ -1,4 +1,5 @@
-import os, re
+import os
+import re
 
 issues = {'fstring_sql': [], 'eval_exec': [], 'pickle_load': [], 'assert_prod': [], 'shell_inject': []}
 
@@ -30,11 +31,11 @@ for root, dirs, files in os.walk('src'):
                     # shell injection risk
                     if re.search(r'os\.system\s*\(|subprocess\.call\s*\([^)]*shell\s*=\s*True', line):
                         issues['shell_inject'].append((fpath, lineno, line.rstrip()))
-        except Exception as e:
+        except Exception:
             pass
 
 total = sum(len(v) for v in issues.values())
-print(f'=== SECURITY AUDIT RESULT ===')
+print('=== SECURITY AUDIT RESULT ===')
 print(f'Total issues found: {total}\n')
 for cat, items in issues.items():
     if items:

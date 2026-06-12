@@ -3,8 +3,6 @@
 
 import pytest
 from datetime import datetime, timedelta
-from dataclasses import dataclass
-from typing import List
 
 from acas_pro.analytics.data_monitor import (
     DataMonitor,

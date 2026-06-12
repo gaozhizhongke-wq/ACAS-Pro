@@ -43,7 +43,7 @@ for _m in ['numpy','torch','transformers','scikit-learn','sklearn','pandas','sci
     if _m not in sys.modules:
         sys.modules[_m] = MagicMock()
 
-import tempfile
+import tempfile  # noqa: E402
 
 @pytest.fixture
 def temp_dir():
@@ -52,7 +52,7 @@ def temp_dir():
 
 @pytest.fixture
 def mock_home(tmp_path):
-    with patch.object(Path, 'home', return_value=tmp_path):
+    with patch.object(Path, 'home', return_value=tmp_path):  # noqa: F821
         yield tmp_path
 
 # ── Pollution diagnostics ──
@@ -63,7 +63,7 @@ def pytest_collection_finish(session):
         gc = sec.__dict__.get('get_config')
         is_mock = isinstance(gc, MagicMock)
         if is_mock:
-            print(f"\n[COLLECTION] POLLUTED! security.get_config is MagicMock")
+            print("\n[COLLECTION] POLLUTED! security.get_config is MagicMock")
         else:
             print(f"\n[COLLECTION] OK: security.get_config type={type(gc).__name__}")
     except Exception as e:
@@ -75,7 +75,7 @@ def pytest_runtest_teardown(item, nextitem):
         gc = sec.__dict__.get('get_config')
         if gc is not None and isinstance(gc, MagicMock):
             print(f"\n[POLLUTED] After {item.nodeid}")
-    except:
+    except:  # noqa: E722
         pass
 
 def pytest_sessionfinish(session, exitstatus):

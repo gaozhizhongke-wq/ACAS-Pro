@@ -2,11 +2,9 @@
 # -*- coding: utf-8 -*-
 """Tests for blockchain/settlement_engine.py"""
 
-import pytest
 from datetime import datetime
-from unittest.mock import MagicMock, patch
 from acas_pro.blockchain.settlement_engine import (
-    SettlementStatus, SettlementType, SettlementParty, SettlementRecord,
+    SettlementType, SettlementParty, SettlementRecord,
     SettlementEngine
 )
 
@@ -216,7 +214,7 @@ class TestSettlementEngine:
         assert result is not None
 
     def test_get_settlement_statistics(self):
-        from datetime import datetime, timedelta
+        from datetime import timedelta
         end = datetime.now().strftime("%Y-%m-%d")
         start = (datetime.now() - timedelta(days=30)).strftime("%Y-%m-%d")
         result = self.engine.get_settlement_statistics(start, end)

@@ -268,8 +268,9 @@ class TestACASTools:
     def test_get_llm_config_no_import(self):
         from acas_pro.llm.tools import ACASTools
         tools = ACASTools()
-        result = tools._get_llm_config()
-        assert result is None
+        with patch.dict('sys.modules', {'acas_pro.core.config': None}):
+            result = tools._get_llm_config()
+            assert result is None
 
     def test_execute_via_registry(self):
         from acas_pro.llm.tools import ACASTools
@@ -282,6 +283,19 @@ class TestACASTools:
         from acas_pro.llm.tools import ACASTools
         tools = ACASTools()
         tool_names = [t["name"] for t in tools.registry.list_tools()]
+        default_kwargs = {
+            "sales_forecast": {"product_id": "P001", "days": 7},
+            "inventory_optimize": {"product_id": "P001", "current_stock": 100},
+            "market_intelligence": {"keyword": "AI"},
+            "content_create": {"topic": "test", "platform": "general"},
+            "trend_monitor": {"category": "tech"},
+            "account_analyze": {"account_id": "A001"},
+            "ad_campaign_manage": {"action": "report"},
+            "ecommerce_manage": {"action": "orders"},
+            "data_query": {"query_type": "sales"},
+            "festival_calendar": {},
+        }
         for name in tool_names:
-            result = tools.registry.execute(name)
+            kwargs = default_kwargs.get(name, {})
+            result = tools.registry.execute(name, **kwargs)
             assert result is not None, f"Tool {name} returned None"

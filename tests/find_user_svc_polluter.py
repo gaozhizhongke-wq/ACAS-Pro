@@ -1,5 +1,6 @@
 """Binary search for polluter of test_user_service_full.py"""
-import subprocess, sys
+import subprocess
+import sys
 
 test_files = [
     "test_e2e_playwright/test_dashboard_e2e.py",

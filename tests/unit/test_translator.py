@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 """Tests for translator module."""
 import sys
-from unittest.mock import MagicMock, patch
 
-import pytest
 
 sys.path.insert(0, 'src')
 
-from acas_pro.i18n.translator import *
+from acas_pro.i18n.translator import *  # noqa: F403
 
 
 class TestTranslator:

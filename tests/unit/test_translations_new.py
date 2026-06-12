@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Tests for translations module"""
-import pytest
 from acas_pro.i18n.translations import translations, _Translations
 
 

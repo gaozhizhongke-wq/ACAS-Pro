@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Unit tests for v2 module aliases."""
-import pytest
 
 
 class TestDataMonitorV2:

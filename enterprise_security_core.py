@@ -11,9 +11,9 @@ import hashlib
 import hmac
 import secrets
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 from functools import wraps
-from typing import Optional, Dict, List
+from typing import Optional, Dict
 import json
 
 # 企业级依赖
@@ -204,7 +204,7 @@ class EnterpriseSecurityCore:
             ).hex()
             
             return hmac.compare_digest(new_hash, hash_val)
-        except:
+        except Exception:
             return False
     
     def hash_password(self, password: str) -> str:
@@ -295,14 +295,14 @@ if __name__ == '__main__':
         
         # 测试RBAC
         sec.user_roles['operator1'] = 'operator'
-        assert sec.check_permission('operator1', 'account:read') == True
-        assert sec.check_permission('operator1', 'setting:write') == False
+        assert sec.check_permission('operator1', 'account:read') == True  # noqa: E712
+        assert sec.check_permission('operator1', 'setting:write') == False  # noqa: E712
         print("[OK] RBAC permissions")
         
         # 测试密码哈希
         pwd_hash = sec.hash_password('MySecurePassword123!')
-        assert sec.verify_password('MySecurePassword123!', pwd_hash) == True
-        assert sec.verify_password('WrongPassword', pwd_hash) == False
+        assert sec.verify_password('MySecurePassword123!', pwd_hash) == True  # noqa: E712
+        assert sec.verify_password('WrongPassword', pwd_hash) == False  # noqa: E712
         print("[OK] Password hashing")
         
         print("\n" + "="*60)

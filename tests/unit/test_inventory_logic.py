@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Tests for inventory logic module"""
-import pytest
 from datetime import datetime
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 from acas_pro.ui.logic.inventory_logic import InventoryLogic, InventoryItem, InventoryAlert
 
 

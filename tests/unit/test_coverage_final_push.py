@@ -2,13 +2,8 @@
 Targeted tests to cover the last few missed lines in high-coverage files.
 These push overall coverage from 78.95% to >= 79%.
 """
-import sys
-import os
-import tempfile
 import unittest.mock as mock
-import pytest
 import datetime
-import hashlib
 from pathlib import Path
 
 

@@ -2,9 +2,7 @@
 """Tests for scene_adapter.py"""
 
 import sys
-import json
 from unittest.mock import MagicMock, patch
-from pathlib import Path
 
 import pytest
 from acas_pro.avatar.scene_adapter import (
@@ -100,8 +98,8 @@ class TestSceneAdapter:
         assert result is None
 
     def test_get_all_scenes(self, adapter):
-        scene1 = adapter.create_scene_from_template(SceneType.EDUCATIONAL)
-        scene2 = adapter.create_scene_from_template(SceneType.CORPORATE)
+        scene1 = adapter.create_scene_from_template(SceneType.EDUCATIONAL)  # noqa: F841
+        scene2 = adapter.create_scene_from_template(SceneType.CORPORATE)  # noqa: F841
         result = adapter.get_all_scenes()
         # Scene IDs use second precision, may collide if created too fast
         assert len(result) >= 1

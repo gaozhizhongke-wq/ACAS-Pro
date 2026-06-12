@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for dashboard_stats routes to boost coverage."""
 import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock
 from flask import Flask
 
 

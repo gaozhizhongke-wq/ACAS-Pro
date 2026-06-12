@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 """Tests for gesture_generator.py"""
 
-import sys
-from unittest.mock import MagicMock
 
-import pytest
 from acas_pro.avatar.gesture_generator import (
     GestureType, BodyPart, JointRotation, PoseFrame,
     Gesture, GestureGenerator

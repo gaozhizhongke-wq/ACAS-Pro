@@ -52,7 +52,7 @@ class TestMetricsWithPrometheus:
 
     def test_metrics_endpoint_calls_generate_latest(self, app_with_metrics, client):
         app, metrics_mod = app_with_metrics
-        with patch.object(metrics_mod, 'generate_latest', return_value=b'metrics_data') as mock_gen:
+        with patch.object(metrics_mod, 'generate_latest', return_value=b'metrics_data') as mock_gen:  # noqa: F841
             with patch.object(metrics_mod, '_registry', MagicMock()):
                 resp = client.get('/metrics')
                 assert resp.data == b'metrics_data'

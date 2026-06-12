@@ -6,7 +6,7 @@ from collections import Counter
 with open(r"C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\mypy_result.txt", 'r', encoding='utf-8') as f:
     lines = f.readlines()
 
-errors = [l.strip() for l in lines if 'error:' in l and 'note:' not in l]
+errors = [l.strip() for l in lines if 'error:' in l and 'note:' not in l]  # noqa: E741
 print(f'Total error lines: {len(errors)}')
 
 if not errors:

@@ -11,16 +11,16 @@ import os
 # Add parent directories to path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 
-from typing import Dict, Optional, List
+from typing import Dict, Optional
 from datetime import datetime, timezone
 import logging
 
 # Import security modules
-from vault.vault_client import VaultClient, get_vault
-from rbac.rbac import RBACManager, Permission, get_rbac
-from audit.audit_logger import ImmutableAuditLogger, AuditEventType, get_audit_logger
-from auth.jwt_auth import JWTAuthManager, TokenPair, get_auth_manager
-from auth.mfa import MFAManager, get_mfa_manager
+from vault.vault_client import VaultClient
+from rbac.rbac import RBACManager, Permission
+from audit.audit_logger import ImmutableAuditLogger, AuditEventType
+from auth.jwt_auth import JWTAuthManager, TokenPair
+from auth.mfa import MFAManager
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger('acas.security')

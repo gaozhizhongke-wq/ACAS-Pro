@@ -17,7 +17,7 @@ for line in lines:
         fname = fname.split("acas_pro/")[-1]
     try:
         lineno = int(parts[1])
-    except:
+    except:  # noqa: E722
         continue
     rest = ":".join(parts[3:]).strip()
     code = ""

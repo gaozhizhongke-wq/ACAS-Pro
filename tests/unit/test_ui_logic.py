@@ -3,9 +3,8 @@
 """Unit tests for all ui/logic/ modules - dataclasses, enums, and logic classes."""
 
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import sys
-import pytest
 
 if 'numpy' not in sys.modules:
     sys.modules['numpy'] = MagicMock()

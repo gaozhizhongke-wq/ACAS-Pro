@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Tests for video_maker exception branches."""
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 
 class TestVideoMakerExceptions:

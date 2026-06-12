@@ -1,5 +1,3 @@
-import sys
-import shutil
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -10,7 +8,7 @@ from acas_pro.web.health import HealthStatus, HealthCheckResult, HealthChecker, 
 
 
 @pytest.fixture
-def health_checker():
+def health_checker():  # noqa: F811
     """Fresh HealthChecker per test."""
     return HealthChecker()
 

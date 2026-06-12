@@ -1,5 +1,4 @@
 """Coverage boost: cover the last ~4 lines to reach 80%."""
-import pytest
 
 
 class TestPlatformApiFactoryCoverage:

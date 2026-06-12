@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 """Tests for metrics/brand_reputation.py"""
 
-import pytest
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, patch
 from acas_pro.metrics.brand_reputation import (
     MetricPeriod, SentimentArticle, ReputationScore, ReputationTrend,
     BrandReputationCalculator

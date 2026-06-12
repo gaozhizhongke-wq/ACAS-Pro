@@ -1,4 +1,3 @@
-import pytest
 from acas_pro.ui.logic.content_logic import (
     ContentCreationLogic, Platform, ContentStyle, GeneratedScript
 )
@@ -22,7 +21,7 @@ class TestFetchTrends:
 
     def test_fetch_populates_internal(self):
         logic = ContentCreationLogic()
-        trends = logic.fetch_trends(limit=2)
+        trends = logic.fetch_trends(limit=2)  # noqa: F841
         assert len(logic._trends) == 2
 
 

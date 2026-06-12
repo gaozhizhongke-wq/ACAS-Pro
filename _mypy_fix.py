@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """Add # type: ignore for Qt stub errors in UI files, fix core type errors."""
-import pathlib, re, sys
+import pathlib
+import re
+import sys
 
 os_chdir = getattr(sys, 'os_chdir', None)  # not used
 
 def fix_file(fpath: pathlib.Path) -> int:
     """Fix Qt type issues in a file. Returns count of fixes."""
     text = fpath.read_text(encoding="utf-8-sig")
-    original = text
+    original = text  # noqa: F841
     lines = text.split("\n")
     fixed_lines = []
     changes = 0

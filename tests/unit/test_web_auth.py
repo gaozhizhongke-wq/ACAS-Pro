@@ -2,8 +2,6 @@
 """Tests for ACAS Pro auth routes - fully isolated by re-importing per test"""
 import sys
 import json
-import types
-import pytest
 
 sys.path.insert(0, r'C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\src')
 
@@ -228,7 +226,6 @@ class TestTokenFunctions:
     def test_verify_token_legacy(self, monkeypatch):
         """JWTManager returns None -> fallback to jwt.decode"""
         import acas_pro.core.security as _sec_mod
-        import acas_pro.web.routes.auth as _auth_mod
         monkeypatch.setattr(_sec_mod.JWTManager, 'verify_token',
                            staticmethod(lambda tok, expected_type=None: None),
                            raising=False)

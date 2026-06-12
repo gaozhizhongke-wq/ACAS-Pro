@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """Deep tests for script_generator and other content modules."""
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import sys
 from datetime import datetime, timezone
 

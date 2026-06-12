@@ -268,7 +268,7 @@ class TestRateLimiter:
         os.environ.pop('ACAS_DATA_DIR', None)
         try:
             shutil.rmtree(self._temp_dir)
-        except:
+        except:  # noqa: E722
             pass
     
     

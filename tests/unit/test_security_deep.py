@@ -1,8 +1,8 @@
 """Tests for core/security.py - covering PasswordValidator, PasswordHasher, JWTManager,
 SessionManager, RateLimiter, CryptoManager, RedisRateLimiter, and module-level functions"""
-import pytest
 from unittest.mock import patch, MagicMock
-import tempfile, os
+import tempfile
+import os
 
 
 class TestPasswordValidator:
@@ -196,7 +196,7 @@ class TestCryptoManager:
     def test_rotate_key(self):
         from acas_pro.core.security import CryptoManager
         cm = CryptoManager(key="old-key-1234567890123456")
-        encrypted = cm.encrypt("test data")
+        encrypted = cm.encrypt("test data")  # noqa: F841
         cm.rotate_key(new_key="new-key-1234567890123456")
 
 
@@ -256,7 +256,7 @@ class TestRedisRateLimiter:
     def test_init_no_redis(self):
         from acas_pro.core.security import RedisRateLimiter
         try:
-            rl = RedisRateLimiter(redis_url="redis://localhost")
+            rl = RedisRateLimiter(redis_url="redis://localhost")  # noqa: F841
         except Exception:
             pass  # Expected if redis not available
 

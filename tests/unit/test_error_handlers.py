@@ -3,7 +3,6 @@ Tests for global error handlers (web/__init__.py)
 """
 import json
 import pytest
-from unittest.mock import patch, MagicMock
 
 
 # ---------------------------------------------------------------------------

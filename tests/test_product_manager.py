@@ -5,11 +5,10 @@ ACAS Pro - Product Manager Tests
 """
 
 import pytest
-from datetime import datetime
 from unittest.mock import Mock, patch
 
 from acas_pro.ecommerce.product_manager import (
-    ProductManager, Product, ProductVariant, ProductImage,
+    Product, ProductVariant, ProductImage,
     ProductStatus, ProductCategory
 )
 

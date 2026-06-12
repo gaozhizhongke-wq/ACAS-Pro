@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Run mypy and save full output."""
-import subprocess, sys, pathlib
+import subprocess
+import sys
+import pathlib
 
 result = subprocess.run(
     [sys.executable, "-m", "mypy", "src/", "--ignore-missing-imports",

@@ -10,7 +10,7 @@ All Rights Reserved.
 import time
 import logging
 from functools import wraps
-from typing import Optional, Callable, Dict, Any
+from typing import Callable
 from contextvars import ContextVar
 
 from prometheus_client import (
@@ -262,7 +262,7 @@ def monitor_http(func: Callable) -> Callable:
                 if request:
                     method = request.method
                     endpoint = request.endpoint or request.path
-            except:
+            except Exception:
                 pass
             
             duration = time.time() - start

@@ -1,16 +1,12 @@
 # -*- coding: utf-8 -*-
 """Tests for avatar_engine.py"""
 
-import sys
-import json
-from unittest.mock import MagicMock, patch
-from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from acas_pro.avatar.avatar_engine import (
     AvatarType, AvatarStyle, AvatarGender, AvatarAgeGroup,
-    AvatarAppearance, AvatarExpression, DigitalAvatar, AvatarScene,
-    AvatarEngine
+    AvatarAppearance, AvatarExpression, DigitalAvatar, AvatarEngine
 )
 
 
@@ -124,9 +120,9 @@ class TestAvatarEngine:
 
     def test_get_user_avatars(self, engine):
         import time
-        avatar1 = engine.create_avatar_from_template("template_business_female", "A1", "user1")
+        avatar1 = engine.create_avatar_from_template("template_business_female", "A1", "user1")  # noqa: F841
         time.sleep(1.1)  # Ensure different ID
-        avatar2 = engine.create_avatar_from_template("template_business_male", "A2", "user1")
+        avatar2 = engine.create_avatar_from_template("template_business_male", "A2", "user1")  # noqa: F841
         result = engine.get_user_avatars("user1")
         assert len(result) >= 1
         if len(result) == 2:

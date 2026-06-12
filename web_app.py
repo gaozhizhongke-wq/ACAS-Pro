@@ -8,12 +8,6 @@ Phase 2: JWT auth middleware, login/register
 
 import os
 import sys
-import json
-import time
-import uuid
-import hashlib
-from datetime import datetime, timedelta, timezone
-from functools import wraps
 
 # ── Load .env ──────────────────────────────────────────────────────────────
 env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
@@ -38,26 +32,15 @@ src_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'src')
 if src_path not in sys.path:
     sys.path.insert(0, src_path)
 
-from flask import Flask, render_template_string, request, jsonify, g, make_response, render_template
-import jwt
+from flask import Flask, request, jsonify, render_template  # noqa: E402
 
-from acas_pro.core.security import password_validator as pv, JWTManager, rate_limiter, create_csrf_cookie, generate_csrf_token, require_csrf, set_jwt_cookie, clear_jwt_cookie, get_jwt_from_cookie
-from acas_pro.core.config import config
-from acas_pro.core.logging import setup_logging, get_logger
-from acas_pro.services.user_service import user_service
-from acas_pro.llm.llm_client import (
-    LLMClient,
-    LLMConfig as ClientLLMConfig,
-    LLMProvider,
-    LLMMessage,
-)
-from acas_pro.core.database import DatabaseManager
-from acas_pro.core.security_headers import SecurityHeaders, InputValidator
+from acas_pro.core.config import config  # noqa: E402
+from acas_pro.core.logging import setup_logging, get_logger  # noqa: E402
+from acas_pro.core.security_headers import SecurityHeaders  # noqa: E402
 
 # New production middleware
-from acas_pro.web.middleware import RequestContext, ErrorHandler
-from acas_pro.web.health import health_checker
-from acas_pro.web.api_spec import register_api_docs
+from acas_pro.web.middleware import RequestContext, ErrorHandler  # noqa: E402
+from acas_pro.web.health import health_checker  # noqa: E402
 
 setup_logging()
 logger = get_logger(__name__)
@@ -91,7 +74,7 @@ RequestContext.init_app(app)
 ErrorHandler.init_app(app)
 logger.info("Production middleware initialized")
 
-from acas_pro.web.routes import auth_bp, llm_bp, dashboard_bp
+from acas_pro.web.routes import auth_bp, llm_bp, dashboard_bp  # noqa: E402
 
 app.register_blueprint(auth_bp)
 app.register_blueprint(llm_bp)

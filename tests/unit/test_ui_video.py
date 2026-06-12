@@ -1,5 +1,3 @@
-import pytest
-import uuid
 from acas_pro.ui.logic.video_logic import VideoLogic, VideoProject, VideoFormat, VideoQuality, RenderJob
 
 

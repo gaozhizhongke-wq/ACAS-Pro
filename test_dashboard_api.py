@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Test dashboard API endpoints"""
-import sys, os
+import sys
+import os
 sys.path.insert(0, 'src')
 os.chdir(r'C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro')
 
-from acas_pro.web.routes.dashboard import bp
-from flask import Flask
+from acas_pro.web.routes.dashboard import bp  # noqa: E402
+from flask import Flask  # noqa: E402
 
 app = Flask(__name__)
 app.register_blueprint(bp)
@@ -37,7 +38,7 @@ with app.test_client() as client:
     data2 = resp2.get_json()
     acts = data2['activities']
     print(f'Activities count: {len(acts)}')
-    print(f'First 3 activities:')
+    print('First 3 activities:')
     for a in acts[:3]:
         print(f'  - {a["time"]} | {a["event"]} | {a["status"]}')
 

@@ -1,4 +1,3 @@
-import re
 
 with open('src/acas_pro/core/database.py', 'r', encoding='utf-8') as f:
     content = f.read()

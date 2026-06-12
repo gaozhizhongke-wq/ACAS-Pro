@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 """Tests for audience_targeting module."""
 import sys
-from unittest.mock import MagicMock, patch
 
-import pytest
 
 sys.path.insert(0, 'src')
 
-from acas_pro.ads.audience_targeting import *
+from acas_pro.ads.audience_targeting import *  # noqa: F403
 
 
 class TestAudienceTargeting:

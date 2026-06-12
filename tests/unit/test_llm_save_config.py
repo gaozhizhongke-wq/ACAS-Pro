@@ -16,7 +16,7 @@ class TestSaveLLMConfig:
         
         @app.route('/api/llm/config', methods=['POST'])
         def save_config():
-            from flask import g, request, jsonify
+            from flask import g, jsonify
             if not hasattr(g, 'user') or not g.user:
                 return jsonify({'error': 'Authentication required'}), 401
             return jsonify({'success': True}), 200

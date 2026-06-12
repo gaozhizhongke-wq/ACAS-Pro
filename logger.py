@@ -5,7 +5,6 @@ ACAS Pro 日志系统
 生产级：分级日志、文件轮转、异步写入
 """
 
-import os
 import sys
 import json
 import logging
@@ -119,7 +118,7 @@ def log_api_call(func):
     """装饰器：记录 API 调用"""
     @wraps(func)
     def wrapper(*args, **kwargs):
-        from flask import request, g
+        from flask import request
         
         start = datetime.now(timezone.utc)
         endpoint = request.endpoint or 'unknown'

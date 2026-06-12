@@ -2,9 +2,8 @@
 """Comprehensive tests for low-coverage non-UI modules."""
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import sys
-import importlib
 
 if 'numpy' not in sys.modules:
     sys.modules['numpy'] = MagicMock()

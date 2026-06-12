@@ -12,13 +12,20 @@ Usage:
 
 from __future__ import annotations
 
-from typing import Dict, List, Tuple
+from typing import List
 
 # ---------------------------------------------------------------------------
 # SQLite schema  (single string passed to execute())
 # ---------------------------------------------------------------------------
 
 SCHEMA_SQLITE: str = """
+-- ── Schema version tracking ───────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS schema_version (
+    version INTEGER PRIMARY KEY,
+    applied_at TEXT NOT NULL DEFAULT (datetime('now')),
+    description TEXT
+);
+
 -- ── Core tables ─────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS users (
     id TEXT PRIMARY KEY,
@@ -802,30 +809,60 @@ CREATE INDEX IF NOT EXISTS idx_stats_account ON account_stats(account_id);
 
 ALL_TABLE_NAMES: List[str] = [
     # Core
-    "users", "products", "transactions", "orders", "inventory",
-    "accounts", "campaigns", "audience_segments", "festival_calendar",
-    "content_templates", "chat_history", "audit_logs", "sessions",
+    "users",
+    "products",
+    "transactions",
+    "orders",
+    "inventory",
+    "accounts",
+    "campaigns",
+    "audience_segments",
+    "festival_calendar",
+    "content_templates",
+    "chat_history",
+    "audit_logs",
+    "sessions",
     # Analytics
-    "metrics_data", "daily_metrics", "data_alerts",
-    "festivals", "marketing_plans",
+    "metrics_data",
+    "daily_metrics",
+    "data_alerts",
+    "festivals",
+    "marketing_plans",
     # Avatar
-    "digital_avatars", "avatar_scenes", "avatar_render_tasks",
+    "digital_avatars",
+    "avatar_scenes",
+    "avatar_render_tasks",
     # Blockchain
-    "wallets", "settlements", "settlement_details",
+    "wallets",
+    "settlements",
+    "settlement_details",
     # Content
-    "generated_scripts", "trend_items",
+    "generated_scripts",
+    "trend_items",
     # Security
-    "token_blacklist", "sessions",
+    "token_blacklist",
+    "sessions",
     # E-commerce
-    "shops", "shop_stats", "suppliers", "inventory_syncs", "purchase_orders",
+    "shops",
+    "shop_stats",
+    "suppliers",
+    "inventory_syncs",
+    "purchase_orders",
     # Platforms
-    "platform_accounts", "account_stats", "account_login_logs",
+    "platform_accounts",
+    "account_stats",
+    "account_login_logs",
     # Publisher
     "publish_tasks",
     # Ads
-    "ad_accounts", "ad_campaigns", "ad_records",
+    "ad_accounts",
+    "ad_campaigns",
+    "ad_records",
     # Video
-    "video_projects", "video_materials", "voice_tasks", "voice_clones",
+    "video_projects",
+    "video_materials",
+    "voice_tasks",
+    "voice_clones",
 ]
 
 # Conflicts resolved: publisher's platform_accounts merged into the
@@ -833,3 +870,28 @@ ALL_TABLE_NAMES: List[str] = [
 # transactions merged core + blockchain/wallet_manager columns.
 # orders merged core + ecommerce/order_manager columns.
 # products merged core + ecommerce/product_manager columns.
+
+# ---------------------------------------------------------------------------
+# Schema version management
+# ---------------------------------------------------------------------------
+
+# Increment this number whenever you add or change tables, columns, or indexes.
+CURRENT_SCHEMA_VERSION: int = 1
+
+
+def get_schema_version(db) -> int:
+    """Return the currently applied schema version, or 0 if never initialised."""
+    try:
+        row = db.fetchone("SELECT MAX(version) as version FROM schema_version")
+        return row["version"] if row and row["version"] is not None else 0
+    except Exception:
+        return 0
+
+
+def record_migration(db, version: int, description: str = "") -> None:
+    """Record that a schema migration has been applied."""
+    db.execute(
+        "INSERT INTO schema_version (version, applied_at, description) "
+        "VALUES (?, datetime('now'), ?)",
+        (version, description),
+    )

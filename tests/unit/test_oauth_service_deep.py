@@ -1,5 +1,7 @@
 """Tests for services/oauth/oauth_service.py - deep coverage."""
-import sys, os, types, json, urllib, secrets
+import sys
+import os
+import json
 from unittest.mock import MagicMock as M, patch
 import pytest
 
@@ -10,13 +12,13 @@ _saved_modules = {mod: sys.modules.get(mod) for mod in [
     'PySide6.QtWidgets', 'PySide6.QtCore', 'PySide6.QtGui']}
 for mod in ['PySide6','numpy','acas_pro.core.config','acas_pro.core.logging',
     'acas_pro.core.security','acas_pro.services.user_service','acas_pro.i18n']:
-    m = M(); m.get_config = M(); m.get_logger = M()
+    m = M(); m.get_config = M(); m.get_logger = M()  # noqa: E702
     sys.modules[mod] = m
-sys.modules['PySide6.QtWidgets'] = M(); sys.modules['PySide6.QtCore'] = M()
+sys.modules['PySide6.QtWidgets'] = M(); sys.modules['PySide6.QtCore'] = M()  # noqa: E702
 sys.modules['PySide6.QtGui'] = M()
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', '..', 'src'))
 
-from acas_pro.services.oauth.oauth_service import (
+from acas_pro.services.oauth.oauth_service import (  # noqa: E402
     OAuthUserInfo, TokenResponse, QQOAuth, WeChatOAuth, OAuthService
 )
 
@@ -211,8 +213,8 @@ class TestOAuthService:
     @pytest.fixture
     def svc(self):
         cfg = M()
-        cfg.qq_app_id = 'qcid'; cfg.qq_app_key = 'qcs'; cfg.qq_redirect_uri = 'http://x.com/cb'
-        cfg.wechat_app_id = 'wcid'; cfg.wechat_app_secret = 'wcs'; cfg.wechat_redirect_uri = 'http://x.com/wxcb'
+        cfg.qq_app_id = 'qcid'; cfg.qq_app_key = 'qcs'; cfg.qq_redirect_uri = 'http://x.com/cb'  # noqa: E702
+        cfg.wechat_app_id = 'wcid'; cfg.wechat_app_secret = 'wcs'; cfg.wechat_redirect_uri = 'http://x.com/wxcb'  # noqa: E702
         return OAuthService(cfg)
 
     def test_available_providers(self, svc):

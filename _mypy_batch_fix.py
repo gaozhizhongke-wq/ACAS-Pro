@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Auto-fix common mypy type error patterns across all core files."""
-import pathlib, re, sys
+import pathlib
+import re
 
 CWD = pathlib.Path(r"C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\src\acas_pro")
 
@@ -34,8 +35,8 @@ def fix_file(fpath: pathlib.Path) -> tuple[int, int]:
                             if lines[j].strip() and not lines[j].startswith(" " * (len(m.group(1)))):
                                 break
                             body_lines.append(lines[j])
-                        has_return = any("return " in l and not l.strip().startswith("#") for l in body_lines)
-                        has_pass = any(l.strip() == "pass" for l in body_lines)
+                        has_return = any("return " in l and not l.strip().startswith("#") for l in body_lines)  # noqa: E741
+                        has_pass = any(l.strip() == "pass" for l in body_lines)  # noqa: E741
                         if has_return and not has_pass:
                             new_line = line.replace("):", ") -> Any:")  # conservative
                             new_lines.append(new_line)

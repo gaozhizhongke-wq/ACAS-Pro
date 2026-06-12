@@ -47,7 +47,7 @@ class VideoAgent:
                 if result.returncode == 0:
                     print(f"✅ 找到 FFmpeg: {path}")
                     return path
-            except:
+            except Exception:
                 continue
         
         print("❌ 未找到 FFmpeg")
@@ -64,13 +64,13 @@ class VideoAgent:
         try:
             result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
             if result.returncode == 0:
-                print(f"✅ 完成!")
+                print("✅ 完成!")
                 return True
             else:
                 print(f"❌ 错误: {result.stderr}")
                 return False
         except subprocess.TimeoutExpired:
-            print(f"❌ 超时")
+            print("❌ 超时")
             return False
         except Exception as e:
             print(f"❌ 异常: {e}")
@@ -217,7 +217,7 @@ class VideoAgent:
             args = [
                 "-i", video_file,
                 "-i", audio_file,
-                "-filter_complex", f"[0:a][1:a]amix=inputs=2:duration=first,volume=2[a]",
+                "-filter_complex", "[0:a][1:a]amix=inputs=2:duration=first,volume=2[a]",
                 "-map", "0:v",
                 "-map", "[a]",
                 "-c:v", "copy",
@@ -295,7 +295,7 @@ class VideoAgent:
             original_size = os.path.getsize(input_file) / (1024 * 1024)
             compressed_size = os.path.getsize(output) / (1024 * 1024)
             ratio = (1 - compressed_size / original_size) * 100
-            print(f"\n📊 压缩结果:")
+            print("\n📊 压缩结果:")
             print(f"   原大小: {original_size:.2f} MB")
             print(f"   压缩后: {compressed_size:.2f} MB")
             print(f"   压缩率: {ratio:.1f}%")

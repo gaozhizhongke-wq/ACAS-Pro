@@ -5,9 +5,8 @@
 Tests the complete user journey through the ACAS Pro web dashboard.
 """
 
-import pytest
 import re
-from playwright.sync_api import Page, expect, Locator
+from playwright.sync_api import Page, expect
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -37,7 +36,7 @@ def safe_goto(page: Page, url: str, timeout: int = 60000):
     """Safely navigate to a URL with error handling."""
     try:
         page.goto(url, wait_until="domcontentloaded", timeout=timeout)
-    except Exception as e:
+    except Exception:
         # Try again with networkidle
         try:
             page.goto(url, wait_until="networkidle", timeout=30000)

@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, patch, MagicMock
 
 from acas_pro.platforms.account_manager import (
-    AccountManager, PlatformAccount, Platform, AccountStatus, AccountPhase, AccountStats
+    PlatformAccount, Platform, AccountStatus, AccountPhase, AccountStats
 )
 
 

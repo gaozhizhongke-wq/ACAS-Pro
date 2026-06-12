@@ -2,7 +2,7 @@
 Comprehensive tests for user_service.py
 """
 import pytest
-from unittest.mock import MagicMock, patch, call
+from unittest.mock import MagicMock, patch
 from datetime import datetime, timedelta, timezone
 
 

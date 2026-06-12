@@ -16,7 +16,6 @@ import os
 import re
 from pathlib import Path
 
-import pytest
 
 SRC_ROOT = Path(__file__).resolve().parent.parent / "src" / "acas_pro"
 SCHEMA_FILE = SRC_ROOT / "core" / "schema.py"
@@ -82,7 +81,7 @@ class TestSchemaCentralization:
 
     def test_no_create_table_outside_schema(self):
         """No module (except schema.py) may contain CREATE TABLE statements."""
-        schema_tables = _extract_table_names_from_schema()
+        schema_tables = _extract_table_names_from_schema()  # noqa: F841
         files = _get_python_files(exclude=["__pycache__"])
         violations: list[str] = []
 

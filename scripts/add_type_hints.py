@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """批量添加类型注解脚本 - 针对 ACAS-Pro"""
 import ast
-import os
-import re
 from pathlib import Path
-from typing import Set, Dict, List, Tuple
+from typing import List, Tuple
 
 def find_untyped_functions(file_path: str) -> List[Tuple[int, str, str]]:
     """查找缺少类型注解的函数"""

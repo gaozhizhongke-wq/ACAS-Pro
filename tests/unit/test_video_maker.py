@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Tests for video maker module"""
-import pytest
 from unittest.mock import patch, MagicMock
 from acas_pro.video.video_maker import VideoMaker, VideoStatus, ClipType, VideoClip, VideoProject
 

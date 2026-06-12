@@ -1,4 +1,3 @@
-import pytest
 from acas_pro.ui.logic.settings_logic import SettingsLogic, SettingItem
 
 

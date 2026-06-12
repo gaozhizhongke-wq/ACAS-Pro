@@ -84,7 +84,7 @@ class TestDatabaseManagerTransaction:
         db._local = None
 
         with pytest.raises(Exception):
-            with db.transaction() as cursor:
+            with db.transaction() as cursor:  # noqa: F841
                 raise Exception("Force error")
 
         # Connection should still be returned to pool

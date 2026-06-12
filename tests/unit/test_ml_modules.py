@@ -3,7 +3,7 @@
 
 import pytest
 import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 # Pre-mock dependencies BEFORE importing acas_pro
 if 'numpy' not in sys.modules:

@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 """Tests for advanced_analytics/smart_decider.py"""
 
-import pytest
 from datetime import datetime, timedelta
-from unittest.mock import MagicMock, patch
 from acas_pro.advanced_analytics.smart_decider import (
     SmartDecider, Decision, DecisionType, DecisionPriority, DecisionStatus, DecisionReport
 )

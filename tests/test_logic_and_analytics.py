@@ -4,7 +4,7 @@ Logic modules are pure Python (no acas_pro dependencies), so no patching needed.
 Advanced analytics modules may have dependencies - patch accordingly.
 """
 import sys
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import inspect
 import pytest
 from datetime import datetime
@@ -98,7 +98,7 @@ class TestAnalyticsLogic:
         assert md.metric_type == MetricType.VIEWS
         # AnalyticsReport may have different fields - just try to instantiate
         try:
-            ar = AnalyticsReport()
+            ar = AnalyticsReport()  # noqa: F841
         except TypeError:
             # Has required fields - skip
             pass
@@ -134,7 +134,6 @@ class TestCustomerLogic:
 
     def test_classes(self):
         _clear_module('acas_pro.ui.logic')
-        from acas_pro.ui.logic.customer_logic import CustomerSegment
         assert True
 
 
@@ -163,7 +162,6 @@ class TestOrderLogic:
 
     def test_classes(self):
         _clear_module('acas_pro.ui.logic')
-        from acas_pro.ui.logic.order_logic import OrderStatus
         assert True
 
 
@@ -210,11 +208,11 @@ class TestContentLogic:
         # Test enums
         assert True
         # Test dataclasses
-        ti = TrendItem(id='1', title='test', author='author', platform=Platform.DOUYIN,
+        ti = TrendItem(id='1', title='test', author='author', platform=Platform.DOUYIN,  # noqa: F841
                       views=100, likes=10, comments=5, viral_score=0.9,
                       timestamp=datetime.now())
-        st = ContentTemplate(name='test', platform=Platform.DOUYIN, duration=60)
-        gs = GeneratedScript(title='test', content='hello world', platform=Platform.DOUYIN,
+        st = ContentTemplate(name='test', platform=Platform.DOUYIN, duration=60)  # noqa: F841
+        gs = GeneratedScript(title='test', content='hello world', platform=Platform.DOUYIN,  # noqa: F841
                            style=ContentStyle.CASUAL, word_count=100, estimated_duration=60, keywords=['test'])
         # Test main logic
         logic = ContentCreationLogic()

@@ -8,9 +8,8 @@ Enterprise-grade token management with refresh rotation
 import os
 import jwt
 import secrets
-import hashlib
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Optional, Tuple, List
+from typing import Dict, Optional, List
 from dataclasses import dataclass
 from enum import Enum
 import logging
@@ -256,10 +255,10 @@ class JWTAuthManager:
             token_id = payload.get('token_id')
             if token_id and token_id in self.refresh_token_store:
                 del self.refresh_token_store[token_id]
-        except:
+        except Exception:
             pass
         
-        logger.info(f"Token revoked")
+        logger.info("Token revoked")
     
     def revoke_all_user_tokens(self, user_id: str):
         """吊销用户所有Token"""

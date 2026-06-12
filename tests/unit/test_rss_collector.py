@@ -7,8 +7,7 @@ from datetime import datetime, timezone
 
 sys.modules['feedparser'] = MagicMock()
 
-import pytest
-from acas_pro.collectors.rss_collector import RSSArticle, RSSCollector
+from acas_pro.collectors.rss_collector import RSSArticle, RSSCollector  # noqa: E402
 
 
 class TestRSSArticle:

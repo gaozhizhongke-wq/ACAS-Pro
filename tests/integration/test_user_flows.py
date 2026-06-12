@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """Integration tests for complete user flows."""
-import pytest
 import json
-from flask import Flask
 
 
 class TestUserRegistrationFlow:

@@ -65,7 +65,7 @@ class TestLLMChat:
     def test_chat_api_error(self, client):
         with patch('acas_pro.web.routes.llm.create_llm_client') as mock_create:
             mock_client = MagicMock()
-            mock_client.chat.side_effect = Exception('API error')
+            mock_client.chat.side_effect = RuntimeError('API error')
             mock_create.return_value = mock_client
 
             response = client.post(

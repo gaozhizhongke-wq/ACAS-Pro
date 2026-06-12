@@ -4,12 +4,17 @@ ACAS Pro - SQLAlchemy ORM Models
 Database models for Alembic migrations and ORM operations
 """
 
-from datetime import datetime
-from typing import Optional, List
-
 from sqlalchemy import (
-    create_engine, Column, String, Integer, Float, Boolean, 
-    DateTime, Text, ForeignKey, JSON, Enum as SQLEnum, Index
+    create_engine,
+    Column,
+    String,
+    Integer,
+    Float,
+    DateTime,
+    Text,
+    ForeignKey,
+    JSON,
+    Index,
 )
 from sqlalchemy.orm import declarative_base, relationship, Session
 from sqlalchemy.sql import func
@@ -21,8 +26,9 @@ Base: type = declarative_base()  # type: ignore[valid-type]
 
 class User(Base):
     """用户表"""
-    __tablename__ = 'users'
-    
+
+    __tablename__ = "users"
+
     id = Column(String(36), primary_key=True)
     account = Column(String(100), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
@@ -30,44 +36,54 @@ class User(Base):
     email = Column(String(255), index=True)
     phone = Column(String(20), index=True)
     avatar = Column(String(500))
-    role = Column(String(20), default='user', index=True)  # user, admin, super_admin
-    status = Column(String(20), default='active', index=True)  # active, inactive, suspended
+    role = Column(String(20), default="user", index=True)  # user, admin, super_admin
+    status = Column(
+        String(20), default="active", index=True
+    )  # active, inactive, suspended
     created_at = Column(DateTime, default=func.now(), index=True)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
     last_login_at = Column(DateTime)
     login_count = Column(Integer, default=0)
-    
+
     # 关系
-    accounts = relationship("SocialAccount", back_populates="user", cascade="all, delete-orphan")
+    accounts = relationship(
+        "SocialAccount", back_populates="user", cascade="all, delete-orphan"
+    )
     orders = relationship("Order", back_populates="user")
 
 
 class SocialAccount(Base):
     """社交媒体账号表"""
-    __tablename__ = 'social_accounts'
-    
+
+    __tablename__ = "social_accounts"
+
     id = Column(String(36), primary_key=True)
-    user_id = Column(String(36), ForeignKey('users.id'), nullable=False, index=True)
-    platform = Column(String(50), nullable=False, index=True)  # douyin, xhs, kuaishou, bilibili
+    user_id = Column(String(36), ForeignKey("users.id"), nullable=False, index=True)
+    platform = Column(
+        String(50), nullable=False, index=True
+    )  # douyin, xhs, kuaishou, bilibili
     platform_account_id = Column(String(100), nullable=False, index=True)
     username = Column(String(100))
     access_token = Column(Text)
     refresh_token = Column(Text)
     token_expires_at = Column(DateTime)
-    status = Column(String(20), default='active', index=True)  # active, expired, revoked
+    status = Column(
+        String(20), default="active", index=True
+    )  # active, expired, revoked
     follower_count = Column(Integer, default=0)
     following_count = Column(Integer, default=0)
     post_count = Column(Integer, default=0)
     created_at = Column(DateTime, default=func.now(), index=True)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
-    
+
     user = relationship("User", back_populates="accounts")
 
 
 class Product(Base):
     """商品表"""
-    __tablename__ = 'products'
-    
+
+    __tablename__ = "products"
+
     id = Column(String(36), primary_key=True)
     name = Column(String(255), nullable=False)
     description = Column(Text)
@@ -75,7 +91,9 @@ class Product(Base):
     price = Column(Float, default=0.0)
     original_price = Column(Float, default=0.0)
     stock = Column(Integer, default=0)
-    status = Column(String(20), default='draft', index=True)  # draft, active, inactive, sold_out
+    status = Column(
+        String(20), default="draft", index=True
+    )  # draft, active, inactive, sold_out
     platform = Column(String(50), index=True)  # taobao, jd, pdd, xhs
     platform_product_id = Column(String(100))
     shop_id = Column(String(36), index=True)
@@ -90,21 +108,22 @@ class Product(Base):
 
 class Order(Base):
     """订单表"""
-    __tablename__ = 'orders'
-    
+
+    __tablename__ = "orders"
+
     id = Column(String(36), primary_key=True)
     platform_order_id = Column(String(100), nullable=False, index=True)
     platform = Column(String(50), nullable=False)
-    user_id = Column(String(36), ForeignKey('users.id'), index=True)
-    product_id = Column(String(36), ForeignKey('products.id'), index=True)
+    user_id = Column(String(36), ForeignKey("users.id"), index=True)
+    product_id = Column(String(36), ForeignKey("products.id"), index=True)
     items = Column(JSON, default=list)
     subtotal = Column(Float, default=0.0)
     shipping_fee = Column(Float, default=0.0)
     discount = Column(Float, default=0.0)
     tax = Column(Float, default=0.0)
     total_amount = Column(Float, default=0.0)
-    status = Column(String(30), default='pending_payment', index=True)
-    payment_status = Column(String(20), default='unpaid', index=True)
+    status = Column(String(30), default="pending_payment", index=True)
+    payment_status = Column(String(20), default="unpaid", index=True)
     shipping_address = Column(JSON)
     logistics = Column(JSON)
     buyer_id = Column(String(100))
@@ -113,20 +132,23 @@ class Order(Base):
     paid_at = Column(DateTime)
     shipped_at = Column(DateTime)
     completed_at = Column(DateTime)
-    
+
     user = relationship("User", back_populates="orders")
 
 
 class ContentPost(Base):
     """内容发布表"""
-    __tablename__ = 'content_posts'
-    
+
+    __tablename__ = "content_posts"
+
     id = Column(String(36), primary_key=True)
     title = Column(String(255))
     content = Column(Text)
     platform = Column(String(50), nullable=False, index=True)
-    account_id = Column(String(36), ForeignKey('social_accounts.id'), index=True)
-    status = Column(String(20), default='draft', index=True)  # draft, scheduled, published, failed
+    account_id = Column(String(36), ForeignKey("social_accounts.id"), index=True)
+    status = Column(
+        String(20), default="draft", index=True
+    )  # draft, scheduled, published, failed
     scheduled_at = Column(DateTime, index=True)
     published_at = Column(DateTime, index=True)
     media_urls = Column(JSON, default=list)
@@ -141,8 +163,9 @@ class ContentPost(Base):
 
 class TrendData(Base):
     """趋势数据表"""
-    __tablename__ = 'trend_data'
-    
+
+    __tablename__ = "trend_data"
+
     id = Column(String(36), primary_key=True)
     platform = Column(String(50), nullable=False, index=True)
     keyword = Column(String(255), nullable=False, index=True)
@@ -152,19 +175,22 @@ class TrendData(Base):
     related_keywords = Column(JSON, default=list)
     top_posts = Column(JSON, default=list)
     recorded_at = Column(DateTime, default=func.now(), index=True)
-    
+
     __table_args__ = (
         # 复合索引：平台+关键词+时间
-        Index('idx_platform_keyword_recorded', 'platform', 'keyword', 'recorded_at'),
+        Index("idx_platform_keyword_recorded", "platform", "keyword", "recorded_at"),
     )
 
 
 class InventoryItem(Base):
     """库存表"""
-    __tablename__ = 'inventory'
-    
+
+    __tablename__ = "inventory"
+
     id = Column(String(36), primary_key=True)
-    product_id = Column(String(36), ForeignKey('products.id'), nullable=False, index=True)
+    product_id = Column(
+        String(36), ForeignKey("products.id"), nullable=False, index=True
+    )
     warehouse_id = Column(String(36), index=True)
     quantity = Column(Integer, default=0, index=True)
     reserved_quantity = Column(Integer, default=0)
@@ -177,8 +203,9 @@ class InventoryItem(Base):
 
 class VideoProject(Base):
     """视频项目表"""
-    __tablename__ = 'video_projects'
-    
+
+    __tablename__ = "video_projects"
+
     id = Column(String(36), primary_key=True)
     name = Column(String(255), nullable=False)
     width = Column(Integer, default=1080)
@@ -191,17 +218,20 @@ class VideoProject(Base):
     clips = Column(JSON, default=list)
     background_music = Column(String(500))
     voice_over = Column(String(500))
-    status = Column(String(20), default='draft', index=True)  # draft, rendering, completed, failed
+    status = Column(
+        String(20), default="draft", index=True
+    )  # draft, rendering, completed, failed
     output_path = Column(String(500))
-    target_platform = Column(String(50), default='douyin', index=True)
+    target_platform = Column(String(50), default="douyin", index=True)
     created_at = Column(DateTime, default=func.now(), index=True)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now())
 
 
 class VoiceTask(Base):
     """语音合成任务表"""
-    __tablename__ = 'voice_tasks'
-    
+
+    __tablename__ = "voice_tasks"
+
     id = Column(String(36), primary_key=True)
     text = Column(Text, nullable=False)
     voice_id = Column(String(50), nullable=False, index=True)
@@ -211,7 +241,9 @@ class VoiceTask(Base):
     volume = Column(Float, default=1.0)
     emotion = Column(String(20))
     output_path = Column(String(500))
-    status = Column(String(20), default='pending', index=True)  # pending, processing, completed, failed
+    status = Column(
+        String(20), default="pending", index=True
+    )  # pending, processing, completed, failed
     duration = Column(Float)
     created_at = Column(DateTime, default=func.now(), index=True)
     completed_at = Column(DateTime, index=True)
@@ -219,24 +251,27 @@ class VoiceTask(Base):
 
 class AuditLog(Base):
     """审计日志表"""
-    __tablename__ = 'audit_logs'
-    
+
+    __tablename__ = "audit_logs"
+
     id = Column(String(36), primary_key=True)
     user_id = Column(String(36), index=True)
-    action = Column(String(50), nullable=False, index=True)  # login, logout, create, update, delete
+    action = Column(
+        String(50), nullable=False, index=True
+    )  # login, logout, create, update, delete
     resource_type = Column(String(50), index=True)  # user, product, order, content
     resource_id = Column(String(36), index=True)
     details = Column(JSON)
     ip_address = Column(String(45))
     user_agent = Column(String(500))
-    status = Column(String(20), default='success', index=True)  # success, failure
+    status = Column(String(20), default="success", index=True)  # success, failure
     created_at = Column(DateTime, default=func.now(), index=True)
-    
+
     __table_args__ = (
         # 复合索引：用户+操作+时间
-        Index('idx_user_action_time', 'user_id', 'action', 'created_at'),
+        Index("idx_user_action_time", "user_id", "action", "created_at"),
         # 复合索引：资源类型+资源ID+时间
-        Index('idx_resource_time', 'resource_type', 'resource_id', 'created_at'),
+        Index("idx_resource_time", "resource_type", "resource_id", "created_at"),
     )
 
 
@@ -244,7 +279,7 @@ class AuditLog(Base):
 def get_engine() -> None:
     """获取 SQLAlchemy 引擎"""
     db_config = config.database
-    if db_config.type == 'postgresql':
+    if db_config.type == "postgresql":
         url = f"postgresql://{db_config.user}:{db_config.password}@{db_config.host}:{db_config.port}/{db_config.database}"
     else:
         url = f"sqlite:///{db_config.path}"

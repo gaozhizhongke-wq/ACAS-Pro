@@ -9,6 +9,7 @@ from typing import Dict, List, Optional, Any
 # Standard library imports (patchable in tests)
 import smtplib
 import logging
+
 logger = logging.getLogger(__name__)
 
 # Config placeholder for patching in tests
@@ -19,10 +20,12 @@ try:
     import requests
 except ImportError:
     from unittest.mock import MagicMock
+
     requests = MagicMock()
 
 try:
     import httpx
+
     _HAS_HTTPX = True
 except ImportError:
     _HAS_HTTPX = False
@@ -127,18 +130,28 @@ class AlertNotifier:
 
     def _select_channels(self, priority: AlertPriority) -> List[AlertChannel]:
         if priority in (AlertPriority.P0_CRITICAL, AlertPriority.P1_URGENT):
-            channels = [ch for ch in AlertChannel if self.enabled_channels.get(ch, False)]
+            channels = [
+                ch for ch in AlertChannel if self.enabled_channels.get(ch, False)
+            ]
             if channels:
                 return channels
             # Default: return all channels if none enabled
             return list(AlertChannel)
         elif priority == AlertPriority.P2_ATTENTION:
-            channels = [ch for ch in [AlertChannel.WECHAT_WORK, AlertChannel.EMAIL] if self.enabled_channels.get(ch, False)]
+            channels = [
+                ch
+                for ch in [AlertChannel.WECHAT_WORK, AlertChannel.EMAIL]
+                if self.enabled_channels.get(ch, False)
+            ]
             if channels:
                 return channels
             return [AlertChannel.EMAIL]
         else:
-            channels = [ch for ch in [AlertChannel.EMAIL] if self.enabled_channels.get(ch, False)]
+            channels = [
+                ch
+                for ch in [AlertChannel.EMAIL]
+                if self.enabled_channels.get(ch, False)
+            ]
             if channels:
                 return channels
             return [AlertChannel.EMAIL]
@@ -159,7 +172,10 @@ class AlertNotifier:
             try:
                 resp = requests.post(
                     self.wechat_webhook,
-                    json={"msgtype": "markdown", "markdown": {"content": msg.to_markdown()}},
+                    json={
+                        "msgtype": "markdown",
+                        "markdown": {"content": msg.to_markdown()},
+                    },
                     timeout=10,
                 )
                 return resp.status_code == 200
@@ -173,7 +189,10 @@ class AlertNotifier:
             try:
                 resp = requests.post(
                     self.dingtalk_webhook,
-                    json={"msgtype": "markdown", "markdown": {"title": msg.title, "text": msg.to_markdown()}},
+                    json={
+                        "msgtype": "markdown",
+                        "markdown": {"title": msg.title, "text": msg.to_markdown()},
+                    },
                     timeout=10,
                 )
                 return resp.status_code == 200
@@ -185,10 +204,19 @@ class AlertNotifier:
     def _send_feishu(self, msg: AlertMessage) -> bool:
         if self.feishu_webhook:
             try:
-                color = self._get_feishu_color(msg.priority)
+                self._get_feishu_color(msg.priority)
                 resp = requests.post(
                     self.feishu_webhook,
-                    json={"msg_type": "interactive", "card": {"header": {"title": {"tag": "plain_text", "content": msg.title}}, "elements": [{"tag": "markdown", "content": msg.content}], "config": {"wide_screen_mode": True}}},
+                    json={
+                        "msg_type": "interactive",
+                        "card": {
+                            "header": {
+                                "title": {"tag": "plain_text", "content": msg.title}
+                            },
+                            "elements": [{"tag": "markdown", "content": msg.content}],
+                            "config": {"wide_screen_mode": True},
+                        },
+                    },
                     timeout=10,
                 )
                 return resp.status_code == 200
@@ -206,7 +234,9 @@ class AlertNotifier:
         }
         return colors.get(priority, "blue")
 
-    def _send_email(self, msg: AlertMessage, recipients: Optional[List[str]] = None) -> bool:
+    def _send_email(
+        self, msg: AlertMessage, recipients: Optional[List[str]] = None
+    ) -> bool:
         if self.smtp_host:
             try:
                 server = smtplib.SMTP(self.smtp_host, self.smtp_port)
@@ -222,7 +252,7 @@ class AlertNotifier:
         return False
 
     def _send_webhook(self, msg: AlertMessage, url: Optional[str] = None) -> bool:
-        hook_url = url or getattr(self, 'webhook_url', None)
+        hook_url = url or getattr(self, "webhook_url", None)
         if hook_url:
             try:
                 resp = requests.post(
@@ -236,11 +266,13 @@ class AlertNotifier:
                 return False
         return False
 
-    async def _send_webhook_async(self, msg: AlertMessage, url: Optional[str] = None) -> bool:
+    async def _send_webhook_async(
+        self, msg: AlertMessage, url: Optional[str] = None
+    ) -> bool:
         """异步发送webhook通知"""
         if not _HAS_HTTPX:
             return False
-        hook_url = url or getattr(self, 'webhook_url', None)
+        hook_url = url or getattr(self, "webhook_url", None)
         if hook_url:
             try:
                 async with httpx.AsyncClient(timeout=10.0) as client:
@@ -254,14 +286,18 @@ class AlertNotifier:
                 return False
         return False
 
-    def _record_alert(self, message: AlertMessage, results: Dict[AlertChannel, bool]) -> None:
-        self._history.append({
-            "message": message,
-            "results": results,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
-        })
+    def _record_alert(
+        self, message: AlertMessage, results: Dict[AlertChannel, bool]
+    ) -> None:
+        self._history.append(
+            {
+                "message": message,
+                "results": results,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        )
         if len(self._history) > self._max_history:
-            self._history = self._history[-self._max_history:]
+            self._history = self._history[-self._max_history :]
 
     def get_history(self, limit: int = 100) -> List[Dict]:
         return self._history[-limit:]
@@ -270,21 +306,32 @@ class AlertNotifier:
         """Configure a channel with settings like webhook URLs."""
         self.enabled_channels[channel] = True
         if channel == AlertChannel.WECHAT_WORK:
-            if "webhook" in kwargs: self.wechat_webhook = kwargs["webhook"]
+            if "webhook" in kwargs:
+                self.wechat_webhook = kwargs["webhook"]
         elif channel == AlertChannel.DINGTALK:
-            if "webhook" in kwargs: self.dingtalk_webhook = kwargs["webhook"]
+            if "webhook" in kwargs:
+                self.dingtalk_webhook = kwargs["webhook"]
         elif channel == AlertChannel.FEISHU:
-            if "webhook" in kwargs: self.feishu_webhook = kwargs["webhook"]
+            if "webhook" in kwargs:
+                self.feishu_webhook = kwargs["webhook"]
         elif channel == AlertChannel.EMAIL:
-            if "host" in kwargs: self.smtp_host = kwargs["host"]
-            elif "smtp_host" in kwargs: self.smtp_host = kwargs["smtp_host"]
-            if "smtp_port" in kwargs: self.smtp_port = kwargs["smtp_port"]
-            if "user" in kwargs: self.smtp_user = kwargs["user"]
-            elif "smtp_user" in kwargs: self.smtp_user = kwargs["smtp_user"]
-            if "password" in kwargs: self.smtp_password = kwargs["password"]
-            elif "smtp_password" in kwargs: self.smtp_password = kwargs["smtp_password"]
+            if "host" in kwargs:
+                self.smtp_host = kwargs["host"]
+            elif "smtp_host" in kwargs:
+                self.smtp_host = kwargs["smtp_host"]
+            if "smtp_port" in kwargs:
+                self.smtp_port = kwargs["smtp_port"]
+            if "user" in kwargs:
+                self.smtp_user = kwargs["user"]
+            elif "smtp_user" in kwargs:
+                self.smtp_user = kwargs["smtp_user"]
+            if "password" in kwargs:
+                self.smtp_password = kwargs["password"]
+            elif "smtp_password" in kwargs:
+                self.smtp_password = kwargs["smtp_password"]
         elif channel == AlertChannel.WEBHOOK:
-            if "url" in kwargs: self.webhook_url = kwargs["url"]
+            if "url" in kwargs:
+                self.webhook_url = kwargs["url"]
 
     def configure_wechat(self, webhook: str = "") -> None:
         self.wechat_webhook = webhook
@@ -298,8 +345,13 @@ class AlertNotifier:
         self.feishu_webhook = webhook
         self.enabled_channels[AlertChannel.FEISHU] = True
 
-    def configure_email(self, smtp_host: str = "", smtp_port: int = 587,
-                        smtp_user: str = "", smtp_password: str = ""):
+    def configure_email(
+        self,
+        smtp_host: str = "",
+        smtp_port: int = 587,
+        smtp_user: str = "",
+        smtp_password: str = "",
+    ):
         # nosec B313  # default empty, caller must set real password
         self.smtp_host = smtp_host
         self.smtp_port = smtp_port
@@ -308,20 +360,24 @@ class AlertNotifier:
         self.enabled_channels[AlertChannel.EMAIL] = True
 
     def send_critical_alert(self, title: str, content: str, **kwargs) -> None:
-        msg = AlertMessage(title=title, content=content, priority=AlertPriority.P0_CRITICAL, **kwargs)
+        msg = AlertMessage(
+            title=title, content=content, priority=AlertPriority.P0_CRITICAL, **kwargs
+        )
         return self.send(msg, force=True)
 
     def send_urgent_alert(self, title: str, content: str, **kwargs) -> None:
-        msg = AlertMessage(title=title, content=content, priority=AlertPriority.P1_URGENT, **kwargs)
+        msg = AlertMessage(
+            title=title, content=content, priority=AlertPriority.P1_URGENT, **kwargs
+        )
         return self.send(msg, force=True)
 
-    async def send_async(self, message: 'AlertMessage',
-                        channels: list = None,
-                        force: bool = False):
+    async def send_async(
+        self, message: "AlertMessage", channels: list = None, force: bool = False
+    ):
         """异步发送告警通知（webhook使用httpx，其他使用to_thread）"""
         if channels is None:
             channels = self._select_channels(message.priority)
-        
+
         results: Dict[AlertChannel, bool] = {}
         for ch in channels:
             if not force and not self.enabled_channels.get(ch, False):
@@ -342,7 +398,7 @@ class AlertNotifier:
                         results[ch] = False
             except Exception:
                 results[ch] = False
-        
+
         self._record_alert(message, results)
         return results
 

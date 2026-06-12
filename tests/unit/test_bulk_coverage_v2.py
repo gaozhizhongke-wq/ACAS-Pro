@@ -1,6 +1,8 @@
 """Bulk coverage for llm/tools.py, services/user_service.py, collectors/rss_collector.py."""
 from dataclasses import asdict
-import sys, os, datetime
+import sys
+import os
+import datetime
 from unittest.mock import MagicMock as M, patch
 import pytest
 
@@ -37,7 +39,7 @@ def _mock_deps():
 
 # ── llm/tools.py ────────────────────────────────────────────────────────
 
-from acas_pro.llm.tools import ACASTools, ToolRegistry
+from acas_pro.llm.tools import ACASTools, ToolRegistry  # noqa: E402
 
 class TestACASToolsInit:
     def test_init_defaults(self):
@@ -97,8 +99,8 @@ class TestToolRegistry:
 
 # ── services/user_service.py ────────────────────────────────────────────
 
-from acas_pro.services import user_service as _us_mod
-from acas_pro.services.user_service import UserService, UserProfile
+from acas_pro.services import user_service as _us_mod  # noqa: E402
+from acas_pro.services.user_service import UserService, UserProfile  # noqa: E402
 
 class TestUserProfile:
     def _make(self):
@@ -247,4 +249,4 @@ class TestUserServiceMethods:
 
 # ── collectors/rss_collector.py ────────────────────────────────────────
 
-from acas_pro.collectors.rss_collector import RSSCollector, RSSArticle
+from acas_pro.collectors.rss_collector import RSSCollector, RSSArticle  # noqa: E402

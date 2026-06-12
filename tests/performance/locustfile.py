@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """Locust performance tests for ACAS Pro API."""
 from locust import HttpUser, task, between
-import random
 
 
 class ACASProUser(HttpUser):

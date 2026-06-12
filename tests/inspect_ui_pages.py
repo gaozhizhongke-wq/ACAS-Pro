@@ -62,10 +62,10 @@ for key in list(sys.modules.keys()):
     if 'PySide6.Qt' in key and key not in ['PySide6.QtWidgets', 'PySide6.QtCore', 'PySide6.QtGui', 'PySide6.QtCharts']:
         del sys.modules[key]
 
-import os
+import os  # noqa: E402
 os.environ['ACAS_PRO_ENV'] = 'test'
 
-from acas_pro.ui.pages.ad_manager import AdManagerPage
+from acas_pro.ui.pages.ad_manager import AdManagerPage  # noqa: E402
 
 cls = AdManagerPage
 print(f"Class: {cls.__name__}")

@@ -15,7 +15,7 @@ import traceback
 import uuid
 from datetime import datetime
 from datetime import timezone
-from typing import Optional, Dict, Any, Union
+from typing import Optional, Dict, Any
 from contextvars import ContextVar
 from pythonjsonlogger import jsonlogger
 
@@ -315,7 +315,7 @@ if __name__ == "__main__":
         
         try:
             1 / 0
-        except:
+        except Exception:
             logger.error("发生错误", exc_info=True)
         
         logger.critical("严重错误", system="database", status="down")

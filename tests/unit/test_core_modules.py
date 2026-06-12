@@ -2,10 +2,6 @@
 """Tests for core modules (config, logging, etc.)"""
 
 import pytest
-import os
-import json
-from unittest.mock import MagicMock, patch
-from pathlib import Path
 
 
 class TestConfig:

@@ -6,8 +6,6 @@ import os
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
 from acas_pro.core.security import (
-    PasswordValidator,
-    JWTManager,
     RateLimiter,
     password_validator as pv,
     jwt_manager,

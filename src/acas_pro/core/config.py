@@ -7,10 +7,9 @@ Production-grade configuration management with validation
 
 import os
 import json
-import secrets
 import logging
 from pathlib import Path
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional, Tuple, Any
 from enum import Enum
 
@@ -19,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 class Environment(str, Enum):
     """Application environment"""
+
     DEVELOPMENT = "development"
     STAGING = "staging"
     PRODUCTION = "production"
@@ -27,6 +27,7 @@ class Environment(str, Enum):
 @dataclass
 class DatabaseConfig:
     """Database configuration"""
+
     type: str = "sqlite"  # sqlite, postgresql
     name: str = "acas_pro"  # database name
     path: str = ""
@@ -41,7 +42,7 @@ class DatabaseConfig:
     pool_timeout: int = 30
     pool_recycle: int = 3600
     echo: bool = False
-    
+
     def __post_init__(self) -> Any:
         if not self.path:
             self.path = str(Path.home() / ".acas-pro" / "data" / "acas_pro.db")
@@ -55,6 +56,7 @@ class DatabaseConfig:
 @dataclass
 class SecurityConfig:
     """Security configuration"""
+
     secret_key: str = ""
     jwt_algorithm: str = "HS256"
     jwt_expiry_hours: int = 24
@@ -70,12 +72,13 @@ class SecurityConfig:
     tls_key_path: str = ""
     # CORS configuration
     cors_allowed_origins: str = ""  # comma-separated
-    
+
     def __post_init__(self) -> Any:
         if not self.secret_key:
             from ..core.secrets_manager import get_secrets_manager
+
             sm = get_secrets_manager()
-            env_key = sm.get('secret_key')
+            env_key = sm.get("secret_key")
             if env_key:
                 self.secret_key = env_key
             else:
@@ -91,6 +94,7 @@ class SecurityConfig:
 @dataclass
 class LLMConfig:
     """LLM configuration"""
+
     enabled: bool = True
     provider: str = "deepseek"  # deepseek, openai, anthropic, gemini
     api_key: str = ""
@@ -100,17 +104,18 @@ class LLMConfig:
     temperature: float = 0.7
     agent_mode: bool = True
     max_agent_steps: int = 10
-    
+
     def __post_init__(self) -> Any:
         if not self.api_key:
             from ..core.secrets_manager import get_secrets_manager
+
             sm = get_secrets_manager()
             # Try provider-specific key first, then generic LLM_API_KEY
-            provider_key = sm.get(f'{self.provider}_api_key')
+            provider_key = sm.get(f"{self.provider}_api_key")
             if provider_key:
                 self.api_key = provider_key
             else:
-                generic_key = sm.get('llm_api_key')
+                generic_key = sm.get("llm_api_key")
                 if generic_key:
                     self.api_key = generic_key
 
@@ -118,6 +123,7 @@ class LLMConfig:
 @dataclass
 class OAuthConfig:
     """OAuth configuration"""
+
     qq_app_id: str = ""
     qq_app_key: str = ""
     qq_redirect_uri: str = ""
@@ -129,6 +135,7 @@ class OAuthConfig:
 @dataclass
 class MLConfig:
     """Machine Learning configuration"""
+
     timesfm_enabled: bool = True
     timesfm_context_length: int = 512
     timesfm_prediction_horizon: int = 30
@@ -140,6 +147,7 @@ class MLConfig:
 @dataclass
 class UIConfig:
     """UI configuration"""
+
     theme: str = "dark"
     language: str = "zh"
     font_family: str = "Microsoft YaHei"
@@ -152,6 +160,7 @@ class UIConfig:
 @dataclass
 class AppConfig:
     """Application configuration"""
+
     name: str = "ACAS Pro"
     version: str = "4.0.0"
     company: str = "ACAS Technology"
@@ -160,31 +169,33 @@ class AppConfig:
     backup_dir: str = ""
     debug: bool = False
     environment: Environment = Environment.DEVELOPMENT
-    
+
     database: Optional[DatabaseConfig] = None
     security: Optional[SecurityConfig] = None
     ml: Optional[MLConfig] = None
     ui: Optional[UIConfig] = None
     llm: Optional[LLMConfig] = None
     oauth: Optional[OAuthConfig] = None
-    
+
     def __post_init__(self) -> Any:
         # ACAS_ENV always takes precedence over any other configuration
-        env = os.environ.get('ACAS_ENV', '').lower()
+        env = os.environ.get("ACAS_ENV", "").lower()
         if env:
             try:
                 self.environment = Environment(env)
                 logger.info(f"Environment set from ACAS_ENV: {self.environment.value}")
             except ValueError:
-                logger.warning(f"Invalid ACAS_ENV value: {env}, keeping current: {self.environment.value}")
-        
+                logger.warning(
+                    f"Invalid ACAS_ENV value: {env}, keeping current: {self.environment.value}"
+                )
+
         if not self.data_dir:
             self.data_dir = str(Path.home() / ".acas-pro" / "data")
         if not self.log_dir:
             self.log_dir = str(Path.home() / ".acas-pro" / "logs")
         if not self.backup_dir:
             self.backup_dir = str(Path.home() / ".acas-pro" / "backups")
-        
+
         if self.database is None:
             self.database = DatabaseConfig()
         if self.security is None:
@@ -197,108 +208,112 @@ class AppConfig:
             self.llm = LLMConfig()
         if self.oauth is None:
             self.oauth = OAuthConfig()
-        
+
         for d in [self.data_dir, self.log_dir, self.backup_dir]:
             Path(d).mkdir(parents=True, exist_ok=True)
-        
+
         # Validate production secrets
         if self.environment == Environment.PRODUCTION:
             self._validate_production_secrets()
-    
+
     def _validate_production_secrets(self) -> Any:
         """Production secrets validation - prevents startup with missing secrets"""
         missing = []
-        
+
         # Check SECRET_KEY
-        if not self.security or not self.security.secret_key or len(self.security.secret_key) < 32:
+        if (
+            not self.security
+            or not self.security.secret_key
+            or len(self.security.secret_key) < 32
+        ):
             missing.append("SECRET_KEY (must be >= 32 chars)")
-        
+
         # Check JWT_SECRET
-        jwt_secret = os.environ.get('ACAS_JWT_SECRET', '')
+        jwt_secret = os.environ.get("ACAS_JWT_SECRET", "")
         if not jwt_secret or len(jwt_secret) < 32:
             missing.append("ACAS_JWT_SECRET (must be >= 32 chars)")
-        
+
         if missing:
             logger.error(f"Production secrets missing: {', '.join(missing)}")
             raise RuntimeError(f"Production secrets missing: {', '.join(missing)}")
-    
+
     def is_development(self) -> bool:
         return self.environment == Environment.DEVELOPMENT
-    
+
     def is_staging(self) -> bool:
         return self.environment == Environment.STAGING
-    
+
     def is_production(self) -> bool:
         return self.environment == Environment.PRODUCTION
-    
+
     def validate(self) -> Tuple[bool, List[str]]:
         """Validate configuration"""
         errors = []
-        
+
         # Validate database
-        if self.database and self.database.type not in ['sqlite', 'postgresql']:
+        if self.database and self.database.type not in ["sqlite", "postgresql"]:
             errors.append(f"Invalid database type: {self.database.type}")
-        
+
         # Validate security
         if not self.security or not self.security.secret_key:
             errors.append("SECRET_KEY is required")
-        
+
         # Validate LLM
         if self.llm and self.llm.enabled and not self.llm.api_key:
             errors.append("LLM API key is required when LLM is enabled")
-        
+
         return len(errors) == 0, errors
-    
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         data = asdict(self)
-        data['environment'] = self.environment.value
+        data["environment"] = self.environment.value
         return data
-    
+
     def save(self, path: Optional[str] = None) -> None:
         """Save configuration to file"""
         if path is None:
             path = str(Path.home() / ".acas-pro" / "config.json")
-        
+
         config_path = Path(path)
         config_path.parent.mkdir(parents=True, exist_ok=True)
-        
+
         data = self.to_dict()
-        
+
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
-    
+
     @classmethod
-    def load(cls, path: Optional[str] = None) -> 'AppConfig':
+    def load(cls, path: Optional[str] = None) -> "AppConfig":
         """Load configuration from file"""
         if path is None:
             path = str(Path.home() / ".acas-pro" / "config.json")
-        
+
         config_path = Path(path)
         if config_path.exists():
             with open(config_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
-            
+
             # Convert environment string back to enum
-            if 'environment' in data:
-                data['environment'] = Environment(data['environment'])
-            
+            if "environment" in data:
+                data["environment"] = Environment(data["environment"])
+
             # Convert nested dicts back to dataclasses
-            if 'database' in data and isinstance(data['database'], dict):
-                data['database'] = DatabaseConfig(**data['database'])
-            if 'security' in data and isinstance(data['security'], dict):
-                data['security'] = SecurityConfig(**data['security'])
-            if 'ml' in data and isinstance(data['ml'], dict):
-                data['ml'] = MLConfig(**data['ml'])
-            if 'ui' in data and isinstance(data['ui'], dict):
-                data['ui'] = UIConfig(**data['ui'])
-            if 'llm' in data and isinstance(data['llm'], dict):
-                data['llm'] = LLMConfig(**data['llm'])
-            if 'oauth' in data and isinstance(data['oauth'], dict):
-                data['oauth'] = OAuthConfig(**data['oauth'])
-            
+            if "database" in data and isinstance(data["database"], dict):
+                data["database"] = DatabaseConfig(**data["database"])
+            if "security" in data and isinstance(data["security"], dict):
+                data["security"] = SecurityConfig(**data["security"])
+            if "ml" in data and isinstance(data["ml"], dict):
+                data["ml"] = MLConfig(**data["ml"])
+            if "ui" in data and isinstance(data["ui"], dict):
+                data["ui"] = UIConfig(**data["ui"])
+            if "llm" in data and isinstance(data["llm"], dict):
+                data["llm"] = LLMConfig(**data["llm"])
+            if "oauth" in data and isinstance(data["oauth"], dict):
+                data["oauth"] = OAuthConfig(**data["oauth"])
+
             return cls(**data)
-        
+
         return cls()
 
 
@@ -311,7 +326,8 @@ def get_config() -> AppConfig:
     global _config_instance
     if _config_instance is None:
         # Try DI container first
-        from .di_container import get_container, DIContainer
+        from .di_container import get_container
+
         container = get_container()
         if container.is_registered(AppConfig):
             _config_instance = container.resolve(AppConfig)
@@ -336,8 +352,9 @@ def reset_config() -> None:
 # Implemented as a module-level lazy accessor via __getattr__
 # to avoid import-time side effects while maintaining backward compatibility.
 
+
 def __getattr__(name: str) -> Optional[object]:
-    if name == 'config':
+    if name == "config":
         return get_config()  # type: ignore[return-value]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
@@ -346,4 +363,3 @@ def __getattr__(name: str) -> Optional[object]:
 def config_func() -> AppConfig:
     """Backward-compatible lazy config accessor - returns global singleton"""
     return get_config()
-

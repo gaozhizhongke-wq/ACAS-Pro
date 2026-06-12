@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 text = open("mypy_result.txt", encoding="utf-8").read()
 lines = text.splitlines()
-errors = [l for l in lines if ": error:" in l and "statsmodels" not in l]
+errors = [l for l in lines if ": error:" in l and "statsmodels" not in l]  # noqa: E741
 by_code = {}
 by_file = {}
 real_bugs = []
-for l in errors:
+for l in errors:  # noqa: E741
     parts = l.split(":")
     if len(parts) < 4:
         continue
@@ -14,7 +14,7 @@ for l in errors:
         fname = fname.split("acas_pro/")[-1]
     try:
         lineno = int(parts[1])
-    except:
+    except:  # noqa: E722
         lineno = 0
     rest = ":".join(parts[3:]).strip()
     code = ""

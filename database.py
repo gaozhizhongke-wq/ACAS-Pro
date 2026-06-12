@@ -5,13 +5,11 @@ ACAS Pro 数据持久化层
 SQLite + SQLAlchemy，零配置，开箱即用
 """
 
-import os
 import json
 from datetime import datetime
 from typing import List, Optional, Dict, Any
-from dataclasses import dataclass, asdict
 
-from sqlalchemy import create_engine, Column, String, Integer, DateTime, Text, Float, Boolean
+from sqlalchemy import create_engine, Column, String, Integer, DateTime, Text, Float
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, Session
 

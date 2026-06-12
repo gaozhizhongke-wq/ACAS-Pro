@@ -2,6 +2,7 @@
 
 Request tracking, logging, and utility middleware for production.
 """
+
 import uuid
 import time
 from typing import Any
@@ -26,12 +27,12 @@ class RequestContext:
         @app.before_request
         def before_request() -> Any:
             # Generate request ID
-            g.request_id = request.headers.get('X-Request-ID', str(uuid.uuid4())[:16])
+            g.request_id = request.headers.get("X-Request-ID", str(uuid.uuid4())[:16])
             g.start_time = time.time()
 
             # Store client info
-            g.client_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
-            g.user_agent = request.headers.get('User-Agent', 'Unknown')[:200]
+            g.client_ip = request.headers.get("X-Forwarded-For", request.remote_addr)
+            g.user_agent = request.headers.get("User-Agent", "Unknown")[:200]
 
             # ── Authentication is handled by web/__init__.py _register_auth_middleware ──
             # This middleware only handles request tracking and logging.
@@ -40,18 +41,18 @@ class RequestContext:
         @app.after_request
         def after_request(response) -> Any:
             # Add request ID to response headers
-            response.headers['X-Request-ID'] = g.get('request_id', 'unknown')
+            response.headers["X-Request-ID"] = g.get("request_id", "unknown")
 
             # Log request completion
-            duration = (time.time() - g.get('start_time', time.time())) * 1000
+            duration = (time.time() - g.get("start_time", time.time())) * 1000
             log_data = {
-                'request_id': g.get('request_id'),
-                'method': request.method,
-                'path': request.path,
-                'status': response.status_code,
-                'duration_ms': round(duration, 2),
-                'client_ip': g.get('client_ip'),
-                'user_agent': g.get('user_agent')[:50] if g.get('user_agent') else None,
+                "request_id": g.get("request_id"),
+                "method": request.method,
+                "path": request.path,
+                "status": response.status_code,
+                "duration_ms": round(duration, 2),
+                "client_ip": g.get("client_ip"),
+                "user_agent": g.get("user_agent")[:50] if g.get("user_agent") else None,
             }
 
             # Log based on status code
@@ -74,74 +75,90 @@ class ErrorHandler:
 
         @app.errorhandler(400)
         def bad_request(error) -> Any:
-            return jsonify({
-                'error': 'Bad Request',
-                'message': str(error.description) if hasattr(error, 'description') else 'Invalid request',
-                'request_id': g.get('request_id')
-            }), 400
+            return jsonify(
+                {
+                    "error": "Bad Request",
+                    "message": str(error.description)
+                    if hasattr(error, "description")
+                    else "Invalid request",
+                    "request_id": g.get("request_id"),
+                }
+            ), 400
 
         @app.errorhandler(401)
         def unauthorized(error) -> Any:
-            return jsonify({
-                'error': 'Unauthorized',
-                'message': 'Authentication required',
-                'request_id': g.get('request_id')
-            }), 401
+            return jsonify(
+                {
+                    "error": "Unauthorized",
+                    "message": "Authentication required",
+                    "request_id": g.get("request_id"),
+                }
+            ), 401
 
         @app.errorhandler(403)
         def forbidden(error) -> Any:
-            return jsonify({
-                'error': 'Forbidden',
-                'message': 'Access denied',
-                'request_id': g.get('request_id')
-            }), 403
+            return jsonify(
+                {
+                    "error": "Forbidden",
+                    "message": "Access denied",
+                    "request_id": g.get("request_id"),
+                }
+            ), 403
 
         @app.errorhandler(404)
         def not_found(error) -> Any:
-            return jsonify({
-                'error': 'Not Found',
-                'message': f"Endpoint {request.path} not found",
-                'request_id': g.get('request_id')
-            }), 404
+            return jsonify(
+                {
+                    "error": "Not Found",
+                    "message": f"Endpoint {request.path} not found",
+                    "request_id": g.get("request_id"),
+                }
+            ), 404
 
         @app.errorhandler(429)
         def rate_limit_exceeded(error) -> Any:
-            return jsonify({
-                'error': 'Too Many Requests',
-                'message': 'Rate limit exceeded. Please try again later.',
-                'request_id': g.get('request_id')
-            }), 429
+            return jsonify(
+                {
+                    "error": "Too Many Requests",
+                    "message": "Rate limit exceeded. Please try again later.",
+                    "request_id": g.get("request_id"),
+                }
+            ), 429
 
         @app.errorhandler(500)
         def internal_error(error) -> Any:
             logger.exception(f"Internal server error: {error}")
-            return jsonify({
-                'error': 'Internal Server Error',
-                'message': 'An unexpected error occurred. Please try again later.',
-                'request_id': g.get('request_id')
-            }), 500
+            return jsonify(
+                {
+                    "error": "Internal Server Error",
+                    "message": "An unexpected error occurred. Please try again later.",
+                    "request_id": g.get("request_id"),
+                }
+            ), 500
 
 
 def validate_json(*required_fields) -> bool:
     """Decorator to validate JSON request body"""
+
     def decorator(f) -> Any:
         @wraps(f)
         def decorated_function(*args, **kwargs) -> Any:
             if not request.is_json:
-                return jsonify({'error': 'Content-Type must be application/json'}), 400
+                return jsonify({"error": "Content-Type must be application/json"}), 400
 
             data = request.get_json(silent=True) or {}
             missing = [field for field in required_fields if field not in data]
 
             if missing:
-                return jsonify({
-                    'error': 'Missing required fields',
-                    'fields': missing
-                }), 400
+                return jsonify(
+                    {"error": "Missing required fields", "fields": missing}
+                ), 400
 
             g.json_data = data
             return f(*args, **kwargs)
+
         return decorated_function
+
     return decorator
 
 

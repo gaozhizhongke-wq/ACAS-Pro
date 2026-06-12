@@ -1,7 +1,8 @@
-import sys, os
+import sys
+import os
 sys.path.insert(0, 'src')
 os.chdir(r'C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro')
-from acas_pro.core.database import DatabaseManager
+from acas_pro.core.database import DatabaseManager  # noqa: E402
 db = DatabaseManager()
 print('Database type:', 'PostgreSQL' if db._is_postgres else 'SQLite')
 print('DB path:', getattr(db, '_db_path', 'N/A'))

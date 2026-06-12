@@ -17,9 +17,9 @@ from dataclasses import dataclass
 from enum import Enum
 
 from sqlalchemy import create_engine, text, event
-from sqlalchemy.orm import sessionmaker, Session
-from sqlalchemy.pool import QueuePool, NullPool
-from sqlalchemy.exc import OperationalError, DisconnectionError
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import QueuePool
+from sqlalchemy.exc import OperationalError
 
 logger = logging.getLogger(__name__)
 

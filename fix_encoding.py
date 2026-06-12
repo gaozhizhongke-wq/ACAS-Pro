@@ -2,8 +2,6 @@
 # -*- coding: utf-8 -*-
 """Fix encoding issues in dashboard_logic.py"""
 
-import codecs
-import json
 
 # Read the file
 with open('src/acas_pro/ui/logic/dashboard_logic.py.bak', 'rb') as f:

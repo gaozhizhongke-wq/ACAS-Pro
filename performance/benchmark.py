@@ -11,7 +11,7 @@ import time
 import os
 import logging
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List
 from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)

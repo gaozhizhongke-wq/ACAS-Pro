@@ -1,8 +1,7 @@
 ﻿#!/usr/bin/env python3
 """Tests for web routes to boost coverage."""
 
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import sys
 
 if 'numpy' not in sys.modules:
@@ -16,7 +15,7 @@ class TestAuthRoutes:
         from acas_pro.web.routes import auth
         assert auth is not None
     
-    def test_auth_route_import(self):
+    def test_auth_route_import(self):  # noqa: F811
         from acas_pro.web.routes import auth
         assert auth is not None
 

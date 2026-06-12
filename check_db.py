@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """Check database status"""
-import sys, os
+import sys
+import os
 sys.path.insert(0, 'src')
 os.chdir(r'C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro')
-from acas_pro.core.database import DatabaseManager
+from acas_pro.core.database import DatabaseManager  # noqa: E402
 db = DatabaseManager()
 
 # Count all tables
@@ -25,5 +26,5 @@ for table in ['products', 'transactions', 'daily_metrics', 'festival_calendar', 
     try:
         rows = db.fetchall(f'SELECT COUNT(*) as cnt FROM {table}')
         print(f'{table}: {rows[0]["cnt"]} rows')
-    except:
+    except:  # noqa: E722
         print(f'{table}: ERROR')

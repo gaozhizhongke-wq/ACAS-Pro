@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 """Unit tests for llm/tools.py - ToolRegistry and ToolDefinition."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import sys
 import pytest
 
@@ -34,8 +34,8 @@ class TestToolRegistry:
         from acas_pro.llm.tools import ToolRegistry
         reg = ToolRegistry()
         reg.register("add", "Add", {"type": "object"}, lambda a, b: a + b)
-        assert reg.unregister("add") == True
-        assert reg.unregister("add") == False
+        assert reg.unregister("add") == True  # noqa: E712
+        assert reg.unregister("add") == False  # noqa: E712
 
     def test_get_schema(self):
         from acas_pro.llm.tools import ToolRegistry

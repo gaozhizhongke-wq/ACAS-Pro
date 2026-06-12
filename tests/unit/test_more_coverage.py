@@ -2,9 +2,8 @@
 """More tests for web routes and core modules."""
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import sys
-import importlib
 
 if 'numpy' not in sys.modules:
     sys.modules['numpy'] = MagicMock()
@@ -55,7 +54,7 @@ class TestWebRoutesImport:
         from acas_pro.web.routes import auth
         assert auth is not None
     
-    def test_auth_import(self):
+    def test_auth_import(self):  # noqa: F811
         from acas_pro.web.routes import auth
         assert auth is not None
     

@@ -5,8 +5,6 @@ ACAS Pro - GDPR Compliance Module
 Data protection and privacy controls
 """
 
-import json
-import hashlib
 from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass

@@ -1,5 +1,4 @@
 """Quick coverage boost for zero-coverage UI modules"""
-import pytest
 
 class TestForecastPage:
     def test_import(self):

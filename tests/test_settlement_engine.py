@@ -5,8 +5,7 @@ ACAS Pro - Settlement Engine Tests
 """
 
 import pytest
-from datetime import datetime
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
 from acas_pro.blockchain.settlement_engine import (
     SettlementEngine, SettlementRecord, SettlementParty,

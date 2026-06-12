@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import pytest
 
 class TestPlatformStubs:
     def test_bilibili(self):

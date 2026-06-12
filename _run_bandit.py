@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """Run bandit and save JSON report."""
-import subprocess, json, sys
+import subprocess
+import json
+import sys
 
 result = subprocess.run(
     [sys.executable, "-m", "bandit", "-r", "src/", "-f", "json", "-q"],

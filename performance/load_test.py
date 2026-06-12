@@ -7,19 +7,17 @@ Locust 性能压测脚本
 支持分布式模式和HTML报告生成
 """
 
-import json
 import time
 import random
 import logging
 import os
-from datetime import datetime
 from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
 try:
-    from locust import HttpUser, task, between, events, tag
-    from locust.runners import MasterRunner, WorkerRunner
+    from locust import HttpUser, task, between, events, tag  # noqa: F401
+    from locust.runners import MasterRunner, WorkerRunner  # noqa: F401
     LOCUST_AVAILABLE = True
 except ImportError:
     LOCUST_AVAILABLE = False
@@ -236,7 +234,7 @@ def main():
                 elapsed = (time.time() - start) * 1000
                 success = resp.getcode() == 200
                 return elapsed, success
-        except Exception as e:
+        except Exception:
             elapsed = (time.time() - start) * 1000
             return elapsed, False
 

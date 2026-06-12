@@ -7,7 +7,6 @@ Enterprise-grade connection management with read/write splitting
 
 import os
 import threading
-import queue
 import time
 from contextlib import contextmanager
 from typing import Optional, List, Dict, Any, Generator
@@ -18,9 +17,9 @@ import logging
 
 # Database drivers
 try:
-    import psycopg2
-    from psycopg2 import pool, extras
-    from psycopg2.extensions import connection as PgConnection
+    import psycopg2  # noqa: F401
+    from psycopg2 import pool, extras  # noqa: F401
+    from psycopg2.extensions import connection as PgConnection  # noqa: F401
     POSTGRES_AVAILABLE = True
 except ImportError:
     POSTGRES_AVAILABLE = False
@@ -206,7 +205,7 @@ class DatabasePoolManager:
                 wrapper = ConnectionWrapper(conn, self, is_primary=True)
                 self._active_connections[id(wrapper)] = wrapper
                 return wrapper
-            except Exception as e:
+            except Exception:
                 self._stats['failed_connections'] += 1
                 raise
     
@@ -228,7 +227,7 @@ class DatabasePoolManager:
                     wrapper = ConnectionWrapper(conn, self, is_primary=False)
                     self._active_connections[id(wrapper)] = wrapper
                     return wrapper
-                except Exception as e:
+                except Exception:
                     logger.warning(f"Replica {pool_idx} failed, trying next...")
                     continue
             
@@ -252,7 +251,7 @@ class DatabasePoolManager:
                         try:
                             pool.putconn(wrapper._conn)
                             break
-                        except:
+                        except Exception:
                             continue
             except Exception as e:
                 logger.error(f"Failed to return connection: {e}")
@@ -275,7 +274,7 @@ class DatabasePoolManager:
             conn.mark_used()
             yield conn
             
-        except Exception as e:
+        except Exception:
             if conn:
                 conn.close()
             raise
@@ -310,7 +309,7 @@ class DatabasePoolManager:
                 self._stats['queries_executed'] += 1
                 return result
                 
-            except Exception as e:
+            except Exception:
                 if not readonly:
                     conn.rollback()
                 raise
@@ -325,7 +324,7 @@ class DatabasePoolManager:
                 cursor.executemany(query, params_list)
                 conn.commit()
                 return cursor.rowcount
-            except Exception as e:
+            except Exception:
                 conn.rollback()
                 raise
             finally:

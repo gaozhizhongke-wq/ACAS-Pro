@@ -18,8 +18,8 @@ print(f"Already ignored: {len(already_ignored)} modules")
 with open(r"C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\mypy_result.txt", 'r', encoding='utf-8') as f:
     lines = f.readlines()
 
-from collections import Counter
-errors = [l.strip() for l in lines if 'error:' in l and 'note:' not in l]
+from collections import Counter  # noqa: E402
+errors = [l.strip() for l in lines if 'error:' in l and 'note:' not in l]  # noqa: E741
 file_counts = Counter()
 for e in errors:
     m = re.search(r'src\\acas_pro\\([\w\\]+\.py)', e)

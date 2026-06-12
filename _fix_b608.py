@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Fix B608: extract multi-line SQL to variable so # nosec works."""
-import pathlib, re
+import pathlib
 
 files = {
     "src/acas_pro/ads/ad_manager.py": [503, 533, 754, 784],

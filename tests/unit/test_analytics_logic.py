@@ -1,7 +1,5 @@
-import pytest
 import json
 from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock
 
 from acas_pro.ui.logic.analytics_logic import (
     AnalyticsLogic, MetricType, TimeRange, MetricData, AnalyticsReport

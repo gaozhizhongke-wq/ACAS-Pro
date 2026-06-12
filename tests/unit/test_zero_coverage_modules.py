@@ -2,10 +2,9 @@
 # -*- coding: utf-8 -*-
 """Unit tests for 0% coverage non-UI modules."""
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from datetime import datetime
 import sys
-import pytest
 
 if 'numpy' not in sys.modules:
     sys.modules['numpy'] = MagicMock()

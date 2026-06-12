@@ -7,7 +7,7 @@ ACAS Pro - Platform API Factory
 
 from typing import Optional
 
-from .platform_api_base import PlatformAPIClient, PlatformCredentials
+from .platform_api_base import APIError, PlatformAPIClient, PlatformCredentials, SyncResult
 from .douyin_shop_api import DouyinShopClient
 from .kuaishou_shop_api import KuaishouShopClient
 from .xiaohongshu_shop_api import XiaohongshuShopClient
@@ -32,11 +32,11 @@ def create_platform_client(
     credentials: PlatformCredentials,
 ) -> Optional[PlatformAPIClient]:
     """创建平台API客户端
-    
+
     Args:
         platform: 平台标识（如 douyin_shop, kuaishou_shop）
         credentials: 平台API凭证
-        
+
     Returns:
         PlatformAPIClient 实例，或 None（如果平台不支持）
     """
@@ -44,7 +44,7 @@ def create_platform_client(
     if not client_class:
         logger.warning(f"[PlatformAPIFactory] Unsupported platform: {platform}")
         return None
-    
+
     client = client_class(credentials)
     logger.info(
         f"[PlatformAPIFactory] Created {client.PLATFORM_NAME} API client "

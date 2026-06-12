@@ -3,8 +3,6 @@
 """Unit tests for alert/notifier.py module."""
 
 import sys
-import json
-from datetime import datetime, timezone
 from unittest.mock import MagicMock, patch
 import pytest
 
@@ -100,20 +98,20 @@ class TestAlertNotifier:
         notifier.enabled_channels[AlertChannel.SMS] = False
         msg = AlertMessage(title="Test", content="Hello")
         result = notifier.send(msg, channels=[AlertChannel.SMS])
-        assert result[AlertChannel.SMS] == False
+        assert result[AlertChannel.SMS] == False  # noqa: E712
     
     def test_send_force_disabled(self, notifier):
         notifier.enabled_channels[AlertChannel.SMS] = False
         msg = AlertMessage(title="Test", content="Hello")
         with patch.object(notifier, '_send_wechat', return_value=True):
             result = notifier.send(msg, channels=[AlertChannel.WECHAT_WORK], force=True)
-            assert result[AlertChannel.WECHAT_WORK] == True
+            assert result[AlertChannel.WECHAT_WORK] == True  # noqa: E712
     
     def test_send_exception_handling(self, notifier):
         msg = AlertMessage(title="Test", content="Hello")
         with patch.object(notifier, '_send_wechat', side_effect=Exception("Network error")):
             result = notifier.send(msg, channels=[AlertChannel.WECHAT_WORK])
-            assert result[AlertChannel.WECHAT_WORK] == False
+            assert result[AlertChannel.WECHAT_WORK] == False  # noqa: E712
     
     def test_select_channels_p0(self, notifier):
         channels = notifier._select_channels(AlertPriority.P0_CRITICAL)

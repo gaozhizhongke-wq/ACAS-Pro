@@ -1,4 +1,5 @@
-import subprocess, sys, pathlib
+import subprocess
+import sys
 
 result = subprocess.run(
     [sys.executable, "-m", "mypy", "src/", "--ignore-missing-imports",

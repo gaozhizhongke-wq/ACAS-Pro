@@ -10,7 +10,9 @@ class TestAdManagerBusiness:
 
     def _make_manager(self):
         """Create AdManager with auto-cleanup."""
-        import tempfile, uuid, os
+        import tempfile
+        import uuid
+        import os
         from acas_pro.ads.ad_manager import AdManager
         db_path = os.path.join(tempfile.gettempdir(), f"test_ads_{uuid.uuid4().hex}.db")
         manager = AdManager(db_path=db_path)
@@ -35,7 +37,7 @@ class TestAdManagerBusiness:
                     pass
 
     def test_create_campaign(self):
-        from acas_pro.ads.ad_manager import AdManager, AdCampaign, AdPlatform, CampaignStatus, BudgetType
+        from acas_pro.ads.ad_manager import AdCampaign, AdPlatform, CampaignStatus, BudgetType
         manager = self._make_manager()
         try:
             from datetime import datetime
@@ -65,7 +67,7 @@ class TestAdManagerBusiness:
             self._close_manager(manager)
 
     def test_add_account(self):
-        from acas_pro.ads.ad_manager import AdManager, AdAccount, AdPlatform
+        from acas_pro.ads.ad_manager import AdAccount, AdPlatform
         manager = self._make_manager()
         try:
             from datetime import datetime
@@ -96,7 +98,9 @@ class TestAudienceTargetingBusiness:
 
     def _make_targeting(self):
         """Create AudienceTargeting with auto-cleanup."""
-        import tempfile, uuid, os
+        import tempfile
+        import uuid
+        import os
         from acas_pro.ads.audience_targeting import AudienceTargeting
         db_path = os.path.join(tempfile.gettempdir(), f"test_aud_{uuid.uuid4().hex}.db")
         targeting = AudienceTargeting(db_path=db_path)
@@ -119,7 +123,7 @@ class TestAudienceTargetingBusiness:
                     pass
 
     def test_create_segment(self):
-        from acas_pro.ads.audience_targeting import AudienceTargeting, AudienceSegment, AudienceType, Gender, AgeRange, GeoTargeting, DeviceTargeting
+        from acas_pro.ads.audience_targeting import AudienceSegment, AudienceType, Gender, AgeRange, GeoTargeting, DeviceTargeting
         targeting = self._make_targeting()
         try:
             from datetime import datetime
@@ -148,7 +152,7 @@ class TestAudienceTargetingBusiness:
             self._close_targeting(targeting)
 
     def test_estimate_audience_size(self):
-        from acas_pro.ads.audience_targeting import AudienceTargeting, AudienceSegment, AudienceType, Gender, AgeRange, GeoTargeting, DeviceTargeting
+        from acas_pro.ads.audience_targeting import AudienceSegment, AudienceType, Gender, AgeRange, GeoTargeting, DeviceTargeting
         targeting = self._make_targeting()
         try:
             from datetime import datetime

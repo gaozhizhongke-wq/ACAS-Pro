@@ -1,4 +1,5 @@
-import os, re
+import os
+import re
 
 real_issues = []
 
@@ -33,7 +34,7 @@ for root, dirs, files in os.walk('src'):
                             if any(fp in line for fp in false_positives):
                                 continue
                             real_issues.append((fpath, lineno, line.rstrip()))
-        except:
+        except:  # noqa: E722
             pass
 
 print(f'Real hardcoded credential issues: {len(real_issues)}')

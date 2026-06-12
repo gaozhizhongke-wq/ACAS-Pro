@@ -3,7 +3,7 @@
 """Unit tests for core/secrets_manager.py and monitoring/metrics.py."""
 
 import os
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import sys
 import pytest
 
@@ -66,7 +66,7 @@ class TestSecretsManager:
     def test_is_set(self):
         from acas_pro.core.secrets_manager import SecretsManager
         mgr = SecretsManager()
-        assert mgr.is_set('nonexistent_xyz_123') == False
+        assert mgr.is_set('nonexistent_xyz_123') == False  # noqa: E712
 
     def test_validate_production(self):
         from acas_pro.core.secrets_manager import SecretsManager

@@ -2,11 +2,8 @@
 # -*- coding: utf-8 -*-
 """Tests for llm/conversation.py"""
 
-import pytest
 import tempfile
 import shutil
-from datetime import datetime
-from unittest.mock import MagicMock, patch
 from acas_pro.llm.conversation import ConversationManager, Conversation
 
 
@@ -155,7 +152,7 @@ class TestConversationManager:
 
     def test_get_active(self):
         # Create and set active
-        conv = self.manager.create_conversation(title="Active", id="CONV001")
+        conv = self.manager.create_conversation(title="Active", id="CONV001")  # noqa: F841
         self.manager.set_active("CONV001")
         
         active = self.manager.get_active()

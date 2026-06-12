@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 """Tests for language detection module"""
-import pytest
 from acas_pro.i18n.lang_detector import LangDetector
 
 

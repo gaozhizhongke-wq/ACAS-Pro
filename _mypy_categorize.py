@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Categorize mypy errors."""
-import subprocess, sys
+import subprocess
+import sys
 
 result = subprocess.run(
     [sys.executable, "-m", "mypy", "src/", "--ignore-missing-imports",
@@ -50,7 +51,7 @@ for line in lines:
         fname = fname.split("acas_pro/")[-1]
     try:
         lineno = int(parts[1])
-    except:
+    except:  # noqa: E722
         lineno = 0
 
     rest = ":".join(parts[3:]).strip()

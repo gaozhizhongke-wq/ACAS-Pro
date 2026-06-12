@@ -6,10 +6,10 @@ AI文案生成与改写系统
 """
 
 import json
+import sqlite3
 import random
-import re
 import time
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 from dataclasses import dataclass
 from enum import Enum
 
@@ -21,16 +21,18 @@ logger = get_logger(__name__)
 
 class ContentStyle(Enum):
     """内容风格"""
-    BROADCAST = "broadcast"      # 口播风格
-    DRAMA = "drama"              # 剧情风格
-    KNOWLEDGE = "knowledge"      # 知识风格
-    SEEDING = "seeding"          # 种草风格
-    EMOTIONAL = "emotional"      # 情感风格
-    PROMOTION = "promotion"      # 促销风格
+
+    BROADCAST = "broadcast"  # 口播风格
+    DRAMA = "drama"  # 剧情风格
+    KNOWLEDGE = "knowledge"  # 知识风格
+    SEEDING = "seeding"  # 种草风格
+    EMOTIONAL = "emotional"  # 情感风格
+    PROMOTION = "promotion"  # 促销风格
 
 
 class Platform(Enum):
     """平台类型"""
+
     DOUYIN = "douyin"
     XIAOHONGSHU = "xiaohongshu"
     KUAISHOU = "kuaishou"
@@ -40,6 +42,7 @@ class Platform(Enum):
 @dataclass
 class ScriptTemplate:
     """文案模板"""
+
     id: str
     name: str
     style: ContentStyle
@@ -54,6 +57,7 @@ class ScriptTemplate:
 @dataclass
 class GeneratedScript:
     """生成的文案"""
+
     id: str
     input_text: str
     title: str
@@ -70,14 +74,14 @@ class GeneratedScript:
 class ScriptGenerator:
     """
     AI文案生成与改写系统
-    
+
     功能：
     1. 单段输入智能扩写
     2. 多风格改写矩阵
     3. 地域文化适配
     4. 节日时令主题生成
     """
-    
+
     # 文案结构模板库
     TEMPLATES = {
         (ContentStyle.BROADCAST, Platform.DOUYIN): ScriptTemplate(
@@ -89,7 +93,7 @@ class ScriptGenerator:
             min_length=300,
             max_length=800,
             example="姐妹们，天天外卖奶茶的看过来！这个黑茶我喝了三个月...",
-            tags=["口播", "种草", "痛点"]
+            tags=["口播", "种草", "痛点"],
         ),
         (ContentStyle.SEEDING, Platform.XIAOHONGSHU): ScriptTemplate(
             id="xhs_seeding_001",
@@ -100,7 +104,7 @@ class ScriptGenerator:
             min_length=500,
             max_length=1500,
             example="周末宅家，泡一杯暖暖的黑茶...",
-            tags=["种草", "生活方式", "测评"]
+            tags=["种草", "生活方式", "测评"],
         ),
         (ContentStyle.KNOWLEDGE, Platform.BILIBILI): ScriptTemplate(
             id="bili_knowledge_001",
@@ -111,10 +115,10 @@ class ScriptGenerator:
             min_length=800,
             max_length=2000,
             example="黑茶，为什么被称为'边疆的生命之饮'？今天我们来聊聊...",
-            tags=["科普", "历史", "文化"]
+            tags=["科普", "历史", "文化"],
         ),
     }
-    
+
     # 钩子模板库
     HOOK_TEMPLATES = {
         "question": [
@@ -132,7 +136,7 @@ class ScriptGenerator:
             "{time}前,我还是{status}...",
         ],
     }
-    
+
     # CTA模板库
     CTA_TEMPLATES = {
         Platform.DOUYIN: [
@@ -146,7 +150,7 @@ class ScriptGenerator:
             "{question}评论区见",
         ],
     }
-    
+
     # 文化适配规则
     CULTURE_RULES = {
         "northwest": {  # 中国西北
@@ -165,7 +169,7 @@ class ScriptGenerator:
             "avoid": ["过于现代化的表达"],
         },
     }
-    
+
     # 节日主题库
     FESTIVAL_THEMES = {
         "ramadan": {  # 斋月
@@ -186,14 +190,12 @@ class ScriptGenerator:
             "visual": ["红色", "金色", "福字"],
         },
     }
-    
+
     # Tables managed by core/schema.py — do not add CREATE TABLE here
 
-    def __init__(self, db: 'DatabaseManager' = None):
+    def __init__(self, db: "DatabaseManager" = None):
         self.db = db or DatabaseManager()
-        
 
-        
     def generate(
         self,
         input_text: str,
@@ -201,11 +203,11 @@ class ScriptGenerator:
         style: ContentStyle = ContentStyle.BROADCAST,
         culture: Optional[str] = None,
         festival: Optional[str] = None,
-        product_info: Optional[Dict] = None
+        product_info: Optional[Dict] = None,
     ) -> GeneratedScript:
         """
         生成文案
-        
+
         Args:
             input_text: 用户输入的简短描述
             platform: 目标平台
@@ -216,37 +218,37 @@ class ScriptGenerator:
         """
         # 1. 意图理解
         intent = self._analyze_intent(input_text)
-        
+
         # 2. 选择模板
         template = self._select_template(style, platform)
-        
+
         # 3. 生成内容
         content = self._generate_content(
             input_text=input_text,
             template=template,
             intent=intent,
-            product_info=product_info
+            product_info=product_info,
         )
-        
+
         # 4. 文化适配
         if culture:
             content = self._apply_culture_adaptation(content, culture)
-            
+
         # 5. 节日主题
         if festival:
             content = self._apply_festival_theme(content, festival)
-            
+
         # 6. 生成标题和标签
         title = self._generate_title(content, platform)
         hashtags = self._generate_hashtags(content, platform)
-        
+
         # 7. 提取钩子和CTA
         hooks = self._extract_hooks(content)
         cta = self._generate_cta(platform, intent)
-        
+
         # 8. 生成变体
         variations = self._generate_variations(content, style, n=2)
-        
+
         script = GeneratedScript(
             id=f"script_{int(time.time() * 1000)}",
             input_text=input_text,
@@ -258,14 +260,14 @@ class ScriptGenerator:
             hashtags=hashtags,
             hooks=hooks,
             cta=cta,
-            variations=variations
+            variations=variations,
         )
-        
+
         # 保存到数据库
         self._save_script(script)
-        
+
         return script
-        
+
     def _analyze_intent(self, input_text: str) -> Dict:
         """分析用户意图"""
         intent = {
@@ -275,7 +277,7 @@ class ScriptGenerator:
             "scenario": None,
             "emotion": None,
         }
-        
+
         # 简单关键词匹配（实际应使用NLP模型）
         if "黑茶" in input_text:
             intent["product"] = "黑茶"
@@ -283,15 +285,17 @@ class ScriptGenerator:
             intent["benefit"] = "健康养生"
         if any(word in input_text for word in ["西北", "中东", "蒙古"]):
             intent["target"] = "地域市场"
-            
+
         return intent
-        
-    def _select_template(self, style: ContentStyle, platform: Platform) -> ScriptTemplate:
+
+    def _select_template(
+        self, style: ContentStyle, platform: Platform
+    ) -> ScriptTemplate:
         """选择文案模板"""
         key = (style, platform)
         if key in self.TEMPLATES:
             return self.TEMPLATES[key]
-            
+
         # 默认模板
         return ScriptTemplate(
             id="default_001",
@@ -302,20 +306,20 @@ class ScriptGenerator:
             min_length=300,
             max_length=1000,
             example="",
-            tags=["通用"]
+            tags=["通用"],
         )
-        
+
     def _generate_content(
         self,
         input_text: str,
         template: ScriptTemplate,
         intent: Dict,
-        product_info: Optional[Dict]
+        product_info: Optional[Dict],
     ) -> str:
         """生成文案内容"""
         # 基于模板结构生成内容
         sections = []
-        
+
         for section_name in template.structure:
             if section_name in ["钩子开场", "开场"]:
                 section = self._generate_hook(intent)
@@ -327,22 +331,22 @@ class ScriptGenerator:
                 section = self._generate_cta_section(intent)
             else:
                 section = input_text
-                
+
             sections.append(section)
-            
+
         content = "\n\n".join(sections)
-        
+
         # 控制长度
         if len(content) > template.max_length:
-            content = content[:template.max_length] + "..."
-            
+            content = content[: template.max_length] + "..."
+
         return content
-        
+
     def _generate_hook(self, intent: Dict) -> str:
         """生成钩子开场"""
         hook_type = random.choice(list(self.HOOK_TEMPLATES.keys()))
         template = random.choice(self.HOOK_TEMPLATES[hook_type])
-        
+
         # 填充变量
         hook = template.format(
             benefit=intent.get("benefit", "变得更健康"),
@@ -354,11 +358,11 @@ class ScriptGenerator:
             before="亚健康",
             after="精力充沛",
             time="三个月",
-            status="熬夜党"
+            status="熬夜党",
         )
-        
+
         return hook
-        
+
     def _generate_context(self, input_text: str, intent: Dict) -> str:
         """生成背景/痛点段落"""
         contexts = [
@@ -367,7 +371,7 @@ class ScriptGenerator:
             f"说到{intent.get('product', '养生')}，你可能有很多疑问。",
         ]
         return random.choice(contexts)
-        
+
     def _generate_solution(self, input_text: str, product_info: Optional[Dict]) -> str:
         """生成解决方案段落"""
         if product_info:
@@ -375,9 +379,9 @@ class ScriptGenerator:
             solution += f"{product_info.get('benefit', '品质有保障')}。"
         else:
             solution = f"{input_text}，经过科学验证，效果显著。"
-            
+
         return solution
-        
+
     def _generate_cta_section(self, intent: Dict) -> str:
         """生成CTA段落"""
         ctas = [
@@ -386,40 +390,40 @@ class ScriptGenerator:
             "评论区告诉我你的想法!",
         ]
         return random.choice(ctas)
-        
+
     def _apply_culture_adaptation(self, content: str, culture: str) -> str:
         """应用文化适配"""
         if culture not in self.CULTURE_RULES:
             return content
-            
+
         rules = self.CULTURE_RULES[culture]
-        
+
         # 添加文化关键词
         keywords = rules.get("keywords", [])
         if keywords and random.random() > 0.5:
             content = random.choice(rules.get("phrases", [""])) + "\n" + content
-            
+
         # 避免敏感内容
         for avoid in rules.get("avoid", []):
             # 简单替换（实际应使用更复杂的NLP）
             pass
-            
+
         return content
-        
+
     def _apply_festival_theme(self, content: str, festival: str) -> str:
         """应用节日主题"""
         if festival not in self.FESTIVAL_THEMES:
             return content
-            
+
         theme = self.FESTIVAL_THEMES[festival]
-        
+
         # 添加节日元素
         phrases = theme.get("phrases", [])
         if phrases:
             content = random.choice(phrases) + "\n" + content
-            
+
         return content
-        
+
     def _generate_title(self, content: str, platform: Platform) -> str:
         """生成标题"""
         # 提取关键信息生成标题
@@ -430,47 +434,49 @@ class ScriptGenerator:
             "千万不要这样喝!",
         ]
         return random.choice(titles)
-        
+
     def _generate_hashtags(self, content: str, platform: Platform) -> List[str]:
         """生成标签"""
         base_tags = ["黑茶", "养生", "健康", "茶文化"]
-        
+
         platform_tags = {
             Platform.DOUYIN: ["#黑茶养生", "#健康生活方式", "#茶饮推荐"],
             Platform.XIAOHONGSHU: ["#黑茶", "#养生茶", "#健康饮品", "#种草"],
             Platform.KUAISHOU: ["#黑茶", "#养生", "#好物推荐"],
             Platform.BILIBILI: ["#茶文化", "#知识科普", "#黑茶"],
         }
-        
+
         tags = base_tags + platform_tags.get(platform, [])
         return tags[:5]  # 限制标签数量
-        
+
     def _extract_hooks(self, content: str) -> List[str]:
         """提取钩子/卖点"""
         hooks = []
         lines = content.split("\n")
-        
+
         for line in lines[:3]:  # 只看前3行
             if any(marker in line for marker in ["?", "!", "为什么", "千万不要"]):
                 hooks.append(line.strip())
-                
+
         return hooks[:3]
-        
+
     def _generate_cta(self, platform: Platform, intent: Dict) -> str:
         """生成CTA"""
         templates = self.CTA_TEMPLATES.get(platform, ["了解更多"])
         template = random.choice(templates)
-        
+
         return template.format(
             benefit=intent.get("benefit") or "改善健康",
             question=(intent.get("product") or "这个产品") + "怎么样",
-            topic="养生知识"
+            topic="养生知识",
         )
-        
-    def _generate_variations(self, content: str, style: ContentStyle, n: int = 2) -> List[str]:
+
+    def _generate_variations(
+        self, content: str, style: ContentStyle, n: int = 2
+    ) -> List[str]:
         """生成变体版本"""
         variations = []
-        
+
         # 简单变体：调整语气和用词
         for i in range(n):
             if i == 0:
@@ -480,38 +486,48 @@ class ScriptGenerator:
                 # 更正式
                 var = content.replace("!", "。")
             variations.append(var)
-            
+
         return variations
-        
+
     def _save_script(self, script: GeneratedScript) -> None:
         """保存生成的文案"""
         try:
-            self.db.execute("""
+            self.db.execute(
+                """
                 INSERT INTO generated_scripts (
                     id, input_text, title, content, style, platform,
                     word_count, hashtags, hooks, cta, variations
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            """, (
-                script.id, script.input_text, script.title, script.content,
-                script.style.value, script.platform.value,
-                script.word_count,
-                json.dumps(script.hashtags, ensure_ascii=False),
-                json.dumps(script.hooks, ensure_ascii=False),
-                script.cta,
-                json.dumps(script.variations, ensure_ascii=False)
-            ))
-        except Exception as e:
+            """,
+                (
+                    script.id,
+                    script.input_text,
+                    script.title,
+                    script.content,
+                    script.style.value,
+                    script.platform.value,
+                    script.word_count,
+                    json.dumps(script.hashtags, ensure_ascii=False),
+                    json.dumps(script.hooks, ensure_ascii=False),
+                    script.cta,
+                    json.dumps(script.variations, ensure_ascii=False),
+                ),
+            )
+        except (
+            sqlite3.Error,
+            ValueError,
+            RuntimeError,
+            json.JSONDecodeError,
+            Exception,
+        ) as e:
             logger.error(f"Failed to save script: {e}")
-            
+
     def rewrite(
-        self,
-        content: str,
-        target_style: ContentStyle,
-        target_platform: Platform
+        self, content: str, target_style: ContentStyle, target_platform: Platform
     ) -> str:
         """
         改写文案风格
-        
+
         Args:
             content: 原始文案
             target_style: 目标风格
@@ -526,5 +542,5 @@ class ScriptGenerator:
             rewritten = f"说实话，{content}\n\n这是我真实的感受。"
         else:
             rewritten = content
-            
+
         return rewritten

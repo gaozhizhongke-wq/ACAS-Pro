@@ -3,7 +3,6 @@ Tests for API documentation endpoints (web/api_spec.py)
 """
 import json
 import pytest
-from unittest.mock import patch, MagicMock
 
 
 # ---------------------------------------------------------------------------

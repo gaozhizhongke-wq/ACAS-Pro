@@ -195,7 +195,7 @@ if __name__ == '__main__':
     print("=" * 50)
     print("ACAS Pro LLM API v2")
     print("=" * 50)
-    print(f"Config file: .env")
+    print("Config file: .env")
     print(f"Provider: {config.llm.provider}")
     print(f"Model: {config.llm.model}")
     print(f"Enabled: {config.llm.enabled}")

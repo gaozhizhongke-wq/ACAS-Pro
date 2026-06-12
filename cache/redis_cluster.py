@@ -15,9 +15,8 @@ from typing import Optional, Any, List, Dict, Callable
 from functools import wraps
 from datetime import datetime, timedelta
 
-import redis
 from redis.cluster import RedisCluster
-from redis.exceptions import RedisError, ConnectionError
+from redis.exceptions import RedisError
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +91,7 @@ class RedisClusterManager:
         try:
             self.client.ping()
             return True
-        except:
+        except Exception:
             return False
     
     def get(self, key: str) -> Optional[Any]:
@@ -104,7 +103,7 @@ class RedisClusterManager:
             if value:
                 try:
                     return json.loads(value)
-                except:
+                except Exception:
                     return value
             return None
         except RedisError as e:
@@ -218,7 +217,7 @@ class RedisClusterManager:
             if value:
                 try:
                     return json.loads(value)
-                except:
+                except Exception:
                     return value
             return None
         except RedisError as e:
@@ -235,7 +234,7 @@ class RedisClusterManager:
             for k, v in data.items():
                 try:
                     result[k] = json.loads(v)
-                except:
+                except Exception:
                     result[k] = v
             return result
         except RedisError as e:
@@ -263,7 +262,7 @@ class RedisClusterManager:
             for v in values:
                 try:
                     result.append(json.loads(v))
-                except:
+                except Exception:
                     result.append(v)
             return result
         except RedisError as e:
@@ -291,7 +290,7 @@ class RedisClusterManager:
             for m in members:
                 try:
                     result.add(json.loads(m))
-                except:
+                except Exception:
                     result.add(m)
             return result
         except RedisError as e:

@@ -3,7 +3,7 @@
 """Tests for core/security_headers.py"""
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from acas_pro.core.security_headers import SecurityHeaders, InputValidator
 
 
@@ -35,7 +35,7 @@ class TestSecurityHeaders:
             return f
         app.after_request = capture_after_request
         
-        sh = SecurityHeaders(app=app, use_nonce=True)
+        sh = SecurityHeaders(app=app, use_nonce=True)  # noqa: F841
         assert len(registered_handlers) == 1
         
         # Test the handler - need to mock request before calling handler
@@ -73,7 +73,7 @@ class TestSecurityHeaders:
         from flask import Flask
         app = Flask(__name__)
         app.config['TESTING'] = True
-        sh = SecurityHeaders(app=app, hsts=True, hsts_max_age=31536000)
+        sh = SecurityHeaders(app=app, hsts=True, hsts_max_age=31536000)  # noqa: F841
         
         @app.route('/test')
         def test_route():
@@ -94,7 +94,7 @@ class TestSecurityHeaders:
             return f
         app.after_request = capture_after_request
         
-        sh = SecurityHeaders(app=app, use_nonce=False)
+        sh = SecurityHeaders(app=app, use_nonce=False)  # noqa: F841
         handler = registered_handlers[0]
         
         response = MagicMock()

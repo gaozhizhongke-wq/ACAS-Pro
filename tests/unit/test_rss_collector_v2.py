@@ -2,13 +2,11 @@
 # -*- coding: utf-8 -*-
 """Tests for rss_collector_v2 module."""
 import sys
-from unittest.mock import MagicMock, patch
 
-import pytest
 
 sys.path.insert(0, 'src')
 
-from acas_pro.collectors.rss_collector_v2 import *
+from acas_pro.collectors.rss_collector_v2 import *  # noqa: F403
 
 
 class TestRssCollector:

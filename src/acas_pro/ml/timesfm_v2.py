@@ -1,4 +1,6 @@
 """TimesFM V2 - Stub for test compatibility"""
+
+
 class TimesFMV2:
     def predict(self, data) -> None:
-        return {'forecast': [1, 2, 3]}
+        return {"forecast": [1, 2, 3]}

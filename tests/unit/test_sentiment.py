@@ -3,7 +3,7 @@
 """Unit tests for sentiment/analyzer.py module."""
 
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 import sys
 import pytest
 

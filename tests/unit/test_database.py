@@ -2,7 +2,7 @@
 """Tests for database.py - Minimal version"""
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from acas_pro.core.database import DatabaseManager, get_db
 

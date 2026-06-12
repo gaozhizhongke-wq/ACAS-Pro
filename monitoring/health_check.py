@@ -13,7 +13,7 @@ import logging
 import platform
 import os
 from datetime import datetime
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -375,7 +375,7 @@ class HealthChecker:
 
         lines = [
             f"{'='*50}",
-            f"  ACAS Pro 系统健康报告",
+            "  ACAS Pro 系统健康报告",
             f"  {report['timestamp']}",
             f"{'='*50}",
             "",
