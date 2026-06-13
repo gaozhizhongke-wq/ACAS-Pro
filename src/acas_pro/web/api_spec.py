@@ -111,18 +111,18 @@ OPENAPI_SPEC = {
         "schemas": {
             "RegisterRequest": {
                 "type": "object",
-                "required": ["username", "password", "account"],
+                "required": ["account", "password"],
                 "properties": {
-                    "username": {"type": "string"},
-                    "password": {"type": "string", "format": "password"},
-                    "account": {"type": "string"},
+                    "account": {"type": "string", "description": "Account name (3-50 chars)"},
+                    "password": {"type": "string", "format": "password", "description": "Password (8-128 chars, requires uppercase, lowercase, digit, special char)"},
+                    "nickname": {"type": "string", "description": "Display name (optional)"},
                 },
             },
             "LoginRequest": {
                 "type": "object",
-                "required": ["username", "password"],
+                "required": ["account", "password"],
                 "properties": {
-                    "username": {"type": "string"},
+                    "account": {"type": "string", "description": "Account name"},
                     "password": {"type": "string", "format": "password"},
                 },
             },
@@ -149,26 +149,57 @@ docs_bp = Blueprint("api_docs", __name__, url_prefix="/api/docs")
 
 @docs_bp.route("", methods=["GET"])
 def swagger_ui() -> None:
-    """Serve Swagger UI HTML."""
+    """Serve Swagger UI HTML with embedded resources (no external CDN)."""
+    # Note: For production, serve swagger-ui-dist from static files instead.
+    # This inline version avoids external CDN dependency for security.
     html = """
     <!DOCTYPE html>
     <html lang="en">
     <head>
         <meta charset="UTF-8">
         <title>ACAS Pro API - Swagger UI</title>
-        <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+        <style>
+            /* Minimal inline styles for basic Swagger UI display */
+            body { margin: 0; padding: 20px; font-family: sans-serif; background: #fafafa; }
+            .container { max-width: 1200px; margin: 0 auto; }
+            .endpoint { background: white; padding: 15px; margin: 10px 0; border-radius: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+            .method-get { color: #61affe; font-weight: bold; }
+            .method-post { color: #49cc90; font-weight: bold; }
+            .method-put { color: #fca130; font-weight: bold; }
+            .method-delete { color: #f93e3e; font-weight: bold; }
+            .path { font-family: monospace; font-size: 16px; }
+            .description { color: #666; margin-top: 5px; }
+            .auth-badge { background: #4990e2; color: white; padding: 2px 8px; border-radius: 3px; font-size: 12px; }
+            h1 { color: #3b4151; }
+            pre { background: #f4f4f4; padding: 10px; overflow-x: auto; }
+        </style>
     </head>
     <body>
-        <div id="swagger-ui"></div>
-        <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+        <div class="container">
+            <h1>ACAS Pro API Documentation</h1>
+            <p><a href="/api/openapi.json">OpenAPI JSON Spec</a> | <a href="/api/openapi.yaml">OpenAPI YAML Spec</a></p>
+            <div id="endpoints"></div>
+        </div>
         <script>
-            window.onload = function() {
-                SwaggerUIBundle({
-                    url: '/api/openapi.json',
-                    dom_id: '#swagger-ui',
-                    presets: [SwaggerUIBundle.presets.apis, SwaggerUIStandalonePreset],
-                });
-            };
+            fetch('/api/openapi.json')
+                .then(r => r.json())
+                .then(spec => {
+                    const container = document.getElementById('endpoints');
+                    for (const [path, methods] of Object.entries(spec.paths || {})) {
+                        for (const [method, details] of Object.entries(methods)) {
+                            const div = document.createElement('div');
+                            div.className = 'endpoint';
+                            const methodClass = `method-${method}`;
+                            const authBadge = details.security ? '<span class=\"auth-badge\">🔐 Auth</span>' : '';
+                            div.innerHTML = `
+                                <div><span class=\"${methodClass}\">${method.toUpperCase()}</span> <span class=\"path\">${path}</span> ${authBadge}</div>
+                                <div class=\"description\">${details.summary || ''}</div>
+                            `;
+                            container.appendChild(div);
+                        }
+                    }
+                })
+                .catch(err => console.error('Failed to load OpenAPI spec:', err));
         </script>
     </body>
     </html>
