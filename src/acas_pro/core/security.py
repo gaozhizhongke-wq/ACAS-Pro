@@ -76,17 +76,21 @@ class PasswordValidator:
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', password):
             return False, "Password must contain at least one special character"
 
-        # Check for common passwords
+        # Check for common passwords (NIST SP 800-63B recommends checking top 1000+)
         common_passwords = {
-            "password",
-            "123456",
-            "qwerty",
-            "admin",
-            "letmein",
-            "password1",
-            "password123",
-            "p@ssword",
-            "passw0rd",
+            "password", "123456", "qwerty", "admin", "letmein",
+            "password1", "password123", "p@ssword", "passw0rd",
+            "welcome", "welcome1", "monkey", "dragon", "master",
+            "12345678", "123456789", "1234567890", "abc123", "111111",
+            "sunshine", "princess", "football", "shadow", "superman",
+            "michael", "charlie", "donald", "batman", "trustno1",
+            "iloveyou", "whatever", "starwars", "robert", "george",
+            "pepper", "hunter", "hunter2", "jordan", "harley",
+            "ranger", "thomas", "matrix", "alexander", "andrew",
+            "987654321", "654321", "qazwsx", "zaq1zaq",
+            "mustang", "access", "secret", "server", "database",
+            "root", "toor", "test", "guest", "demo",
+            "changeme", "temp", "temp123", "default", "nopassword",
         }
         pwd_lower = password.lower()
         # Strip common special chars appended to common bases

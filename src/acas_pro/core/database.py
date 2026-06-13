@@ -213,27 +213,28 @@ class DatabaseManager:
 
     def __init__(self) -> Any:
         # Guard: skip re-init if already initialized (singleton pattern).
-        # Use cls._instance (class attr) consistently — NOT a global variable,
-        # avoiding the bug where global _db_instance was checked before being
-        # defined at module scope (causing NameError in some import orders).
-        if self._initialized:
-            return
-        self._db_url = os.environ.get("DATABASE_URL", "")
-        self._is_postgres = (
-            "postgresql" in self._db_url.lower() or "postgres" in self._db_url.lower()
-        )
+        # Acquire lock to prevent concurrent __init__ calls on the same
+        # instance (thread A creates instance via __new__, both A and B
+        # can enter __init__ before _initialized is set — race condition).
+        with self._lock:
+            if self._initialized:
+                return
+            self._db_url = os.environ.get("DATABASE_URL", "")
+            self._is_postgres = (
+                "postgresql" in self._db_url.lower() or "postgres" in self._db_url.lower()
+            )
 
-        if self._is_postgres:
-            self._init_postgres()
-            self._init_postgres_db()
-        else:
-            self._init_sqlite()
-            self._init_sqlite_db()
+            if self._is_postgres:
+                self._init_postgres()
+                self._init_postgres_db()
+            else:
+                self._init_sqlite()
+                self._init_sqlite_db()
 
-        self._initialized = True
-        _get_logger().info(
-            f"DatabaseManager initialized ({'PostgreSQL' if self._is_postgres else 'SQLite'})"
-        )
+            self._initialized = True
+            _get_logger().info(
+                f"DatabaseManager initialized ({'PostgreSQL' if self._is_postgres else 'SQLite'})"
+            )
 
     def reset(self) -> "DatabaseManager":
         """Reset to clean SQLite state (used by test conftest between tests).

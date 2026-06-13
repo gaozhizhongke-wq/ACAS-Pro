@@ -16,7 +16,7 @@ from sqlalchemy import (
     JSON,
     Index,
 )
-from sqlalchemy.orm import declarative_base, relationship, Session
+from sqlalchemy.orm import declarative_base, relationship, Session, validates
 from sqlalchemy.sql import func
 
 from acas_pro.core.config import config
@@ -32,6 +32,15 @@ class User(Base):
     id = Column(String(36), primary_key=True)
     account = Column(String(100), unique=True, nullable=False, index=True)
     password_hash = Column(String(255), nullable=False)
+
+    @validates("password_hash")
+    def _validate_password_hash(self, key: str, value: str) -> str:
+        """Ensure stored password_hash uses PBKDF2 format (not plaintext)."""
+        if not value.startswith("pbkdf2:sha256:"):
+            raise ValueError(
+                f"password_hash must use PBKDF2 format, got: {value[:20]}..."
+            )
+        return value
     nickname = Column(String(100))
     email = Column(String(255), index=True)
     phone = Column(String(20), index=True)
