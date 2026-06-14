@@ -1,7 +1,7 @@
 """Dashboard routes for ACAS Pro Web"""
 
 from typing import Any
-from flask import Blueprint, render_template_string, jsonify
+from flask import Blueprint, render_template, jsonify
 from datetime import datetime, timezone
 from acas_pro.core.logging import get_logger
 import sqlite3
@@ -195,7 +195,7 @@ DASHBOARD_HTML = """
 @bp.route("/")
 def index() -> Any:
     """Main dashboard page - returns real HTML"""
-    return render_template_string(DASHBOARD_HTML)
+    return render_template("dashboard.html")
 
 
 @bp.route("/api/stats")
