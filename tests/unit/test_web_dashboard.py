@@ -1,22 +1,30 @@
 # -*- coding: utf-8 -*-
 """Tests for dashboard web routes.
 
-The / route renders a Jinja2 template which is not available in a
-bare Flask test app. Those tests are skipped. API routes are tested
-with proper 404 fallbacks since the blueprint is registered standalone.
+Uses create_app to properly load templates and register all blueprints.
 """
 import pytest
 import json
 from unittest.mock import MagicMock, patch
-from flask import Flask
 
 
 @pytest.fixture
-def app():
-    app = Flask(__name__)
-    from acas_pro.web.routes.dashboard import bp
-    app.register_blueprint(bp)
-    app.config['TESTING'] = True
+def mock_config():
+    cfg = MagicMock()
+    cfg.llm.enabled = True
+    cfg.llm.provider = "openai"
+    cfg.llm.api_key = "sk-test-key-12345678"
+    return cfg
+
+
+@pytest.fixture
+def app(mock_config):
+    from acas_pro.web import create_app
+
+    with patch("acas_pro.core.config.get_config", return_value=mock_config):
+        app = create_app(
+            {"TESTING": True, "SECRET_KEY": "test-secret-key-for-testing"}
+        )
     return app
 
 
@@ -26,74 +34,92 @@ def client(app):
 
 
 class TestDashboardIndex:
-    """Index route requires dashboard.html template — skip in standalone mode."""
+    """Index route renders dashboard.html with proper Jinja2 context."""
 
-    @pytest.mark.skip(reason="Template not available in standalone Flask app")
     def test_index_returns_html(self, client):
-        pass
+        resp = client.get("/")
+        assert resp.status_code == 200
+        assert b"<!DOCTYPE html>" in resp.data or b"<html" in resp.data
 
-    @pytest.mark.skip(reason="Template not available in standalone Flask app")
     def test_index_contains_dashboard_elements(self, client):
-        pass
+        resp = client.get("/")
+        assert resp.status_code == 200
+        html = resp.data.decode("utf-8", errors="replace")
+        assert "dashboard" in html.lower()
 
-    @pytest.mark.skip(reason="Template not available in standalone Flask app")
     def test_index_contains_javascript(self, client):
-        pass
+        resp = client.get("/")
+        assert resp.status_code == 200
+        html = resp.data.decode("utf-8", errors="replace")
+        assert "<script" in html or "javascript" in html.lower()
 
-    @pytest.mark.skip(reason="Template not available in standalone Flask app")
-    def test_index_llm_info(self, client):
-        pass
+    def test_index_llm_info(self, client, mock_config):
+        resp = client.get("/")
+        assert resp.status_code == 200
+        html = resp.data.decode("utf-8", errors="replace")
+        assert "openai" in html.lower()
 
 
 class TestDashboardTemplate:
-    @pytest.mark.skip(reason="Template not available in standalone Flask app")
+    """Template content assertions for dashboard.html."""
+
     def test_template_contains_api_endpoints(self, client):
-        pass
+        resp = client.get("/")
+        assert resp.status_code == 200
+        html = resp.data.decode("utf-8", errors="replace")
+        # Template has sidebar navigation with data-page attributes
+        assert "data-page=" in html
 
-    @pytest.mark.skip(reason="Template not available in standalone Flask app")
     def test_template_contains_styling(self, client):
-        pass
+        resp = client.get("/")
+        assert resp.status_code == 200
+        html = resp.data.decode("utf-8", errors="replace")
+        assert "<style" in html or "bootstrap" in html.lower() or "tailwind" in html.lower()
 
-    @pytest.mark.skip(reason="Template not available in standalone Flask app")
     def test_template_responsive_design(self, client):
-        pass
+        resp = client.get("/")
+        assert resp.status_code == 200
+        html = resp.data.decode("utf-8", errors="replace")
+        assert ("viewport" in html.lower() or "media" in html.lower())
 
 
 class TestDashboardAPI:
+    """Dashboard API route fallback tests (blueprint registered)."""
+
     def test_dashboard_data_route(self, client):
-        response = client.get('/api/dashboard/data')
-        assert response.status_code in (200, 404)
+        resp = client.get("/api/dashboard/data")
+        assert resp.status_code in (200, 404)
 
     def test_dashboard_export_route(self, client):
-        response = client.get('/api/dashboard/export')
-        assert response.status_code in (200, 404)
+        resp = client.get("/api/dashboard/export")
+        assert resp.status_code in (200, 404)
 
 
 class TestDashboardAnalytics:
     def test_analytics_route(self, client):
-        response = client.get('/api/dashboard/analytics')
-        assert response.status_code in (200, 404)
+        resp = client.get("/api/dashboard/analytics")
+        assert resp.status_code in (200, 404)
 
     def test_realtime_route(self, client):
-        response = client.get('/api/dashboard/realtime')
-        assert response.status_code in (200, 404)
+        resp = client.get("/api/dashboard/realtime")
+        assert resp.status_code in (200, 404)
 
 
 class TestDashboardCharts:
     def test_sales_chart_route(self, client):
-        response = client.get('/api/dashboard/charts/sales')
-        assert response.status_code in (200, 404)
+        resp = client.get("/api/dashboard/charts/sales")
+        assert resp.status_code in (200, 404)
 
     def test_traffic_chart_route(self, client):
-        response = client.get('/api/dashboard/charts/traffic')
-        assert response.status_code in (200, 404)
+        resp = client.get("/api/dashboard/charts/traffic")
+        assert resp.status_code in (200, 404)
 
 
 class TestDashboardFilters:
     def test_date_range_filter(self, client):
-        response = client.get('/api/dashboard/data?start=2026-01-01&end=2026-06-01')
-        assert response.status_code in (200, 404)
+        resp = client.get("/api/dashboard/data?start=2026-01-01&end=2026-06-01")
+        assert resp.status_code in (200, 404)
 
     def test_platform_filter(self, client):
-        response = client.get('/api/dashboard/data?platform=douyin')
-        assert response.status_code in (200, 404)
+        resp = client.get("/api/dashboard/data?platform=douyin")
+        assert resp.status_code in (200, 404)
