@@ -1,51 +1,49 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""Fix encoding issues in dashboard_logic.py"""
+"""Fix encoding issues in ecommerce source files."""
+import os, sys
 
-
-# Read the file
-with open('src/acas_pro/ui/logic/dashboard_logic.py.bak', 'rb') as f:
-    content = f.read()
-
-# Decode with replacement to see the damage
-text = content.decode('utf-8', errors='replace')
-
-# Define the fixes
-fixes = {
-    106: 'title="总营收",',
-    108: 'subtitle=f"较上月{self._format_trend(revenue_trend)}",',
-    120: 'subtitle=f"较上月{self._format_trend(orders_trend)}",',
-    143: 'alert_text = f"{critical}个紧急 {high}个高"',
-    146: 'alert_text = "无风险"',
-    164: 'QuickAction(id="inventory", label="库存检查", icon="📦"),',
-    223: 'return f"¥{value/10000:.1f}万"',
-    230: 'return f"{value/10000:.1f}万"',
-    236: 'arrow = "↑" if percent > 0 else "↓" if percent < 0 else "→"'
-}
-
-# Split into lines
-lines = text.split('\n')
-
-# Apply fixes
-fixed_count = 0
-for line_num, fix in fixes.items():
-    idx = line_num - 1  # 0-indexed
-    if idx < len(lines):
-        lines[idx] = fix
-        fixed_count += 1
-
-# Reconstruct the text
-fixed_text = '\n'.join(lines)
-
-# Write the fixed file
-with open('src/acas_pro/ui/logic/dashboard_logic.py', 'w', encoding='utf-8') as f:
-    f.write(fixed_text)
-
-print(f'Fixed {fixed_count} lines in dashboard_logic.py')
-
-# Verify the file can be parsed
-try:
-    compile(fixed_text, 'dashboard_logic.py', 'exec')
-    print('Syntax verification: PASSED')
-except SyntaxError as e:
-    print(f'Syntax error: {e}')
+for fname in ['taobao_shop_api.py', 'kuaishou_shop_api.py',
+             'xiaohongshu_shop_api.py', 'douyin_shop_api.py']:
+    path = os.path.join('src', 'acas_pro', 'ecommerce', fname)
+    if not os.path.exists(path):
+        print(f"SKIP: {path} not found")
+        continue
+    
+    data = open(path, 'rb').read()
+    lines = data.split(b'\n')
+    
+    # Check if first line has BOM or other issues
+    print(f"\n=== {fname} ===")
+    print(f"line 1: {repr(lines[0])}")
+    print(f"line 2: {repr(lines[1])}")
+    print(f"line 3: {repr(lines[2][:80])}")
+    print(f"line 4: {repr(lines[3][:80])}")
+    print(f"line 5: {repr(lines[4][:80])}")
+    
+    # Try decoding each line individually
+    for i, line in enumerate(lines[:10]):
+        try:
+            decoded = line.decode('utf-8')
+        except UnicodeDecodeError:
+            print(f"  line {i+1}: DECODE ERROR - {repr(line[:50])}")
+        else:
+            pass  # ok
+    
+    # Check if the file has valid UTF-8 for its content
+    try:
+        text = data.decode('utf-8')
+        print(f"  File is valid UTF-8")
+    except UnicodeDecodeError as e:
+        print(f"  UTF-8 ERROR at pos {e.start}: {repr(data[max(0,e.start-5):e.start+5])}")
+        # Find bad bytes
+        bad_pos = e.start
+        bad_bytes = data[bad_pos:bad_pos+5]
+        print(f"  Bad bytes: {bad_bytes.hex()} at position {bad_pos}")
+        
+        # Try to fix by replacing bad bytes
+        fixed_data = data[:bad_pos] + b'?' + data[bad_pos+1:]
+        try:
+            text = fixed_data.decode('utf-8')
+            print(f"  Fixed version decodes OK (replaced 1 byte)")
+        except UnicodeDecodeError as e2:
+            print(f"  Still broken at {e2.start}: {repr(fixed_data[max(0,e2.start-5):e2.start+5])}")

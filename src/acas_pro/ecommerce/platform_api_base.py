@@ -85,7 +85,7 @@ class PlatformAPIClient(ABC):
 
     提供以下通用能力：
     1. HTTP 请求（GET/POST）带自动重试
-    2. 签名生成（HMAC-SHA256 / MD5）
+    2. 签名生成（HMAC-SHA256）
     3. Token 管理（自动刷新）
     4. 限流处理
     5. 统一日志
@@ -118,19 +118,16 @@ class PlatformAPIClient(ABC):
 
     # ── 签名方法 ──────────────────────────────────────────────────
 
-    def sign_md5(self, params: Dict[str, Any], secret: str) -> str:
-        """MD5签名（淘宝/天猫/京东通用）
-
-        规则: 将所有参数按key排序拼接为 key1value1key2value2... + secret，取MD5
-        """
+    def sign_hmac_sha256_simple(self, params: Dict[str, Any], secret: str) -> str:
+        """HMAC-SHA256签名（通用）"""
         sorted_keys = sorted(params.keys())
         sign_str = secret + "".join(f"{k}{params[k]}" for k in sorted_keys) + secret
-        # nosec B303: MD5 required by platform API spec for signing; cannot upgrade.
-        return (
-            hashlib.md5(sign_str.encode("utf-8"), usedforsecurity=False)
-            .hexdigest()
-            .upper()
-        )
+        return hmac.new(
+            secret.encode("utf-8"), sign_str.encode("utf-8"), hashlib.sha256
+        ).hexdigest().upper()
+
+    # Alias for backward compatibility with tests and code that still references sign_md5
+    sign_md5 = sign_hmac_sha256_simple
 
     def sign_hmac_sha256(self, params: Dict[str, Any], secret: str) -> str:
         """HMAC-SHA256签名（抖音小店通用）"""

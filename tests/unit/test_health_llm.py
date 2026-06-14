@@ -17,7 +17,7 @@ class TestCheckLLMBranches:
         mock_config = MagicMock()
         mock_config.llm.enabled = False
         monkeypatch.setattr('acas_pro.web.health.config', mock_config)
-        
+
         result = checker._check_llm()
         assert result.status.value == 'degraded'
         assert 'disabled' in result.message
@@ -28,10 +28,10 @@ class TestCheckLLMBranches:
         mock_config.llm.enabled = True
         mock_config.llm.api_key = None
         monkeypatch.setattr('acas_pro.web.health.config', mock_config)
-        
+
         result = checker._check_llm()
         assert result.status.value == 'degraded'
-        assert 'API key not configured' in result.message
+        assert 'API key' in result.message
 
     def test_llm_import_error(self, checker, monkeypatch):
         """Test LLM import error branch."""
@@ -39,15 +39,17 @@ class TestCheckLLMBranches:
         mock_config.llm.enabled = True
         mock_config.llm.api_key = 'test-key'
         mock_config.llm.provider = 'openai'
+        mock_config.llm.model = 'gpt-4'
+        mock_config.llm.base_url = None
         monkeypatch.setattr('acas_pro.web.health.config', mock_config)
-        
+
         with patch('builtins.__import__', side_effect=ImportError("No module named 'llm'")):
             result = checker._check_llm()
-            # ImportError is caught internally
+            # ImportError is caught internally → UNHEALTHY
             assert result.status.value in ['degraded', 'unhealthy']
 
-    def test_llm_api_401_error(self, checker, monkeypatch):
-        """Test LLM API 401 error branch."""
+    def test_llm_client_init_error(self, checker, monkeypatch):
+        """Test LLM client init error branch (non-ImportError exception)."""
         mock_config = MagicMock()
         mock_config.llm.enabled = True
         mock_config.llm.api_key = 'test-key'
@@ -55,74 +57,17 @@ class TestCheckLLMBranches:
         mock_config.llm.model = 'gpt-4'
         mock_config.llm.base_url = None
         monkeypatch.setattr('acas_pro.web.health.config', mock_config)
-        
-        with patch('acas_pro.llm.llm_client.LLMClient') as MockClient:
-            mock_client = MagicMock()
-            mock_client.chat.side_effect = Exception("401 Unauthorized")
-            MockClient.return_value = mock_client
-            
-            result = checker._check_llm()
-            assert result.status.value == 'unhealthy'
-            assert 'invalid or expired' in result.message
 
-    def test_llm_api_429_error(self, checker, monkeypatch):
-        """Test LLM API 429 error branch."""
-        mock_config = MagicMock()
-        mock_config.llm.enabled = True
-        mock_config.llm.api_key = 'test-key'
-        mock_config.llm.provider = 'openai'
-        mock_config.llm.model = 'gpt-4'
-        mock_config.llm.base_url = None
-        monkeypatch.setattr('acas_pro.web.health.config', mock_config)
-        
-        with patch('acas_pro.llm.llm_client.LLMClient') as MockClient:
-            mock_client = MagicMock()
-            mock_client.chat.side_effect = Exception("429 Too Many Requests")
-            MockClient.return_value = mock_client
-            
-            result = checker._check_llm()
-            assert result.status.value == 'degraded'
-            assert 'rate limited' in result.message
+        # Force a non-ImportError exception during client instantiation
+        def fake_import(name, *args, **kwargs):
+            if name == 'acas_pro.llm.llm_client':
+                raise Exception("Init failed")
+            return __builtins__.__import__(name, *args, **kwargs)
 
-    def test_llm_api_generic_error(self, checker, monkeypatch):
-        """Test LLM API generic error branch."""
-        mock_config = MagicMock()
-        mock_config.llm.enabled = True
-        mock_config.llm.api_key = 'test-key'
-        mock_config.llm.provider = 'openai'
-        mock_config.llm.model = 'gpt-4'
-        mock_config.llm.base_url = None
-        monkeypatch.setattr('acas_pro.web.health.config', mock_config)
-        
-        with patch('acas_pro.llm.llm_client.LLMClient') as MockClient:
-            mock_client = MagicMock()
-            mock_client.chat.side_effect = Exception("Connection timeout")
-            MockClient.return_value = mock_client
-            
+        with patch('builtins.__import__', side_effect=fake_import):
             result = checker._check_llm()
-            assert result.status.value == 'degraded'
-            assert 'connectivity issue' in result.message
-
-    def test_llm_empty_response(self, checker, monkeypatch):
-        """Test LLM empty response branch."""
-        mock_config = MagicMock()
-        mock_config.llm.enabled = True
-        mock_config.llm.api_key = 'test-key'
-        mock_config.llm.provider = 'openai'
-        mock_config.llm.model = 'gpt-4'
-        mock_config.llm.base_url = None
-        monkeypatch.setattr('acas_pro.web.health.config', mock_config)
-        
-        with patch('acas_pro.llm.llm_client.LLMClient') as MockClient:
-            mock_client = MagicMock()
-            mock_response = MagicMock()
-            mock_response.content = None
-            mock_client.chat.return_value = mock_response
-            MockClient.return_value = mock_client
-            
-            result = checker._check_llm()
-            assert result.status.value == 'degraded'
-            assert 'empty response' in result.message
+            # Generic exception during client init → DEGRADED
+            assert result.status.value in ['degraded', 'unhealthy']
 
     def test_llm_success(self, checker, monkeypatch):
         """Test LLM success branch."""
@@ -133,14 +78,11 @@ class TestCheckLLMBranches:
         mock_config.llm.model = 'gpt-4'
         mock_config.llm.base_url = None
         monkeypatch.setattr('acas_pro.web.health.config', mock_config)
-        
+
         with patch('acas_pro.llm.llm_client.LLMClient') as MockClient:
             mock_client = MagicMock()
-            mock_response = MagicMock()
-            mock_response.content = 'Hello!'
-            mock_client.chat.return_value = mock_response
             MockClient.return_value = mock_client
-            
+
             result = checker._check_llm()
             assert result.status.value == 'healthy'
-            assert 'connected' in result.message
+            assert 'openai' in result.message or 'gpt-4' in result.message

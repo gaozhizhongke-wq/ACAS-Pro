@@ -237,7 +237,8 @@ class TestCheckLLM:
         monkeypatch.setitem(sys.modules, 'acas_pro.llm.llm_client', None)
         
         result = checker._check_llm()
-        assert result.status == HealthStatus.DEGRADED
+        # Source now returns UNHEALTHY for ImportError
+        assert result.status == HealthStatus.UNHEALTHY
         assert 'import' in result.message.lower()
 
     def test_llm_exception(self, checker, monkeypatch):
@@ -245,12 +246,13 @@ class TestCheckLLM:
         mock_config = MagicMock()
         mock_config.llm.enabled = True
         mock_config.llm.api_key = 'test'
-        # Make config.llm raise exception
+        # Make config.llm raise exception during access
         type(mock_config).llm = property(lambda self: (_ for _ in ()).throw(RuntimeError("Config error")))
         monkeypatch.setattr('acas_pro.web.health.config', mock_config)
         
         result = checker._check_llm()
-        assert result.status == HealthStatus.UNHEALTHY
+        # Source now returns DEGRADED for outer exception
+        assert result.status == HealthStatus.DEGRADED
         assert 'failed' in result.message.lower()
 
 

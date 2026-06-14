@@ -58,7 +58,7 @@ class KuaishouShopClient(PlatformAPIClient):
             "version": self.API_VERSION,
             "sign_method": "MD5",
         }
-        params["sign"] = self.sign_md5(params, self.credentials.app_secret)
+        params["sign"] = self.sign_hmac_sha256_simple(params, self.credentials.app_secret)
         return params
 
     def _request_api(self, method: str, biz_data: Optional[Dict] = None) -> Dict:
@@ -76,7 +76,7 @@ class KuaishouShopClient(PlatformAPIClient):
             "refresh_token": self.credentials.refresh_token,
             "grant_type": "refresh_token",
         }
-        params["sign"] = self.sign_md5(params, self.credentials.app_secret)
+        params["sign"] = self.sign_hmac_sha256_simple(params, self.credentials.app_secret)
         result = self.request("POST", "/oauth2/refresh_token", data=params)
         return result.get("data", {}).get("access_token")
 
@@ -204,7 +204,7 @@ class KuaishouShopClient(PlatformAPIClient):
             "code": code,
             "grant_type": "authorization_code",
         }
-        params["sign"] = self.sign_md5(params, self.credentials.app_secret)
+        params["sign"] = self.sign_hmac_sha256_simple(params, self.credentials.app_secret)
 
         try:
             result = self.request("POST", "/oauth2/access_token", data=params)

@@ -59,6 +59,59 @@ OPENAPI_SPEC = {
                 },
             }
         },
+        "/stats": {
+            "get": {
+                "tags": ["dashboard"],
+                "summary": "Public statistics (no auth required)",
+                "responses": {
+                    "200": {"description": "Public stats"},
+                },
+            }
+        },
+        "/festivals": {
+            "get": {
+                "tags": ["dashboard"],
+                "summary": "List festival calendar",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Festival list"},
+                    "401": {"description": "Unauthorized"},
+                },
+            }
+        },
+        "/products": {
+            "get": {
+                "tags": ["dashboard"],
+                "summary": "List products",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Product list"},
+                    "401": {"description": "Unauthorized"},
+                },
+            }
+        },
+        "/accounts": {
+            "get": {
+                "tags": ["dashboard"],
+                "summary": "List platform accounts",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Account list"},
+                    "401": {"description": "Unauthorized"},
+                },
+            }
+        },
+        "/forecast/daily": {
+            "get": {
+                "tags": ["dashboard"],
+                "summary": "Daily forecast data",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Forecast data"},
+                    "401": {"description": "Unauthorized"},
+                },
+            }
+        },
         "/dashboard/stats": {
             "get": {
                 "tags": ["dashboard"],
@@ -66,6 +119,17 @@ OPENAPI_SPEC = {
                 "security": [{"bearerAuth": []}],
                 "responses": {
                     "200": {"description": "Dashboard stats"},
+                    "401": {"description": "Unauthorized"},
+                },
+            }
+        },
+        "/products/low-stock": {
+            "get": {
+                "tags": ["dashboard"],
+                "summary": "List low-stock products",
+                "security": [{"bearerAuth": []}],
+                "responses": {
+                    "200": {"description": "Low-stock product list"},
                     "401": {"description": "Unauthorized"},
                 },
             }

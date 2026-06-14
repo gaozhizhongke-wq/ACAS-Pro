@@ -16,17 +16,17 @@ bp = Blueprint("dashboard", __name__, template_folder="../../templates")
 @bp.route("/")
 def index() -> Any:
     """Main dashboard page - returns real HTML"""
-    from acas_pro.core import config
-    
-    llm_provider = config.llm.provider if config.llm.enabled else 'not configured'
-    key_val = config.llm.api_key
+    from acas_pro.core.config import get_config
+    cfg = get_config()
+    llm_provider = cfg.llm.provider if cfg.llm.enabled else 'not configured'
+    key_val = cfg.llm.api_key
     llm_key_mask = ('*' * 20) + key_val[-4:] if key_val else 'not set'
     
     return render_template(
         "dashboard.html",
         llm_provider=llm_provider,
         llm_key_mask=llm_key_mask,
-        llm_enabled=config.llm.enabled,
+        llm_enabled=cfg.llm.enabled,
     )
 
 

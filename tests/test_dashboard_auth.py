@@ -2,12 +2,25 @@
 """Test authentication for dashboard_stats endpoint."""
 
 import os
+import pytest
 import sys
 
 # Set environment before importing ANY acas_pro module
+_original_env = {}
+for key in ('LLM_API_KEY', 'ACAS_SECRET_KEY', 'ACAS_ENVIRONMENT'):
+    _original_env[key] = os.environ.get(key)
 os.environ['LLM_API_KEY'] = 'test-key-for-testing'
 os.environ['ACAS_SECRET_KEY'] = 'test-secret-key-for-testing-only-32chars'
 os.environ['ACAS_ENVIRONMENT'] = 'testing'
+
+@pytest.fixture(autouse=True, scope="module")
+def _cleanup_env():
+    yield
+    for key, val in _original_env.items():
+        if val is None:
+            os.environ.pop(key, None)
+        else:
+            os.environ[key] = val
 
 from acas_pro.core.config import reset_config, get_config
 reset_config()  # Clear any cached config

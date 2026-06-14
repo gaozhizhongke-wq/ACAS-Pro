@@ -143,6 +143,8 @@ class TestSecretsManagerCoverage:
     def test_production_warning_logged(self, caplog):
         """Test that production warning is logged when using fallback"""
         import logging
+        import acas_pro.core.secrets_manager as sm_mod
+        sm_mod._instance = None
         sm = SecretsManager(is_production=True)
         
         with caplog.at_level(logging.WARNING):
@@ -155,6 +157,8 @@ class TestSecretsManagerCoverage:
     def test_production_error_logged(self, caplog):
         """Test that production error is logged when secret not found"""
         import logging
+        import acas_pro.core.secrets_manager as sm_mod
+        sm_mod._instance = None
         sm = SecretsManager(is_production=True)
         
         with caplog.at_level(logging.ERROR):

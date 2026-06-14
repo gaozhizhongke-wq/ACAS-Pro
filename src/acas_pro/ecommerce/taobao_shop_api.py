@@ -63,7 +63,7 @@ class TaobaoShopClient(PlatformAPIClient):
             "sign_method": "md5",
             "session": self.credentials.access_token,
         }
-        params["sign"] = self.sign_md5(params, self.credentials.app_secret)
+        params["sign"] = self.sign_hmac_sha256_simple(params, self.credentials.app_secret)
         return params
 
     def _request_api(self, method: str, biz_params: Optional[Dict] = None) -> Dict:
@@ -82,7 +82,7 @@ class TaobaoShopClient(PlatformAPIClient):
             "refresh_token": self.credentials.refresh_token,
             "grant_type": "refresh_token",
         }
-        params["sign"] = self.sign_md5(params, self.credentials.app_secret)
+        params["sign"] = self.sign_hmac_sha256_simple(params, self.credentials.app_secret)
         result = self.request("POST", "", data=params)
         token_data = result.get("top_auth_token_refresh_response", {}).get(
             "top_auth_token", {}
@@ -245,7 +245,7 @@ class TaobaoShopClient(PlatformAPIClient):
             "code": code,
             "grant_type": "authorization_code",
         }
-        params["sign"] = self.sign_md5(params, self.credentials.app_secret)
+        params["sign"] = self.sign_hmac_sha256_simple(params, self.credentials.app_secret)
 
         try:
             result = self.request("POST", "", data=params)
