@@ -92,17 +92,37 @@ def health():
     return jsonify(result), status_code
 
 
+# ── Dashboard ──────────────────────────────────────────────────────────────────
 @app.route('/')
 def index():
-    llm_provider = config.llm.provider if config.llm.enabled else 'not configured'
-    key_val = config.llm.api_key
-    llm_key_mask = ('*' * 20) + key_val[-4:] if key_val else 'not set'
-    return render_template(
-        'dashboard.html',
-        llm_provider=llm_provider,
-        llm_key_mask=llm_key_mask,
-        llm_enabled=config.llm.enabled,
-    )
+    """Main dashboard page - reads template directly"""
+    try:
+        from acas_pro.core.config import get_config
+        config = get_config()
+        import os
+        
+        # Read template file directly
+        template_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 
+                                      'src', 'acas_pro', 'web', 'templates', 'dashboard.html')
+        with open(template_path, 'r', encoding='utf-8') as f:
+            template_content = f.read()
+        
+        # Render with variables
+        from flask import render_template_string
+        llm_provider = config.llm.provider if config.llm.enabled else 'not configured'
+        key_val = config.llm.api_key
+        llm_key_mask = ('*' * 20) + key_val[-4:] if key_val else 'not set'
+        
+        return render_template_string(template_content,
+            llm_provider=llm_provider,
+            llm_key_mask=llm_key_mask,
+            llm_enabled=config.llm.enabled,
+        )
+    except Exception as e:
+        import traceback
+        error_msg = f"Error in index(): {e}\n{traceback.format_exc()}"
+        print(error_msg)
+        return error_msg, 500
 
 
 # ── CORS ───────────────────────────────────────────────────────────────────
