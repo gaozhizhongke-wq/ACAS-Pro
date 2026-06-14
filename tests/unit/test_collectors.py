@@ -8,48 +8,37 @@ from unittest.mock import patch
 class TestRSSCollectorV2:
     """Test RSS collector v2"""
 
-    def test_import(self):
-        """Test RSSCollectorV2 can be imported"""
+    @pytest.fixture(autouse=True)
+    def _setup(self):
+        """Import RSSCollectorV2, skip all tests if not available."""
         try:
             from acas_pro.collectors.rss_collector import RSSCollectorV2, RSSCollector
-            assert RSSCollectorV2 is not None
-            assert RSSCollector is not None
+            self.RSSCollectorV2 = RSSCollectorV2
+            self.RSSCollector = RSSCollector
         except ImportError as e:
             pytest.skip(f'RSS collector not available: {e}')
 
+    def test_import(self):
+        """Test RSSCollectorV2 can be imported"""
+        assert self.RSSCollectorV2 is not None
+        assert self.RSSCollector is not None
+
     def test_rss_collector_alias(self):
         """Test RSSCollector alias exists"""
-        try:
-            from acas_pro.collectors.rss_collector import RSSCollector
-            assert RSSCollector is not None
-        except ImportError:
-            pytest.skip('RSSCollector not available')
+        assert self.RSSCollector is not None
 
     def test_create_collector(self):
         """Test creating RSS collector"""
-        try:
-            from acas_pro.collectors.rss_collector import RSSCollectorV2
-            
-            # Try to create without DB (might fail, that's ok)
-            try:
-                collector = RSSCollectorV2()
-                assert collector is not None
-            except Exception:
-                # If DB init fails, that's expected in tests
-                pytest.skip('RSSCollectorV2 requires DB connection')
-        except (ImportError, AttributeError):
-            pytest.skip('RSSCollectorV2 not available')
+        collector = self.RSSCollectorV2()
+        assert collector is not None
+        assert collector.sources is not None
+        assert collector.timeout == 30
 
     def test_collect_method(self):
         """Test collect method exists"""
-        try:
-            from acas_pro.collectors.rss_collector import RSSCollectorV2
-            
-            with patch('acas_pro.collectors.rss_collector.DatabaseManager'):
-                collector = RSSCollectorV2()
-                assert hasattr(collector, 'collect') or hasattr(collector, 'fetch')
-        except (ImportError, AttributeError):
-            pytest.skip('RSSCollectorV2 methods not available')
+        collector = self.RSSCollectorV2()
+        assert hasattr(collector, 'collect')
+        assert callable(collector.collect)
 
 
 class TestBaseCollector:
