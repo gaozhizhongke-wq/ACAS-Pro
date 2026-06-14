@@ -1,0 +1,637 @@
+﻿============================= test session starts =============================
+collecting ... collected 1774 items
+stepwise: no previously failed tests, not skipping.
+
+tests/unit/test_account_manager.py::TestPlatformEnum::test_values PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountStatusEnum::test_values PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountPhaseEnum::test_values PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountManager::test_init PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountManager::test_add_account PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountManager::test_add_account_full PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountManager::test_get_account PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountManager::test_get_account_not_found PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountManager::test_list_accounts PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountManager::test_list_accounts_by_platform PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountManager::test_list_accounts_by_status PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountManager::test_list_accounts_empty PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountManager::test_delete_account PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountManager::test_update_account_status PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountManager::test_update_account_stats PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountManager::test_get_access_token PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountManager::test_get_access_token_not_found PASSED [  0%]
+tests/unit/test_account_manager.py::TestAccountManager::test_refresh_token PASSED [  1%]
+tests/unit/test_account_manager.py::TestAccountManager::test_record_login PASSED [  1%]
+tests/unit/test_account_manager.py::TestAccountManager::test_get_login_logs PASSED [  1%]
+tests/unit/test_account_manager.py::TestAccountManager::test_get_account_summary PASSED [  1%]
+tests/unit/test_ad_manager.py::TestAdManager::test_init PASSED           [  1%]
+tests/unit/test_ad_manager.py::TestCreateAd::test_create_ad PASSED       [  1%]
+tests/unit/test_ad_manager.py::TestGetAd::test_get_ad PASSED             [  1%]
+tests/unit/test_ad_manager.py::TestUpdateAd::test_update_ad PASSED       [  1%]
+tests/unit/test_ad_manager.py::TestDeleteAd::test_delete_ad PASSED       [  1%]
+tests/unit/test_ad_manager.py::TestListAds::test_list_ads PASSED         [  1%]
+tests/unit/test_ad_manager.py::TestGetAdStats::test_get_ad_stats PASSED  [  1%]
+tests/unit/test_ad_manager.py::TestOptimizeAd::test_optimize_ad PASSED   [  1%]
+tests/unit/test_advanced_analytics_extended.py::TestAttributionEngineExtended::test_import PASSED [  1%]
+tests/unit/test_advanced_analytics_extended.py::TestAttributionEngineExtended::test_create_attribution_engine PASSED [  1%]
+tests/unit/test_advanced_analytics_extended.py::TestAttributionEngineExtended::test_calculate_attribution PASSED [  1%]
+tests/unit/test_advanced_analytics_extended.py::TestAttributionEngineExtended::test_get_attribution_report PASSED [  1%]
+tests/unit/test_advanced_analytics_extended.py::TestSmartDeciderExtended::test_import PASSED [  1%]
+tests/unit/test_advanced_analytics_extended.py::TestSmartDeciderExtended::test_create_smart_decider PASSED [  1%]
+tests/unit/test_advanced_analytics_extended.py::TestSmartDeciderExtended::test_analyze PASSED [  2%]
+tests/unit/test_advanced_analytics_extended.py::TestSmartDeciderExtended::test_decide PASSED [  2%]
+tests/unit/test_advanced_analytics_extended.py::TestForecastEngine::test_import PASSED [  2%]
+tests/unit/test_advanced_analytics_extended.py::TestForecastEngine::test_forecast_method PASSED [  2%]
+tests/unit/test_advanced_analytics_extended.py::TestRecommendationEngine::test_import PASSED [  2%]
+tests/unit/test_advanced_analytics_extended.py::TestRecommendationEngine::test_recommend_method PASSED [  2%]
+tests/unit/test_advanced_analytics_extended.py::TestAnomalyDetector::test_import PASSED [  2%]
+tests/unit/test_advanced_analytics_extended.py::TestAnomalyDetector::test_detect_method PASSED [  2%]
+tests/unit/test_advanced_analytics_extended.py::TestCustomerSegmentation::test_import PASSED [  2%]
+tests/unit/test_advanced_analytics_extended.py::TestCustomerSegmentation::test_segment_method PASSED [  2%]
+tests/unit/test_advanced_analytics_extended.py::TestMLModulesExtended::test_timesfm_wrapper_import PASSED [  2%]
+tests/unit/test_advanced_analytics_extended.py::TestMLModulesExtended::test_prophet_wrapper_import PASSED [  2%]
+tests/unit/test_advanced_analytics_extended.py::TestMLModulesExtended::test_sklearn_wrapper_import PASSED [  2%]
+tests/unit/test_alert_sentiment_config.py::TestAlertChannelEnum::test_values PASSED [  2%]
+tests/unit/test_alert_sentiment_config.py::TestAlertPriorityEnum::test_values PASSED [  2%]
+tests/unit/test_alert_sentiment_config.py::TestAlertMessage::test_create PASSED [  2%]
+tests/unit/test_alert_sentiment_config.py::TestWeiboPost::test_create PASSED [  2%]
+tests/unit/test_alert_sentiment_config.py::TestWeiboCollector::test_class_attrs PASSED [  2%]
+tests/unit/test_alert_sentiment_config.py::TestPlatformEnum::test_values PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestTrendItem::test_create PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestTrendReport::test_create PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestTrendMonitor::test_get_trending_items PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestTrendMonitor::test_get_trend_report PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestSentimentLevelEnum::test_values PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestSentimentResult::test_create PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestAspectSentiment::test_create PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestSentimentAnalyzer::test_analyze PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestSentimentAnalyzer::test_batch_analyze PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestSentimentAnalyzer::test_negative_sentiment PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestSentimentAnalyzer::test_positive_sentiment PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestUpdateInfo::test_create PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestUpdateChecker::test_init PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestUpdateChecker::test_check PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestConfigEnums::test_environment_enum PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestAppConfig::test_default_creation PASSED [  3%]
+tests/unit/test_alert_sentiment_config.py::TestAppConfig::test_has_llm_config PASSED [  4%]
+tests/unit/test_alert_sentiment_config.py::TestLLMConfig::test_defaults PASSED [  4%]
+tests/unit/test_alert_sentiment_config.py::TestDatabaseConfig::test_defaults PASSED [  4%]
+tests/unit/test_alert_sentiment_config.py::TestSecurityConfig::test_defaults PASSED [  4%]
+tests/unit/test_alert_sentiment_config.py::TestUIConfig::test_defaults PASSED [  4%]
+tests/unit/test_analytics_logic.py::TestTimeRange::test_today_range PASSED [  4%]
+tests/unit/test_analytics_logic.py::TestTimeRange::test_yesterday_range PASSED [  4%]
+tests/unit/test_analytics_logic.py::TestTimeRange::test_last_7_days PASSED [  4%]
+tests/unit/test_analytics_logic.py::TestTimeRange::test_last_30_days PASSED [  4%]
+tests/unit/test_analytics_logic.py::TestTimeRange::test_custom_range PASSED [  4%]
+tests/unit/test_analytics_logic.py::TestTimeRange::test_default_range PASSED [  4%]
+tests/unit/test_analytics_logic.py::TestAggregateMetrics::test_aggregate_by_day PASSED [  4%]
+tests/unit/test_analytics_logic.py::TestAggregateMetrics::test_aggregate_by_hour PASSED [  4%]
+tests/unit/test_analytics_logic.py::TestAggregateMetrics::test_aggregate_empty PASSED [  4%]
+tests/unit/test_analytics_logic.py::TestCalculateGrowthRate::test_positive_growth PASSED [  4%]
+tests/unit/test_analytics_logic.py::TestCalculateGrowthRate::test_negative_growth PASSED [  4%]
+tests/unit/test_analytics_logic.py::TestCalculateGrowthRate::test_zero_previous PASSED [  4%]
+tests/unit/test_analytics_logic.py::TestCalculateGrowthRate::test_both_zero PASSED [  4%]
+tests/unit/test_analytics_logic.py::TestCalculateEngagementRate::test_normal PASSED [  5%]
+tests/unit/test_analytics_logic.py::TestCalculateEngagementRate::test_zero_views PASSED [  5%]
+tests/unit/test_analytics_logic.py::TestGenerateSummary::test_non_empty PASSED [  5%]
+tests/unit/test_analytics_logic.py::TestGenerateSummary::test_empty PASSED [  5%]
+tests/unit/test_analytics_logic.py::TestComparePeriods::test_positive_growth PASSED [  5%]
+tests/unit/test_analytics_logic.py::TestExportReport::test_export_json PASSED [  5%]
+tests/unit/test_analytics_logic.py::TestDetectAnomalies::test_detects_spike PASSED [  5%]
+tests/unit/test_analytics_logic.py::TestDetectAnomalies::test_too_few_data_points PASSED [  5%]
+tests/unit/test_analyzer.py::TestSentimentAnalyzer::test_init PASSED     [  5%]
+tests/unit/test_analyzer.py::TestAnalyze::test_analyze PASSED            [  5%]
+tests/unit/test_analyzer.py::TestGetSentiment::test_get_sentiment PASSED [  5%]
+tests/unit/test_analyzer.py::TestExportSentiment::test_export_sentiment PASSED [  5%]
+tests/unit/test_analyzer.py::TestImportSentiment::test_import_sentiment PASSED [  5%]
+tests/unit/test_attribution_engine.py::TestAttributionEngine::test_init_default PASSED [  5%]
+tests/unit/test_attribution_engine.py::TestAttributionEngine::test_init_custom_config PASSED [  5%]
+tests/unit/test_attribution_engine.py::TestAttributionEngine::test_position_weights PASSED [  5%]
+tests/unit/test_attribution_engine.py::TestAttributionEngine::test_channel_mapping PASSED [  5%]
+tests/unit/test_attribution_engine.py::TestAttributionEngine::test_analyze_first_touch PASSED [  5%]
+tests/unit/test_attribution_engine.py::TestAttributionEngine::test_analyze_last_touch PASSED [  6%]
+tests/unit/test_attribution_engine.py::TestAttributionEngine::test_analyze_linear PASSED [  6%]
+tests/unit/test_attribution_engine.py::TestAttributionEngine::test_analyze_time_decay PASSED [  6%]
+tests/unit/test_attribution_engine.py::TestAttributionEngine::test_analyze_position_based PASSED [  6%]
+tests/unit/test_attribution_engine.py::TestAttributionEngine::test_group_by_journey PASSED [  6%]
+tests/unit/test_attribution_engine.py::TestAttributionEngine::test_calculate_attribution PASSED [  6%]
+tests/unit/test_attribution_engine.py::TestAttributionEngine::test_analyze_returns_report PASSED [  6%]
+tests/unit/test_attribution_engine.py::TestAttributionEngine::test_report_structure PASSED [  6%]
+tests/unit/test_attribution_engine.py::TestTouchPoint::test_create_touchpoint PASSED [  6%]
+tests/unit/test_attribution_engine.py::TestTouchPoint::test_touchpoint_with_value PASSED [  6%]
+tests/unit/test_attribution_engine.py::TestAttributionResult::test_create_attribution_result PASSED [  6%]
+tests/unit/test_attribution_engine.py::TestEnums::test_attribution_model_values PASSED [  6%]
+tests/unit/test_attribution_engine.py::TestEnums::test_channel_type_values PASSED [  6%]
+tests/unit/test_audience_targeting.py::TestAudienceTargeting::test_init PASSED [  6%]
+tests/unit/test_audience_targeting.py::TestCreateAudience::test_create_audience PASSED [  6%]
+tests/unit/test_audience_targeting.py::TestGetAudience::test_get_audience PASSED [  6%]
+tests/unit/test_audience_targeting.py::TestUpdateAudience::test_update_audience PASSED [  6%]
+tests/unit/test_audience_targeting.py::TestDeleteAudience::test_delete_audience PASSED [  6%]
+tests/unit/test_audience_targeting.py::TestListAudiences::test_list_audiences PASSED [  7%]
+tests/unit/test_audience_targeting.py::TestGetAudienceStats::test_get_audience_stats PASSED [  7%]
+tests/unit/test_audience_targeting.py::TestOptimizeAudience::test_optimize_audience PASSED [  7%]
+tests/unit/test_avatar_engine.py::TestEnums::test_avatar_type_values PASSED [  7%]
+tests/unit/test_avatar_engine.py::TestEnums::test_avatar_style_values PASSED [  7%]
+tests/unit/test_avatar_engine.py::TestEnums::test_avatar_gender_values PASSED [  7%]
+tests/unit/test_avatar_engine.py::TestEnums::test_avatar_age_group_values PASSED [  7%]
+tests/unit/test_avatar_engine.py::TestDataclasses::test_avatar_appearance_defaults PASSED [  7%]
+tests/unit/test_avatar_engine.py::TestDataclasses::test_avatar_expression_defaults PASSED [  7%]
+tests/unit/test_avatar_engine.py::TestDataclasses::test_digital_avatar_to_dict PASSED [  7%]
+tests/unit/test_avatar_engine.py::TestDataclasses::test_digital_avatar_from_dict PASSED [  7%]
+tests/unit/test_avatar_engine.py::TestAvatarEngine::test_init PASSED     [  7%]
+tests/unit/test_avatar_engine.py::TestAvatarEngine::test_create_avatar_from_template PASSED [  7%]
+tests/unit/test_avatar_engine.py::TestAvatarEngine::test_create_avatar_from_template_not_found PASSED [  7%]
+tests/unit/test_avatar_engine.py::TestAvatarEngine::test_create_avatar_with_customizations PASSED [  7%]
+tests/unit/test_avatar_engine.py::TestAvatarEngine::test_get_avatar_template PASSED [  7%]
+tests/unit/test_avatar_engine.py::TestAvatarEngine::test_get_avatar_db PASSED [  7%]
+tests/unit/test_avatar_engine.py::TestAvatarEngine::test_get_avatar_not_found PASSED [  8%]
+tests/unit/test_avatar_engine.py::TestAvatarEngine::test_get_user_avatars PASSED [  8%]
+tests/unit/test_avatar_engine.py::TestAvatarEngine::test_get_public_templates PASSED [  8%]
+tests/unit/test_avatar_engine.py::TestAvatarEngine::test_update_avatar PASSED [  8%]
+tests/unit/test_avatar_engine.py::TestAvatarEngine::test_update_avatar_not_found PASSED [  8%]
+tests/unit/test_avatar_engine.py::TestAvatarEngine::test_delete_avatar PASSED [  8%]
+tests/unit/test_avatar_engine.py::TestAvatarEngine::test_create_scene PASSED [  8%]
+tests/unit/test_avatar_engine.py::TestAvatarEngine::test_get_render_status_found PASSED [  8%]
+tests/unit/test_avatar_engine.py::TestAvatarEngine::test_get_render_status_not_found PASSED [  8%]
+tests/unit/test_avatar_modules.py::TestLipSync::test_lipsync_enum PASSED [  8%]
+tests/unit/test_avatar_modules.py::TestLipSync::test_viseme_frame PASSED [  8%]
+tests/unit/test_avatar_modules.py::TestLipSync::test_viseme_frame_with_visemes PASSED [  8%]
+tests/unit/test_avatar_modules.py::TestLipSync::test_phoneme PASSED      [  8%]
+tests/unit/test_avatar_modules.py::TestGestureGenerator::test_gesture_type_enum PASSED [  8%]
+tests/unit/test_avatar_modules.py::TestGestureGenerator::test_body_part_enum PASSED [  8%]
+tests/unit/test_avatar_modules.py::TestGestureGenerator::test_joint_rotation PASSED [  8%]
+tests/unit/test_avatar_modules.py::TestGestureGenerator::test_pose_frame PASSED [  8%]
+tests/unit/test_avatar_modules.py::TestGestureGenerator::test_gesture PASSED [  8%]
+tests/unit/test_avatar_modules.py::TestGestureGenerator::test_gesture_get_duration PASSED [  9%]
+tests/unit/test_avatar_modules.py::TestSceneAdapter::test_scene_type_enum PASSED [  9%]
+tests/unit/test_avatar_modules.py::TestSceneAdapter::test_background_type_enum PASSED [  9%]
+tests/unit/test_avatar_modules.py::TestSceneAdapter::test_lighting_preset_enum PASSED [  9%]
+tests/unit/test_avatar_modules.py::TestSceneAdapter::test_camera_angle_enum PASSED [  9%]
+tests/unit/test_avatar_modules.py::TestSceneAdapter::test_lighting_config PASSED [  9%]
+tests/unit/test_avatar_modules.py::TestSceneAdapter::test_camera_config PASSED [  9%]
+tests/unit/test_avatar_modules.py::TestSceneAdapter::test_scene_config PASSED [  9%]
+tests/unit/test_avatar_modules.py::TestAvatarEngine::test_avatar_type_enum PASSED [  9%]
+tests/unit/test_avatar_modules.py::TestAvatarEngine::test_avatar_style_enum PASSED [  9%]
+tests/unit/test_avatar_modules.py::TestAvatarEngine::test_avatar_gender_enum PASSED [  9%]
+tests/unit/test_avatar_modules.py::TestAvatarEngine::test_avatar_age_group_enum PASSED [  9%]
+tests/unit/test_avatar_modules.py::TestAvatarEngine::test_avatar_appearance PASSED [  9%]
+tests/unit/test_avatar_modules.py::TestAvatarEngine::test_avatar_expression PASSED [  9%]
+tests/unit/test_avatar_modules.py::TestAvatarEngine::test_digital_avatar PASSED [  9%]
+tests/unit/test_bidding_engine.py::TestBidAdjustment::test_create PASSED [  9%]
+tests/unit/test_bidding_engine.py::TestBiddingConfig::test_post_init PASSED [  9%]
+tests/unit/test_bidding_engine.py::TestBiddingConfig::test_with_adjustments PASSED [  9%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_init PASSED   [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_calculate_bid_basic PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_calculate_bid_with_hour PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_calculate_bid_with_device PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_calculate_bid_with_geo PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_calculate_bid_with_audience PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_calculate_bid_with_competition PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_calculate_bid_with_adjustments PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_calculate_bid_min_max PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_calculate_bid_target_cpa_high PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_calculate_bid_target_cpa_low PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_calculate_bid_target_roi_high PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_calculate_bid_target_roi_low PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_calculate_bid_max_conversion_slow PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_calculate_bid_max_conversion_fast PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_optimize_bidding_empty PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_optimize_bidding_target_cpa_high PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_optimize_bidding_target_cpa_low PASSED [ 10%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_get_time_multiplier PASSED [ 11%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_get_device_multiplier PASSED [ 11%]
+tests/unit/test_bidding_engine.py::TestBiddingEngine::test_get_geo_multiplier PASSED [ 11%]
+tests/unit/test_brand_reputation.py::TestSentimentArticle::test_create PASSED [ 11%]
+tests/unit/test_brand_reputation.py::TestReputationScore::test_post_init PASSED [ 11%]
+tests/unit/test_brand_reputation.py::TestReputationScore::test_to_dict PASSED [ 11%]
+tests/unit/test_brand_reputation.py::TestBrandReputationCalculator::test_init PASSED [ 11%]
+tests/unit/test_brand_reputation.py::TestBrandReputationCalculator::test_calculate_empty PASSED [ 11%]
+tests/unit/test_brand_reputation.py::TestBrandReputationCalculator::test_calculate_positive PASSED [ 11%]
+tests/unit/test_brand_reputation.py::TestBrandReputationCalculator::test_calculate_negative PASSED [ 11%]
+tests/unit/test_brand_reputation.py::TestBrandReputationCalculator::test_calculate_mixed PASSED [ 11%]
+tests/unit/test_brand_reputation.py::TestBrandReputationCalculator::test_calculate_with_previous_score PASSED [ 11%]
+tests/unit/test_brand_reputation.py::TestBrandReputationCalculator::test_calculate_declining PASSED [ 11%]
+tests/unit/test_brand_reputation.py::TestBrandReputationCalculator::test_platform_breakdown PASSED [ 11%]
+tests/unit/test_brand_reputation.py::TestBrandReputationCalculator::test_category_breakdown PASSED [ 11%]
+tests/unit/test_brand_reputation.py::TestBrandReputationCalculator::test_grade_a PASSED [ 11%]
+tests/unit/test_brand_reputation.py::TestBrandReputationCalculator::test_grade_f PASSED [ 11%]
+tests/unit/test_brand_reputation.py::TestBrandReputationCalculator::test_calculate_trend_empty PASSED [ 12%]
+tests/unit/test_brand_reputation.py::TestBrandReputationCalculator::test_calculate_trend_with_history PASSED [ 12%]
+tests/unit/test_brand_reputation.py::TestBrandReputationCalculator::test_history_limit PASSED [ 12%]
+tests/unit/test_brand_reputation.py::TestBrandReputationCalculator::test_reputation_trend_to_dict PASSED [ 12%]
+tests/unit/test_bulk_coverage_v2.py::TestACASToolsInit::test_init_defaults PASSED [ 12%]
+tests/unit/test_bulk_coverage_v2.py::TestACASToolsInit::test_registry_attribute PASSED [ 12%]
+tests/unit/test_bulk_coverage_v2.py::TestACASToolsMethods::test_account_analyze PASSED [ 12%]
+tests/unit/test_bulk_coverage_v2.py::TestACASToolsMethods::test_ad_campaign_manage PASSED [ 12%]
+tests/unit/test_bulk_coverage_v2.py::TestACASToolsMethods::test_content_create PASSED [ 12%]
+tests/unit/test_bulk_coverage_v2.py::TestToolRegistry::test_init PASSED  [ 12%]
+tests/unit/test_bulk_coverage_v2.py::TestToolRegistry::test_register_and_list PASSED [ 12%]
+tests/unit/test_bulk_coverage_v2.py::TestToolRegistry::test_get_schema PASSED [ 12%]
+tests/unit/test_bulk_coverage_v2.py::TestToolRegistry::test_unregister PASSED [ 12%]
+tests/unit/test_bulk_coverage_v2.py::TestUserProfile::test_create PASSED [ 12%]
+tests/unit/test_bulk_coverage_v2.py::TestUserProfile::test_to_dict PASSED [ 12%]
+tests/unit/test_bulk_coverage_v2.py::TestUserServiceInit::test_init_no_args PASSED [ 12%]
+tests/unit/test_bulk_coverage_v2.py::TestRSSArticle::test_create PASSED  [ 12%]
+tests/unit/test_bulk_coverage_v2.py::TestRSSArticle::test_to_dict PASSED [ 12%]
+tests/unit/test_bulk_coverage_v2.py::TestRSSCollectorInit::test_init_defaults PASSED [ 13%]
+tests/unit/test_bulk_coverage_v2.py::TestRSSCollectorInit::test_init_with_sources PASSED [ 13%]
+tests/unit/test_bulk_coverage_v2.py::TestRSSCollectorMethods::test_add_source PASSED [ 13%]
+tests/unit/test_bulk_coverage_v2.py::TestRSSCollectorMethods::test_collect PASSED [ 13%]
+tests/unit/test_bulk_coverage_v2.py::TestRSSCollectorMethods::test_get_available_sources PASSED [ 13%]
+tests/unit/test_bulk_coverage_v2.py::TestUserServiceMethods::test_register PASSED [ 13%]
+tests/unit/test_bulk_coverage_v2.py::TestUserServiceMethods::test_login PASSED [ 13%]
+tests/unit/test_bulk_coverage_v2.py::TestUserServiceMethods::test_get_profile PASSED [ 13%]
+tests/unit/test_bulk_coverage_v2.py::TestUserServiceMethods::test_login_guest PASSED [ 13%]
+tests/unit/test_campaign_and_product_logic.py::TestCreateCampaign::test_create_basic PASSED [ 13%]
+tests/unit/test_campaign_and_product_logic.py::TestCreateCampaign::test_create_adds_to_dict PASSED [ 13%]
+tests/unit/test_campaign_and_product_logic.py::TestScheduleCampaign::test_schedule_draft PASSED [ 13%]
+tests/unit/test_campaign_and_product_logic.py::TestScheduleCampaign::test_schedule_non_draft_fails PASSED [ 13%]
+tests/unit/test_campaign_and_product_logic.py::TestScheduleCampaign::test_schedule_missing PASSED [ 13%]
+tests/unit/test_campaign_and_product_logic.py::TestLaunchCampaign::test_launch_draft PASSED [ 13%]
+tests/unit/test_campaign_and_product_logic.py::TestLaunchCampaign::test_launch_scheduled PASSED [ 13%]
+tests/unit/test_campaign_and_product_logic.py::TestLaunchCampaign::test_launch_not_draft_or_scheduled PASSED [ 13%]
+tests/unit/test_campaign_and_product_logic.py::TestPauseResume::test_pause_running PASSED [ 13%]
+tests/unit/test_campaign_and_product_logic.py::TestPauseResume::test_pause_not_running PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestPauseResume::test_resume_paused PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestPauseResume::test_resume_not_paused PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestCompleteCampaign::test_complete_running PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestCompleteCampaign::test_complete_missing PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestUpdateStats::test_update_stats PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestUpdateStats::test_update_stats_missing PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestGetCampaign::test_get_exists PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestGetCampaign::test_get_missing PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestListCampaigns::test_list_all PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestListCampaigns::test_list_by_status PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestListCampaigns::test_list_by_type PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestPerformanceMetrics::test_metrics PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestPerformanceMetrics::test_metrics_missing PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestPerformanceMetrics::test_metrics_zero_sent PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestDuplicateCampaign::test_duplicate PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestDuplicateCampaign::test_duplicate_missing PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestCreateProduct::test_create_basic PASSED [ 14%]
+tests/unit/test_campaign_and_product_logic.py::TestCreateProduct::test_create_zero_stock PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestCreateProduct::test_create_adds_to_dict PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestUpdateProduct::test_update_price PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestUpdateProduct::test_update_missing PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestGetProduct::test_get_exists PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestGetProduct::test_get_missing PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestListProducts::test_list_all PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestListProducts::test_list_by_category PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestListProducts::test_list_by_status PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestListProducts::test_list_by_search PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestUpdateStock::test_update_stock_active PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestUpdateStock::test_update_stock_to_zero PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestUpdateStock::test_update_stock_from_zero PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestUpdateStock::test_update_stock_missing PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestProfitMargin::test_positive_margin PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestProfitMargin::test_zero_price PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestProfitMargin::test_missing_product PASSED [ 15%]
+tests/unit/test_campaign_and_product_logic.py::TestLowStock::test_low_stock PASSED [ 16%]
+tests/unit/test_campaign_and_product_logic.py::TestCategorySummary::test_summary PASSED [ 16%]
+tests/unit/test_collectors.py::TestRSSCollectorV2::test_import PASSED    [ 16%]
+tests/unit/test_collectors.py::TestRSSCollectorV2::test_rss_collector_alias PASSED [ 16%]
+tests/unit/test_collectors.py::TestRSSCollectorV2::test_create_collector PASSED [ 16%]
+tests/unit/test_collectors.py::TestRSSCollectorV2::test_collect_method PASSED [ 16%]
+tests/unit/test_collectors.py::TestBaseCollector::test_import PASSED     [ 16%]
+tests/unit/test_collectors.py::TestBaseCollector::test_base_collector_class PASSED [ 16%]
+tests/unit/test_collectors.py::TestCollectorManager::test_import PASSED  [ 16%]
+tests/unit/test_collectors.py::TestDataProcessor::test_import PASSED     [ 16%]
+tests/unit/test_collectors.py::TestSocialMediaCollector::test_douyin_collector_import PASSED [ 16%]
+tests/unit/test_collectors.py::TestSocialMediaCollector::test_xiaohongshu_collector_import PASSED [ 16%]
+tests/unit/test_collectors.py::TestSocialMediaCollector::test_kuaishou_collector_import PASSED [ 16%]
+tests/unit/test_collectors.py::TestContentProcessor::test_content_processor_import PASSED [ 16%]
+tests/unit/test_collectors.py::TestContentProcessor::test_text_cleaner_import PASSED [ 16%]
+tests/unit/test_collectors.py::TestMediaProcessor::test_image_processor_import PASSED [ 16%]
+tests/unit/test_collectors.py::TestMediaProcessor::test_video_processor_import PASSED [ 16%]
+tests/unit/test_collectors.py::TestNLPProcessor::test_nlp_processor_import PASSED [ 16%]
+tests/unit/test_collectors.py::TestNLPProcessor::test_sentiment_analyzer_import PASSED [ 17%]
+tests/unit/test_collectors.py::TestCollectorUtils::test_utils_import PASSED [ 17%]
+tests/unit/test_collectors.py::TestCollectorUtils::test_helpers_import PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestFetchTrends::test_fetch_all_platforms PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestFetchTrends::test_fetch_specific_platform PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestFetchTrends::test_fetch_populates_internal PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestAnalyzeTrend::test_analyze_existing PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestAnalyzeTrend::test_analyze_missing PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestGenerateScript::test_generate_basic PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestGenerateScript::test_generate_with_keywords PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestGenerateScript::test_generate_title_format PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestGetTemplates::test_get_all PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestGetTemplates::test_get_by_platform PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestOptimizeScript::test_optimize_for_douyin PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestOptimizeScript::test_optimize_for_kuaishou PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestOptimizeScript::test_optimize_content_prefix PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestCreateCustomer::test_create_basic PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestCreateCustomer::test_create_custom_source PASSED [ 17%]
+tests/unit/test_content_and_customer_logic.py::TestCreateCustomer::test_create_adds_to_dict PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestUpdateCustomer::test_update_email PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestUpdateCustomer::test_update_missing PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestGetCustomer::test_get_exists PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestGetCustomer::test_get_missing PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestFindByEmail::test_find_exists PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestFindByEmail::test_find_case_insensitive PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestFindByEmail::test_find_missing PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestListCustomers::test_list_all PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestListCustomers::test_list_by_status PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestListCustomers::test_list_by_source PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestListCustomers::test_list_by_search PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestUpdatePurchaseHistory::test_first_purchase PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestUpdatePurchaseHistory::test_vip_threshold PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestUpdatePurchaseHistory::test_missing_customer PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestCreateSegment::test_create_basic PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestGetSegmentCustomers::test_filter_by_min_spent PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestGetSegmentCustomers::test_empty_segment PASSED [ 18%]
+tests/unit/test_content_and_customer_logic.py::TestGetCustomerStats::test_with_customers PASSED [ 19%]
+tests/unit/test_content_and_customer_logic.py::TestGetCustomerStats::test_empty PASSED [ 19%]
+tests/unit/test_content_and_customer_logic.py::TestGetChurnedCustomers::test_no_customers PASSED [ 19%]
+tests/unit/test_content_and_customer_logic.py::TestGetChurnedCustomers::test_no_churned PASSED [ 19%]
+tests/unit/test_content_deep.py::TestScriptGeneratorDeep::test_init PASSED [ 19%]
+tests/unit/test_content_deep.py::TestScriptGeneratorDeep::test_init_with_db PASSED [ 19%]
+tests/unit/test_content_deep.py::TestScriptGeneratorDeep::test_templates_exist PASSED [ 19%]
+tests/unit/test_content_deep.py::TestScriptGeneratorDeep::test_festival_themes PASSED [ 19%]
+tests/unit/test_content_deep.py::TestScriptGeneratorDeep::test_culture_rules PASSED [ 19%]
+tests/unit/test_content_deep.py::TestTrendMonitorDeep::test_platform_enum PASSED [ 19%]
+tests/unit/test_content_deep.py::TestTrendMonitorDeep::test_trend_item_fields PASSED [ 19%]
+tests/unit/test_content_deep.py::TestTrendMonitorDeep::test_trend_report_fields PASSED [ 19%]
+tests/unit/test_content_deep.py::TestTrendMonitorDeep::test_monitor_init PASSED [ 19%]
+tests/unit/test_content_deep.py::TestWeiboAPIStructure::test_weibo_post_dataclass PASSED [ 19%]
+tests/unit/test_content_deep.py::TestWeiboAPIStructure::test_weibo_collector_class PASSED [ 19%]
+tests/unit/test_content_deep.py::TestNewsEngineStructure::test_news_article_dataclass PASSED [ 19%]
+tests/unit/test_content_deep.py::TestNewsEngineStructure::test_risk_alert_dataclass PASSED [ 19%]
+tests/unit/test_content_deep.py::TestNewsEngineStructure::test_sentiment_level_enum PASSED [ 20%]
+tests/unit/test_content_deep.py::TestContentCreationLogic::test_content_creation_logic_import PASSED [ 20%]
+tests/unit/test_content_deep.py::TestContentCreationLogic::test_analytics_logic_import PASSED [ 20%]
+tests/unit/test_content_deep.py::TestLoggingDeep::test_get_logger PASSED [ 20%]
+tests/unit/test_content_deep.py::TestLoggingDeep::test_logger_has_methods PASSED [ 20%]
+tests/unit/test_conversation.py::TestConversation::test_create PASSED    [ 20%]
+tests/unit/test_conversation.py::TestConversation::test_add_message PASSED [ 20%]
+tests/unit/test_conversation.py::TestConversation::test_add_multiple_messages PASSED [ 20%]
+tests/unit/test_conversation.py::TestConversation::test_to_dict PASSED   [ 20%]
+tests/unit/test_conversation.py::TestConversation::test_from_dict PASSED [ 20%]
+tests/unit/test_conversation.py::TestConversationManager::test_init PASSED [ 20%]
+tests/unit/test_conversation.py::TestConversationManager::test_create_conversation PASSED [ 20%]
+tests/unit/test_conversation.py::TestConversationManager::test_create_conversation_with_id PASSED [ 20%]
+tests/unit/test_conversation.py::TestConversationManager::test_get_conversation PASSED [ 20%]
+tests/unit/test_conversation.py::TestConversationManager::test_get_conversation_not_found PASSED [ 20%]
+tests/unit/test_conversation.py::TestConversationManager::test_list_conversations PASSED [ 20%]
+tests/unit/test_conversation.py::TestConversationManager::test_list_conversations_empty PASSED [ 20%]
+tests/unit/test_conversation.py::TestConversationManager::test_list_conversations_pagination PASSED [ 20%]
+tests/unit/test_conversation.py::TestConversationManager::test_delete_conversation PASSED [ 21%]
+tests/unit/test_conversation.py::TestConversationManager::test_set_active PASSED [ 21%]
+tests/unit/test_conversation.py::TestConversationManager::test_get_active PASSED [ 21%]
+tests/unit/test_conversation.py::TestConversationManager::test_get_active_none PASSED [ 21%]
+tests/unit/test_conversation.py::TestConversationManager::test_update_conversation PASSED [ 21%]
+tests/unit/test_conversation.py::TestConversationManager::test_clear_all PASSED [ 21%]
+tests/unit/test_conversation.py::TestConversationManager::test_search_conversations PASSED [ 21%]
+tests/unit/test_conversation.py::TestConversationManager::test_export_conversation PASSED [ 21%]
+tests/unit/test_conversation.py::TestConversationManager::test_export_conversation_not_found PASSED [ 21%]
+tests/unit/test_core_modules.py::TestConfig::test_config_import PASSED   [ 21%]
+tests/unit/test_core_modules.py::TestConfig::test_config_has_attributes PASSED [ 21%]
+tests/unit/test_core_modules.py::TestConfig::test_config_get PASSED      [ 21%]
+tests/unit/test_core_modules.py::TestLogging::test_logging_import PASSED [ 21%]
+tests/unit/test_core_modules.py::TestLogging::test_get_logger PASSED     [ 21%]
+tests/unit/test_core_modules.py::TestLogging::test_logger_logging PASSED [ 21%]
+tests/unit/test_core_modules.py::TestDatabase::test_database_import PASSED [ 21%]
+tests/unit/test_core_modules.py::TestDatabase::test_database_singleton PASSED [ 21%]
+tests/unit/test_core_modules.py::TestDatabase::test_database_methods PASSED [ 21%]
+tests/unit/test_core_modules.py::TestWebRoutes::test_auth_routes_import PASSED [ 22%]
+tests/unit/test_core_modules.py::TestWebRoutes::test_dashboard_routes_import PASSED [ 22%]
+tests/unit/test_core_modules.py::TestWebRoutes::test_llm_routes_import PASSED [ 22%]
+tests/unit/test_core_modules.py::TestEcommerceModules::test_product_manager_import PASSED [ 22%]
+tests/unit/test_core_modules.py::TestEcommerceModules::test_shop_manager_import PASSED [ 22%]
+tests/unit/test_core_modules.py::TestEcommerceModules::test_supply_chain_import PASSED [ 22%]
+tests/unit/test_core_modules.py::TestCollectors::test_rss_collector_import PASSED [ 22%]
+tests/unit/test_core_modules.py::TestCollectors::test_base_collector_import PASSED [ 22%]
+tests/unit/test_core_modules.py::TestMLModules::test_timesfm_import PASSED [ 22%]
+tests/unit/test_core_modules.py::TestMLModules::test_forecast_import PASSED [ 22%]
+tests/unit/test_core_modules.py::TestAnalytics::test_attribution_import PASSED [ 22%]
+tests/unit/test_core_modules.py::TestAnalytics::test_smart_decider_import PASSED [ 22%]
+tests/unit/test_coverage_boost2.py::TestCoreDatabaseExtended::test_database_manager_execute_update PASSED [ 22%]
+tests/unit/test_coverage_boost2.py::TestCoreDatabaseExtended::test_database_manager_init_tables PASSED [ 22%]
+tests/unit/test_coverage_boost2.py::TestCoreDatabaseExtended::test_database_manager_context PASSED [ 22%]
+tests/unit/test_coverage_boost2.py::TestShopAPIsExtended::test_douyin_client_methods PASSED [ 22%]
+tests/unit/test_coverage_boost2.py::TestShopAPIsExtended::test_kuaishou_client_methods PASSED [ 22%]
+tests/unit/test_coverage_boost2.py::TestShopAPIsExtended::test_xiaohongshu_client_methods PASSED [ 22%]
+tests/unit/test_coverage_boost2.py::TestShopAPIsExtended::test_taobao_client_methods PASSED [ 23%]
+tests/unit/test_coverage_boost2.py::TestWebDashboardStats::test_dashboard_stats_module PASSED [ 23%]
+tests/unit/test_coverage_boost2.py::TestWebDashboardStats::test_dashboard_stats_functions PASSED [ 23%]
+tests/unit/test_coverage_boost2.py::TestWebMiddlewareExtended::test_middleware_module PASSED [ 23%]
+tests/unit/test_coverage_boost2.py::TestLlmTools::test_tools_module PASSED [ 23%]
+tests/unit/test_coverage_boost2.py::TestAvatarLipSyncExtended::test_lip_sync_engine_methods PASSED [ 23%]
+tests/unit/test_coverage_boost2.py::TestConfigExtended::test_config_properties PASSED [ 23%]
+tests/unit/test_coverage_boost2.py::TestConfigExtended::test_config_database_url PASSED [ 23%]
+tests/unit/test_coverage_boost2.py::TestPlatformApiBaseExtended::test_platform_api_base_methods PASSED [ 23%]
+tests/unit/test_coverage_boost2.py::TestPlatformApiBaseExtended::test_sync_result PASSED [ 23%]
+tests/unit/test_coverage_boost2.py::TestWebDashboardExtended::test_dashboard_module PASSED [ 23%]
+tests/unit/test_coverage_boost3.py::TestDatabaseFullCRUD::test_insert_returns_rowid PASSED [ 23%]
+tests/unit/test_coverage_boost3.py::TestDatabaseFullCRUD::test_fetchall_returns_rows PASSED [ 23%]
+tests/unit/test_coverage_boost3.py::TestDatabaseFullCRUD::test_fetchone_returns_single PASSED [ 23%]
+tests/unit/test_coverage_boost3.py::TestDatabaseFullCRUD::test_update_with_where_clause PASSED [ 23%]
+tests/unit/test_coverage_boost3.py::TestDatabaseFullCRUD::test_delete_by_id PASSED [ 23%]
+tests/unit/test_coverage_boost3.py::TestDatabaseFullCRUD::test_execute_one PASSED [ 23%]
+tests/unit/test_coverage_boost3.py::TestDatabaseFullCRUD::test_health_check PASSED [ 24%]
+tests/unit/test_coverage_boost3.py::TestDatabaseFullCRUD::test_transaction_commit PASSED [ 24%]
+tests/unit/test_coverage_boost3.py::TestDatabaseFullCRUD::test_init_database PASSED [ 24%]
+tests/unit/test_coverage_boost3.py::TestShopClientMethods::test_douyin_client_all PASSED [ 24%]
+tests/unit/test_coverage_boost3.py::TestShopClientMethods::test_kuaishou_client_all PASSED [ 24%]
+tests/unit/test_coverage_boost3.py::TestShopClientMethods::test_xiaohongshu_client_all PASSED [ 24%]
+tests/unit/test_coverage_boost3.py::TestShopClientMethods::test_taobao_client_all PASSED [ 24%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_execute_pg_select PASSED [ 24%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_execute_pg_write PASSED [ 24%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_execute_pg_with_question_marks PASSED [ 24%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_execute_pg_datetime PASSED [ 24%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_insert_pg PASSED [ 24%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_update_pg PASSED [ 24%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_delete_by_id_pg PASSED [ 24%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_delete_by_where_pg PASSED [ 24%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_health_check_pg PASSED [ 24%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_transaction_commit_pg PASSED [ 24%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_transaction_rollback_pg PASSED [ 24%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_fetchone_pg PASSED [ 25%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_fetchall_pg PASSED [ 25%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_execute_pg_with_datetime_result PASSED [ 25%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_execute_pg_with_date_result PASSED [ 25%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_execute_pg_with_bytes_result PASSED [ 25%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_execute_pg_with_autoincrement PASSED [ 25%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_execute_pg_insert_or_replace PASSED [ 25%]
+tests/unit/test_coverage_boost4.py::TestDatabasePgManualConstruct::test_execute_pg_error_rollback PASSED [ 25%]
+tests/unit/test_coverage_boost4.py::TestDatabaseSQLiteExtra::test_init_sqlite PASSED [ 25%]
+tests/unit/test_coverage_boost4.py::TestDatabaseSQLiteExtra::test_init_database PASSED [ 25%]
+tests/unit/test_coverage_boost4.py::TestDatabaseSQLiteExtra::test_validate_identifier_good PASSED [ 25%]
+tests/unit/test_coverage_boost4.py::TestDatabaseSQLiteExtra::test_validate_identifier_bad PASSED [ 25%]
+tests/unit/test_coverage_boost4.py::TestDatabaseSQLiteExtra::test_translate_insert_or_replace PASSED [ 25%]
+tests/unit/test_coverage_boost4.py::TestDatabaseSQLiteExtra::test_translate_no_match PASSED [ 25%]
+tests/unit/test_coverage_boost4.py::TestDatabaseSQLiteExtra::test_delete_no_args_raises PASSED [ 25%]
+tests/unit/test_coverage_boost4.py::TestDatabaseSQLiteExtra::test_update_no_where_raises PASSED [ 25%]
+tests/unit/test_coverage_boost5.py::TestTaobaoShopClientDeep::test_utility_methods PASSED [ 25%]
+tests/unit/test_coverage_boost5.py::TestTaobaoShopClientDeep::test_exchange_token PASSED [ 25%]
+tests/unit/test_coverage_boost5.py::TestTaobaoShopClientDeep::test_refresh_access_token PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestTaobaoShopClientDeep::test_refresh_no_token PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestTaobaoShopClientDeep::test_sync_orders PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestTaobaoShopClientDeep::test_sync_products PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestTaobaoShopClientDeep::test_sync_inventory PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestTaobaoShopClientDeep::test_get_logistics_info PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestTaobaoShopClientDeep::test_update_product_status PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestDouyinShopClientDeep::test_utility_methods PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestDouyinShopClientDeep::test_sync_orders PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestDouyinShopClientDeep::test_sync_products PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestDouyinShopClientDeep::test_sync_inventory PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestDouyinShopClientDeep::test_get_logistics_info PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestDouyinShopClientDeep::test_update_product_status PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestKuaishouShopClientDeep::test_utility_methods PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestKuaishouShopClientDeep::test_sync_orders PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestKuaishouShopClientDeep::test_sync_products PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestKuaishouShopClientDeep::test_sync_inventory PASSED [ 26%]
+tests/unit/test_coverage_boost5.py::TestXiaohongshuShopClientDeep::test_utility_methods PASSED [ 27%]
+tests/unit/test_coverage_boost5.py::TestXiaohongshuShopClientDeep::test_sync_orders PASSED [ 27%]
+tests/unit/test_coverage_boost5.py::TestXiaohongshuShopClientDeep::test_sync_products PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestWeiboAPIDeep::test_weibo_post_creation PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestWeiboAPIDeep::test_weibo_post_to_dict PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestWeiboAPIDeep::test_collector_init_no_config PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestWeiboAPIDeep::test_collector_init_with_params PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestWeiboAPIDeep::test_search_no_token PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestWeiboAPIDeep::test_search_with_token PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestWeiboAPIDeep::test_search_parse_results PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestWeiboAPIDeep::test_search_exclude_retweets PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestWeiboAPIDeep::test_search_include_retweets PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestWeiboAPIDeep::test_search_error PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestWeiboAPIDeep::test_get_hot_topics_success PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestWeiboAPIDeep::test_get_hot_topics_fallback PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestWeiboAPIDeep::test_get_user_timeline_no_token PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestWeiboAPIDeep::test_get_user_timeline_success PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestWeiboAPIDeep::test_get_user_timeline_error PASSED [ 27%]
+tests/unit/test_coverage_boost_deep.py::TestNewsEngineDeep::test_news_article_creation PASSED [ 28%]
+tests/unit/test_coverage_boost_deep.py::TestNewsEngineDeep::test_sentiment_result_creation PASSED [ 28%]
+tests/unit/test_coverage_boost_deep.py::TestNewsEngineDeep::test_risk_alert_creation PASSED [ 28%]
+tests/unit/test_coverage_boost_deep.py::TestNewsEngineDeep::test_engine_fetch_intelligence PASSED [ 28%]
+tests/unit/test_coverage_boost_deep.py::TestNewsEngineDeep::test_engine_detect_risks PASSED [ 28%]
+tests/unit/test_coverage_boost_deep.py::TestNewsEngineDeep::test_engine_get_sentiment_summary PASSED [ 28%]
+tests/unit/test_coverage_boost_deep.py::TestTrendMonitorDeep::test_monitor_get_trending_items FAILED [ 28%]
+
+================================== FAILURES ===================================
+____________ TestTrendMonitorDeep.test_monitor_get_trending_items _____________
+
+self = <unit.test_coverage_boost_deep.TestTrendMonitorDeep object at 0x0000027BB2384CD0>
+
+    def test_monitor_get_trending_items(self):
+        from acas_pro.content.trend_monitor import TrendMonitor
+>       monitor = TrendMonitor()
+                  ^^^^^^^^^^^^^^
+
+tests\unit\test_coverage_boost_deep.py:404: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <acas_pro.content.trend_monitor.TrendMonitor object at 0x0000027BB46C29E0>
+db = None
+
+    def __init__(self, db: 'DatabaseManager' = None):
+        self.db = db or DatabaseManager()
+        self._running = False
+        self._monitor_thread = None
+        self._callback_queue = queue.Queue()
+        self._callbacks: List[Callable] = []
+    
+        # ƽ̨����
+        self.platform_configs = {
+            Platform.DOUYIN: {
+                "api_endpoint": "https://open.douyin.com",
+                "fetch_interval": 900,  # 15����
+                "enabled": True,
+            },
+            Platform.XIAOHONGSHU: {
+                "api_endpoint": "https://open.xiaohongshu.com",
+                "fetch_interval": 3600,  # 1Сʱ
+                "enabled": True,
+            },
+            Platform.KUAISHOU: {
+                "api_endpoint": "https://open.kuaishou.com",
+                "fetch_interval": 900,
+                "enabled": True,
+            },
+            Platform.BILIBILI: {
+                "api_endpoint": "https://open.bilibili.com",
+                "fetch_interval": 3600,
+                "enabled": True,
+            },
+            Platform.TIKTOK: {
+                "api_endpoint": "https://open.tiktokapis.com",
+                "fetch_interval": 1800,
+                "enabled": False,  # ��Ҫ��������
+            },
+            Platform.INSTAGRAM: {
+                "api_endpoint": "https://graph.instagram.com",
+                "fetch_interval": 3600,
+                "enabled": False,
+            },
+            Platform.YOUTUBE: {
+                "api_endpoint": "https://www.googleapis.com/youtube/v3",
+                "fetch_interval": 3600,
+                "enabled": False,
+            },
+        }
+    
+        # ��ʼ�����ݱ�
+>       self._init_database()
+
+src\acas_pro\content\trend_monitor.py:139: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <acas_pro.content.trend_monitor.TrendMonitor object at 0x0000027BB46C29E0>
+
+    def _init_database(self):
+        """��ʼ�����ݿ��"""
+>       self.db.execute("""
+            CREATE TABLE IF NOT EXISTS trend_items (
+                id TEXT PRIMARY KEY,
+                platform TEXT NOT NULL,
+                title TEXT,
+                author TEXT,
+                url TEXT,
+                views INTEGER DEFAULT 0,
+                likes INTEGER DEFAULT 0,
+                comments INTEGER DEFAULT 0,
+                shares INTEGER DEFAULT 0,
+                publish_time TIMESTAMP,
+                tags TEXT,  -- JSON array
+                content_type TEXT,
+                thumbnail_url TEXT,
+                viral_score REAL DEFAULT 0,
+                efficiency_score REAL DEFAULT 0,
+                relevance_score REAL DEFAULT 0,
+                transcript TEXT,
+                visual_tags TEXT,  -- JSON array
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+
+src\acas_pro\content\trend_monitor.py:143: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <acas_pro.core.database.DatabaseManager object at 0x0000027BB2CB82F0>
+query = '\n            CREATE TABLE IF NOT EXISTS trend_items (\n                id TEXT PRIMARY KEY,\n                platfor...MP DEFAULT CURRENT_TIMESTAMP,\n                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP\n            )\n        '
+params = None
+
+    def execute(self, query: str, params: tuple = None) -> List[Dict]:
+        """Execute query and return results. Auto-commits write operations on PostgreSQL."""
+        if self._is_postgres:
+            # Auto-translate SQLite ? placeholders to PostgreSQL %s
+            if '?' in query:
+                query = query.replace('?', '%s')
+            # SQLite AUTOINCREMENT is invalid in PostgreSQL
+            if 'AUTOINCREMENT' in query:
+                query = query.replace('AUTOINCREMENT', '')
+            # SQLite datetime('now') �� PostgreSQL NOW()
+            if "datetime('now')" in query:
+                query = query.replace("datetime('now')", 'NOW()')
+            # SQLite INSERT OR REPLACE �� PostgreSQL INSERT ... ON CONFLICT DO UPDATE
+            if 'INSERT OR REPLACE' in query.upper():
+                import re
+                query = self._translate_insert_or_replace(query)
+>           conn = self._pool.getconn()
+                   ^^^^^^^^^^^^^^^^^^
+E           AttributeError: 'NoneType' object has no attribute 'getconn'
+
+src\acas_pro\core\database.py:603: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/unit/test_coverage_boost_deep.py::TestTrendMonitorDeep::test_monitor_get_trending_items - AttributeError: 'NoneType' object has no attribute 'getconn'
+!!!!!!!! Interrupted: Test failed, continuing from this test next run. !!!!!!!!
+======================== 1 failed, 502 passed in 6.82s ========================

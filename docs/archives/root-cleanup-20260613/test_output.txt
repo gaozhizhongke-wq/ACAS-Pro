@@ -1,0 +1,932 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.14.3, pytest-9.0.3, pluggy-1.6.0
+Fugue tests will be initialized with options:
+rootdir: C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: anyio-3.7.1, fugue-0.9.7, langsmith-0.7.35, locust-2.44.1, asyncio-1.3.0, base-url-2.1.0, cov-7.1.0, forked-1.6.0, mock-3.15.1, playwright-0.7.2, xdist-3.8.0
+asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 1996 items
+
+tests\unit\test_account_manager.py .....................                 [  1%]
+tests\unit\test_ad_manager.py ........                                   [  1%]
+tests\unit\test_advanced_analytics_extended.py ...................       [  2%]
+tests\unit\test_alert_sentiment_config.py ...........................    [  3%]
+tests\unit\test_analytics_logic.py .....................                 [  4%]
+tests\unit\test_analyzer.py .....                                        [  5%]
+tests\unit\test_api_docs.py ..........                                   [  5%]
+tests\unit\test_attribution_engine.py ..................                 [  6%]
+tests\unit\test_audience_targeting.py ........                           [  6%]
+tests\unit\test_avatar_engine.py .......................                 [  8%]
+tests\unit\test_avatar_modules.py ........................               [  9%]
+tests\unit\test_bidding_engine.py ........................               [ 10%]
+tests\unit\test_brand_reputation.py ..................                   [ 11%]
+tests\unit\test_bulk_coverage_v2.py ....F..................              [ 12%]
+tests\unit\test_campaign_and_product_logic.py .......................... [ 13%]
+....................                                                     [ 14%]
+tests\unit\test_collectors.py ...................                        [ 15%]
+tests\unit\test_content_and_customer_logic.py .......................... [ 17%]
+...........                                                              [ 17%]
+tests\unit\test_content_deep.py ..................                       [ 18%]
+tests\unit\test_conversation.py ......................                   [ 19%]
+tests\unit\test_core_modules.py .....................                    [ 20%]
+tests\unit\test_coverage_boost2.py ...                                   [ 20%]
+tests\unit\test_coverage_boost3.py ......................                [ 21%]
+tests\unit\test_coverage_boost4.py .........................             [ 23%]
+tests\unit\test_coverage_boost5.py ......................                [ 24%]
+tests\unit\test_coverage_boost_deep.py ...........................       [ 25%]
+tests\unit\test_coverage_boost_final.py ................................ [ 27%]
+........................................................................ [ 30%]
+....................                                                     [ 31%]
+tests\unit\test_coverage_final_push.py ....                              [ 32%]
+tests\unit\test_dashboard_and_order_logic.py ........................... [ 33%]
+..........                                                               [ 33%]
+tests\unit\test_dashboard_stats.py ..................                    [ 34%]
+tests\unit\test_data_monitor.py ....................                     [ 35%]
+tests\unit\test_data_monitor_v2.py .......                               [ 36%]
+tests\unit\test_database.py ....................                         [ 37%]
+tests\unit\test_database_transaction.py ....                             [ 37%]
+tests\unit\test_deep_modules_v2.py ..................................... [ 39%]
+                                                                         [ 39%]
+tests\unit\test_ecommerce_deep.py ..................                     [ 40%]
+tests\unit\test_ecommerce_modules.py ....................                [ 41%]
+tests\unit\test_error_handlers.py .......                                [ 41%]
+tests\unit\test_festival_calendar.py ...................                 [ 42%]
+tests\unit\test_gesture_generator.py ..................                  [ 43%]
+tests\unit\test_health.py ...................                            [ 44%]
+tests\unit\test_health_llm.py ........                                   [ 44%]
+tests\unit\test_inventory_logic.py ...............                       [ 45%]
+tests\unit\test_lang_detector_new.py .................                   [ 46%]
+tests\unit\test_lip_sync.py .....                                        [ 46%]
+tests\unit\test_llm_isolated.py .......                                  [ 46%]
+tests\unit\test_llm_save_config.py .....                                 [ 47%]
+tests\unit\test_llm_sentiment_logging.py .................               [ 47%]
+tests\unit\test_llm_tools.py ...........                                 [ 48%]
+tests\unit\test_llm_tools_comprehensive.py .............FFFF..FFFFFF..FF [ 49%]
+.FF...FFFF.                                                              [ 50%]
+tests\unit\test_low_coverage_deep.py ......................              [ 51%]
+tests\unit\test_middleware.py .................                          [ 52%]
+tests\unit\test_ml_modules.py ......                                     [ 52%]
+tests\unit\test_more_coverage.py .......................                 [ 53%]
+tests\unit\test_more_modules.py ..........                               [ 54%]
+tests\unit\test_non_ui_modules.py ..................                     [ 55%]
+tests\unit\test_notifier.py .............                                [ 55%]
+tests\unit\test_oauth_agent_tools.py ................................    [ 57%]
+tests\unit\test_oauth_service_deep.py ...........................        [ 58%]
+tests\unit\test_order_manager.py .......................                 [ 60%]
+tests\unit\test_platform_stubs.py ....                                   [ 60%]
+tests\unit\test_product_manager.py ........................              [ 61%]
+tests\unit\test_publish_manager.py ........                              [ 61%]
+tests\unit\test_rss_collector.py .......................                 [ 63%]
+tests\unit\test_rss_collector_v2.py .....                                [ 63%]
+tests\unit\test_scene_adapter.py .........................               [ 64%]
+tests\unit\test_script_generator.py .................................... [ 66%]
+..                                                                       [ 66%]
+tests\unit\test_secrets_manager_coverage.py ..........................   [ 67%]
+tests\unit\test_secrets_metrics.py ...............                       [ 68%]
+tests\unit\test_security.py ................F..F..F.....F............... [ 70%]
+.......................                                                  [ 71%]
+tests\unit\test_security_deep.py ........F..FF..................         [ 73%]
+tests\unit\test_security_headers.py .....................                [ 74%]
+tests\unit\test_sentiment.py ............                                [ 75%]
+tests\unit\test_settings_logic.py ..........                             [ 75%]
+tests\unit\test_settlement_engine.py .....................               [ 76%]
+tests\unit\test_settlement_engine_v2.py ........                         [ 77%]
+tests\unit\test_shop_manager.py ............................             [ 78%]
+tests\unit\test_smart_decider.py .......................                 [ 79%]
+tests\unit\test_supply_chain.py ....................                     [ 80%]
+tests\unit\test_timesfm_v2.py .....                                      [ 80%]
+tests\unit\test_translations_new.py ...............                      [ 81%]
+tests\unit\test_translator.py ......                                     [ 81%]
+tests\unit\test_trend_monitor.py ......                                  [ 82%]
+tests\unit\test_ui_logic.py ............................................ [ 84%]
+.......                                                                  [ 84%]
+tests\unit\test_ui_logic_deep.py .................................       [ 86%]
+tests\unit\test_ui_settings.py ...............                           [ 87%]
+tests\unit\test_ui_video.py .................................            [ 88%]
+tests\unit\test_user_service.py .F.FFFF.FFFFFF.F                         [ 89%]
+tests\unit\test_v2_modules.py .......                                    [ 89%]
+tests\unit\test_v2_small_modules.py ....                                 [ 90%]
+tests\unit\test_video_maker.py ........................                  [ 91%]
+tests\unit\test_video_maker_exceptions.py .....                          [ 91%]
+tests\unit\test_video_modules.py ....                                    [ 91%]
+tests\unit\test_voice_synthesis.py ...................                   [ 92%]
+tests\unit\test_wallet_manager.py .......................                [ 93%]
+tests\unit\test_web_auth.py ................                             [ 94%]
+tests\unit\test_web_auth_isolated.py FFFF.                               [ 94%]
+tests\unit\test_web_dashboard.py ..............                          [ 95%]
+tests\unit\test_web_health.py ...............                            [ 96%]
+tests\unit\test_web_init_isolated.py .......                             [ 96%]
+tests\unit\test_web_llm.py ...F......                                    [ 97%]
+tests\unit\test_web_metrics.py ......                                    [ 97%]
+tests\unit\test_web_middleware.py ........                               [ 97%]
+tests\unit\test_web_routes.py ........                                   [ 98%]
+tests\unit\test_zero_coverage_modules.py ..............................  [ 99%]
+tests\unit\test_zero_coverage_pages.py ...                               [100%]
+
+================================== FAILURES ===================================
+__________________ TestACASToolsMethods.test_content_create ___________________
+tests\unit\test_bulk_coverage_v2.py:66: in test_content_create
+    result = t._content_create(content_type='script', platform='wechat', topic='test')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:508: in _content_create
+    llm_config = self._get_llm_config()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:722: in _get_llm_config
+    provider=LLMProvider(config.llm.get('provider', 'openai')),
+                         ^^^^^^^^^^^^^^
+E   AttributeError: 'LLMConfig' object has no attribute 'get'
+______________________ TestACASTools.test_sales_forecast ______________________
+tests\unit\test_llm_tools_comprehensive.py:104: in test_sales_forecast
+    result = self.tools._sales_forecast("prod_1", days=7)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:402: in _sales_forecast
+    result = engine.predict_sample(horizon=days)
+             ^^^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'TimesFMEngine' object has no attribute 'predict_sample'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:20] [INFO] acas_pro.acas_pro.ml.timesfm_engine: TimesFM Engine initialized (StatsForecast available: False)[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.acas_pro.ml.timesfm_engine:timesfm_engine.py:128 TimesFM Engine initialized (StatsForecast available: False)
+_________________ TestACASTools.test_sales_forecast_with_data _________________
+tests\unit\test_llm_tools_comprehensive.py:112: in test_sales_forecast_with_data
+    result = self.tools._sales_forecast("prod_1", days=7, historical_data=[10, 20, 30, 40, 50])
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:399: in _sales_forecast
+    result = engine.predict(historical_data, horizon=days)
+             ^^^^^^^^^^^^^^
+E   AttributeError: 'TimesFMEngine' object has no attribute 'predict'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:20] [INFO] acas_pro.acas_pro.ml.timesfm_engine: TimesFM Engine initialized (StatsForecast available: False)[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.acas_pro.ml.timesfm_engine:timesfm_engine.py:128 TimesFM Engine initialized (StatsForecast available: False)
+____________________ TestACASTools.test_inventory_optimize ____________________
+tests\unit\test_llm_tools_comprehensive.py:116: in test_inventory_optimize
+    result = self.tools._inventory_optimize("prod_1", current_stock=100)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:431: in _inventory_optimize
+    result = optimizer.optimize(
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'InventoryOptimizer' object has no attribute 'optimize'
+_______________ TestACASTools.test_inventory_optimize_fallback ________________
+tests\unit\test_llm_tools_comprehensive.py:123: in test_inventory_optimize_fallback
+    result = self.tools._inventory_optimize("prod_1", current_stock=10, lead_time_days=14)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:431: in _inventory_optimize
+    result = optimizer.optimize(
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'InventoryOptimizer' object has no attribute 'optimize'
+______________________ TestACASTools.test_content_create ______________________
+tests\unit\test_llm_tools_comprehensive.py:139: in test_content_create
+    result = self.tools._content_create(topic=" skincare", platform="xiaohongshu")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:508: in _content_create
+    llm_config = self._get_llm_config()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:722: in _get_llm_config
+    provider=LLMProvider(config.llm.get('provider', 'openai')),
+                         ^^^^^^^^^^^^^^
+E   AttributeError: 'LLMConfig' object has no attribute 'get'
+__________________ TestACASTools.test_content_create_douyin ___________________
+tests\unit\test_llm_tools_comprehensive.py:146: in test_content_create_douyin
+    result = self.tools._content_create(topic="fitness", platform="douyin", style="humorous")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:508: in _content_create
+    llm_config = self._get_llm_config()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:722: in _get_llm_config
+    provider=LLMProvider(config.llm.get('provider', 'openai')),
+                         ^^^^^^^^^^^^^^
+E   AttributeError: 'LLMConfig' object has no attribute 'get'
+__________________ TestACASTools.test_content_create_wechat ___________________
+tests\unit\test_llm_tools_comprehensive.py:151: in test_content_create_wechat
+    result = self.tools._content_create(topic="marketing", platform="wechat")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:508: in _content_create
+    llm_config = self._get_llm_config()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:722: in _get_llm_config
+    provider=LLMProvider(config.llm.get('provider', 'openai')),
+                         ^^^^^^^^^^^^^^
+E   AttributeError: 'LLMConfig' object has no attribute 'get'
+__________________ TestACASTools.test_content_create_general __________________
+tests\unit\test_llm_tools_comprehensive.py:155: in test_content_create_general
+    result = self.tools._content_create(topic="test", platform="general")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:508: in _content_create
+    llm_config = self._get_llm_config()
+                 ^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:722: in _get_llm_config
+    provider=LLMProvider(config.llm.get('provider', 'openai')),
+                         ^^^^^^^^^^^^^^
+E   AttributeError: 'LLMConfig' object has no attribute 'get'
+______________________ TestACASTools.test_trend_monitor _______________________
+tests\unit\test_llm_tools_comprehensive.py:159: in test_trend_monitor
+    result = self.tools._trend_monitor(category="beauty")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:565: in _trend_monitor
+    trends = monitor.get_trends(category=category, platform=platform)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'TrendMonitor' object has no attribute 'get_trends'
+____________________ TestACASTools.test_trend_monitor_all _____________________
+tests\unit\test_llm_tools_comprehensive.py:165: in test_trend_monitor_all
+    result = self.tools._trend_monitor(platform="all")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:565: in _trend_monitor
+    trends = monitor.get_trends(category=category, platform=platform)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'TrendMonitor' object has no attribute 'get_trends'
+____________________ TestACASTools.test_ad_campaign_create ____________________
+tests\unit\test_llm_tools_comprehensive.py:178: in test_ad_campaign_create
+    result = self.tools._ad_campaign_manage("create", budget=1000)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:618: in _ad_campaign_manage
+    result = manager.create_campaign(budget=budget, target=target_audience)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: AdManager.create_campaign() got an unexpected keyword argument 'budget'
+____________________ TestACASTools.test_ad_campaign_report ____________________
+tests\unit\test_llm_tools_comprehensive.py:183: in test_ad_campaign_report
+    result = self.tools._ad_campaign_manage("report", campaign_id="camp_1")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:621: in _ad_campaign_manage
+    report = manager.get_report(campaign_id)
+             ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'AdManager' object has no attribute 'get_report'
+_____________________ TestACASTools.test_ecommerce_orders _____________________
+tests\unit\test_llm_tools_comprehensive.py:191: in test_ecommerce_orders
+    result = self.tools._ecommerce_manage("orders", shop_id="shop_1")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:643: in _ecommerce_manage
+    orders = manager.list_orders(shop_id=shop_id, filters=filters)
+             ^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'OrderManager' object has no attribute 'list_orders'
+____________________ TestACASTools.test_ecommerce_products ____________________
+tests\unit\test_llm_tools_comprehensive.py:196: in test_ecommerce_products
+    result = self.tools._ecommerce_manage("products", shop_id="shop_1")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:648: in _ecommerce_manage
+    products = manager.list_products(shop_id=shop_id)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   TypeError: ProductManager.list_products() got an unexpected keyword argument 'shop_id'
+____________________ TestACASTools.test_festival_calendar _____________________
+tests\unit\test_llm_tools_comprehensive.py:213: in test_festival_calendar
+    result = self.tools._festival_calendar(month=6)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:680: in _festival_calendar
+    events = calendar.get_events(month=month, category=category)
+             ^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'FestivalCalendar' object has no attribute 'get_events'
+________________ TestACASTools.test_festival_calendar_no_month ________________
+tests\unit\test_llm_tools_comprehensive.py:220: in test_festival_calendar_no_month
+    result = self.tools._festival_calendar()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:680: in _festival_calendar
+    events = calendar.get_events(month=month, category=category)
+             ^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'FestivalCalendar' object has no attribute 'get_events'
+________________ TestACASTools.test_festival_calendar_category ________________
+tests\unit\test_llm_tools_comprehensive.py:225: in test_festival_calendar_category
+    result = self.tools._festival_calendar(month=11, category="����")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:680: in _festival_calendar
+    events = calendar.get_events(month=month, category=category)
+             ^^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'FestivalCalendar' object has no attribute 'get_events'
+______________________ TestACASTools.test_get_llm_config ______________________
+tests\unit\test_llm_tools_comprehensive.py:229: in test_get_llm_config
+    config = self.tools._get_llm_config()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\llm\tools.py:722: in _get_llm_config
+    provider=LLMProvider(config.llm.get('provider', 'openai')),
+                         ^^^^^^^^^^^^^^
+E   AttributeError: 'LLMConfig' object has no attribute 'get'
+___________________ TestJWTManager.test_verify_valid_token ____________________
+tests\unit\test_security.py:142: in test_verify_valid_token
+    payload = JWTManager.verify_token(token)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\security.py:403: in verify_token
+    if jti and TokenBlacklist.is_revoked(jti):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\security.py:262: in is_revoked
+    row = db.fetchone(
+src\acas_pro\core\database.py:410: in fetchone
+    return self.execute_one(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+__________________ TestJWTManager.test_refresh_access_token ___________________
+tests\unit\test_security.py:158: in test_refresh_access_token
+    new_token = JWTManager.refresh_access_token(refresh)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\security.py:427: in refresh_access_token
+    payload = cls.verify_token(refresh_token, expected_type='refresh')
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\security.py:403: in verify_token
+    if jti and TokenBlacklist.is_revoked(jti):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\security.py:262: in is_revoked
+    row = db.fetchone(
+src\acas_pro\core\database.py:410: in fetchone
+    return self.execute_one(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+___________________ TestSessionManager.test_create_session ____________________
+tests\unit\test_security.py:185: in test_create_session
+    token = sm.create_session("user123", "127.0.0.1", "Mozilla/5.0")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\security.py:517: in create_session
+    audit_logger.log(
+src\acas_pro\core\logging.py:185: in log
+    self.db.insert("audit_logs", {
+src\acas_pro\core\database.py:428: in insert
+    result = self.execute_one(query, tuple(values))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:21] [INFO] acas_pro.audit: AUDIT: SESSION_CREATED[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.audit:logging.py:166 AUDIT: SESSION_CREATED
+________________ TestSessionManager.test_revoke_session_error _________________
+tests\unit\test_security.py:233: in test_revoke_session_error
+    result = sm.revoke_session("token123")
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\security.py:554: in revoke_session
+    db.execute("DELETE FROM sessions WHERE token = ?", (token,))
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:1175: in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:1179: in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:1234: in _execute_mock_call
+    raise effect
+E   Exception: DB error
+________________ TestJWTManager.test_generate_and_verify_token ________________
+tests\unit\test_security_deep.py:61: in test_generate_and_verify_token
+    result = JWTManager.verify_token(token)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\security.py:403: in verify_token
+    if jti and TokenBlacklist.is_revoked(jti):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\security.py:262: in is_revoked
+    row = db.fetchone(
+src\acas_pro\core\database.py:410: in fetchone
+    return self.execute_one(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+__________________ TestJWTManager.test_refresh_access_token ___________________
+tests\unit\test_security_deep.py:89: in test_refresh_access_token
+    result = JWTManager.refresh_access_token(refresh)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\security.py:427: in refresh_access_token
+    payload = cls.verify_token(refresh_token, expected_type='refresh')
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\security.py:403: in verify_token
+    if jti and TokenBlacklist.is_revoked(jti):
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\security.py:262: in is_revoked
+    row = db.fetchone(
+src\acas_pro\core\database.py:410: in fetchone
+    return self.execute_one(query, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+___________________ TestSessionManager.test_create_session ____________________
+tests\unit\test_security_deep.py:103: in test_create_session
+    token = sm.create_session(user_id="1", ip_address="127.0.0.1", user_agent="test")
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\security.py:517: in create_session
+    audit_logger.log(
+src\acas_pro\core\logging.py:185: in log
+    self.db.insert("audit_logs", {
+src\acas_pro\core\database.py:428: in insert
+    result = self.execute_one(query, tuple(values))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:23] [INFO] acas_pro.audit: AUDIT: SESSION_CREATED[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.audit:logging.py:166 AUDIT: SESSION_CREATED
+________________________ TestUserService.test_register ________________________
+tests\unit\test_user_service.py:96: in test_register
+    assert success is True
+E   assert False is True
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: USER_REGISTERED[0m
+[31m[2026-06-12 04:55:36] [ERROR] acas_pro.acas_pro.services.user_service: Registration failed: 'NoneType' object has no attribute 'getconn'[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.audit:logging.py:166 AUDIT: USER_REGISTERED
+ERROR    acas_pro.acas_pro.services.user_service:user_service.py:189 Registration failed: 'NoneType' object has no attribute 'getconn'
+_________________________ TestUserService.test_login __________________________
+tests\unit\test_user_service.py:111: in test_login
+    success, msg, user = self.service.login("testuser", "password123")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\services\user_service.py:285: in login
+    audit_logger.log(
+src\acas_pro\core\logging.py:185: in log
+    self.db.insert("audit_logs", {
+src\acas_pro\core\database.py:428: in insert
+    result = self.execute_one(query, tuple(values))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: USER_REGISTERED[0m
+[31m[2026-06-12 04:55:36] [ERROR] acas_pro.acas_pro.services.user_service: Registration failed: 'NoneType' object has no attribute 'getconn'[0m
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: LOGIN_SUCCESS[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.audit:logging.py:166 AUDIT: USER_REGISTERED
+ERROR    acas_pro.acas_pro.services.user_service:user_service.py:189 Registration failed: 'NoneType' object has no attribute 'getconn'
+INFO     acas_pro.audit:logging.py:166 AUDIT: LOGIN_SUCCESS
+__________________ TestUserService.test_login_wrong_password __________________
+tests\unit\test_user_service.py:120: in test_login_wrong_password
+    success, msg, user = self.service.login("testuser", "wrongpassword")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\services\user_service.py:265: in login
+    audit_logger.log(
+src\acas_pro\core\logging.py:185: in log
+    self.db.insert("audit_logs", {
+src\acas_pro\core\database.py:428: in insert
+    result = self.execute_one(query, tuple(values))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: USER_REGISTERED[0m
+[31m[2026-06-12 04:55:36] [ERROR] acas_pro.acas_pro.services.user_service: Registration failed: 'NoneType' object has no attribute 'getconn'[0m
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: LOGIN_FAILED[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.audit:logging.py:166 AUDIT: USER_REGISTERED
+ERROR    acas_pro.acas_pro.services.user_service:user_service.py:189 Registration failed: 'NoneType' object has no attribute 'getconn'
+INFO     acas_pro.audit:logging.py:166 AUDIT: LOGIN_FAILED
+__________________ TestUserService.test_login_user_not_found __________________
+tests\unit\test_user_service.py:124: in test_login_user_not_found
+    success, msg, user = self.service.login("nonexistent", "password123")
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\services\user_service.py:214: in login
+    audit_logger.log(
+src\acas_pro\core\logging.py:185: in log
+    self.db.insert("audit_logs", {
+src\acas_pro\core\database.py:428: in insert
+    result = self.execute_one(query, tuple(values))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: LOGIN_FAILED[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.audit:logging.py:166 AUDIT: LOGIN_FAILED
+______________________ TestUserService.test_get_current _______________________
+tests\unit\test_user_service.py:129: in test_get_current
+    self.service.login("testuser", "password123")
+src\acas_pro\services\user_service.py:285: in login
+    audit_logger.log(
+src\acas_pro\core\logging.py:185: in log
+    self.db.insert("audit_logs", {
+src\acas_pro\core\database.py:428: in insert
+    result = self.execute_one(query, tuple(values))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: USER_REGISTERED[0m
+[31m[2026-06-12 04:55:36] [ERROR] acas_pro.acas_pro.services.user_service: Registration failed: 'NoneType' object has no attribute 'getconn'[0m
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: LOGIN_SUCCESS[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.audit:logging.py:166 AUDIT: USER_REGISTERED
+ERROR    acas_pro.acas_pro.services.user_service:user_service.py:189 Registration failed: 'NoneType' object has no attribute 'getconn'
+INFO     acas_pro.audit:logging.py:166 AUDIT: LOGIN_SUCCESS
+_____________________ TestUserService.test_update_profile _____________________
+tests\unit\test_user_service.py:140: in test_update_profile
+    self.service.login("testuser", "password123")
+src\acas_pro\services\user_service.py:285: in login
+    audit_logger.log(
+src\acas_pro\core\logging.py:185: in log
+    self.db.insert("audit_logs", {
+src\acas_pro\core\database.py:428: in insert
+    result = self.execute_one(query, tuple(values))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: USER_REGISTERED[0m
+[31m[2026-06-12 04:55:36] [ERROR] acas_pro.acas_pro.services.user_service: Registration failed: 'NoneType' object has no attribute 'getconn'[0m
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: LOGIN_SUCCESS[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.audit:logging.py:166 AUDIT: USER_REGISTERED
+ERROR    acas_pro.acas_pro.services.user_service:user_service.py:189 Registration failed: 'NoneType' object has no attribute 'getconn'
+INFO     acas_pro.audit:logging.py:166 AUDIT: LOGIN_SUCCESS
+__________________ TestUserService.test_update_profile_empty __________________
+tests\unit\test_user_service.py:150: in test_update_profile_empty
+    self.service.login("testuser", "password123")
+src\acas_pro\services\user_service.py:285: in login
+    audit_logger.log(
+src\acas_pro\core\logging.py:185: in log
+    self.db.insert("audit_logs", {
+src\acas_pro\core\database.py:428: in insert
+    result = self.execute_one(query, tuple(values))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: USER_REGISTERED[0m
+[31m[2026-06-12 04:55:36] [ERROR] acas_pro.acas_pro.services.user_service: Registration failed: 'NoneType' object has no attribute 'getconn'[0m
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: LOGIN_SUCCESS[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.audit:logging.py:166 AUDIT: USER_REGISTERED
+ERROR    acas_pro.acas_pro.services.user_service:user_service.py:189 Registration failed: 'NoneType' object has no attribute 'getconn'
+INFO     acas_pro.audit:logging.py:166 AUDIT: LOGIN_SUCCESS
+____________________ TestUserService.test_change_password _____________________
+tests\unit\test_user_service.py:158: in test_change_password
+    self.service.login("testuser", "oldpass")
+src\acas_pro\services\user_service.py:285: in login
+    audit_logger.log(
+src\acas_pro\core\logging.py:185: in log
+    self.db.insert("audit_logs", {
+src\acas_pro\core\database.py:428: in insert
+    result = self.execute_one(query, tuple(values))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: USER_REGISTERED[0m
+[31m[2026-06-12 04:55:36] [ERROR] acas_pro.acas_pro.services.user_service: Registration failed: 'NoneType' object has no attribute 'getconn'[0m
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: LOGIN_SUCCESS[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.audit:logging.py:166 AUDIT: USER_REGISTERED
+ERROR    acas_pro.acas_pro.services.user_service:user_service.py:189 Registration failed: 'NoneType' object has no attribute 'getconn'
+INFO     acas_pro.audit:logging.py:166 AUDIT: LOGIN_SUCCESS
+_______________ TestUserService.test_change_password_wrong_old ________________
+tests\unit\test_user_service.py:165: in test_change_password_wrong_old
+    self.service.login("testuser", "oldpass")
+src\acas_pro\services\user_service.py:285: in login
+    audit_logger.log(
+src\acas_pro\core\logging.py:185: in log
+    self.db.insert("audit_logs", {
+src\acas_pro\core\database.py:428: in insert
+    result = self.execute_one(query, tuple(values))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: USER_REGISTERED[0m
+[31m[2026-06-12 04:55:36] [ERROR] acas_pro.acas_pro.services.user_service: Registration failed: 'NoneType' object has no attribute 'getconn'[0m
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: LOGIN_SUCCESS[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.audit:logging.py:166 AUDIT: USER_REGISTERED
+ERROR    acas_pro.acas_pro.services.user_service:user_service.py:189 Registration failed: 'NoneType' object has no attribute 'getconn'
+INFO     acas_pro.audit:logging.py:166 AUDIT: LOGIN_SUCCESS
+_________________________ TestUserService.test_logout _________________________
+tests\unit\test_user_service.py:174: in test_logout
+    self.service.login("testuser", "password123")
+src\acas_pro\services\user_service.py:285: in login
+    audit_logger.log(
+src\acas_pro\core\logging.py:185: in log
+    self.db.insert("audit_logs", {
+src\acas_pro\core\database.py:428: in insert
+    result = self.execute_one(query, tuple(values))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: USER_REGISTERED[0m
+[31m[2026-06-12 04:55:36] [ERROR] acas_pro.acas_pro.services.user_service: Registration failed: 'NoneType' object has no attribute 'getconn'[0m
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: LOGIN_SUCCESS[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.audit:logging.py:166 AUDIT: USER_REGISTERED
+ERROR    acas_pro.acas_pro.services.user_service:user_service.py:189 Registration failed: 'NoneType' object has no attribute 'getconn'
+INFO     acas_pro.audit:logging.py:166 AUDIT: LOGIN_SUCCESS
+____________________ TestUserService.test_is_authenticated ____________________
+tests\unit\test_user_service.py:180: in test_is_authenticated
+    self.service.login("testuser", "password123")
+src\acas_pro\services\user_service.py:285: in login
+    audit_logger.log(
+src\acas_pro\core\logging.py:185: in log
+    self.db.insert("audit_logs", {
+src\acas_pro\core\database.py:428: in insert
+    result = self.execute_one(query, tuple(values))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: USER_REGISTERED[0m
+[31m[2026-06-12 04:55:36] [ERROR] acas_pro.acas_pro.services.user_service: Registration failed: 'NoneType' object has no attribute 'getconn'[0m
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: LOGIN_SUCCESS[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.audit:logging.py:166 AUDIT: USER_REGISTERED
+ERROR    acas_pro.acas_pro.services.user_service:user_service.py:189 Registration failed: 'NoneType' object has no attribute 'getconn'
+INFO     acas_pro.audit:logging.py:166 AUDIT: LOGIN_SUCCESS
+______________________ TestUserService.test_login_guest _______________________
+tests\unit\test_user_service.py:188: in test_login_guest
+    user = self.service.login_guest()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\services\user_service.py:320: in login_guest
+    audit_logger.log("GUEST_LOGIN", guest_id, {})
+src\acas_pro\core\logging.py:185: in log
+    self.db.insert("audit_logs", {
+src\acas_pro\core\database.py:428: in insert
+    result = self.execute_one(query, tuple(values))
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:404: in execute_one
+    results = self.execute(query, params)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\core\database.py:363: in execute
+    conn = self._pool.getconn()
+           ^^^^^^^^^^^^^^^^^^
+E   AttributeError: 'NoneType' object has no attribute 'getconn'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:36] [INFO] acas_pro.audit: AUDIT: GUEST_LOGIN[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.audit:logging.py:166 AUDIT: GUEST_LOGIN
+____________ TestAuthMiddlewareIsolated.test_public_route_no_auth _____________
+tests\unit\test_web_auth_isolated.py:41: in test_public_route_no_auth
+    app = self._create_app_with_auth(monkeypatch)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\test_web_auth_isolated.py:37: in _create_app_with_auth
+    return create_app({'TESTING': True, 'SECRET_KEY': secret_key})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\web\__init__.py:49: in create_app
+    _register_blueprints(app)
+src\acas_pro\web\__init__.py:236: in _register_blueprints
+    from .routes import auth, llm, dashboard, metrics, health
+src\acas_pro\web\routes\__init__.py:2: in <module>
+    from acas_pro.web.routes.auth import bp as auth_bp
+src\acas_pro\web\routes\auth.py:7: in <module>
+    import acas_pro.core.security as _sec
+src\acas_pro\core\security.py:1012: in <module>
+    raise ACASConfigError(
+E   acas_pro.core.exceptions.ACASConfigError: CSRF_STATE_SECRET must be set in production. Generate: python -c 'import secrets; print(secrets.token_hex(32))'
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:37] [INFO] acas_pro.acas_pro.web: CORS configured for development origins[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.acas_pro.web:__init__.py:160 CORS configured for development origins
+___________ TestAuthMiddlewareIsolated.test_protected_route_no_auth ___________
+tests\unit\test_web_auth_isolated.py:50: in test_protected_route_no_auth
+    app = self._create_app_with_auth(monkeypatch)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\test_web_auth_isolated.py:37: in _create_app_with_auth
+    return create_app({'TESTING': True, 'SECRET_KEY': secret_key})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\web\__init__.py:49: in create_app
+    _register_blueprints(app)
+src\acas_pro\web\__init__.py:236: in _register_blueprints
+    from .routes import auth, llm, dashboard, metrics, health
+src\acas_pro\web\routes\__init__.py:2: in <module>
+    from acas_pro.web.routes.auth import bp as auth_bp
+src\acas_pro\web\routes\auth.py:7: in <module>
+    import acas_pro.core.security as _sec
+src\acas_pro\core\security.py:1012: in <module>
+    raise ACASConfigError(
+E   acas_pro.core.exceptions.ACASConfigError: CSRF_STATE_SECRET must be set in production. Generate: python -c 'import secrets; print(secrets.token_hex(32))'
+---------------------------- Captured stdout setup ----------------------------
+[33m[2026-06-12 04:55:37] [WARNING] acas_pro.core.security: CSRF_STATE_SECRET not set �� critical for HMAC-based CSRF in production. Per-request tokens still work for development.[0m
+----------------------------- Captured log setup ------------------------------
+WARNING  acas_pro.core.security:security.py:1017 CSRF_STATE_SECRET not set �� critical for HMAC-based CSRF in production. Per-request tokens still work for development.
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:37] [INFO] acas_pro.acas_pro.web: CORS configured for development origins[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.acas_pro.web:__init__.py:160 CORS configured for development origins
+_____ TestAuthMiddlewareIsolated.test_protected_route_with_invalid_token ______
+tests\unit\test_web_auth_isolated.py:66: in test_protected_route_with_invalid_token
+    app = self._create_app_with_auth(monkeypatch)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\test_web_auth_isolated.py:37: in _create_app_with_auth
+    return create_app({'TESTING': True, 'SECRET_KEY': secret_key})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\web\__init__.py:49: in create_app
+    _register_blueprints(app)
+src\acas_pro\web\__init__.py:236: in _register_blueprints
+    from .routes import auth, llm, dashboard, metrics, health
+src\acas_pro\web\routes\__init__.py:2: in <module>
+    from acas_pro.web.routes.auth import bp as auth_bp
+src\acas_pro\web\routes\auth.py:7: in <module>
+    import acas_pro.core.security as _sec
+src\acas_pro\core\security.py:1012: in <module>
+    raise ACASConfigError(
+E   acas_pro.core.exceptions.ACASConfigError: CSRF_STATE_SECRET must be set in production. Generate: python -c 'import secrets; print(secrets.token_hex(32))'
+---------------------------- Captured stdout setup ----------------------------
+[33m[2026-06-12 04:55:37] [WARNING] acas_pro.core.security: CSRF_STATE_SECRET not set �� critical for HMAC-based CSRF in production. Per-request tokens still work for development.[0m
+----------------------------- Captured log setup ------------------------------
+WARNING  acas_pro.core.security:security.py:1017 CSRF_STATE_SECRET not set �� critical for HMAC-based CSRF in production. Per-request tokens still work for development.
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:37] [INFO] acas_pro.acas_pro.web: CORS configured for development origins[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.acas_pro.web:__init__.py:160 CORS configured for development origins
+____________ TestAuthMiddlewareIsolated.test_read_only_public_path ____________
+tests\unit\test_web_auth_isolated.py:81: in test_read_only_public_path
+    app = self._create_app_with_auth(monkeypatch)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\unit\test_web_auth_isolated.py:37: in _create_app_with_auth
+    return create_app({'TESTING': True, 'SECRET_KEY': secret_key})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\web\__init__.py:49: in create_app
+    _register_blueprints(app)
+src\acas_pro\web\__init__.py:236: in _register_blueprints
+    from .routes import auth, llm, dashboard, metrics, health
+src\acas_pro\web\routes\__init__.py:2: in <module>
+    from acas_pro.web.routes.auth import bp as auth_bp
+src\acas_pro\web\routes\auth.py:7: in <module>
+    import acas_pro.core.security as _sec
+src\acas_pro\core\security.py:1012: in <module>
+    raise ACASConfigError(
+E   acas_pro.core.exceptions.ACASConfigError: CSRF_STATE_SECRET must be set in production. Generate: python -c 'import secrets; print(secrets.token_hex(32))'
+---------------------------- Captured stdout setup ----------------------------
+[33m[2026-06-12 04:55:37] [WARNING] acas_pro.core.security: CSRF_STATE_SECRET not set �� critical for HMAC-based CSRF in production. Per-request tokens still work for development.[0m
+----------------------------- Captured log setup ------------------------------
+WARNING  acas_pro.core.security:security.py:1017 CSRF_STATE_SECRET not set �� critical for HMAC-based CSRF in production. Per-request tokens still work for development.
+---------------------------- Captured stdout call -----------------------------
+[32m[2026-06-12 04:55:37] [INFO] acas_pro.acas_pro.web: CORS configured for development origins[0m
+------------------------------ Captured log call ------------------------------
+INFO     acas_pro.acas_pro.web:__init__.py:160 CORS configured for development origins
+_______________________ TestLLMChat.test_chat_api_error _______________________
+tests\unit\test_web_llm.py:71: in test_chat_api_error
+    response = client.post(
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\werkzeug\test.py:1167: in post
+    return self.open(*args, **kw)
+           ^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\flask\testing.py:235: in open
+    response = super().open(
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\werkzeug\test.py:1116: in open
+    response_parts = self.run_wsgi_app(request.environ, buffered=buffered)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\werkzeug\test.py:988: in run_wsgi_app
+    rv = run_wsgi_app(self.application, environ, buffered=buffered)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\werkzeug\test.py:1264: in run_wsgi_app
+    app_rv = app(environ, start_response)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\flask\app.py:1536: in __call__
+    return self.wsgi_app(environ, start_response)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\flask\app.py:1514: in wsgi_app
+    response = self.handle_exception(e)
+               ^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\flask\app.py:1511: in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\flask\app.py:919: in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\flask\app.py:917: in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\flask\app.py:902: in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)  # type: ignore[no-any-return]
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+src\acas_pro\web\routes\llm.py:90: in llm_chat
+    response = client.chat(llm_messages)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:1175: in __call__
+    return self._mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:1179: in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\AppData\Local\Python\pythoncore-3.14-64\Lib\unittest\mock.py:1234: in _execute_mock_call
+    raise effect
+E   Exception: API error
+============================== warnings summary ===============================
+tests/unit/test_database_transaction.py::TestDatabaseManagerTransaction::test_transaction_sqlite_mode
+  C:\Users\HUAWEI\AppData\Local\Python\pythoncore-3.14-64\Lib\site-packages\_pytest\unraisableexception.py:67: PytestUnraisableExceptionWarning: Exception ignored while calling deallocator <function DatabaseManager.__del__ at 0x000002C40B720F60>: None
+  
+  Traceback (most recent call last):
+    File "C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\src\acas_pro\core\database.py", line 247, in __del__
+      self.close()
+      ~~~~~~~~~~^^
+    File "C:\Users\HUAWEI\.qclaw\workspace-hermes\ACAS-Pro\src\acas_pro\core\database.py", line 253, in close
+      if not self._is_postgres and hasattr(self._local, 'connection') and self._local.connection:
+                                           ^^^^^^^^^^^
+  AttributeError: 'DatabaseManager' object has no attribute '_local'. Did you mean: '_lock'?
+  
+  
+    warnings.warn(pytest.PytestUnraisableExceptionWarning(msg))
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/unit/test_bulk_coverage_v2.py::TestACASToolsMethods::test_content_create
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_sales_forecast
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_sales_forecast_with_data
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_inventory_optimize
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_inventory_optimize_fallback
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_content_create
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_content_create_douyin
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_content_create_wechat
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_content_create_general
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_trend_monitor
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_trend_monitor_all
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_ad_campaign_create
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_ad_campaign_report
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_ecommerce_orders
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_ecommerce_products
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_festival_calendar
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_festival_calendar_no_month
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_festival_calendar_category
+FAILED tests/unit/test_llm_tools_comprehensive.py::TestACASTools::test_get_llm_config
+FAILED tests/unit/test_security.py::TestJWTManager::test_verify_valid_token
+FAILED tests/unit/test_security.py::TestJWTManager::test_refresh_access_token
+FAILED tests/unit/test_security.py::TestSessionManager::test_create_session
+FAILED tests/unit/test_security.py::TestSessionManager::test_revoke_session_error
+FAILED tests/unit/test_security_deep.py::TestJWTManager::test_generate_and_verify_token
+FAILED tests/unit/test_security_deep.py::TestJWTManager::test_refresh_access_token
+FAILED tests/unit/test_security_deep.py::TestSessionManager::test_create_session
+FAILED tests/unit/test_user_service.py::TestUserService::test_register - asse...
+FAILED tests/unit/test_user_service.py::TestUserService::test_login - Attribu...
+FAILED tests/unit/test_user_service.py::TestUserService::test_login_wrong_password
+FAILED tests/unit/test_user_service.py::TestUserService::test_login_user_not_found
+FAILED tests/unit/test_user_service.py::TestUserService::test_get_current - A...
+FAILED tests/unit/test_user_service.py::TestUserService::test_update_profile
+FAILED tests/unit/test_user_service.py::TestUserService::test_update_profile_empty
+FAILED tests/unit/test_user_service.py::TestUserService::test_change_password
+FAILED tests/unit/test_user_service.py::TestUserService::test_change_password_wrong_old
+FAILED tests/unit/test_user_service.py::TestUserService::test_logout - Attrib...
+FAILED tests/unit/test_user_service.py::TestUserService::test_is_authenticated
+FAILED tests/unit/test_user_service.py::TestUserService::test_login_guest - A...
+FAILED tests/unit/test_web_auth_isolated.py::TestAuthMiddlewareIsolated::test_public_route_no_auth
+FAILED tests/unit/test_web_auth_isolated.py::TestAuthMiddlewareIsolated::test_protected_route_no_auth
+FAILED tests/unit/test_web_auth_isolated.py::TestAuthMiddlewareIsolated::test_protected_route_with_invalid_token
+FAILED tests/unit/test_web_auth_isolated.py::TestAuthMiddlewareIsolated::test_read_only_public_path
+FAILED tests/unit/test_web_llm.py::TestLLMChat::test_chat_api_error - Excepti...
+================= 43 failed, 1953 passed, 1 warning in 26.11s =================

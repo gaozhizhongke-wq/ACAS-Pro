@@ -1,0 +1,8 @@
+[bandit]
+# B608 (hardcoded_sql_expressions):
+#   All flagged usages are parameterized via _build_where_clause() or direct
+#   ? / %s placeholders - values are never in the SQL string. Safe by design.
+# B311 (random):
+#   random.random() used only for UI/content generation (gesture selection,
+#   script shuffling, test fixtures). Not for cryptography.
+skips = B608, B311

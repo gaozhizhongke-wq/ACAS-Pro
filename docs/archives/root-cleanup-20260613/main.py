@@ -1,0 +1,69 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+ACAS Pro - Enterprise Entry Point
+Production-grade auto customer acquisition system
+"""
+
+import sys
+import os
+
+# Add src to path
+src_path = os.path.join(os.path.dirname(__file__), 'src')
+if src_path not in sys.path:
+    sys.path.insert(0, src_path)
+
+from PySide6.QtWidgets import QApplication  # noqa: E402
+from PySide6.QtCore import Qt  # noqa: E402
+from PySide6.QtGui import QFont  # noqa: E402
+
+from acas_pro.core.config import config  # noqa: E402
+from acas_pro.core.logging import setup_logging, get_logger  # noqa: E402
+from acas_pro.core.database import db  # noqa: E402
+from acas_pro.ui.main_window import MainWindow  # noqa: E402
+
+logger = get_logger(__name__)
+
+
+def main():
+    """Application entry point"""
+    # Setup logging
+    setup_logging()
+    cfg = config  # config is now a global singleton object
+    logger.info("=" * 50)
+    logger.info(f"{cfg.name} v{cfg.version} starting...")
+    logger.info("=" * 50)
+    
+    # Initialize database
+    try:
+        _ = db  # Trigger initialization
+        logger.info("Database initialized")
+    except Exception as e:
+        logger.error(f"Database initialization failed: {e}")
+        sys.exit(1)
+    
+    # Create Qt application
+    app = QApplication(sys.argv)
+    app.setApplicationName(cfg.name)
+    app.setApplicationVersion(cfg.version)
+    app.setOrganizationName(cfg.company)
+    
+    # Set application font
+    font = QFont(cfg.ui.font_family, cfg.ui.font_size)
+    app.setFont(font)
+    
+    # Enable high DPI support
+    app.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+    
+    # Create and show main window
+    window = MainWindow()
+    window.show()
+    
+    logger.info("Application started successfully")
+    
+    # Run event loop
+    return app.exec()
+
+
+if __name__ == "__main__":
+    sys.exit(main())

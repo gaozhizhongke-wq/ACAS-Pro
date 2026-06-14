@@ -1,0 +1,181 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.0.3, pluggy-1.6.0 -- F:\小龙虾\ACAS-Pro\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: F:\自动获客系统\ACAS-Pro
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: cov-7.1.0
+collecting ... collected 24 items
+
+tests/test_coverage_boost_v2.py::TestAttributionEngine::test_methods PASSED [  4%]
+tests/test_coverage_boost_v2.py::TestSmartDecider::test_methods PASSED   [  8%]
+tests/test_coverage_boost_v2.py::TestNotifier::test_methods PASSED       [ 12%]
+tests/test_coverage_boost_v2.py::TestBrandReputation::test_methods PASSED [ 16%]
+tests/test_coverage_boost_v2.py::TestLipSync::test_methods PASSED        [ 20%]
+tests/test_coverage_boost_v2.py::TestPublishManager::test_methods PASSED [ 25%]
+tests/test_coverage_boost_v2.py::TestScheduler::test_methods PASSED      [ 29%]
+tests/test_coverage_boost_v2.py::TestInventoryOptimizer::test_methods PASSED [ 33%]
+tests/test_coverage_boost_v2.py::TestTimesFMEngine::test_methods PASSED  [ 37%]
+tests/test_coverage_boost_v2.py::TestDatabasePg::test_methods PASSED     [ 41%]
+tests/test_coverage_boost_v2.py::TestSupplyChain::test_methods PASSED    [ 45%]
+tests/test_coverage_boost_v2.py::TestNewsEngine::test_methods PASSED     [ 50%]
+tests/test_coverage_boost_v2.py::TestSecurityHeaders::test_methods PASSED [ 54%]
+tests/test_coverage_boost_v2.py::TestRssCollector::test_methods PASSED   [ 58%]
+tests/test_coverage_boost_v2.py::TestWeiboApi::test_methods PASSED       [ 62%]
+tests/test_coverage_boost_v2.py::TestUpdater::test_methods PASSED        [ 66%]
+tests/test_coverage_boost_v2.py::TestVideoMaker::test_methods PASSED     [ 70%]
+tests/test_coverage_boost_v2.py::TestVoiceSynthesis::test_methods PASSED [ 75%]
+tests/test_coverage_boost_v2.py::TestMiddleware::test_classes PASSED     [ 79%]
+tests/test_coverage_boost_v2.py::TestWebRoutes::test_auth PASSED         [ 83%]
+tests/test_coverage_boost_v2.py::TestWebRoutes::test_dashboard PASSED    [ 87%]
+tests/test_coverage_boost_v2.py::TestWebRoutes::test_llm PASSED          [ 91%]
+tests/test_coverage_boost_v2.py::TestLLMAgentEngine::test_methods PASSED [ 95%]
+tests/test_coverage_boost_v2.py::TestLLMClient::test_methods PASSED      [100%]
+ERROR: Coverage failure: total of 20 is less than fail-under=60
+
+
+=============================== tests coverage ================================
+______________ coverage: platform win32, python 3.11.15-final-0 _______________
+
+Name                                                    Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------------------------
+src\acas_pro\__init__.py                                    0      0   100%
+src\acas_pro\ads\__init__.py                                0      0   100%
+src\acas_pro\ads\ad_manager.py                            301    301     0%   6-642
+src\acas_pro\ads\ad_manager_v2.py                          44     44     0%   2-103
+src\acas_pro\ads\audience_targeting.py                    215    215     0%   6-498
+src\acas_pro\ads\bidding_engine.py                        132    132     0%   6-347
+src\acas_pro\advanced_analytics\__init__.py                 3      0   100%
+src\acas_pro\advanced_analytics\attribution_engine.py     283    185    35%   180-214, 219-231, 239-250, 256-274, 280-298, 304-324, 330-370, 376-407, 411, 429-486, 492-518, 526-575, 579-583, 597-598, 607-614, 645
+src\acas_pro\advanced_analytics\smart_decider.py          263    144    45%   242-280, 288, 297-359, 363-439, 443-494, 498-573, 577-617, 621-661, 665-714, 718-719, 724-727, 733-736, 746-754, 759-763, 778, 795-827, 848-849, 875
+src\acas_pro\alert\__init__.py                              2      0   100%
+src\acas_pro\alert\notifier.py                            183     92    50%   55-56, 60-68, 78, 148-150, 155-166, 181, 184, 187, 195, 210-217, 221-244, 248-276, 280-286, 290-330, 334-341, 355, 364-365, 367-368, 370-371, 373-377, 389-395, 400-406
+src\acas_pro\analytics\__init__.py                          0      0   100%
+src\acas_pro\analytics\data_monitor.py                    163    163     0%   8-438
+src\acas_pro\analytics\data_monitor_v2.py                  22     22     0%   2-57
+src\acas_pro\analytics\festival_calendar.py               145    145     0%   8-526
+src\acas_pro\analytics\festival_calendar_v2.py             20     20     0%   2-45
+src\acas_pro\avatar\__init__.py                             5      0   100%
+src\acas_pro\avatar\avatar_engine.py                      201     79    61%   138, 166-167, 226-232, 237-285, 303-312, 316-392, 402-434, 445-467, 473-474, 483, 509-520, 524-528, 532, 536, 563-575, 579-581, 585-618, 630-652, 656-672, 677-686
+src\acas_pro\avatar\gesture_generator.py                  166     80    52%   73, 95, 118-120, 127-128, 133-208, 212, 259, 298-300, 341, 371, 406-452, 456-463, 467, 490, 542-563, 567-600, 608-631, 635, 639, 652-669, 679-706
+src\acas_pro\avatar\lip_sync.py                           148     33    78%   50, 156-158, 197, 261, 293, 328-346, 355-387
+src\acas_pro\avatar\scene_adapter.py                      203     96    53%   282-283, 287-297, 306-345, 349-376, 380, 384, 388, 395-404, 408-417, 421, 430-450, 454-456, 480-489, 503-538, 542, 565-590
+src\acas_pro\blockchain\__init__.py                         0      0   100%
+src\acas_pro\blockchain\settlement_engine.py              170    170     0%   5-501
+src\acas_pro\blockchain\settlement_engine_v2.py            27     27     0%   2-60
+src\acas_pro\blockchain\wallet_manager.py                 173    173     0%   5-471
+src\acas_pro\collectors\__init__.py                         0      0   100%
+src\acas_pro\collectors\rss_collector.py                  125     79    37%   32-33, 36, 94, 120, 130-156, 160-203, 207-212, 216-220, 224-229, 233-238, 242-254, 258-264, 268-269
+src\acas_pro\collectors\rss_collector_v2.py                19     19     0%   2-41
+src\acas_pro\collectors\weibo_api.py                      116     38    67%   38-39, 42, 114-115, 134-136, 141-143, 158-170, 197-198, 218-220, 225-237, 261-265
+src\acas_pro\content\__init__.py                            0      0   100%
+src\acas_pro\content\script_generator.py                  177    177     0%   8-545
+src\acas_pro\content\script_generator_v2.py                12     12     0%   2-36
+src\acas_pro\content\trend_monitor.py                     164    164     0%   8-396
+src\acas_pro\core\__init__.py                               0      0   100%
+src\acas_pro\core\config.py                               226     76    66%   42, 89-96, 145-149, 152, 154, 156, 159, 161, 163, 165, 167, 169, 182, 187, 196-245, 264-265, 282-287, 291-302, 316-319, 330-332
+src\acas_pro\core\config_v2.py                            106    106     0%   6-163
+src\acas_pro\core\database.py                             168     85    49%   86, 103-122, 312-315, 320-343, 348-357, 368, 381-394, 410-432, 436-440, 444-461
+src\acas_pro\core\database_pg.py                          130     57    56%   89-91, 95-99, 115-126, 136, 148-167, 171-186, 190-200, 217-219
+src\acas_pro\core\database_v2.py                           61     61     0%   6-95
+src\acas_pro\core\di_container.py                          51     51     0%   6-112
+src\acas_pro\core\logging.py                               84     34    60%   35-49, 56-79, 95-99, 165-196
+src\acas_pro\core\logging_v2.py                            70     70     0%   6-137
+src\acas_pro\core\monitoring.py                           179    179     0%   8-364
+src\acas_pro\core\security.py                             355    231    35%   47-74, 83-90, 95-121, 143-148, 153-166, 175-184, 202-220, 233-242, 253-256, 261-299, 303-322, 326-332, 336-342, 364-368, 371-373, 378-385, 389-393, 397-399, 404-406, 429, 434, 455, 460-464, 473-477, 502-509, 524-534, 547-556, 587-600, 604, 608-617, 620-626, 629-631, 638-640, 657, 667, 677, 686, 690-696, 700-710, 714-723
+src\acas_pro\core\security_headers.py                      78     43    45%   45-74, 105-112, 120-124, 141-146, 151-179
+src\acas_pro\core\security_v2.py                          133    133     0%   6-239
+src\acas_pro\ecommerce\__init__.py                          0      0   100%
+src\acas_pro\ecommerce\order_manager.py                   165    165     0%   5-404
+src\acas_pro\ecommerce\order_manager_v2.py                 31     31     0%   2-80
+src\acas_pro\ecommerce\product_manager.py                 178     81    54%   123-130, 134-136, 192-206, 210, 239-242, 246-256, 260-266, 300-310, 314-316, 320-334, 338-351, 360-375, 387-405
+src\acas_pro\ecommerce\product_manager_v2.py               29     29     0%   2-68
+src\acas_pro\ecommerce\shop_manager.py                    159     68    57%   50-57, 73, 125, 262-282, 286, 306, 314-317, 325, 329-333, 337-346, 372-383, 387-390, 394-405, 419, 427-440, 451, 467, 478-506
+src\acas_pro\ecommerce\supply_chain.py                    165     67    59%   196-209, 213, 235-237, 245, 249, 280-332, 336, 351, 367, 394-414, 418, 438, 448, 472-500, 508, 528-540
+src\acas_pro\i18n\__init__.py                               1      1     0%   2
+src\acas_pro\i18n\translator.py                            48     48     0%   7-79
+src\acas_pro\i18n\translator_v2.py                         14     14     0%   2-27
+src\acas_pro\llm\__init__.py                                5      0   100%
+src\acas_pro\llm\agent_engine.py                          192     85    56%   137-218, 246, 274-282, 286-293, 297-300, 310-313, 317-325, 329-350, 354-374
+src\acas_pro\llm\claude_engine.py                          81     81     0%   8-188
+src\acas_pro\llm\conversation.py                          143    110    23%   29-31, 36-47, 51, 72-89, 98-105, 109-118, 122-131, 135-137, 141-142, 147-166, 170-178, 182, 186-218, 222-224, 228-237, 241-245, 249-268
+src\acas_pro\llm\gemini_engine.py                          88     88     0%   8-187
+src\acas_pro\llm\llm_client.py                            156     49    69%   131, 133-134, 156-157, 167, 173-176, 192-193, 199, 201, 203, 213-267, 281-282, 286-295, 334, 340, 344
+src\acas_pro\llm\llm_client_v2.py                          29     29     0%   2-55
+src\acas_pro\llm\tools.py                                 197    165    16%   23, 40, 45, 54-57, 61-64, 68, 72-83, 87, 104-107, 113-363, 388-415, 421-448, 453-482, 487-541, 552-569, 574-589, 601-616, 621-642, 647-652, 663-698, 702-717
+src\acas_pro\metrics\__init__.py                            0      0   100%
+src\acas_pro\metrics\brand_reputation.py                  163     54    67%   63, 89, 156, 161, 174-182, 186-187, 210-216, 244, 254, 258-260, 269, 273-275, 281, 318-348, 369-397, 407-422
+src\acas_pro\metrics\brand_reputation_v2.py                17     17     0%   2-31
+src\acas_pro\ml\__init__.py                                 0      0   100%
+src\acas_pro\ml\inventory_optimizer.py                    156    108    31%   35, 95-108, 118-197, 217-291, 296, 303
+src\acas_pro\ml\timesfm_engine.py                         183    133    27%   42, 67-105, 133-142, 147-157, 178-237, 249-269, 273-286, 295-335, 339-349, 358-376
+src\acas_pro\platforms\__init__.py                          0      0   100%
+src\acas_pro\platforms\account_manager.py                 183    183     0%   8-544
+src\acas_pro\platforms\account_manager_v2.py               23     23     0%   2-50
+src\acas_pro\publisher\__init__.py                          0      0   100%
+src\acas_pro\publisher\publish_manager.py                 182     86    53%   227-240, 244, 266, 278-280, 284-287, 318-340, 348-351, 362-429, 447-456, 465-474, 479-486, 491-502, 526, 545
+src\acas_pro\publisher\publish_manager_v2.py               30     30     0%   2-70
+src\acas_pro\publisher\scheduler.py                       105     40    62%   51-52, 73-74, 86-94, 148-174, 191-217, 246-248
+src\acas_pro\sentiment\__init__.py                          0      0   100%
+src\acas_pro\sentiment\analyzer.py                        134     10    93%   51, 173-174, 207, 214, 242, 257, 271, 304, 326
+src\acas_pro\sentiment\analyzer_v2.py                      28     28     0%   2-47
+src\acas_pro\sentiment\news_engine.py                     135     27    80%   60, 88, 171, 182, 185, 304-308, 313-333, 349-376, 381, 398-400, 405-412
+src\acas_pro\services\__init__.py                           0      0   100%
+src\acas_pro\services\oauth\__init__.py                     2      2     0%   4-6
+src\acas_pro\services\oauth\oauth_service.py              194    194     0%   7-361
+src\acas_pro\services\user_service.py                     142     99    30%   70-132, 141-233, 237-262, 266-268, 272-276, 296, 300, 304-316, 321-339
+src\acas_pro\services\user_service_v2.py                   74     74     0%   6-174
+src\acas_pro\ui\__init__.py                                 0      0   100%
+src\acas_pro\ui\auth\__init__.py                            2      2     0%   7-9
+src\acas_pro\ui\auth\login_dialog.py                      296    296     0%   7-641
+src\acas_pro\ui\logic\__init__.py                          13     13     0%   8-25
+src\acas_pro\ui\logic\analytics_logic.py                  114    114     0%   8-197
+src\acas_pro\ui\logic\campaign_logic.py                   106    106     0%   8-191
+src\acas_pro\ui\logic\content_creation_logic.py            25     25     0%   8-44
+src\acas_pro\ui\logic\content_logic.py                     97     97     0%   8-213
+src\acas_pro\ui\logic\customer_logic.py                   115    115     0%   8-209
+src\acas_pro\ui\logic\dashboard_logic.py                   96     96     0%   8-237
+src\acas_pro\ui\logic\inventory_logic.py                   73     73     0%   8-160
+src\acas_pro\ui\logic\order_logic.py                       88     88     0%   8-165
+src\acas_pro\ui\logic\product_logic.py                     76     76     0%   8-144
+src\acas_pro\ui\logic\report_logic.py                      86     86     0%   8-210
+src\acas_pro\ui\logic\settings_logic.py                    28     28     0%   8-52
+src\acas_pro\ui\logic\video_logic.py                       81     81     0%   8-153
+src\acas_pro\ui\main_window.py                            154    154     0%   8-397
+src\acas_pro\ui\pages\__init__.py                           0      0   100%
+src\acas_pro\ui\pages\account_management.py               236    236     0%   8-534
+src\acas_pro\ui\pages\ad_manager.py                       311    311     0%   5-679
+src\acas_pro\ui\pages\advanced_analytics.py               420    420     0%   5-1199
+src\acas_pro\ui\pages\avatar_studio.py                    302    302     0%   5-586
+src\acas_pro\ui\pages\blockchain_settlement.py            253    253     0%   5-547
+src\acas_pro\ui\pages\content_creation.py                 220    220     0%   8-554
+src\acas_pro\ui\pages\dashboard.py                         76     76     0%   7-166
+src\acas_pro\ui\pages\ecommerce_manager.py                225    225     0%   5-503
+src\acas_pro\ui\pages\festival_calendar.py                246    246     0%   8-564
+src\acas_pro\ui\pages\forecast.py                          81     81     0%   8-201
+src\acas_pro\ui\pages\intelligence.py                     293    293     0%   8-580
+src\acas_pro\ui\pages\inventory.py                         69     69     0%   7-169
+src\acas_pro\ui\pages\llm_chat.py                         248    248     0%   8-494
+src\acas_pro\ui\pages\publish_manager.py                  237    237     0%   8-572
+src\acas_pro\ui\pages\settings.py                         475    475     0%   7-981
+src\acas_pro\ui\pages\video_maker.py                      252    252     0%   8-574
+src\acas_pro\update\__init__.py                             2      0   100%
+src\acas_pro\update\updater.py                             79     43    46%   47-60, 68-76, 83-120, 132, 136
+src\acas_pro\update\updater_v2.py                          12     12     0%   2-26
+src\acas_pro\video\__init__.py                              0      0   100%
+src\acas_pro\video\video_maker.py                         188     80    57%   241-242, 263, 285-287, 316, 344-362, 376-422, 434-456, 469-498, 511-512, 514-515, 527, 535-566
+src\acas_pro\video\video_maker_v2.py                       16     16     0%   2-34
+src\acas_pro\video\voice_synthesis.py                     113     41    64%   125, 127, 166-193, 199-201, 212-213, 233-255, 278-293, 298-300, 315-319
+src\acas_pro\web\__init__.py                               34     26    24%   12-27, 32-52, 57-61
+src\acas_pro\web\api_spec.py                               11     11     0%   5-380
+src\acas_pro\web\health.py                                102    102     0%   5-272
+src\acas_pro\web\middleware.py                             64     34    47%   24-29, 34-56, 68, 76, 84, 92, 100, 108-109, 118-136, 141
+src\acas_pro\web\routes\__init__.py                         0      0   100%
+src\acas_pro\web\routes\auth.py                            63     47    25%   16, 25-38, 44-68, 78-96, 106-107
+src\acas_pro\web\routes\auth_v2.py                         11     11     0%   2-23
+src\acas_pro\web\routes\dashboard.py                       32     20    38%   176, 182-208, 214-223
+src\acas_pro\web\routes\llm.py                             47     35    26%   23-36, 42-63, 69-87
+-------------------------------------------------------------------------------------
+TOTAL                                                   14723  11827    20%
+Coverage HTML written to dir htmlcov
+FAIL Required test coverage of 60% not reached. Total coverage: 19.67%
+============================= 24 passed in 29.89s =============================

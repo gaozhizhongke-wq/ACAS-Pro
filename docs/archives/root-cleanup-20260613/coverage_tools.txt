@@ -1,0 +1,225 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.11.15, pytest-9.0.3, pluggy-1.6.0 -- F:\小龙虾\ACAS-Pro\.venv\Scripts\python.exe
+cachedir: .pytest_cache
+rootdir: F:\自动获客系统\ACAS-Pro
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: cov-7.1.0
+collecting ... collected 37 items
+
+tests/test_llm_tools_focused.py::TestToolRegistry::test_register_and_list PASSED [  2%]
+tests/test_llm_tools_focused.py::TestToolRegistry::test_unregister PASSED [  5%]
+tests/test_llm_tools_focused.py::TestToolRegistry::test_get_schema PASSED [  8%]
+tests/test_llm_tools_focused.py::TestToolRegistry::test_get_all_schemas PASSED [ 10%]
+tests/test_llm_tools_focused.py::TestToolRegistry::test_execute_success PASSED [ 13%]
+tests/test_llm_tools_focused.py::TestToolRegistry::test_execute_missing_tool PASSED [ 16%]
+tests/test_llm_tools_focused.py::TestToolRegistry::test_execute_no_function PASSED [ 18%]
+tests/test_llm_tools_focused.py::TestToolRegistry::test_execute_function_exception PASSED [ 21%]
+tests/test_llm_tools_focused.py::TestToolRegistry::test_tool_definition_to_schema PASSED [ 24%]
+tests/test_llm_tools_focused.py::TestACASTools::test_init_no_args FAILED [ 27%]
+tests/test_llm_tools_focused.py::TestACASTools::test_init_with_args PASSED [ 29%]
+tests/test_llm_tools_focused.py::TestACASTools::test_register_all FAILED [ 32%]
+tests/test_llm_tools_focused.py::TestACASTools::test_sales_forecast_import_error PASSED [ 35%]
+tests/test_llm_tools_focused.py::TestACASTools::test_sales_forecast_with_data PASSED [ 37%]
+tests/test_llm_tools_focused.py::TestACASTools::test_inventory_optimize_import_error PASSED [ 40%]
+tests/test_llm_tools_focused.py::TestACASTools::test_inventory_optimize_low_stock FAILED [ 43%]
+tests/test_llm_tools_focused.py::TestACASTools::test_market_intelligence_import_error PASSED [ 45%]
+tests/test_llm_tools_focused.py::TestACASTools::test_content_create_fallback_xiaohongshu PASSED [ 48%]
+tests/test_llm_tools_focused.py::TestACASTools::test_content_create_fallback_douyin PASSED [ 51%]
+tests/test_llm_tools_focused.py::TestACASTools::test_content_create_fallback_wechat PASSED [ 54%]
+tests/test_llm_tools_focused.py::TestACASTools::test_content_create_fallback_general PASSED [ 56%]
+tests/test_llm_tools_focused.py::TestACASTools::test_trend_monitor_import_error PASSED [ 59%]
+tests/test_llm_tools_focused.py::TestACASTools::test_trend_monitor_with_platform PASSED [ 62%]
+tests/test_llm_tools_focused.py::TestACASTools::test_account_analyze_import_error PASSED [ 64%]
+tests/test_llm_tools_focused.py::TestACASTools::test_ad_campaign_create_import_error PASSED [ 67%]
+tests/test_llm_tools_focused.py::TestACASTools::test_ad_campaign_report_import_error PASSED [ 70%]
+tests/test_llm_tools_focused.py::TestACASTools::test_ecommerce_orders_import_error PASSED [ 72%]
+tests/test_llm_tools_focused.py::TestACASTools::test_ecommerce_products_import_error PASSED [ 75%]
+tests/test_llm_tools_focused.py::TestACASTools::test_ecommerce_other_action PASSED [ 78%]
+tests/test_llm_tools_focused.py::TestACASTools::test_data_query PASSED   [ 81%]
+tests/test_llm_tools_focused.py::TestACASTools::test_data_query_users PASSED [ 83%]
+tests/test_llm_tools_focused.py::TestACASTools::test_festival_calendar_import_error PASSED [ 86%]
+tests/test_llm_tools_focused.py::TestACASTools::test_festival_calendar_default_month PASSED [ 89%]
+tests/test_llm_tools_focused.py::TestACASTools::test_festival_calendar_all_months_have_events PASSED [ 91%]
+tests/test_llm_tools_focused.py::TestACASTools::test_get_llm_config_no_import PASSED [ 94%]
+tests/test_llm_tools_focused.py::TestACASTools::test_execute_via_registry PASSED [ 97%]
+tests/test_llm_tools_focused.py::TestACASTools::test_execute_via_registry_all_tools FAILED [100%]
+ERROR: Coverage failure: total of 2 is less than fail-under=60
+
+
+================================== FAILURES ===================================
+_______________________ TestACASTools.test_init_no_args _______________________
+tests\test_llm_tools_focused.py:95: in test_init_no_args
+    assert len(tools.list_tools()) >= 8
+               ^^^^^^^^^^^^^^^^
+E   AttributeError: 'ACASTools' object has no attribute 'list_tools'
+_______________________ TestACASTools.test_register_all _______________________
+tests\test_llm_tools_focused.py:109: in test_register_all
+    tool_names = [t["name"] for t in tools.list_tools()]
+                                     ^^^^^^^^^^^^^^^^
+E   AttributeError: 'ACASTools' object has no attribute 'list_tools'
+_______________ TestACASTools.test_inventory_optimize_low_stock _______________
+tests\test_llm_tools_focused.py:144: in test_inventory_optimize_low_stock
+    assert result["status"] == "low"
+E   AssertionError: assert 'adequate' == 'low'
+E     
+E     - low
+E     + adequate
+______________ TestACASTools.test_execute_via_registry_all_tools ______________
+tests\test_llm_tools_focused.py:284: in test_execute_via_registry_all_tools
+    tool_names = [t["name"] for t in tools.list_tools()]
+                                     ^^^^^^^^^^^^^^^^
+E   AttributeError: 'ACASTools' object has no attribute 'list_tools'
+=============================== tests coverage ================================
+______________ coverage: platform win32, python 3.11.15-final-0 _______________
+
+Name                                                    Stmts   Miss  Cover   Missing
+-------------------------------------------------------------------------------------
+src\acas_pro\__init__.py                                    0      0   100%
+src\acas_pro\ads\__init__.py                                0      0   100%
+src\acas_pro\ads\ad_manager.py                            301    301     0%   6-642
+src\acas_pro\ads\ad_manager_v2.py                          44     44     0%   2-103
+src\acas_pro\ads\audience_targeting.py                    215    215     0%   6-498
+src\acas_pro\ads\bidding_engine.py                        132    132     0%   6-347
+src\acas_pro\advanced_analytics\__init__.py                 3      3     0%   5-8
+src\acas_pro\advanced_analytics\attribution_engine.py     283    283     0%   6-645
+src\acas_pro\advanced_analytics\smart_decider.py          263    263     0%   5-875
+src\acas_pro\alert\__init__.py                              2      2     0%   2-4
+src\acas_pro\alert\notifier.py                            183    183     0%   8-406
+src\acas_pro\analytics\__init__.py                          0      0   100%
+src\acas_pro\analytics\data_monitor.py                    163    163     0%   8-438
+src\acas_pro\analytics\data_monitor_v2.py                  22     22     0%   2-57
+src\acas_pro\analytics\festival_calendar.py               145    145     0%   8-526
+src\acas_pro\analytics\festival_calendar_v2.py             20     20     0%   2-45
+src\acas_pro\avatar\__init__.py                             5      5     0%   5-10
+src\acas_pro\avatar\avatar_engine.py                      201    201     0%   5-686
+src\acas_pro\avatar\gesture_generator.py                  166    166     0%   5-706
+src\acas_pro\avatar\lip_sync.py                           148    148     0%   5-403
+src\acas_pro\avatar\scene_adapter.py                      203    203     0%   5-590
+src\acas_pro\blockchain\__init__.py                         0      0   100%
+src\acas_pro\blockchain\settlement_engine.py              170    170     0%   5-501
+src\acas_pro\blockchain\settlement_engine_v2.py            27     27     0%   2-60
+src\acas_pro\blockchain\wallet_manager.py                 173    173     0%   5-471
+src\acas_pro\collectors\__init__.py                         0      0   100%
+src\acas_pro\collectors\rss_collector.py                  125    125     0%   8-277
+src\acas_pro\collectors\rss_collector_v2.py                19     19     0%   2-41
+src\acas_pro\collectors\weibo_api.py                      116    116     0%   8-271
+src\acas_pro\content\__init__.py                            0      0   100%
+src\acas_pro\content\script_generator.py                  177    177     0%   8-545
+src\acas_pro\content\script_generator_v2.py                12     12     0%   2-36
+src\acas_pro\content\trend_monitor.py                     164    164     0%   8-396
+src\acas_pro\core\__init__.py                               0      0   100%
+src\acas_pro\core\config.py                               226    226     0%   8-332
+src\acas_pro\core\config_v2.py                            106    106     0%   6-163
+src\acas_pro\core\database.py                             168    168     0%   8-477
+src\acas_pro\core\database_pg.py                          130    130     0%   8-226
+src\acas_pro\core\database_v2.py                           61     61     0%   6-95
+src\acas_pro\core\di_container.py                          51     51     0%   6-112
+src\acas_pro\core\logging.py                               84     84     0%   8-203
+src\acas_pro\core\logging_v2.py                            70     70     0%   6-137
+src\acas_pro\core\monitoring.py                           179    179     0%   8-364
+src\acas_pro\core\security.py                             355    355     0%   8-745
+src\acas_pro\core\security_headers.py                      78     78     0%   8-179
+src\acas_pro\core\security_v2.py                          133    133     0%   6-239
+src\acas_pro\ecommerce\__init__.py                          0      0   100%
+src\acas_pro\ecommerce\order_manager.py                   165    165     0%   5-404
+src\acas_pro\ecommerce\order_manager_v2.py                 31     31     0%   2-80
+src\acas_pro\ecommerce\product_manager.py                 178    178     0%   5-405
+src\acas_pro\ecommerce\product_manager_v2.py               29     29     0%   2-68
+src\acas_pro\ecommerce\shop_manager.py                    159    159     0%   5-506
+src\acas_pro\ecommerce\supply_chain.py                    165    165     0%   5-540
+src\acas_pro\i18n\__init__.py                               1      1     0%   2
+src\acas_pro\i18n\translator.py                            48     48     0%   7-79
+src\acas_pro\i18n\translator_v2.py                         14     14     0%   2-27
+src\acas_pro\llm\__init__.py                                5      0   100%
+src\acas_pro\llm\agent_engine.py                          192    124    35%   109-115, 122-231, 243-250, 254-255, 259, 263, 267-282, 286-293, 297-300, 310-313, 317-325, 329-350, 354-374
+src\acas_pro\llm\claude_engine.py                          81     81     0%   8-188
+src\acas_pro\llm\conversation.py                          143    110    23%   29-31, 36-47, 51, 72-89, 98-105, 109-118, 122-131, 135-137, 141-142, 147-166, 170-178, 182, 186-218, 222-224, 228-237, 241-245, 249-268
+src\acas_pro\llm\gemini_engine.py                          88     88     0%   8-187
+src\acas_pro\llm\llm_client.py                            156     87    44%   68-71, 74-84, 87-97, 104-105, 123-134, 143-176, 192-193, 197-204, 213-267, 281-282, 286-295, 316-317, 321-322, 328, 334, 338-344, 350, 355-365
+src\acas_pro\llm\llm_client_v2.py                          29     29     0%   2-55
+src\acas_pro\llm\tools.py                                 197     65    67%   390-398, 414-415, 423-430, 447-448, 455-463, 481-482, 501-529, 554-556, 568-569, 576-579, 603-612, 615-616, 629-631, 634-636, 641-642, 665-667, 697-698, 704-706
+src\acas_pro\metrics\__init__.py                            0      0   100%
+src\acas_pro\metrics\brand_reputation.py                  163    163     0%   8-426
+src\acas_pro\metrics\brand_reputation_v2.py                17     17     0%   2-31
+src\acas_pro\ml\__init__.py                                 0      0   100%
+src\acas_pro\ml\inventory_optimizer.py                    156    156     0%   8-317
+src\acas_pro\ml\timesfm_engine.py                         183    183     0%   8-388
+src\acas_pro\platforms\__init__.py                          0      0   100%
+src\acas_pro\platforms\account_manager.py                 183    183     0%   8-544
+src\acas_pro\platforms\account_manager_v2.py               23     23     0%   2-50
+src\acas_pro\publisher\__init__.py                          0      0   100%
+src\acas_pro\publisher\publish_manager.py                 182    182     0%   8-548
+src\acas_pro\publisher\publish_manager_v2.py               30     30     0%   2-70
+src\acas_pro\publisher\scheduler.py                       105    105     0%   8-251
+src\acas_pro\sentiment\__init__.py                          0      0   100%
+src\acas_pro\sentiment\analyzer.py                        134    134     0%   8-332
+src\acas_pro\sentiment\analyzer_v2.py                      28     28     0%   2-47
+src\acas_pro\sentiment\news_engine.py                     135    135     0%   8-423
+src\acas_pro\services\__init__.py                           0      0   100%
+src\acas_pro\services\oauth\__init__.py                     2      2     0%   4-6
+src\acas_pro\services\oauth\oauth_service.py              194    194     0%   7-361
+src\acas_pro\services\user_service.py                     142    142     0%   8-343
+src\acas_pro\services\user_service_v2.py                   74     74     0%   6-174
+src\acas_pro\ui\__init__.py                                 0      0   100%
+src\acas_pro\ui\auth\__init__.py                            2      2     0%   7-9
+src\acas_pro\ui\auth\login_dialog.py                      296    296     0%   7-641
+src\acas_pro\ui\logic\__init__.py                          13     13     0%   8-25
+src\acas_pro\ui\logic\analytics_logic.py                  114    114     0%   8-197
+src\acas_pro\ui\logic\campaign_logic.py                   106    106     0%   8-191
+src\acas_pro\ui\logic\content_creation_logic.py            25     25     0%   8-44
+src\acas_pro\ui\logic\content_logic.py                     97     97     0%   8-213
+src\acas_pro\ui\logic\customer_logic.py                   115    115     0%   8-209
+src\acas_pro\ui\logic\dashboard_logic.py                   96     96     0%   8-237
+src\acas_pro\ui\logic\inventory_logic.py                   73     73     0%   8-160
+src\acas_pro\ui\logic\order_logic.py                       88     88     0%   8-165
+src\acas_pro\ui\logic\product_logic.py                     76     76     0%   8-144
+src\acas_pro\ui\logic\report_logic.py                      86     86     0%   8-210
+src\acas_pro\ui\logic\settings_logic.py                    28     28     0%   8-52
+src\acas_pro\ui\logic\video_logic.py                       81     81     0%   8-153
+src\acas_pro\ui\main_window.py                            154    154     0%   8-397
+src\acas_pro\ui\pages\__init__.py                           0      0   100%
+src\acas_pro\ui\pages\account_management.py               236    236     0%   8-534
+src\acas_pro\ui\pages\ad_manager.py                       311    311     0%   5-679
+src\acas_pro\ui\pages\advanced_analytics.py               420    420     0%   5-1199
+src\acas_pro\ui\pages\avatar_studio.py                    302    302     0%   5-586
+src\acas_pro\ui\pages\blockchain_settlement.py            253    253     0%   5-547
+src\acas_pro\ui\pages\content_creation.py                 220    220     0%   8-554
+src\acas_pro\ui\pages\dashboard.py                         76     76     0%   7-166
+src\acas_pro\ui\pages\ecommerce_manager.py                225    225     0%   5-503
+src\acas_pro\ui\pages\festival_calendar.py                246    246     0%   8-564
+src\acas_pro\ui\pages\forecast.py                          81     81     0%   8-201
+src\acas_pro\ui\pages\intelligence.py                     293    293     0%   8-580
+src\acas_pro\ui\pages\inventory.py                         69     69     0%   7-169
+src\acas_pro\ui\pages\llm_chat.py                         248    248     0%   8-494
+src\acas_pro\ui\pages\publish_manager.py                  237    237     0%   8-572
+src\acas_pro\ui\pages\settings.py                         475    475     0%   7-981
+src\acas_pro\ui\pages\video_maker.py                      252    252     0%   8-574
+src\acas_pro\update\__init__.py                             2      2     0%   4-6
+src\acas_pro\update\updater.py                             79     79     0%   7-136
+src\acas_pro\update\updater_v2.py                          12     12     0%   2-26
+src\acas_pro\video\__init__.py                              0      0   100%
+src\acas_pro\video\video_maker.py                         188    188     0%   8-566
+src\acas_pro\video\video_maker_v2.py                       16     16     0%   2-34
+src\acas_pro\video\voice_synthesis.py                     113    113     0%   8-322
+src\acas_pro\web\__init__.py                               34     34     0%   2-61
+src\acas_pro\web\api_spec.py                               11     11     0%   5-380
+src\acas_pro\web\health.py                                102    102     0%   5-272
+src\acas_pro\web\middleware.py                             64     64     0%   5-141
+src\acas_pro\web\routes\__init__.py                         0      0   100%
+src\acas_pro\web\routes\auth.py                            63     63     0%   2-107
+src\acas_pro\web\routes\auth_v2.py                         11     11     0%   2-23
+src\acas_pro\web\routes\dashboard.py                       32     32     0%   2-223
+src\acas_pro\web\routes\llm.py                             47     47     0%   2-87
+-------------------------------------------------------------------------------------
+TOTAL                                                   14723  14416     2%
+Coverage HTML written to dir htmlcov
+FAIL Required test coverage of 60% not reached. Total coverage: 2.09%
+=========================== short test summary info ===========================
+FAILED tests/test_llm_tools_focused.py::TestACASTools::test_init_no_args - AttributeError: 'ACASTools' object has no attribute 'list_tools'
+FAILED tests/test_llm_tools_focused.py::TestACASTools::test_register_all - AttributeError: 'ACASTools' object has no attribute 'list_tools'
+FAILED tests/test_llm_tools_focused.py::TestACASTools::test_inventory_optimize_low_stock - AssertionError: assert 'adequate' == 'low'
+  
+  - low
+  + adequate
+FAILED tests/test_llm_tools_focused.py::TestACASTools::test_execute_via_registry_all_tools - AttributeError: 'ACASTools' object has no attribute 'list_tools'
+======================== 4 failed, 33 passed in 5.87s =========================

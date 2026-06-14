@@ -1,0 +1,1 @@
+176: '        return factors\n'177: '    \n'178: '    def _infer_audience(self, trend: TrendItem) -> str:\n'179: '        """Infer target audience"""\n'180: '        return "18-35岁年轻用�?\n'181: '    \n'182: '    def _find_content_gaps(self, trend: TrendItem) -> List[str]:\n'183: '        """Find content gaps"""\n'184: '        return ["深度解析", "实操教程", "对比评测"]\n'185: '    \n'
