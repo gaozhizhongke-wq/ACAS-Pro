@@ -12,14 +12,14 @@ class ACASProUser(HttpUser):
     def on_start(self):
         """Login and get token."""
         # Register a test user (if not exists)
-        self.client.post("/api/auth/register", json={
+        self.client.post("/api/v1/auth/register", json={
             "account": f"test_user_{self.user_id}",
             "password": "Test123!@#",
             "nickname": "Test User"
         }, catch_response=True)
         
         # Login
-        response = self.client.post("/api/auth/login", json={
+        response = self.client.post("/api/v1/auth/login", json={
             "account": f"test_user_{self.user_id}",
             "password": "Test123!@#"
         })
@@ -35,12 +35,12 @@ class ACASProUser(HttpUser):
     @task(10)
     def get_health(self):
         """Health check - most frequent."""
-        self.client.get("/api/health")
+        self.client.get("/api/v1/health")
     
     @task(5)
     def get_dashboard_stats(self):
         """Dashboard stats."""
-        self.client.get("/api/dashboard/stats", headers=self.headers)
+        self.client.get("/api/v1/dashboard/stats", headers=self.headers)
     
     @task(3)
     def get_products(self):
@@ -60,7 +60,7 @@ class ACASProUser(HttpUser):
     @task(1)
     def llm_chat(self):
         """LLM chat - least frequent (expensive)."""
-        self.client.post("/api/llm/chat", 
+        self.client.post("/api/v1/llm/chat", 
             headers=self.headers,
             json={
                 "messages": [{"role": "user", "content": "Hello"}],
@@ -72,7 +72,7 @@ class ACASProUser(HttpUser):
     @task(1)
     def get_user_profile(self):
         """Get current user profile."""
-        self.client.get("/api/auth/me", headers=self.headers)
+        self.client.get("/api/v1/auth/me", headers=self.headers)
 
 
 class ReadOnlyUser(HttpUser):
@@ -83,12 +83,12 @@ class ReadOnlyUser(HttpUser):
     
     @task(10)
     def get_health(self):
-        self.client.get("/api/health")
+        self.client.get("/api/v1/health")
     
     @task(5)
     def get_stats(self):
-        self.client.get("/api/stats")
+        self.client.get("/api/v1/stats")
     
     @task(3)
     def get_activity(self):
-        self.client.get("/api/activity")
+        self.client.get("/api/v1/activity")

@@ -264,11 +264,63 @@ class OpenAIProvider(BaseLLMProvider):
     def stream_chat(
         self, messages: List[LLMMessage], tools: Optional[List[Dict]] = None, **kwargs
     ):
-        """Stream chat - simplified version using iterative requests"""
-        # Note: For true streaming, use async HTTP client
-        # This is a simplified sync version
-        response = self.chat(messages, tools, **kwargs)
-        yield response
+        """True SSE streaming for OpenAI-compatible providers.
+
+        Sends ``stream: true`` and yields text deltas as they arrive.
+        Falls back to non-streaming chat if the provider does not support it.
+        """
+        payload = {
+            "model": kwargs.get("model", self.config.model),
+            "messages": [self._format_message(m) for m in messages],
+            "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
+            "temperature": kwargs.get("temperature", self.config.temperature),
+            "top_p": kwargs.get("top_p", self.config.top_p),
+            "stream": True,
+        }
+
+        if tools:
+            payload["tools"] = tools
+            payload["tool_choice"] = "auto"
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {self.config.api_key}",
+        }
+
+        if self.config.provider == LLMProvider.KIMI:
+            headers["X-Timestamp"] = str(int(time.time()))
+
+        url = f"{self.config.api_base}/chat/completions"
+        req = urllib.request.Request(
+            url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST"
+        )
+
+        try:
+            with _safe_urlopen(req, timeout=120) as resp:
+                for line_bytes in resp:
+                    line = line_bytes.decode("utf-8").strip()
+                    if not line or line.startswith(":"):
+                        continue
+                    if line.startswith("data: "):
+                        data_str = line[len("data: "):]
+                        if data_str.strip() == "[DONE]":
+                            break
+                        try:
+                            chunk = json.loads(data_str)
+                            delta = chunk.get("choices", [{}])[0].get("delta", {})
+                            content = delta.get("content", "")
+                            if content:
+                                yield LLMResponse(
+                                    content=content,
+                                    role="assistant",
+                                    model=chunk.get("model", self.config.model),
+                                    finish_reason=delta.get("finish_reason"),
+                                )
+                        except (json.JSONDecodeError, KeyError, IndexError):
+                            continue
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode("utf-8")
+            raise RuntimeError(f"Streaming API Error {e.code}: {error_body}")
 
     def _format_message(self, msg: LLMMessage) -> Dict:
         """Format message for OpenAI API"""
@@ -396,8 +448,11 @@ class AnthropicProvider(BaseLLMProvider):
                 tool_calls.append(
                     {
                         "id": block.get("id"),
-                        "type": block.get("type"),
-                        "function": block.get("input", {}),
+                        "type": "function",
+                        "function": {
+                            "name": block.get("name"),
+                            "arguments": json.dumps(block.get("input", {})),
+                        },
                     }
                 )
 
@@ -414,9 +469,60 @@ class AnthropicProvider(BaseLLMProvider):
     def stream_chat(
         self, messages: List[LLMMessage], tools: Optional[List[Dict]] = None, **kwargs
     ):
-        """Stream chat for Anthropic"""
-        response = self.chat(messages, tools, **kwargs)
-        yield response
+        """Stream chat for Anthropic using SSE."""
+        system_msg = ""
+        chat_messages = []
+        for msg in messages:
+            if msg.role == "system":
+                system_msg = msg.content
+            else:
+                chat_messages.append({"role": msg.role, "content": msg.content})
+
+        payload = {
+            "model": kwargs.get("model", self.config.model),
+            "max_tokens": kwargs.get("max_tokens", self.config.max_tokens),
+            "messages": chat_messages,
+            "temperature": kwargs.get("temperature", self.config.temperature),
+            "stream": True,
+        }
+        if system_msg:
+            payload["system"] = system_msg
+        if tools:
+            payload["tools"] = self._format_tools(tools)
+
+        headers = {
+            "Content-Type": "application/json",
+            "x-api-key": self.config.api_key,
+            "anthropic-version": "2023-06-01",
+        }
+        url = f"{self.config.api_base}/messages"
+        req = urllib.request.Request(
+            url, data=json.dumps(payload).encode("utf-8"), headers=headers, method="POST"
+        )
+
+        try:
+            with _safe_urlopen(req, timeout=120) as resp:
+                for line_bytes in resp:
+                    line = line_bytes.decode("utf-8").strip()
+                    if not line or line.startswith(":"):
+                        continue
+                    if line.startswith("data: "):
+                        data_str = line[len("data: "):]
+                        try:
+                            chunk = json.loads(data_str)
+                            if chunk.get("type") == "content_block_delta":
+                                delta = chunk.get("delta", {})
+                                if delta.get("type") == "text_delta":
+                                    yield LLMResponse(
+                                        content=delta.get("text", ""),
+                                        role="assistant",
+                                        model=chunk.get("model", self.config.model),
+                                    )
+                        except (json.JSONDecodeError, KeyError, IndexError):
+                            continue
+        except urllib.error.HTTPError as e:
+            error_body = e.read().decode("utf-8")
+            raise RuntimeError(f"Anthropic streaming error {e.code}: {error_body}")
 
     def _format_tools(self, tools: List[Dict]) -> List[Dict]:
         """Format tools for Anthropic API"""

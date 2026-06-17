@@ -7,13 +7,19 @@ Production-grade configuration management with validation
 
 import os
 import json
-import logging
 from pathlib import Path
 from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional, Tuple, Any
 from enum import Enum
 
-logger = logging.getLogger(__name__)
+
+def _get_logger():
+    """Lazy logger accessor — resolves circular import between config.py ↔ logging.py.
+    logging.py imports get_config() from this module at module level, so
+    config.py CANNOT import get_logger at module level. Instead, we call
+    get_logger(__name__) lazily only when a log statement is actually executed."""
+    from acas_pro.core.logging import get_logger
+    return get_logger(__name__)
 
 
 class Environment(str, Enum):
@@ -183,9 +189,9 @@ class AppConfig:
         if env:
             try:
                 self.environment = Environment(env)
-                logger.info(f"Environment set from ACAS_ENV: {self.environment.value}")
+                _get_logger().info(f"Environment set from ACAS_ENV: {self.environment.value}")
             except ValueError:
-                logger.warning(
+                _get_logger().warning(
                     f"Invalid ACAS_ENV value: {env}, keeping current: {self.environment.value}"
                 )
 
@@ -234,7 +240,7 @@ class AppConfig:
             missing.append("ACAS_JWT_SECRET (must be >= 32 chars)")
 
         if missing:
-            logger.error(f"Production secrets missing: {', '.join(missing)}")
+            _get_logger().error(f"Production secrets missing: {', '.join(missing)}")
             raise RuntimeError(f"Production secrets missing: {', '.join(missing)}")
 
     def is_development(self) -> bool:
@@ -285,7 +291,17 @@ class AppConfig:
 
     @classmethod
     def load(cls, path: Optional[str] = None) -> "AppConfig":
-        """Load configuration from file"""
+        """Load configuration from file.
+
+        Configuration priority (highest wins):
+          1. Environment variables (e.g. ``ACAS_ENV``, ``ACAS_JWT_SECRET``, ``REDIS_URL``)
+          2. JSON config file (``~/.acas-pro/config.json``)
+          3. Code-level defaults (dataclass defaults)
+
+        Note: ``ACAS_ENV`` is always applied on top of file/defaults
+        inside ``__post_init__``, ensuring the environment variable
+        takes final precedence.
+        """
         if path is None:
             path = str(Path.home() / ".acas-pro" / "config.json")
 
@@ -338,7 +354,7 @@ def get_config() -> AppConfig:
                 is_valid, errors = _config_instance.validate()
                 if not is_valid:
                     for error in errors:
-                        logger.error(f"Production config validation failed: {error}")
+                        _get_logger().error(f"Production config validation failed: {error}")
     return _config_instance
 
 

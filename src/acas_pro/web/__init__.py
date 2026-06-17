@@ -126,10 +126,11 @@ def _configure_app(app) -> None:
                 app.config["SSL_CONTEXT"] = context
                 logger.info("HTTPS enforced with TLS")
         else:
-            logger.warning(
-                "HTTPS not enforced in production! "
-                "Set enable_https=true in config and provide tls_cert_path/tls_key_path, "
-                "or configure a reverse-proxy (nginx) to handle TLS termination."
+            raise RuntimeError(
+                "HTTPS is required in production but enable_https=False. "
+                "Either set enable_https=true with tls_cert_path/tls_key_path, "
+                "or configure a reverse-proxy (e.g., nginx) to handle TLS termination. "
+                "Do NOT expose the application directly over HTTP in production."
             )
 
 
@@ -196,16 +197,16 @@ def _register_auth_middleware(app) -> None:
         "health.health_check",
     }
     PUBLIC_PREFIXES = (
-        "/api/auth/register",
-        "/api/auth/login",
-        "/api/health",
+        "/api/v1/auth/register",
+        "/api/v1/auth/login",
+        "/api/v1/health",
         "/api/docs",
         "/api/openapi.json",
         "/api/openapi.yaml",
     )
 
     # Routes that are accessible without auth but don't expose sensitive data
-    READ_ONLY_PUBLIC_PATHS = ("/", "/api/stats", "/api/activity")
+    READ_ONLY_PUBLIC_PATHS = ("/", "/api/v1/stats", "/api/v1/activity")
 
     @app.before_request
     def authenticate() -> None:
@@ -301,7 +302,7 @@ def _register_error_handlers(app: Flask) -> None:
         """Check if request expects JSON response."""
         # Check URL prefix
         if request.path.startswith("/api/"):
-            return True
+            return True  # Covers both /api/v1/ and legacy paths
         # Check Accept header
         accept = request.headers.get("Accept", "")
         if "application/json" in accept:
@@ -366,6 +367,20 @@ def _register_error_handlers(app: Flask) -> None:
 
     @app.errorhandler(Exception)
     def handle_generic_exception(e) -> None:
+        exc_tb = traceback.format_exc()
         logger.error(f"Unhandled exception: {request.path}", exc_info=True)
-        details = traceback.format_exc() if app.debug else None
+        # In production, also log full traceback to a dedicated error log
+        if not app.debug:
+            try:
+                from acas_pro.core.logging import get_logger as _get_logger
+                error_log = _get_logger("unhandled_errors")
+                error_log.error(
+                    "Unhandled exception on %s %s:\n%s",
+                    request.method,
+                    request.path,
+                    exc_tb,
+                )
+            except Exception:
+                pass
+        details = exc_tb if app.debug else None
         return _make_error_response(500, "Internal Server Error", details)

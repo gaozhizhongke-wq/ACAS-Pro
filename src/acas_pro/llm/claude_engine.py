@@ -7,14 +7,14 @@ Production-grade Anthropic API integration
 
 import os
 import sqlite3
-import logging
+from acas_pro.core.logging import get_logger
 from typing import List, Dict, Iterator
 from dataclasses import dataclass
 import json
 
 from .base_engine import BaseLLMEngine, LLMMessage, LLMResponse, LLMStreamChunk
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass

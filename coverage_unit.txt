@@ -1,7 +1,0 @@
-﻿============================= test session starts =============================
-collected 882 items / 1 error
-
-=========================== short test summary info ===========================
-ERROR tests/unit/test_translator.py
-!!!!!!!!!!!!!!!!!!! Interrupted: 1 error during collection !!!!!!!!!!!!!!!!!!!!
-============================== 1 error in 0.45s ===============================

@@ -21,9 +21,10 @@ from acas_pro.web.schemas import (
     LLMConfigResponse,
     AuthErrorResponse,
 )
+import acas_pro.core.security as _sec
 
 logger = get_logger(__name__)
-bp = Blueprint("llm", __name__, url_prefix="/api/llm")
+bp = Blueprint("llm", __name__, url_prefix="/api/v1/llm")
 
 _PROVIDER_MAP = {
     "openai": LLMProvider.OPENAI,
@@ -95,6 +96,13 @@ def save_llm_config() -> Any:
 @bp.route("/chat", methods=["POST"])
 def llm_chat() -> Any:
     """Chat with LLM with Pydantic validation"""
+    # Rate limit: 60 requests per minute per user
+    user_id = g.get("user", {}).get("user_id", "anonymous")
+    rate_key = f"llm:chat:{user_id}"
+    if not _sec.rate_limiter.is_allowed(rate_key, max_attempts=60, window_seconds=60):
+        return jsonify(
+            AuthErrorResponse(error="LLM rate limit exceeded. Please try again later.").model_dump(mode="json")
+        ), 429
     try:
         req = LLMChatRequest.model_validate(request.json or {})
     except ValidationError as e:

@@ -6,7 +6,6 @@ Production-grade authentication and encryption
 """
 
 import re
-import sqlite3
 import json
 import secrets
 import time
@@ -188,7 +187,7 @@ class TokenBlacklist:
                 cls._backend = "redis"
                 logger.info("TokenBlacklist: using Redis backend")
                 return "redis"
-            except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+            except (ImportError, OSError, Exception) as e:
                 logger.warning(f"TokenBlacklist: Redis unavailable ({e}), trying DB")
 
         # 2. Try DatabaseManager
@@ -200,7 +199,7 @@ class TokenBlacklist:
             cls._backend = "db"
             logger.info("TokenBlacklist: using DB backend")
             return "db"
-        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+        except (ImportError, OSError, Exception) as e:
             logger.warning(
                 f"TokenBlacklist: DB unavailable ({e}), falling back to memory"
             )
@@ -257,7 +256,7 @@ class TokenBlacklist:
                 )
                 logger.info(f"Token revoked (db): jti={jti[:16]}...")
                 cls._cleanup_db(db)
-            except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+            except Exception as e:
                 logger.error(f"TokenBlacklist DB write failed: {e}")
                 # Fallback to memory so the revoke is not lost
                 with cls._get_lock():
@@ -287,7 +286,7 @@ class TokenBlacklist:
                     (jti, time.time()),
                 )
                 return row is not None
-            except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+            except Exception as e:
                 logger.error(f"TokenBlacklist DB read failed: {e}")
                 # Check in-memory fallback as well
                 with cls._get_lock():
@@ -318,7 +317,7 @@ class TokenBlacklist:
             db.execute(
                 "DELETE FROM token_blacklist WHERE expires_at < ?", (time.time(),)
             )
-        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+        except Exception as e:
             logger.debug(f"TokenBlacklist DB cleanup skipped: {e}")
 
     @classmethod
@@ -541,7 +540,7 @@ class SessionManager:
                     user_agent,
                 ),
             )
-        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+        except Exception as e:
             logger.error(f"Failed to create session: {e}")
             return None  # FAIL FAST — do not return token without DB record  # type: ignore[return-value]
 
@@ -576,7 +575,7 @@ class SessionManager:
 
             return row["user_id"]  # type: ignore[no-any-return]
 
-        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+        except Exception as e:
             logger.error(f"Session validation error: {e}")
             return None
 
@@ -586,7 +585,7 @@ class SessionManager:
             db = self._get_db()
             db.execute("DELETE FROM sessions WHERE token = ?", (token,))
             return True
-        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+        except Exception as e:
             logger.error(f"Failed to revoke session: {e}")
             return False
 
@@ -597,7 +596,7 @@ class SessionManager:
             result = db.execute("DELETE FROM sessions WHERE user_id = ?", (user_id,))
             return result.rowcount  # type: ignore[no-any-return]
 
-        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+        except Exception as e:
             logger.error(f"Failed to revoke user sessions: {e}")
             return 0
 
@@ -630,6 +629,14 @@ class RateLimiter:
     def _atomic(self) -> None:
         """Atomic read-write via exclusive file lock."""
         lock_path = self._path + ".lock"
+        # Clear stale lock from crashed process (>60s old)
+        if os.path.exists(lock_path):
+            try:
+                mtime = os.path.getmtime(lock_path)
+                if time.time() - mtime > 60:
+                    os.remove(lock_path)
+            except OSError:
+                pass
         with open(lock_path, "w") as lf:
             if _WIN32:
                 msvcrt.locking(lf.fileno(), msvcrt.LK_LOCK, 1)
@@ -786,12 +793,7 @@ class CryptoManager:
                                 capture_output=True,
                                 timeout=5,
                             )
-                        except (
-                            sqlite3.Error,
-                            ValueError,
-                            RuntimeError,
-                            json.JSONDecodeError,
-                        ) as e:
+                        except Exception as e:
                             # nosec B110  # Best effort Windows ACL - do not fail on permission errors
                             logger.debug(f"icacls permission hardening skipped: {e}")
                     else:
@@ -827,7 +829,7 @@ class CryptoManager:
             encrypted = self._fernet.encrypt(plaintext.encode("utf-8"))
             return encrypted.decode("ascii")  # type: ignore[no-any-return]
 
-        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+        except Exception as e:
             logger.error(f"Encryption failed: {e}")
             raise
 
@@ -853,7 +855,7 @@ class CryptoManager:
         except InvalidToken:
             logger.warning("Invalid encrypted data (may be corrupted or tampered)")
             raise ValueError("Invalid encrypted data")
-        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+        except Exception as e:
             logger.error(f"Decryption failed: {e}")
             raise
 
@@ -954,7 +956,7 @@ class RedisRateLimiter:
                     socket_timeout=2,
                 )
                 self._client.ping()
-            except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+            except (ImportError, OSError, Exception) as e:
                 logger.warning(f"Redis connection failed, rate limiter disabled: {e}")
                 self._client = None  # type: ignore[no-redef]
 

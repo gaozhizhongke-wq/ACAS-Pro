@@ -6,10 +6,10 @@ from acas_pro.core.database import db
 from acas_pro.core.logging import get_logger
 
 logger = get_logger(__name__)
-bp = Blueprint("dashboard_stats", __name__, url_prefix="")
+bp = Blueprint("dashboard_stats", __name__, url_prefix="/api/v1")
 
 
-@bp.route("/api/dashboard/stats")
+@bp.route("/dashboard/stats")
 def dashboard_stats() -> None:
     """Real dashboard data from database."""
     try:
@@ -35,14 +35,16 @@ def dashboard_stats() -> None:
                 "WHERE status IN ('pending', 'processing', 'shipped')"
             )
             stats["active_orders"] = result["cnt"] if result else 0
-        except Exception:
+        except Exception as e:
+            logger.warning(f"active_orders (orders table) query failed: {e}, trying transactions fallback")
             try:
                 result = db.fetchone(
                     "SELECT COUNT(*) AS cnt FROM transactions "
                     "WHERE created_at >= datetime('now', '-7 days')"
                 )
                 stats["active_orders"] = result["cnt"] if result else 0
-            except Exception:
+            except Exception as e_inner:
+                logger.warning(f"active_orders (transactions fallback) query failed: {e_inner}")
                 stats["active_orders"] = 0
 
         try:
@@ -97,7 +99,7 @@ def dashboard_stats() -> None:
         )
 
 
-@bp.route("/api/festivals", methods=["GET"])
+@bp.route("/festivals", methods=["GET"])
 def list_festivals() -> None:
     try:
         rows = db.fetchall(
@@ -110,7 +112,7 @@ def list_festivals() -> None:
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@bp.route("/api/products", methods=["GET"])
+@bp.route("/products", methods=["GET"])
 def list_products() -> None:
     try:
         rows = db.fetchall(
@@ -123,7 +125,7 @@ def list_products() -> None:
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@bp.route("/api/products/low-stock", methods=["GET"])
+@bp.route("/products/low-stock", methods=["GET"])
 def low_stock_products() -> None:
     try:
         rows = db.fetchall(
@@ -139,7 +141,7 @@ def low_stock_products() -> None:
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@bp.route("/api/accounts", methods=["GET"])
+@bp.route("/accounts", methods=["GET"])
 def list_accounts() -> None:
     try:
         rows = db.fetchall(
@@ -153,7 +155,7 @@ def list_accounts() -> None:
         return jsonify({"success": False, "error": str(e)}), 500
 
 
-@bp.route("/api/forecast/daily", methods=["GET"])
+@bp.route("/forecast/daily", methods=["GET"])
 def forecast_daily() -> None:
     try:
         rows = db.fetchall(

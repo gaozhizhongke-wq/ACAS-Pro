@@ -8,9 +8,9 @@ from typing import Dict, List, Optional, Any
 
 # Standard library imports (patchable in tests)
 import smtplib
-import logging
+from acas_pro.core.logging import get_logger
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Config placeholder for patching in tests
 config = None
@@ -122,7 +122,8 @@ class AlertNotifier:
                     results[ch] = bool(ok)
                 else:
                     results[ch] = False
-            except Exception:
+            except Exception as e:
+                logger.warning(f"[AlertNotifier] Sync handler for channel {ch} raised {type(e).__name__}: {e}")
                 results[ch] = False
 
         self._record_alert(message, results)
@@ -244,8 +245,18 @@ class AlertNotifier:
                     server.login(self.smtp_user, self.smtp_password)
                 server.quit()
                 return True
-            except Exception:
-                return True  # Stub: return True if smtp_host is set
+            except smtplib.SMTPAuthenticationError as e:
+                logger.error(f"[EMAIL] SMTP authentication failed for host={self.smtp_host}, user={self.smtp_user}: {e}")
+                return False
+            except smtplib.SMTPException as e:
+                logger.error(f"[EMAIL] SMTP error sending mail host={self.smtp_host}: {e}")
+                return False
+            except OSError as e:
+                logger.error(f"[EMAIL] Network error connecting to SMTP host={self.smtp_host}: {e}")
+                return False
+            except Exception as e:
+                logger.error(f"[EMAIL] Unexpected error in _send_email: {e}")
+                return False
         return False
 
     def _send_sms(self, msg: AlertMessage) -> bool:
@@ -396,7 +407,8 @@ class AlertNotifier:
                         results[ch] = bool(ok)
                     else:
                         results[ch] = False
-            except Exception:
+            except Exception as e:
+                logger.warning(f"[AlertNotifier] Async handler for channel {ch} raised {type(e).__name__}: {e}")
                 results[ch] = False
 
         self._record_alert(message, results)

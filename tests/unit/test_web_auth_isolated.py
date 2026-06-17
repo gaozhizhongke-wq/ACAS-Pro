@@ -41,7 +41,7 @@ class TestAuthMiddlewareIsolated:
         app = self._create_app_with_auth(monkeypatch)
         
         with app.test_client() as client:
-            response = client.get('/api/auth/register')
+            response = client.get('/api/v1/auth/register')
             assert response.status_code != 401
 
     # Remove skip: auth middleware now registered in create_app
@@ -50,13 +50,13 @@ class TestAuthMiddlewareIsolated:
         app = self._create_app_with_auth(monkeypatch)
         
         # Add a protected test route (not in PUBLIC_ROUTES or PUBLIC_PREFIXES)
-        @app.route('/api/protected')
+        @app.route('/api/v1/auth/protected')
         def protected_route():
             from flask import jsonify
             return jsonify({'message': 'protected'}), 200
         
         with app.test_client() as client:
-            response = client.get('/api/protected')
+            response = client.get('/api/v1/auth/protected')
             # Should return 401 (Unauthorized) because route is protected
             assert response.status_code == 401
 
@@ -66,13 +66,13 @@ class TestAuthMiddlewareIsolated:
         app = self._create_app_with_auth(monkeypatch)
         
         # Add a protected test route (not in PUBLIC_ROUTES or PUBLIC_PREFIXES)
-        @app.route('/api/protected')
+        @app.route('/api/v1/auth/protected')
         def protected_route():
             from flask import jsonify
             return jsonify({'message': 'protected'}), 200
         
         with app.test_client() as client:
-            response = client.get('/api/protected', headers={'Authorization': 'Bearer invalid_token'})
+            response = client.get('/api/v1/auth/protected', headers={'Authorization': 'Bearer invalid_token'})
             # Should return 401 (Unauthorized) because token is invalid
             assert response.status_code == 401
 
@@ -81,7 +81,7 @@ class TestAuthMiddlewareIsolated:
         app = self._create_app_with_auth(monkeypatch)
         
         with app.test_client() as client:
-            response = client.get('/api/stats')
+            response = client.get('/api/v1/stats')
             assert response.status_code != 401
 
 
@@ -110,8 +110,10 @@ class TestBlueprintsIsolated:
         mock_cfg_module2 = MagicMock(config=mock_config)
         mock_cfg_module2.get_config.return_value = mock_config
         with patch.dict('sys.modules', {'acas_pro.core.config': mock_cfg_module2}):
-            from acas_pro.web import create_app
-            app = create_app({'TESTING': True})
+            # Patch the already-imported config reference in web module
+            with patch('acas_pro.web.config.is_production', return_value=False):
+                from acas_pro.web import create_app
+                app = create_app({'TESTING': True})
             
             blueprint_names = [bp.name for bp in app.blueprints.values()]
             assert 'auth' in blueprint_names

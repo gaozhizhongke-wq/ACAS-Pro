@@ -1,0 +1,223 @@
+# ACAS Pro - Vault High Availability Configuration
+# 3-node Raft cluster for production
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vault-config
+  namespace: acas-pro
+data:
+  vault.hcl: |
+    ui = true
+    
+    listener "tcp" {
+      address = "0.0.0.0:8200"
+      tls_cert_file = "/vault/tls/cert.pem"
+      tls_key_file = "/vault/tls/key.pem"
+      tls_min_version = "tls13"
+    }
+    
+    storage "raft" {
+      path = "/vault/data"
+      node_id = "NODE_ID"
+      
+      retry_leader_election = true
+      
+      autopilot {
+        cleanup_dead_servers = true
+        last_contact_threshold = "10s"
+        max_trailing_logs = 250
+        min_quorum = 2
+        server_stabilization_time = "10s"
+      }
+    }
+    
+    seal "awskms" {
+      region = "us-east-1"
+      kms_key_id = "KMS_KEY_ID"
+    }
+    
+    telemetry {
+      prometheus_retention_time = "30s"
+      disable_hostname = true
+    }
+    
+    default_lease_ttl = "1h"
+    max_lease_ttl = "24h"
+    api_addr = "https://VAULT_POD_IP:8200"
+    cluster_addr = "https://VAULT_POD_IP:8201"
+    cluster_name = "acas-pro-vault"
+    
+    log_level = "Info"
+    log_format = "json"
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: vault
+  namespace: acas-pro
+  labels:
+    app: vault
+spec:
+  serviceName: vault-internal
+  replicas: 3
+  selector:
+    matchLabels:
+      app: vault
+  template:
+    metadata:
+      labels:
+        app: vault
+    spec:
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: app
+                    operator: In
+                    values:
+                      - vault
+              topologyKey: kubernetes.io/hostname
+      containers:
+        - name: vault
+          image: hashicorp/vault:1.15.4
+          args:
+            - server
+          securityContext:
+            capabilities:
+              add:
+                - IPC_LOCK
+          ports:
+            - containerPort: 8200
+              name: http
+            - containerPort: 8201
+              name: internal
+          env:
+            - name: VAULT_ADDR
+              value: "https://127.0.0.1:8200"
+            - name: VAULT_CACERT
+              value: "/vault/tls/ca.pem"
+            - name: POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: VAULT_POD_IP
+              value: "$(POD_IP)"
+            - name: VAULT_K8S_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: VAULT_K8S_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: config
+              mountPath: /vault/config
+            - name: data
+              mountPath: /vault/data
+            - name: tls
+              mountPath: /vault/tls
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /v1/sys/health?standbyok=true
+              port: 8200
+              scheme: HTTPS
+            initialDelaySeconds: 60
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /v1/sys/health?standbyok=true&sealedcode=204&uninitcode=204
+              port: 8200
+              scheme: HTTPS
+            initialDelaySeconds: 10
+            periodSeconds: 5
+      volumes:
+        - name: config
+          configMap:
+            name: vault-config
+        - name: tls
+          secret:
+            secretName: vault-tls
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: fast-ssd
+        resources:
+          requests:
+            storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault-internal
+  namespace: acas-pro
+  labels:
+    app: vault
+spec:
+  clusterIP: None
+  ports:
+    - port: 8200
+      name: http
+    - port: 8201
+      name: internal
+  selector:
+    app: vault
+  publishNotReadyAddresses: true
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: vault
+  namespace: acas-pro
+  labels:
+    app: vault
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 8200
+      targetPort: 8200
+      name: http
+  selector:
+    app: vault
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: vault-network-policy
+  namespace: acas-pro
+spec:
+  podSelector:
+    matchLabels:
+      app: vault
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: acas-pro
+      ports:
+        - protocol: TCP
+          port: 8200
+        - protocol: TCP
+          port: 8201
+  egress:
+    - to:
+        - podSelector:
+            matchLabels:
+              app: vault
+      ports:
+        - protocol: TCP
+          port: 8201

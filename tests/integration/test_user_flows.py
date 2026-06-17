@@ -18,7 +18,7 @@ class TestUserRegistrationFlow:
             'password': 'TestPass123!',
             'nickname': 'Test User'
         }
-        resp = client.post('/api/auth/register', json=register_data)
+        resp = client.post('/api/v1/auth/register', json=register_data)
         # Should succeed with 200 or 201
         assert resp.status_code in (200, 201), f'Registration failed: {resp.data}'
 
@@ -28,7 +28,7 @@ class TestUserRegistrationFlow:
             'account': 'nonexistent',
             'password': 'wrongpassword'
         }
-        resp = client.post('/api/auth/login', json=login_data)
+        resp = client.post('/api/v1/auth/login', json=login_data)
         assert resp.status_code in (401, 403, 404)
 
 
@@ -36,7 +36,7 @@ class TestAPIDocumentationFlow:
     """Test API documentation access flow."""
 
     def test_access_api_docs(self, client):
-        """Test accessing API documentation."""
+        """Test API documentation access flow."""
         resp = client.get('/api/docs')
         assert resp.status_code == 200
         assert b'Swagger' in resp.data or b'swagger' in resp.data or b'OpenAPI' in resp.data
@@ -72,7 +72,7 @@ class TestErrorHandlingFlow:
     def test_400_for_invalid_json(self, client):
         """Test 400 error for invalid JSON."""
         resp = client.post(
-            '/api/auth/login',
+            '/api/v1/auth/login',
             data='invalid json',
             content_type='application/json'
         )
@@ -85,7 +85,7 @@ class TestHealthCheckFlow:
     def test_health_endpoint(self, client):
         """Test health check endpoint."""
         # Try multiple possible health/status endpoints
-        endpoints = ['/api/health', '/api/stats', '/api/docs', '/']
+        endpoints = ['/api/v1/health', '/api/v1/stats', '/api/docs', '/']
         success = False
         for endpoint in endpoints:
             resp = client.get(endpoint)
@@ -96,5 +96,5 @@ class TestHealthCheckFlow:
 
     def test_stats_endpoint(self, client):
         """Test stats endpoint (read-only, public)."""
-        resp = client.get('/api/stats')
+        resp = client.get('/api/v1/stats')
         assert resp.status_code in (200, 404, 500)

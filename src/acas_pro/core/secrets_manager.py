@@ -9,10 +9,10 @@ Development: Falls back to .env file or config.json (with warnings).
 """
 
 import os
-import logging
+from acas_pro.core.logging import get_logger
 from typing import Optional
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 # Secrets that must NEVER be stored in config.json or .env in production
 _PRODUCTION_ENV_ONLY = {

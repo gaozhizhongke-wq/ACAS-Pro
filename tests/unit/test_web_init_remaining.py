@@ -314,7 +314,7 @@ class TestTokenExtraction:
 
             with app.test_client() as client:
                 # /api/health is in PUBLIC_PREFIXES
-                resp = client.get('/api/health')
+                resp = client.get('/api/v1/health')
                 assert resp.status_code == 200
 
 

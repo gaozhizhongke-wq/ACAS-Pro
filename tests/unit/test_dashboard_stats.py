@@ -39,7 +39,7 @@ class TestDashboardStats:
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
             with patch('acas_pro.web.routes.dashboard_stats.get_config', return_value=mock_config):
-                response = client.get('/api/dashboard/stats')
+                response = client.get('/api/v1/dashboard/stats')
         assert response.status_code == 200
         data = response.get_json()
         assert data['revenue'] == 1234.56
@@ -68,7 +68,7 @@ class TestDashboardStats:
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
             with patch('acas_pro.web.routes.dashboard_stats.get_config', return_value=mock_config):
-                response = client.get('/api/dashboard/stats')
+                response = client.get('/api/v1/dashboard/stats')
         assert response.status_code == 200
         data = response.get_json()
         assert data['active_orders'] == 10  # fallback value
@@ -84,7 +84,7 @@ class TestDashboardStats:
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
             with patch('acas_pro.web.routes.dashboard_stats.get_config', side_effect=Exception('config down')):
-                response = client.get('/api/dashboard/stats')
+                response = client.get('/api/v1/dashboard/stats')
         assert response.status_code == 200
         data = response.get_json()
         assert data.get('error') == 'Dashboard data unavailable' or data.get('status') == 'degraded'
@@ -100,7 +100,7 @@ class TestFestivals:
         ]
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
-            response = client.get('/api/festivals')
+            response = client.get('/api/v1/festivals')
         assert response.status_code == 200
         data = response.get_json()
         assert data['success'] is True
@@ -111,7 +111,7 @@ class TestFestivals:
         mock_db.fetchall.side_effect = Exception('table missing')
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
-            response = client.get('/api/festivals')
+            response = client.get('/api/v1/festivals')
         assert response.status_code == 500
         data = response.get_json()
         assert data['success'] is False
@@ -127,7 +127,7 @@ class TestProducts:
         ]
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
-            response = client.get('/api/products')
+            response = client.get('/api/v1/products')
         assert response.status_code == 200
         data = response.get_json()
         assert data['success'] is True
@@ -140,7 +140,7 @@ class TestProducts:
         ]
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
-            response = client.get('/api/products/low-stock')
+            response = client.get('/api/v1/products/low-stock')
         assert response.status_code == 200
         data = response.get_json()
         assert data['success'] is True
@@ -156,7 +156,7 @@ class TestAccounts:
         ]
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
-            response = client.get('/api/accounts')
+            response = client.get('/api/v1/accounts')
         assert response.status_code == 200
         data = response.get_json()
         assert data['success'] is True
@@ -178,7 +178,7 @@ class TestDashboardStatsErrors:
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
             with patch('acas_pro.web.routes.dashboard_stats.get_config', return_value=mock_config):
-                response = client.get('/api/dashboard/stats')
+                response = client.get('/api/v1/dashboard/stats')
         assert response.status_code == 200
         data = response.get_json()
         assert data['revenue'] == 0
@@ -196,7 +196,7 @@ class TestDashboardStatsErrors:
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
             with patch('acas_pro.web.routes.dashboard_stats.get_config', return_value=mock_config):
-                response = client.get('/api/dashboard/stats')
+                response = client.get('/api/v1/dashboard/stats')
         assert response.status_code == 200
         data = response.get_json()
         assert data['inventory'] == 0
@@ -214,7 +214,7 @@ class TestDashboardStatsErrors:
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
             with patch('acas_pro.web.routes.dashboard_stats.get_config', return_value=mock_config):
-                response = client.get('/api/dashboard/stats')
+                response = client.get('/api/v1/dashboard/stats')
         assert response.status_code == 200
         data = response.get_json()
         assert data['low_stock'] == 0
@@ -231,7 +231,7 @@ class TestDashboardStatsErrors:
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
             with patch('acas_pro.web.routes.dashboard_stats.get_config', return_value=mock_config):
-                response = client.get('/api/dashboard/stats')
+                response = client.get('/api/v1/dashboard/stats')
         assert response.status_code == 200
         data = response.get_json()
         assert data['risk_alerts'] == 0
@@ -241,7 +241,7 @@ class TestDashboardStatsErrors:
         mock_db.fetchall.side_effect = Exception('festivals fail')
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
-            response = client.get('/api/festivals')
+            response = client.get('/api/v1/festivals')
         assert response.status_code == 500
 
     def test_products_error(self, client):
@@ -249,7 +249,7 @@ class TestDashboardStatsErrors:
         mock_db.fetchall.side_effect = Exception('products fail')
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
-            response = client.get('/api/products')
+            response = client.get('/api/v1/products')
         assert response.status_code == 500
 
     def test_low_stock_error_route(self, client):
@@ -257,7 +257,7 @@ class TestDashboardStatsErrors:
         mock_db.fetchall.side_effect = Exception('low_stock fail')
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
-            response = client.get('/api/products/low-stock')
+            response = client.get('/api/v1/products/low-stock')
         assert response.status_code == 500
 
     def test_accounts_error(self, client):
@@ -265,7 +265,7 @@ class TestDashboardStatsErrors:
         mock_db.fetchall.side_effect = Exception('accounts fail')
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
-            response = client.get('/api/accounts')
+            response = client.get('/api/v1/accounts')
         assert response.status_code == 500
 
     def test_forecast_error(self, client):
@@ -273,7 +273,7 @@ class TestDashboardStatsErrors:
         mock_db.fetchall.side_effect = Exception('forecast fail')
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
-            response = client.get('/api/forecast/daily')
+            response = client.get('/api/v1/forecast/daily')
         assert response.status_code == 500
 
     def test_forecast_daily(self, client):
@@ -283,7 +283,7 @@ class TestDashboardStatsErrors:
         ]
 
         with patch('acas_pro.web.routes.dashboard_stats.db', mock_db):
-            response = client.get('/api/forecast/daily')
+            response = client.get('/api/v1/forecast/daily')
         assert response.status_code == 200
         data = response.get_json()
         assert data['success'] is True

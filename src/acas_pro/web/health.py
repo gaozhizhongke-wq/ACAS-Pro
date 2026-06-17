@@ -232,7 +232,7 @@ class HealthChecker:
                     model=config.llm.model,
                     api_base=config.llm.base_url,
                 )
-                client = LLMClient(llm_config)
+                LLMClient(llm_config)
 
                 # Health check without actual API call
                 return HealthCheckResult(

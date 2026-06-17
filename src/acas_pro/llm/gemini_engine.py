@@ -6,13 +6,13 @@ Production-grade Google AI API integration
 """
 
 import os
-import logging
+from acas_pro.core.logging import get_logger
 from typing import List, Dict, Iterator
 from dataclasses import dataclass
 
 from .base_engine import BaseLLMEngine, LLMMessage, LLMResponse, LLMStreamChunk
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass

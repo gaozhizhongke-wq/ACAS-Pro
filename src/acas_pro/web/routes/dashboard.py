@@ -4,10 +4,13 @@ from typing import Any
 from flask import Blueprint, render_template, jsonify
 from datetime import datetime, timezone
 from acas_pro.core.logging import get_logger
-import sqlite3
+
+# OperationalError: generic for both SQLite and PostgreSQL compatibility
+OperationalError = Exception
+
 
 logger = get_logger(__name__)
-bp = Blueprint("dashboard", __name__, template_folder="../../templates")
+bp = Blueprint("dashboard", __name__, template_folder="../../templates", url_prefix="/api/v1")
 
 
 # Dashboard HTML template
@@ -30,7 +33,7 @@ def index() -> Any:
     )
 
 
-@bp.route("/api/stats")
+@bp.route("/stats")
 def dashboard_stats() -> Any:
     """Dashboard statistics API - production-grade with explicit error handling"""
     from acas_pro.core.database import db
@@ -53,7 +56,7 @@ def dashboard_stats() -> Any:
         )
         if result and len(result) > 0:
             stats["active_users"] = int(result[0].get("cnt", 0))
-    except sqlite3.OperationalError as e:
+    except OperationalError as e:
         logger.warning(f"[dashboard_stats] users table query failed: {e}")
     except Exception as e:
         logger.error(f"[dashboard_stats] Unexpected error querying users: {e}")
@@ -63,7 +66,7 @@ def dashboard_stats() -> Any:
         result = db.fetchall("SELECT COUNT(*) as cnt FROM products")
         if result and len(result) > 0:
             stats["products_count"] = int(result[0].get("cnt", 0))
-    except sqlite3.OperationalError as e:
+    except OperationalError as e:
         logger.warning(f"[dashboard_stats] products table query failed: {e}")
     except Exception as e:
         logger.error(f"[dashboard_stats] Unexpected error querying products: {e}")
@@ -75,7 +78,7 @@ def dashboard_stats() -> Any:
         )
         if result and len(result) > 0:
             stats["total_revenue"] = float(result[0].get("total", 0.0))
-    except sqlite3.OperationalError as e:
+    except OperationalError as e:
         logger.warning(f"[dashboard_stats] transactions revenue query failed: {e}")
     except Exception as e:
         logger.error(f"[dashboard_stats] Unexpected error querying revenue: {e}")
@@ -87,7 +90,7 @@ def dashboard_stats() -> Any:
         )
         if result and len(result) > 0:
             stats["transactions_today"] = int(result[0].get("cnt", 0))
-    except sqlite3.OperationalError as e:
+    except OperationalError as e:
         logger.warning(f"[dashboard_stats] transactions today query failed: {e}")
     except Exception as e:
         logger.error(
@@ -101,7 +104,7 @@ def dashboard_stats() -> Any:
         )
         if result and len(result) > 0:
             stats["pending_tasks"] = int(result[0].get("cnt", 0))
-    except sqlite3.OperationalError as e:
+    except OperationalError as e:
         logger.warning(f"[dashboard_stats] publish_tasks query failed: {e}")
     except Exception as e:
         logger.error(f"[dashboard_stats] Unexpected error querying pending tasks: {e}")
@@ -116,7 +119,7 @@ def dashboard_stats() -> Any:
         if tasks and len(tasks) > 0:
             cnt += int(tasks[0].get("cnt", 0))
         stats["content_count"] = cnt
-    except sqlite3.OperationalError as e:
+    except OperationalError as e:
         logger.warning(f"[dashboard_stats] content count query failed: {e}")
     except Exception as e:
         logger.error(f"[dashboard_stats] Unexpected error querying content: {e}")
@@ -128,7 +131,7 @@ def dashboard_stats() -> Any:
         )
         if result and len(result) > 0:
             stats["alerts_count"] = int(result[0].get("cnt", 0))
-    except sqlite3.OperationalError as e:
+    except OperationalError as e:
         logger.warning(f"[dashboard_stats] data_alerts query failed: {e}")
     except Exception as e:
         logger.error(f"[dashboard_stats] Unexpected error querying alerts: {e}")
@@ -140,7 +143,7 @@ def dashboard_stats() -> Any:
         )
         if result and len(result) > 0:
             stats["api_calls_today"] = int(result[0].get("cnt", 0))
-    except sqlite3.OperationalError as e:
+    except OperationalError as e:
         logger.warning(f"[dashboard_stats] audit_log query failed: {e}")
     except Exception as e:
         logger.error(f"[dashboard_stats] Unexpected error querying audit log: {e}")
@@ -154,7 +157,7 @@ def dashboard_stats() -> Any:
     )
 
 
-@bp.route("/api/activity")
+@bp.route("/activity")
 def recent_activity() -> Any:
     """Recent activity API - reads from audit_log with explicit error handling"""
     from acas_pro.core.database import db
@@ -176,7 +179,7 @@ def recent_activity() -> Any:
                         "status": r.get("status", "info"),
                     }
                 )
-    except sqlite3.OperationalError as e:
+    except OperationalError as e:
         logger.warning(f"[recent_activity] audit_log query failed: {e}")
     except Exception as e:
         logger.error(f"[recent_activity] Unexpected error querying audit_log: {e}")
@@ -199,7 +202,7 @@ def recent_activity() -> Any:
                             "status": r.get("status", "completed"),
                         }
                     )
-        except sqlite3.OperationalError as e:
+        except OperationalError as e:
             logger.warning(f"[recent_activity] transactions query failed: {e}")
         except Exception as e:
             logger.error(

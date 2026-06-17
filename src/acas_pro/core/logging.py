@@ -164,6 +164,8 @@ def get_logger(name: str) -> logging.Logger:
 class AuditLogger:
     """Security audit logger"""
 
+    _consecutive_failures: int = 0
+
     def __init__(self) -> Any:
         self.logger = get_logger("audit")
         self.db = None  # Will be set after import
@@ -220,8 +222,15 @@ class AuditLogger:
                     "created_at": datetime.now(timezone.utc).isoformat(),
                 },
             )
+            AuditLogger._consecutive_failures = 0
         except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
-            self.logger.error(f"Failed to write audit log: {e}")
+            AuditLogger._consecutive_failures += 1
+            if AuditLogger._consecutive_failures == 1:
+                self.logger.warning(f"Failed to write audit log to DB: {e}")
+            elif AuditLogger._consecutive_failures % 5 == 0:
+                self.logger.error(
+                    f"Audit log DB write failed {AuditLogger._consecutive_failures} consecutive times: {e}"
+                )
 
 
 # Global instances

@@ -6,7 +6,7 @@ Multi-language support with JSON-based translations
 
 import json
 import sqlite3
-import logging
+from acas_pro.core.logging import get_logger
 from pathlib import Path
 from typing import Dict, Optional
 

@@ -3,6 +3,7 @@
 
 from flask import Blueprint, request, jsonify, g
 from datetime import datetime, timezone
+import warnings
 
 import jwt
 import acas_pro.core.security as _sec
@@ -22,7 +23,7 @@ logger = get_logger(__name__)
 # DO NOT cache refs here - conftest resets singletons between tests.
 # Access _sec.rate_limiter etc. directly in each function.
 
-bp = Blueprint("auth", __name__, url_prefix="/api/auth")
+bp = Blueprint("auth", __name__, url_prefix="/api/v1/auth")
 
 
 def generate_token(user_id: str, account: str) -> str:
@@ -59,6 +60,11 @@ def verify_token(token: str) -> dict | None:
             return None
         payload = jwt.decode(token, JWT_SECRET, algorithms=[alg])
         # Validate legacy token has required claims
+        warnings.warn(
+            "Legacy JWT token detected — will be removed in v2.0",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if not payload.get("user_id"):
             return None
         # Check expiration — legacy tokens must have valid exp

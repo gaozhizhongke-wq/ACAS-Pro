@@ -134,9 +134,13 @@ class UserService:
 
         Returns: (success, message, user_profile)
         """
-        # Validate account
+        # Validate and truncate inputs
         if not account or len(account) < 3:
             return False, "Account must be at least 3 characters", None
+        account = account[:64]
+        nickname = (nickname or account)[:128]
+        email = email[:256]
+        phone = phone[:32]
 
         # Validate password
         is_valid, error_msg = _get_lazy_password_validator().validate(password)
@@ -200,13 +204,7 @@ class UserService:
             profile = self._get_profile(user_id)
             return True, "Registration successful", profile
 
-        except (
-            sqlite3.Error,
-            ValueError,
-            RuntimeError,
-            json.JSONDecodeError,
-            Exception,
-        ) as e:
+        except Exception as e:
             logger.error(f"Registration failed: {e}")
             return False, "Registration failed, please try again", None
 
@@ -426,13 +424,7 @@ class UserService:
                 "PROFILE_UPDATED", user_id, {"fields": list(filtered_updates.keys())}
             )
             return True, "Profile updated successfully"
-        except (
-            sqlite3.Error,
-            ValueError,
-            RuntimeError,
-            json.JSONDecodeError,
-            Exception,
-        ) as e:
+        except Exception as e:
             logger.error(f"Profile update failed: {e}")
             return False, "Update failed"
 

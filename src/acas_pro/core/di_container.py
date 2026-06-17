@@ -31,6 +31,7 @@ class DIContainer:
         self._singletons: Dict[Type, Any] = {}
         self._factories: Dict[Type, Callable[["DIContainer"], Any]] = {}
         self._lock = threading.RLock()
+        self._resolving: set = set()
 
     def register_singleton(self, interface: Type[T], factory: Callable[[], T]) -> None:
         """Register a singleton service"""
@@ -49,18 +50,24 @@ class DIContainer:
     def resolve(self, interface: Type[T]) -> T:
         """Resolve a dependency"""
         with self._lock:
-            # Return existing singleton
-            if interface in self._singletons:
-                return self._singletons[interface]
+            if interface in self._resolving:
+                raise RuntimeError(f"Circular dependency detected for {interface}")
+            self._resolving.add(interface)
+            try:
+                # Return existing singleton
+                if interface in self._singletons:
+                    return self._singletons[interface]
 
-            # Create from factory
-            if interface in self._factories:
-                instance = self._factories[interface](self)
-                # Cache singletons
-                self._singletons[interface] = instance
-                return instance
+                # Create from factory
+                if interface in self._factories:
+                    instance = self._factories[interface](self)
+                    # Cache singletons
+                    self._singletons[interface] = instance
+                    return instance
 
-            raise KeyError(f"No registration for {interface}")
+                raise KeyError(f"No registration for {interface}")
+            finally:
+                self._resolving.discard(interface)
 
     def clear(self) -> None:
         """Clear all registrations (for testing)"""

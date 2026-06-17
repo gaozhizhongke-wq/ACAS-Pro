@@ -85,7 +85,7 @@ class TestAuthRegister:
     def test_register_success(self, monkeypatch):
         app, _, _ = _make_isolated_app(monkeypatch, register_ok=True, rate_limit_allowed=True)
         client = app.test_client()
-        resp = client.post('/api/auth/register', json={
+        resp = client.post('/api/v1/auth/register', json={
             'account': 'test', 'password': 'Test123!', 'nickname': 'Test'
         })
         assert resp.status_code == 200
@@ -95,13 +95,13 @@ class TestAuthRegister:
     def test_register_missing_account(self, monkeypatch):
         app, _, _ = _make_isolated_app(monkeypatch)
         client = app.test_client()
-        resp = client.post('/api/auth/register', json={'password': 'Test123!'})
+        resp = client.post('/api/v1/auth/register', json={'password': 'Test123!'})
         assert resp.status_code == 400
 
     def test_register_missing_password(self, monkeypatch):
         app, _, _ = _make_isolated_app(monkeypatch)
         client = app.test_client()
-        resp = client.post('/api/auth/register', json={'account': 'test'})
+        resp = client.post('/api/v1/auth/register', json={'account': 'test'})
         assert resp.status_code == 400
 
     def test_register_weak_password(self, monkeypatch):
@@ -111,7 +111,7 @@ class TestAuthRegister:
         })(), raising=False)
         app, _, _ = _make_isolated_app(monkeypatch)
         client = app.test_client()
-        resp = client.post('/api/auth/register', json={
+        resp = client.post('/api/v1/auth/register', json={
             'account': 'test', 'password': 'weak'
         })
         assert resp.status_code == 400
@@ -119,7 +119,7 @@ class TestAuthRegister:
     def test_register_rate_limited(self, monkeypatch):
         app, _, _ = _make_isolated_app(monkeypatch, rate_limit_allowed=False)
         client = app.test_client()
-        resp = client.post('/api/auth/register', json={
+        resp = client.post('/api/v1/auth/register', json={
             'account': 'test', 'password': 'Test123!'
         })
         assert resp.status_code == 429
@@ -127,7 +127,7 @@ class TestAuthRegister:
     def test_register_duplicate(self, monkeypatch):
         app, _, _ = _make_isolated_app(monkeypatch, register_ok=False)
         client = app.test_client()
-        resp = client.post('/api/auth/register', json={
+        resp = client.post('/api/v1/auth/register', json={
             'account': 'test', 'password': 'Test123!'
         })
         assert resp.status_code == 409
@@ -141,7 +141,7 @@ class TestAuthLogin:
     def test_login_success(self, monkeypatch):
         app, _, _ = _make_isolated_app(monkeypatch, login_ok=True, rate_limit_allowed=True)
         client = app.test_client()
-        resp = client.post('/api/auth/login', json={
+        resp = client.post('/api/v1/auth/login', json={
             'account': 'test', 'password': 'Test123!'
         })
         assert resp.status_code == 200
@@ -151,7 +151,7 @@ class TestAuthLogin:
     def test_login_invalid_credentials(self, monkeypatch):
         app, _, _ = _make_isolated_app(monkeypatch, login_ok=False)
         client = app.test_client()
-        resp = client.post('/api/auth/login', json={
+        resp = client.post('/api/v1/auth/login', json={
             'account': 'test', 'password': 'wrong'
         })
         assert resp.status_code == 401
@@ -159,13 +159,13 @@ class TestAuthLogin:
     def test_login_missing_account(self, monkeypatch):
         app, _, _ = _make_isolated_app(monkeypatch)
         client = app.test_client()
-        resp = client.post('/api/auth/login', json={'password': 'Test123!'})
+        resp = client.post('/api/v1/auth/login', json={'password': 'Test123!'})
         assert resp.status_code == 400
 
     def test_login_rate_limited(self, monkeypatch):
         app, _, _ = _make_isolated_app(monkeypatch, rate_limit_allowed=False)
         client = app.test_client()
-        resp = client.post('/api/auth/login', json={
+        resp = client.post('/api/v1/auth/login', json={
             'account': 'test', 'password': 'Test123!'
         })
         assert resp.status_code == 429

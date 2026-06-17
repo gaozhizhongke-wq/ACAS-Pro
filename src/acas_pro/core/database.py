@@ -310,7 +310,7 @@ class DatabaseManager:
             self._is_postgres = False
             self._init_sqlite()
             return
-        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+        except (ImportError, Exception) as e:
             _get_logger().warning(
                 f"PostgreSQL connection failed, falling back to SQLite: {e}"
             )
@@ -334,12 +334,7 @@ class DatabaseManager:
                     cursor.execute(self._get_postgres_schema())
                     conn.commit()
                     _get_logger().info("PostgreSQL schema initialized")
-                except (
-                    sqlite3.Error,
-                    ValueError,
-                    RuntimeError,
-                    json.JSONDecodeError,
-                ) as e:
+                except (ImportError, Exception) as e:
                     _get_logger().warning(
                         f"PostgreSQL schema init (may already exist): {e}"
                     )
@@ -379,7 +374,7 @@ class DatabaseManager:
             self.close()
         except AttributeError:
             pass  # __init__ may not have completed
-        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+        except (sqlite3.Error, Exception) as e:
             _get_logger().debug(f"database GC cleanup: {e}")
 
     def close(self) -> None:
@@ -391,7 +386,7 @@ class DatabaseManager:
         ):
             try:
                 self._local.connection.close()
-            except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+            except (sqlite3.Error, Exception) as e:
                 _get_logger().debug(f"database connection close: {e}")
             self._local.connection = None
         elif self._is_postgres and self._pool:
@@ -434,7 +429,7 @@ class DatabaseManager:
                 cursor.execute("BEGIN")
                 yield cursor
                 conn.commit()
-            except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+            except (sqlite3.Error, Exception) as e:
                 _get_logger().exception(f"SQLite transaction failed, rolling back: {e}")
                 conn.rollback()
                 _get_logger().error(
@@ -450,7 +445,7 @@ class DatabaseManager:
             try:
                 yield conn
                 conn.execute("COMMIT")
-            except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+            except (sqlite3.Error, Exception) as e:
                 _get_logger().exception(
                     f"PostgreSQL transaction failed, rolling back: {e}"
                 )
@@ -500,6 +495,25 @@ class DatabaseManager:
             if "AUTOINCREMENT" in query:
                 query = query.replace("AUTOINCREMENT", "")
             # SQLite datetime('now') → PostgreSQL NOW()
+            # Handle parameterized forms: datetime('now', '-N days'), datetime('now', 'start of day'), etc.
+            import re as _re
+            # datetime('now', '-N days') → NOW() - INTERVAL 'N days'
+            query = _re.sub(
+                r"datetime\('now',\s*'-(\d+)\s*days?'\)",
+                lambda m: f"NOW() - INTERVAL '{m.group(1)} days'",
+                query,
+            )
+            # datetime('now', '-N day') → NOW() - INTERVAL 'N days'
+            query = _re.sub(
+                r"datetime\('now',\s*'-(\d+)\s*day?'\)",
+                lambda m: f"NOW() - INTERVAL '{m.group(1)} days'",
+                query,
+            )
+            # datetime('now', 'start of day') → DATE_TRUNC('day', NOW())
+            query = query.replace("datetime('now', 'start of day')", "DATE_TRUNC('day', NOW())")
+            # datetime('now', 'start of month') → DATE_TRUNC('month', NOW())
+            query = query.replace("datetime('now', 'start of month')", "DATE_TRUNC('month', NOW())")
+            # Plain datetime('now') → NOW()
             if "datetime('now')" in query:
                 query = query.replace("datetime('now')", "NOW()")
             # SQLite INSERT OR REPLACE → PostgreSQL INSERT ... ON CONFLICT DO UPDATE
@@ -853,7 +867,7 @@ class DatabaseManager:
                     "database": "sqlite",
                     "path": str(self._db_path),
                 }
-        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+        except (sqlite3.Error, Exception) as e:
             _get_logger().error(f"Health check failed: {e}")
             return {"status": "unhealthy", "error": str(e)}
 
@@ -886,9 +900,12 @@ def reset_db() -> Any:
     if old is not None:
         try:
             old._pool.dispose()
-        except (sqlite3.Error, ValueError, RuntimeError, json.JSONDecodeError) as e:
+        except (sqlite3.Error, Exception) as e:
             _get_logger().debug(f"connection pool dispose: {e}")
 
 
 # Backward compatibility - deprecated, use get_db()
-db = get_db()
+def __getattr__(name):
+    if name == "db":
+        return get_db()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

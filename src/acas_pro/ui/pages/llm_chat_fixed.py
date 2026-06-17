@@ -28,10 +28,10 @@ from PySide6.QtCore import Qt, Signal, QTimer
 from PySide6.QtGui import QTextCursor
 import json
 
-import logging
+from acas_pro.core.logging import get_logger
 from ...llm.llm_client import LLMMessage
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class MessageBubble(QFrame):

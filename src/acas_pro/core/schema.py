@@ -781,6 +781,10 @@ CREATE TABLE IF NOT EXISTS voice_clones (
 SCHEMA_POSTGRES: str = SCHEMA_SQLITE.replace("AUTOINCREMENT", "").replace(
     "CURRENT_TIMESTAMP", "NOW()").replace(
     "datetime('now')", "NOW()"
+).replace(
+    "TEXT NOT NULL DEFAULT (NOW())", "TIMESTAMPTZ NOT NULL DEFAULT NOW()"
+).replace(
+    "TEXT NOT NULL", "TEXT NOT NULL"
 )
 
 

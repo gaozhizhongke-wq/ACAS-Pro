@@ -4,7 +4,7 @@
 from flask import Blueprint, jsonify
 from acas_pro.web.health import health_checker
 
-bp = Blueprint("health", __name__, url_prefix="/api")
+bp = Blueprint("health", __name__, url_prefix="/api/v1")
 
 
 @bp.route("/health", methods=["GET"])

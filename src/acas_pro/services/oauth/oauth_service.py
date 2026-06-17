@@ -10,7 +10,7 @@ import urllib.request
 import urllib.parse
 import urllib.error
 import secrets
-import logging
+from acas_pro.core.logging import get_logger
 
 try:
     import aiohttp
@@ -23,7 +23,7 @@ from typing import Optional, Dict, Tuple, NamedTuple
 from dataclasses import dataclass
 from abc import ABC, abstractmethod
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass

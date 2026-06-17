@@ -7,7 +7,7 @@ Check for updates, download, and install
 import json
 import sqlite3
 import hashlib
-import logging
+from acas_pro.core.logging import get_logger
 import urllib.request
 import urllib.error
 import urllib.parse
@@ -36,7 +36,7 @@ def _safe_urlopen(req, **kwargs):
     return urllib.request.urlopen(req, **kwargs)  # nosec B310  # validated scheme above
 
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 @dataclass
