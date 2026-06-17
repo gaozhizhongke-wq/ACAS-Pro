@@ -225,6 +225,7 @@ class TestTokenFunctions:
 
     def test_verify_token_legacy(self, monkeypatch):
         """JWTManager returns None -> fallback to jwt.decode"""
+        import warnings
         import acas_pro.core.security as _sec_mod
         monkeypatch.setattr(_sec_mod.JWTManager, 'verify_token',
                            staticmethod(lambda tok, expected_type=None: None),
@@ -241,7 +242,9 @@ class TestTokenFunctions:
                            staticmethod(lambda *a, **kw: {'user_id': 'u1', 'account': 'test', 'exp': 9999999999}),
                            raising=False)
         
-        payload = verify_token('tok')
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            payload = verify_token('tok')
         assert payload is not None
         assert payload['user_id'] == 'u1'
 

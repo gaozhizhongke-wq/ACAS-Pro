@@ -179,9 +179,8 @@ class TestAnomalyDetector:
             detector = AnomalyDetector()
 
             if hasattr(detector, "detect"):
-                result = detector.detect(
-                    {"data": [1, 2, 3, 100, 5]}
-                )  # 100 is anomaly
+                # detect() expects List[float], not a dict
+                result = detector.detect([1.0, 2.0, 3.0, 100.0, 5.0])
                 assert result is not None
         except (ImportError, Exception) as e:
             pytest.skip(f"Cannot test detect: {e}")
@@ -208,14 +207,11 @@ class TestCustomerSegmentation:
             segmentation = CustomerSegmentation()
 
             if hasattr(segmentation, "segment"):
-                result = segmentation.segment(
-                    {
-                        "customers": [
-                            {"id": "1", "value": 100},
-                            {"id": "2", "value": 500},
-                        ]
-                    }
-                )
+                # segment() expects List[Dict] with customer_id/timestamp/amount
+                result = segmentation.segment([
+                    {"customer_id": "1", "timestamp": 1700000000, "amount": 100.0},
+                    {"customer_id": "2", "timestamp": 1700000001, "amount": 500.0},
+                ])
                 assert result is not None
         except (ImportError, Exception) as e:
             pytest.skip(f"Cannot test segment: {e}")

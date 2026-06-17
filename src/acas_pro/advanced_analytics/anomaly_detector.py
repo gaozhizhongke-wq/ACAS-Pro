@@ -80,23 +80,36 @@ class AnomalyDetector:
         if len(arr) < 3:
             return self._empty_result()
 
-        # Run all three methods
-        zscore_results = self._detect_zscore(arr)
-        iqr_results = self._detect_iqr(arr)
-        rolling_results = self._detect_rolling(arr)
+        # Per-point z-scores for the score vector
+        mean = float(np.mean(arr))
+        std = float(np.std(arr))
+        if std > 1e-9:
+            per_point_scores = np.abs((arr - mean) / std)
+            per_point_scores = np.clip(
+                (per_point_scores - self.z_threshold) / self.z_threshold, 0.0, 1.0
+            )
+        else:
+            per_point_scores = np.zeros(len(arr))
 
-        # Combine: mark as anomaly if ANY method detects it
-        combined_scores = np.maximum.reduce([
-            zscore_results.scores,
-            iqr_results.scores,
-            rolling_results.scores,
-        ])
+        # Run all three methods for the binary anomaly flag
+        zscore_result = self._detect_zscore(arr)
+        iqr_result = self._detect_iqr(arr)
+        rolling_result = self._detect_rolling(arr)
 
-        anomaly_indices = np.where(combined_scores > 0.5)[0].tolist()
+        max_score = max(
+            zscore_result.score,
+            iqr_result.score,
+            rolling_result.score,
+        )
+        anomaly_indices = (
+            np.where(per_point_scores > 0.5)[0].tolist()
+            if max_score > 0.5
+            else []
+        )
 
         return {
             "anomalies": anomaly_indices,
-            "scores": combined_scores.tolist(),
+            "scores": per_point_scores.tolist(),
             "summary": {
                 "total_points": len(data),
                 "valid_points": len(arr),
